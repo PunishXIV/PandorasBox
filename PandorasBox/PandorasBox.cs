@@ -3,6 +3,7 @@ using Dalamud.Interface.Windowing;
 using Dalamud.IoC;
 using Dalamud.Plugin;
 using ECommons;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using PandorasBox.Features;
 using PandorasBox.UI;
@@ -27,6 +28,7 @@ public class PandorasBox : IDalamudPlugin
 
     public List<FeatureProvider> FeatureProviders = new();
     public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
+    internal TaskManager TaskManager;
 
     public PandorasBox(DalamudPluginInterface pluginInterface)
     {
@@ -42,7 +44,7 @@ public class PandorasBox : IDalamudPlugin
         Ws = new();
         MainWindow = new();
         Ws.AddWindow(MainWindow);
-
+        TaskManager = new();
         Config = pi.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(Svc.PluginInterface);
 
@@ -65,17 +67,19 @@ public class PandorasBox : IDalamudPlugin
     public void Dispose()
     {
         Svc.Commands.RemoveHandler(CommandName);
+        foreach (var t in FeatureProviders.Where(t => !t.Disposed))
+        {
+            t.Dispose();
+        }
+
         Svc.PluginInterface.UiBuilder.Draw -= Ws.Draw;
         Svc.PluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;
         Ws.RemoveAllWindows();
         MainWindow = null;
         Ws = null;
         ECommonsMain.Dispose();
-        foreach(var t in FeatureProviders.Where(t => !t.Disposed))
-        {
-            t.Dispose();
-        }
         FeatureProviders.Clear();
+        TaskManager.Dispose();
         P = null;
     }
 

@@ -1,6 +1,7 @@
 using Dalamud.Game;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.GeneratedSheets;
@@ -37,7 +38,7 @@ namespace PandorasBox.Features
 
         private void RunFeature(Framework framework)
         {
-            if (!TerritoryInfo.Instance()->IsInSanctuary())
+            if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
 
             ActionManager* am = ActionManager.Instance();

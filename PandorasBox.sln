@@ -9,6 +9,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECommons", "ECommons\ECommo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PunishLib", "PunishLib\PunishLib\PunishLib.csproj", "{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClickLib", "ClickLib\ClickLib\ClickLib.csproj", "{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
@@ -27,6 +29,10 @@ Global
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Debug|x64.Build.0 = Debug|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Release|x64.ActiveCfg = Release|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Release|x64.Build.0 = Release|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Debug|x64.ActiveCfg = Debug|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Debug|x64.Build.0 = Debug|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Release|x64.ActiveCfg = Release|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

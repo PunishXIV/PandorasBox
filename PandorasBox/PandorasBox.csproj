@@ -86,4 +86,13 @@
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Features\Other\" />
+      <Folder Include="Features\Targets\" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
+    </ItemGroup>
 </Project>

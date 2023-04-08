@@ -27,6 +27,11 @@ namespace PandorasBox.Features
 
         public virtual string Description => null!;
 
+        public virtual void Draw()
+        {
+
+        }
+
         public virtual bool Ready { get; protected set; }
 
         public virtual FeatureType FeatureType { get; }
