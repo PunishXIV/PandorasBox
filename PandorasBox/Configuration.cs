@@ -1,6 +1,7 @@
 using Dalamud.Configuration;
 using Dalamud.Plugin;
 using System;
+using System.Collections.Generic;
 
 namespace PandorasBox
 {
@@ -8,6 +9,8 @@ namespace PandorasBox
     public class Configuration : IPluginConfiguration
     {
         public int Version { get; set; } = 0;
+
+        public List<string> EnabledFeatures = new List<string>();
 
         [NonSerialized]
         private DalamudPluginInterface? PluginInterface;

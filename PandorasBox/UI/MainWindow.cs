@@ -1,13 +1,22 @@
-using System;
-using System.Numerics;
 using Dalamud.Interface.Windowing;
+using Dalamud.Logging;
+using ECommons.ImGuiMethods;
 using ImGuiNET;
-using ImGuiScene;
+using Lumina.Excel.GeneratedSheets;
+using PandorasBox.Features;
+using PandorasBox.FeaturesSetup;
+using PunishLib.ImGuiMethods;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
 
 namespace PandorasBox.UI;
 
 internal class MainWindow : Window
 {
+    public OpenWindow OpenWindow { get; private set; } = OpenWindow.None;
+
     public MainWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###PandorasBox")
     {
         this.SizeConstraints = new WindowSizeConstraints
@@ -19,11 +28,122 @@ internal class MainWindow : Window
 
     public void Dispose()
     {
-        
+
     }
 
     public override void Draw()
     {
-        PunishLib.ImGuiMethods.AboutTab.Draw(PandorasBox.P);
+        var region = ImGui.GetContentRegionAvail();
+        var itemSpacing = ImGui.GetStyle().ItemSpacing;
+
+        var topLeftSideHeight = region.Y;
+
+        if (ImGui.BeginTable("$PandorasBoxTableContainer", 2, ImGuiTableFlags.Resizable))
+        {
+            ImGui.TableSetupColumn($"###LeftColumn", ImGuiTableColumnFlags.WidthFixed, ImGui.GetWindowWidth() / 2);
+            ImGui.TableNextColumn();
+
+            var regionSize = ImGui.GetContentRegionAvail();
+            ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
+            if (ImGui.BeginChild($"###PandoraLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
+            {
+                ImGui.Spacing();
+                ImGui.Separator();
+
+                foreach (var window in Enum.GetValues(typeof(OpenWindow)))
+                {
+                    if ((OpenWindow)window == OpenWindow.None) continue;
+
+                    if (ImGui.Selectable($"{window.ToString()}", OpenWindow == (OpenWindow)window))
+                    {
+                        OpenWindow = (OpenWindow)window;
+                    }
+                }
+            }
+            ImGui.EndChild();
+            ImGui.PopStyleVar();
+            ImGui.TableNextColumn();
+            if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (false ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
+            {
+                switch (OpenWindow)
+                {
+                    case OpenWindow.Actions:
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Actions).ToArray());
+                        break;
+                    case OpenWindow.UI:
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.UI).ToArray());
+                        break;
+                    case OpenWindow.Other:
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Other).ToArray());
+                        break;
+                    case OpenWindow.Targets:
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
+                        break;
+                    case OpenWindow.About:
+                        AboutTab.Draw(P);
+                        break;
+                }
+            }
+            ImGui.EndChild();
+
+            ImGui.EndTable();
+        }
     }
+
+    private void DrawFeatures(IEnumerable<BaseFeature> features)
+    {
+        if (features == null || !features.Any() || features.Count() == 0) return;
+
+        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
+        ImGui.Separator();
+
+        foreach (var feature in features)
+        {
+            bool enabled = feature.Enabled;
+            if (ImGui.Checkbox($"{feature.Name}", ref enabled))
+            {
+                if (enabled)
+                {
+                    try
+                    {
+                        feature.Enable();
+                        if (feature.Enabled)
+                        {
+                            Config.EnabledFeatures.Add(feature.GetType().Name);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error(ex, $"Failed to enabled {feature.Name}");
+                    }
+                }
+                else
+                {
+                    try
+                    {
+                        feature.Disable();
+                        Config.EnabledFeatures.RemoveAll(x => x == feature.GetType().Name);
+
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginLog.Error(ex, $"Failed to enabled {feature.Name}");
+                    }
+                }
+                Config.Save();
+            }
+            ImGui.TextWrapped($"{feature.Description}");
+            ImGui.Separator();
+        }
+    }
+}
+
+public enum OpenWindow
+{
+    None,
+    Actions,
+    UI,
+    Targets,
+    Other,
+    About
 }

@@ -4,8 +4,13 @@ using Dalamud.IoC;
 using Dalamud.Plugin;
 using ECommons;
 using ECommons.DalamudServices;
+using PandorasBox.Features;
 using PandorasBox.UI;
 using PunishLib.Sponsor;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 
 namespace PandorasBox;
 
@@ -13,23 +18,32 @@ public class PandorasBox : IDalamudPlugin
 {
     public string Name => "Pandora's Box";
     private const string CommandName = "/pandora";
-    internal Configuration Configuration { get; init; }
     internal WindowSystem Ws;
     internal MainWindow MainWindow;
-    internal Configuration Config;
 
     internal static PandorasBox P;
+    internal static DalamudPluginInterface pi;
+    internal static Configuration Config;
+
+    public List<FeatureProvider> FeatureProviders = new();
+    public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
 
     public PandorasBox(DalamudPluginInterface pluginInterface)
     {
         P = this;
-        ECommonsMain.Init(pluginInterface, P);
+        pi = pluginInterface;
+        Initialize();
+    }
+
+    private void Initialize()
+    {
+        ECommonsMain.Init(pi, P);
         SponsorManager.SetSponsorInfo("https://ko-fi.com/taurenkey");
         Ws = new();
         MainWindow = new();
         Ws.AddWindow(MainWindow);
 
-        Config = pluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
+        Config = pi.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(Svc.PluginInterface);
 
         Svc.Commands.AddHandler(CommandName, new CommandInfo(OnCommand)
@@ -41,8 +55,12 @@ public class PandorasBox : IDalamudPlugin
         Svc.PluginInterface.UiBuilder.Draw += Ws.Draw;
         Svc.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
 
+        var provider = new FeatureProvider(Assembly.GetExecutingAssembly());
+        provider.LoadFeatures();
+        FeatureProviders.Add(provider);
 
     }
+
 
     public void Dispose()
     {
@@ -53,6 +71,11 @@ public class PandorasBox : IDalamudPlugin
         MainWindow = null;
         Ws = null;
         ECommonsMain.Dispose();
+        foreach(var t in FeatureProviders.Where(t => !t.Disposed))
+        {
+            t.Dispose();
+        }
+        FeatureProviders.Clear();
         P = null;
     }
 
