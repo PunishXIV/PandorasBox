@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.6.33513.286
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PandorasBox", "PunishTemplate\PandorasBox.csproj", "{910E17C8-A0DF-4131-B610-CD387C19035D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PandorasBox", "PandorasBox\PandorasBox.csproj", "{910E17C8-A0DF-4131-B610-CD387C19035D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ECommons", "ECommons\ECommons\ECommons.csproj", "{1389B772-C3BF-486E-894A-32A2EB962008}"
 EndProject
