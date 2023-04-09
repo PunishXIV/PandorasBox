@@ -5,10 +5,12 @@ using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
 using System;
+using System.Linq;
 using System.Numerics;
 using static ECommons.GenericHelpers;
 
@@ -61,16 +63,30 @@ namespace PandorasBox.Features
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
                 ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
-
+                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
                 ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                     | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
-                if (ImGui.Button($"Repair All", size))
+
+                if (!Repairing)
                 {
-                    Repairing = true;
-                    TryRepairAll();
+                    if (ImGui.Button($"Repair All###StartRepair", size))
+                    {
+                        Repairing = true;
+                        TryRepairAll();
+                    }
+
+                    ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text);
+                }
+                else
+                {
+                    if (ImGui.Button($"Repairing. Click to abort.###AbortRepair", size))
+                    {
+                        Repairing = false;
+                        P.TaskManager.Abort();
+                    }
+                    ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {P.TaskManager.NumQueuedTasks} tasks");
                 }
 
                 ImGui.End();
@@ -86,14 +102,15 @@ namespace PandorasBox.Features
             for (int i = 1; i <= 7; i++)
             {
                 P.TaskManager.Enqueue(() => SwitchSection(i));
-                P.TaskManager.Enqueue(() => Repair(), 2000, false);
-                P.TaskManager.Enqueue(() => ConfirmYesNo(), 2000, false);
+                P.TaskManager.Enqueue(() => Repair(), 300, false);
+                P.TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
             }
-
+            P.TaskManager.Enqueue(() => { Repairing = false; return true; });
         }
 
         private bool SwitchSection(int section)
         {
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
             if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
             {
                 var values = stackalloc AtkValue[2];

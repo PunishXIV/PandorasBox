@@ -1,5 +1,6 @@
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
+using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -8,8 +9,10 @@ using PandorasBox.FeaturesSetup;
 using PunishLib.ImGuiMethods;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Numerics;
+using ThreadLoadImageHandler = ECommons.ImGuiMethods.ThreadLoadImageHandler;
 
 namespace PandorasBox.UI;
 
@@ -47,6 +50,13 @@ internal class MainWindow : Window
             ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
             if (ImGui.BeginChild($"###PandoraLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
             {
+                var imagePath = Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "Icon.png");
+
+                if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
+                {
+                    ImGui.Image(logo.ImGuiHandle, new(125f.Scale(), 125f.Scale()));
+                }
+
                 ImGui.Spacing();
                 ImGui.Separator();
 

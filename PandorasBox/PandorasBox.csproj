@@ -82,6 +82,9 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Update="Icon.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
       <None Update="PandorasBox.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
@@ -89,7 +92,6 @@
 
     <ItemGroup>
       <Folder Include="Features\Other\" />
-      <Folder Include="Features\Targets\" />
     </ItemGroup>
 
     <ItemGroup>
