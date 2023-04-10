@@ -91,10 +91,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Features\Other\" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
     </ItemGroup>
 </Project>

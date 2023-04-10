@@ -11,7 +11,7 @@ using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Linq;
 
-namespace PandorasBox.Features.Targets
+namespace PandorasBox.Features.Other
 {
     public unsafe class AutoSwitchGatherer : Feature
     {
