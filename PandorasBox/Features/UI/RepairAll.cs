@@ -101,7 +101,8 @@ namespace PandorasBox.Features
         {
             for (int i = 1; i <= 7; i++)
             {
-                P.TaskManager.Enqueue(() => SwitchSection(i));
+                var val = i;
+                P.TaskManager.Enqueue(() => SwitchSection(val));
                 P.TaskManager.Enqueue(() => Repair(), 300, false);
                 P.TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
             }

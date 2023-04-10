@@ -1,5 +1,6 @@
 using Dalamud.Game;
 using ECommons.DalamudServices;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -43,9 +44,12 @@ namespace PandorasBox.Features
 
             ActionManager* am = ActionManager.Instance();
             bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1)
-                am->UseAction(ActionType.General, 4);
+            {
+                 am->UseAction(ActionType.General, 4);
+            }
         }
 
         public override void Disable()

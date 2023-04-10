@@ -31,9 +31,6 @@ namespace PandorasBox.Features.Targets
             {
                 slowCheckRemaining = slowCheckInterval;
 
-                if (P.TaskManager.NumQueuedTasks > 0)
-                    return;
-
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering])
                     return;
 

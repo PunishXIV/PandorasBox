@@ -33,7 +33,7 @@ namespace PandorasBox.Features.Actions
             ActionManager* am = ActionManager.Instance();
             if (am->GetActionStatus(ActionType.General, 9) != 0) return false;
 
-            am->UseAction(ActionType.General, 9);
+            P.TaskManager.Enqueue(() => am->UseAction(ActionType.General, 9));
 
             return true;
         }

@@ -17,9 +17,9 @@ namespace PandorasBox.Features.Targets
     {
         public override string Name => "Switch Gatherers Automatically";
 
-        public override string Description => "Switches to the appropriate gathering job when approaching gathering spot and you have both Triangulate & Prospect active. Must have a gearset for the job to switch to. (Excluding FSH)";
+        public override string Description => "Switches to the appropriate gathering job when approaching a gathering spot and you have both Triangulate & Prospect active. Must have a gearset for the job to switch to. (Excluding FSH)";
 
-        public override FeatureType FeatureType => FeatureType.Targeting;
+        public override FeatureType FeatureType => FeatureType.Other;
 
         private const float slowCheckInterval = 1f;
         private float slowCheckRemaining = 0.0f;
@@ -32,6 +32,7 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer == null) return;
             slowCheckRemaining -= (float)Svc.Framework.UpdateDelta.Milliseconds / 1000;
 
             if (slowCheckRemaining <= 0.0f)

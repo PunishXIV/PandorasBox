@@ -3,11 +3,7 @@ using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features
 {
@@ -28,13 +24,17 @@ namespace PandorasBox.Features
         private void RunFeature(Framework framework)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (Svc.ClientState.LocalPlayer is null) return;
 
             ActionManager* am = ActionManager.Instance();
             bool isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
             bool hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
+
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
+            {
                 am->UseAction(ActionType.Spell, 7557, Svc.ClientState.LocalPlayer.ObjectId);
+            }
         }
 
         public override void Disable()

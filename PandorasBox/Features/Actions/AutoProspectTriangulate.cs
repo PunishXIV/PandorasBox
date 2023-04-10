@@ -56,6 +56,7 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer is null) return;
             JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
         }
 
