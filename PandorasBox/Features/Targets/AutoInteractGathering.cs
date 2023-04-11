@@ -1,3 +1,4 @@
+using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Lumina.Excel.GeneratedSheets;
@@ -17,8 +18,22 @@ namespace PandorasBox.Features.Targets
         private const float slowCheckInterval = 0.1f;
         private float slowCheckRemaining = 0.0f;
 
+        public override bool UseAutoConfig => true;
+
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
+            public int Throttle =  100;
+
+            [FeatureConfigOption("Exclude Timed Nodes", "", 1)]
+            public bool ExcludeTimed = false;
+        }
+
+        public Configs Config { get; private set; }
+
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
@@ -47,16 +62,21 @@ namespace PandorasBox.Features.Targets
                 var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
                 var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
 
-                if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && !P.TaskManager.IsBusy)
+                if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && (x.GatheringRarePopTimeTable.Value.RowId > 0 || x.EphemeralStartTime != 65535)) && Config.ExcludeTimed)
+                    return;
+
+                if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && !TaskManager.IsBusy)
                 {
                     Svc.Targets.Target = nearestNode;
-                    P.TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj); return true; }, 1000);
+                    TaskManager.DelayNext("Gathering", Config.Throttle);
+                    TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj); return true; }, 1000);
                     return;
                 }
-                if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && !P.TaskManager.IsBusy)
+                if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && !TaskManager.IsBusy)
                 {
                     Svc.Targets.Target = nearestNode;
-                    P.TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj); return true; }, 1000);
+                    TaskManager.DelayNext("Gathering", Config.Throttle);
+                    TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj); return true; }, 1000);
                     return;
                 }
             }
@@ -64,6 +84,7 @@ namespace PandorasBox.Features.Targets
 
         public override void Disable()
         {
+            SaveConfig(Config);
             Svc.Framework.Update -= RunFeature;
             base.Disable();
         }

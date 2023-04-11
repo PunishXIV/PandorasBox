@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>0.0.0.1</Version>
+        <Version>0.0.0.2</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -31,7 +31,7 @@
 
     <ItemGroup Condition="'$(Configuration)' == 'Release'">
         <PackageReference Include="PunishLib" Version="1.0.1.2" />
-        <PackageReference Include="ECommons" Version="2.0.0.1" />
+        <PackageReference Include="ECommons" Version="2.0.0.4" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)' == 'Debug'">

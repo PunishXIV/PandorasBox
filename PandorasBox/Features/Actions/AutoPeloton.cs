@@ -1,5 +1,6 @@
 using Dalamud.Game;
 using ECommons.DalamudServices;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using PandorasBox.FeaturesSetup;
@@ -15,14 +16,29 @@ namespace PandorasBox.Features
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
+        public override bool UseAutoConfig => true;
+
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
+            public int Throttle = 100;
+
+            [FeatureConfigOption("Use whilst walk status is toggled")]
+            public bool RPWalk = false;
+        }
+
+        public Configs Config { get; private set; }
+
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
 
         private void RunFeature(Framework framework)
         {
+            if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
 
@@ -30,16 +46,31 @@ namespace PandorasBox.Features
             bool isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
             bool hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
+            if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
+            {
+                TaskManager.Enqueue(() => EzThrottler.Throttle("Pelotoning", Config.Throttle));
+                TaskManager.Enqueue(() => EzThrottler.Check("Pelotoning"));
+                TaskManager.Enqueue(UsePeloton);
+            }
+        }
+
+        private void UsePeloton()
+        {
+            ActionManager* am = ActionManager.Instance();
+            bool isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            bool hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
             {
-                am->UseAction(ActionType.Spell, 7557, Svc.ClientState.LocalPlayer.ObjectId);
-            }
+                am->UseAction(ActionType.Spell, 7557);
+            } 
         }
+
 
         public override void Disable()
         {
             Svc.Framework.Update -= RunFeature;
+            SaveConfig(Config);
             base.Disable();
         }
     }

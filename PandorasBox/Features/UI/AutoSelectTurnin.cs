@@ -3,10 +3,12 @@ using ECommons;
 using ECommons.DalamudServices;
 using ECommons.Loader;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
 using System;
+using System.Collections.Generic;
 using static ECommons.GenericHelpers;
 using static System.Collections.Specialized.BitVector32;
 
@@ -23,6 +25,7 @@ namespace PandorasBox.Features.UI
         private const float slowCheckInterval = 0.1f;
         private float slowCheckRemaining = 0.0f;
 
+        List<int> SlotsFilled = new();
         public override void Enable()
         {
             Svc.Framework.Update += RunFeature;
@@ -40,15 +43,22 @@ namespace PandorasBox.Features.UI
                 {
                     for (int i = 1; i <= addon->EntryCount; i++)
                     {
+                        if (SlotsFilled.Contains(i)) return;
                         int val = i;
                         P.TaskManager.Enqueue(() => TryClickItem(addon, val));
                     }
+                }
+                else
+                {
+                    SlotsFilled.Clear();
                 }
             }
         }
 
         private bool? TryClickItem(AddonRequest* addon, int i)
         {
+            if (SlotsFilled.Contains(i)) return true;
+
             var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextIconMenu", 1);
             if (contextMenu == null) return null;
 
@@ -62,6 +72,7 @@ namespace PandorasBox.Features.UI
             else
             {
                 Callback(contextMenu, 0, 0, 1021003, 0, 0);
+                SlotsFilled.Add(i);
             }
 
             return true;
@@ -70,6 +81,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             Svc.Framework.Update -= RunFeature;
+            SlotsFilled.Clear();
             base.Disable();
         }
     }

@@ -50,7 +50,7 @@ public class PandorasBox : IDalamudPlugin
 
         Svc.Commands.AddHandler(CommandName, new CommandInfo(OnCommand)
         {
-            HelpMessage = "Help!",
+            HelpMessage = "Opens the Pandora menu.",
             ShowInHelp = true
         });
 

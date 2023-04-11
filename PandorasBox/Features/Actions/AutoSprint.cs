@@ -5,13 +5,11 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Lumina.Excel.GeneratedSheets;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features
 {
@@ -23,9 +21,15 @@ namespace PandorasBox.Features
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
+        public override bool UseAutoConfig => true;
+
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
+            public int Throttle = 100;
 
+            [FeatureConfigOption("Use whilst walk status is toggled")]
+            public bool RPWalk = false;
         }
 
         public Configs Config { get; private set; }
@@ -42,13 +46,30 @@ namespace PandorasBox.Features
             if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
 
+            if (IsRpWalking() && !Config.RPWalk)
+                return;
+
+            ActionManager* am = ActionManager.Instance();
+            bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+
+            if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !P.TaskManager.IsBusy)
+            {
+                P.TaskManager.Enqueue(() => EzThrottler.Throttle("Sprinting", Config.Throttle));
+                P.TaskManager.Enqueue(() => EzThrottler.Check("Sprinting"));
+                P.TaskManager.Enqueue(UseSprint);
+            }
+        }
+
+        private void UseSprint()
+        {
             ActionManager* am = ActionManager.Instance();
             bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
             bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1)
             {
-                 am->UseAction(ActionType.General, 4);
+                am->UseAction(ActionType.General, 4);
             }
         }
 

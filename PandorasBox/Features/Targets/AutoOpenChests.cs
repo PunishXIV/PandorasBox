@@ -18,8 +18,19 @@ namespace PandorasBox.Features.Targets
         private const float slowCheckInterval = 0.3f;
         private float slowCheckRemaining = 0.0f;
 
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
+            public int Throttle = 500;
+        }
+
+        public Configs Config { get; private set; }
+
+        public override bool UseAutoConfig => true;
+
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
@@ -32,9 +43,6 @@ namespace PandorasBox.Features.Targets
             {
                 slowCheckRemaining = slowCheckInterval;
 
-                if (P.TaskManager.NumQueuedTasks > 0)
-                    return;
-
                 var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) < 2).ToList();
                 if (nearbyNodes.Count == 0)
                     return;
@@ -45,13 +53,18 @@ namespace PandorasBox.Features.Targets
                 if (!baseObj->GetIsTargetable())
                     return;
 
-                P.TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj, true); return true; });
+                if (!TaskManager.IsBusy)
+                {
+                    TaskManager.DelayNext("Chests", Config.Throttle);
+                    TaskManager.Enqueue(() => TargetSystem.Instance()->InteractWithObject(baseObj, true));
+                }
 
             }
         }
 
         public override void Disable()
         {
+            SaveConfig(Config);
             Svc.Framework.Update -= RunFeature;
             base.Disable();
         }

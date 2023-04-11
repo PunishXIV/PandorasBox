@@ -1,6 +1,9 @@
 using Dalamud.Game;
 using ECommons.DalamudServices;
+using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
+using PandorasBox.FeaturesSetup;
 using System;
 using System.Linq;
 
@@ -12,6 +15,21 @@ namespace PandorasBox.Features.Actions
 
         public override string Description => "When switching to MIN or BTN, automatically activate the other jobs searching ability.";
 
+        public override FeatureType FeatureType => FeatureType.Actions;
+
+        public override bool UseAutoConfig => true;
+
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
+            public int Throttle = 100;
+
+            [FeatureConfigOption("Include Truth of Mountains/Forests", "", 1)]
+            public bool AddTruth = false;
+        }
+
+        public Configs Config { get; private set; }
+
         private uint? jobID;
         public uint? JobID
         {
@@ -21,7 +39,10 @@ namespace PandorasBox.Features.Actions
                 if (jobID != value)
                 {
                     if (value is 16 or 17)
-                        P.TaskManager.Enqueue(() => ActivateBuff(value));
+                    {
+                        TaskManager.DelayNext("ProspectTriangulate", Config.Throttle);
+                        TaskManager.Enqueue(() => ActivateBuff(value));
+                    }
                 }
                 jobID = value;
             }
@@ -36,11 +57,19 @@ namespace PandorasBox.Features.Actions
             if (value == 16 && am->GetActionStatus(ActionType.Spell, 210) == 0)
             {
                 am->UseAction(ActionType.Spell, 210);
+                if (Config.AddTruth && am->GetActionStatus(ActionType.Spell, 221) == 0)
+                {
+                   TaskManager.EnqueueImmediate(() => am->UseAction(ActionType.Spell, 221));
+                }
                 return true;
             }
             if (value == 17 && am->GetActionStatus(ActionType.Spell, 227) == 0)
             {
                 am->UseAction(ActionType.Spell, 227);
+                if (Config.AddTruth && am->GetActionStatus(ActionType.Spell, 238) == 0)
+                {
+                    TaskManager.EnqueueImmediate(() => am->UseAction(ActionType.Spell, 238));
+                }
                 return true;
             }
 
@@ -50,6 +79,7 @@ namespace PandorasBox.Features.Actions
 
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
@@ -62,6 +92,7 @@ namespace PandorasBox.Features.Actions
 
         public override void Disable()
         {
+            SaveConfig(Config);
             Svc.Framework.Update -= RunFeature;
             base.Disable();
         }

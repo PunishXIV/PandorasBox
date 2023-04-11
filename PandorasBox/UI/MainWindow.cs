@@ -110,7 +110,7 @@ internal class MainWindow : Window
         foreach (var feature in features)
         {
             bool enabled = feature.Enabled;
-            if (ImGui.Checkbox($"{feature.Name}", ref enabled))
+            if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
             {
                 if (enabled)
                 {
@@ -142,7 +142,11 @@ internal class MainWindow : Window
                 }
                 Config.Save();
             }
+            ImGui.SameLine();
+            feature.DrawConfig(ref enabled);
+            ImGui.Spacing();
             ImGui.TextWrapped($"{feature.Description}");
+
             ImGui.Separator();
         }
     }
