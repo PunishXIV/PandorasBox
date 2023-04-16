@@ -34,6 +34,11 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(Framework framework)
         {
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
+            {
+                TaskManager.Abort();
+                return;
+            }
             var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2).ToList();
             if (nearbyNodes.Count == 0)
                 return;

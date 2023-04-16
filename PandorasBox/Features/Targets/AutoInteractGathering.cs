@@ -71,16 +71,14 @@ namespace PandorasBox.Features.Targets
 
             if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && !TaskManager.IsBusy)
             {
-                Svc.Targets.Target = nearestNode;
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj); return true; }, 1000);
+                TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && !TaskManager.IsBusy)
             {
-                Svc.Targets.Target = nearestNode;
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { TargetSystem.Instance()->InteractWithObject(baseObj); return true; }, 1000);
+                TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
 

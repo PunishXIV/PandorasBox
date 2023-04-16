@@ -59,7 +59,8 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Framework framework)
         {
-            var addon = Common.GetAddonByID(AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->AddonId);
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return;
+            var addon = Common.GetAddonByID(AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID());
             if (addon == null) return;
             if (addon->IsVisible && !InventoryOpened)
             {
@@ -115,7 +116,6 @@ namespace PandorasBox.Features.UI
 
                 if (inventorySlots.GroupBy(x => new { x.ItemID, x.ItemHQ }).Any(x => x.Count() > 1) && Config.SortAfter)
                 {
-
                     TaskManager.DelayNext("Sort", 100);
                     TaskManager.Enqueue(() => Chat.Instance.SendMessage("/isort condition inventory id"));
                     TaskManager.Enqueue(() => Chat.Instance.SendMessage("/isort execute inventory"));

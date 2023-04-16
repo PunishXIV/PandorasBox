@@ -79,7 +79,7 @@ namespace PandorasBox.Features.UI
                     if (ImGui.Button($"Extracting. Click to abort.###AbortExtract", size))
                     {
                         Extracting = false;
-                        P.TaskManager.Abort();
+                        TaskManager.Abort();
                     }
                 }
 
@@ -177,12 +177,10 @@ namespace PandorasBox.Features.UI
             {
                 for (int i = 1; i <= spiritBondedItems1.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(1));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(1));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
@@ -205,12 +203,10 @@ namespace PandorasBox.Features.UI
 
                 for (int i = 1; i <= spiritBondedItems2.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(2));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(2));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
@@ -233,12 +229,10 @@ namespace PandorasBox.Features.UI
 
                 for (int i = 1; i <= spiritBondedItems3.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(3));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(3));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
@@ -260,12 +254,10 @@ namespace PandorasBox.Features.UI
             {
                 for (int i = 1; i <= spiritBondedItems4.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(4));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(4));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
@@ -287,12 +279,10 @@ namespace PandorasBox.Features.UI
             {
                 for (int i = 1; i <= spiritBondedItems5.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(5));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(5));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
@@ -314,12 +304,10 @@ namespace PandorasBox.Features.UI
             {
                 for (int i = 1; i <= spiritBondedItems6.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(6));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(6));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
@@ -341,16 +329,14 @@ namespace PandorasBox.Features.UI
             {
                 for (int i = 1; i <= spiritBondedItems7.Length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SwitchTabs(7));
-                    P.TaskManager.Enqueue(() => GenerateAndFireCallback());
-                    P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
-                    P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 100));
-                    P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
+                    TaskManager.Enqueue(() => SwitchTabs(7));
+                    TaskManager.Enqueue(() => GenerateAndFireCallback());
+                    //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
+                    TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
 
-            P.TaskManager.Enqueue(() => { Extracting = false; return true; });
+            TaskManager.Enqueue(() => { Extracting = false; return true; });
         }
 
         public unsafe static void CloseMateriaMenu()
@@ -365,8 +351,8 @@ namespace PandorasBox.Features.UI
         public unsafe bool? SwitchTabs(int section)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Switching", 300));
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Check("Switching"));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Switching", 300));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Switching"));
 
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
@@ -402,16 +388,16 @@ namespace PandorasBox.Features.UI
 
                 var materializePTR = Svc.GameGui.GetAddonByName("MaterializeDialog", 1);
                 if (materializePTR == IntPtr.Zero)
-                    return false;
+                    return true;
 
                 var materalizeWindow = (AtkUnitBase*)materializePTR;
                 if (materalizeWindow == null)
-                    return false;
+                    return true;
 
                 ClickMaterializeDialog.Using(materializePTR).Materialize();
 
-                P.TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 1000));
-                P.TaskManager.EnqueueImmediate(() => EzThrottler.Check("Extracting"));
+                TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 1000));
+                TaskManager.EnqueueImmediate(() => EzThrottler.Check("Extracting"));
 
                 return true;
 
@@ -427,8 +413,8 @@ namespace PandorasBox.Features.UI
         public bool? GenerateAndFireCallback()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 1000));
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 1000));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
 
             var values = stackalloc AtkValue[2];
             values[0] = new()

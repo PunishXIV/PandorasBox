@@ -40,6 +40,9 @@ namespace PandorasBox.Features.Other
 
             [FeatureConfigOption($@"Exclude ""Endwalker"" zones", "", 5)]
             public bool ExcludeEW = false;
+
+            [FeatureConfigOption("Don't trigger when in combat", "", 6)]
+            public bool ExcludeCombat = false;
         }
 
         public Configs Config { get; private set; }
@@ -76,6 +79,7 @@ namespace PandorasBox.Features.Other
                 if (zone.ExVersion.Row == 2 && Config.ExcludeSB) return;
                 if (zone.ExVersion.Row == 3 && Config.ExcludeShB) return;
                 if (zone.ExVersion.Row == 4 && Config.ExcludeEW) return;
+                if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Config.ExcludeCombat) return;
 
                 if (Svc.ClientState.LocalPlayer.Level > FateMaxLevel)
                 Chat.Instance.SendMessage("/lsync");
