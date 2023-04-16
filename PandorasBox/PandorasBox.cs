@@ -39,6 +39,9 @@ public class PandorasBox : IDalamudPlugin
 
     private void Initialize()
     {
+        FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace();
+        FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
+
         ECommonsMain.Init(pi, P);
         SponsorManager.SetSponsorInfo("https://ko-fi.com/taurenkey");
         Ws = new();
@@ -56,7 +59,7 @@ public class PandorasBox : IDalamudPlugin
 
         Svc.PluginInterface.UiBuilder.Draw += Ws.Draw;
         Svc.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
-
+        Common.Setup();
         var provider = new FeatureProvider(Assembly.GetExecutingAssembly());
         provider.LoadFeatures();
         FeatureProviders.Add(provider);
@@ -79,7 +82,7 @@ public class PandorasBox : IDalamudPlugin
         Ws = null;
         ECommonsMain.Dispose();
         FeatureProviders.Clear();
-        TaskManager.Dispose();
+        Common.Shutdown();
         P = null;
     }
 

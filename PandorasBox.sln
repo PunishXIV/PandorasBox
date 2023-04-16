@@ -11,28 +11,56 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PunishLib", "PunishLib\Puni
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClickLib", "ClickLib\ClickLib\ClickLib.csproj", "{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FFXIVClientStructs", "..\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj", "{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
 		Debug|x64 = Debug|x64
+		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{910E17C8-A0DF-4131-B610-CD387C19035D}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{910E17C8-A0DF-4131-B610-CD387C19035D}.Debug|Any CPU.Build.0 = Debug|x64
 		{910E17C8-A0DF-4131-B610-CD387C19035D}.Debug|x64.ActiveCfg = Debug|x64
 		{910E17C8-A0DF-4131-B610-CD387C19035D}.Debug|x64.Build.0 = Debug|x64
+		{910E17C8-A0DF-4131-B610-CD387C19035D}.Release|Any CPU.ActiveCfg = Release|x64
+		{910E17C8-A0DF-4131-B610-CD387C19035D}.Release|Any CPU.Build.0 = Release|x64
 		{910E17C8-A0DF-4131-B610-CD387C19035D}.Release|x64.ActiveCfg = Release|x64
 		{910E17C8-A0DF-4131-B610-CD387C19035D}.Release|x64.Build.0 = Release|x64
+		{1389B772-C3BF-486E-894A-32A2EB962008}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{1389B772-C3BF-486E-894A-32A2EB962008}.Debug|Any CPU.Build.0 = Debug|x64
 		{1389B772-C3BF-486E-894A-32A2EB962008}.Debug|x64.ActiveCfg = Debug|x64
 		{1389B772-C3BF-486E-894A-32A2EB962008}.Debug|x64.Build.0 = Debug|x64
+		{1389B772-C3BF-486E-894A-32A2EB962008}.Release|Any CPU.ActiveCfg = Release|x64
+		{1389B772-C3BF-486E-894A-32A2EB962008}.Release|Any CPU.Build.0 = Release|x64
 		{1389B772-C3BF-486E-894A-32A2EB962008}.Release|x64.ActiveCfg = Release|x64
 		{1389B772-C3BF-486E-894A-32A2EB962008}.Release|x64.Build.0 = Release|x64
+		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Debug|Any CPU.Build.0 = Debug|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Debug|x64.ActiveCfg = Debug|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Debug|x64.Build.0 = Debug|x64
+		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Release|Any CPU.ActiveCfg = Release|x64
+		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Release|Any CPU.Build.0 = Release|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Release|x64.ActiveCfg = Release|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.Release|x64.Build.0 = Release|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Debug|Any CPU.ActiveCfg = Debug|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Debug|Any CPU.Build.0 = Debug|x64
 		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Debug|x64.ActiveCfg = Debug|x64
 		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Debug|x64.Build.0 = Debug|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Release|Any CPU.ActiveCfg = Release|x64
+		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Release|Any CPU.Build.0 = Release|x64
 		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Release|x64.ActiveCfg = Release|x64
 		{C5B6D6BE-753C-4A0C-BA74-CF1BC38A0FD4}.Release|x64.Build.0 = Release|x64
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Debug|x64.Build.0 = Debug|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Release|x64.ActiveCfg = Release|Any CPU
+		{2C2301DF-BEC5-465B-AB50-5707C5D3DD6F}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

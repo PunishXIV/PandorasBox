@@ -18,6 +18,11 @@
         "resolved": "7.1.0",
         "contentHash": "4Y5tCsRWdW/shj9W7RqJq37LStuW1VVtjxsBp4LKZilPcjudeQg9k+u+6fnDgacCEJiG3S2EtcaiNtVMTdaSnQ=="
       },
+      "Serilog": {
+        "type": "Transitive",
+        "resolved": "2.11.0",
+        "contentHash": "ysv+hBzTul6Dp+Hvm10FlhJO3yMQcFKSAleus+LpiIzvNstpeV4Z7gGuIZ1OPNfIMulSHOjmLuGAEDKzpnV8ZQ=="
+      },
       "clicklib": {
         "type": "Project",
         "dependencies": {
@@ -27,6 +32,12 @@
       },
       "ecommons": {
         "type": "Project"
+      },
+      "ffxivclientstructs": {
+        "type": "Project",
+        "dependencies": {
+          "Serilog": "[2.11.0, )"
+        }
       },
       "punishlib": {
         "type": "Project"

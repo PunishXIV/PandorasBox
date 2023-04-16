@@ -24,5 +24,14 @@ namespace PandorasBox.Helpers
 
             return Math.Max(0, Vector2.Distance(position, selfPosition) - target.HitboxRadius - Svc.ClientState.LocalPlayer.HitboxRadius);
         }
+
+        public static float GetHeightDifference(GameObject target)
+        {
+            var dist = Svc.ClientState.LocalPlayer.Position.Y - target.Position.Y;
+            if (dist < 0)
+                dist *= -1;
+
+            return dist;
+        }
     }
 }

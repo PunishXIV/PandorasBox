@@ -25,8 +25,8 @@ namespace PandorasBox.Features
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
-            public int Throttle = 100;
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
+            public float ThrottleF = 0.1f;
 
             [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
@@ -55,7 +55,7 @@ namespace PandorasBox.Features
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !P.TaskManager.IsBusy)
             {
-                P.TaskManager.Enqueue(() => EzThrottler.Throttle("Sprinting", Config.Throttle));
+                P.TaskManager.Enqueue(() => EzThrottler.Throttle("Sprinting", (int)(Config.ThrottleF * 1000)));
                 P.TaskManager.Enqueue(() => EzThrottler.Check("Sprinting"));
                 P.TaskManager.Enqueue(UseSprint);
             }

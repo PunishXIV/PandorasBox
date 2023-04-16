@@ -1,10 +1,5 @@
-using Dalamud.Configuration;
-using Dalamud.Game.ClientState.Objects;
-using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
@@ -17,15 +12,23 @@ namespace PandorasBox.Features.Other
     {
         public override string Name => "Switch Gatherers Automatically";
 
-        public override string Description => "Switches to the appropriate gathering job when approaching a gathering spot and you have both Triangulate & Prospect active. Must have a gearset for the job to switch to. (Excluding FSH)";
+        public override string Description => "Switches to the appropriate gathering job when approaching a gathering spot and you have both Triangulate & Prospect active. Must have a gearset for the job to switch to.";
 
         public override FeatureType FeatureType => FeatureType.Other;
 
-        private const float slowCheckInterval = 1f;
-        private float slowCheckRemaining = 0.0f;
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
+            public float Throttle = 0.1f;
+        }
+
+        public Configs Config { get; private set; }
+
+        public override bool UseAutoConfig => true;
 
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
@@ -33,41 +36,37 @@ namespace PandorasBox.Features.Other
         private void RunFeature(Dalamud.Game.Framework framework)
         {
             if (Svc.ClientState.LocalPlayer == null) return;
-            slowCheckRemaining -= (float)Svc.Framework.UpdateDelta.Milliseconds / 1000;
 
-            if (slowCheckRemaining <= 0.0f)
+            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) < 5).ToList();
+            if (nearbyNodes.Count == 0)
+                return;
+
+            var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
+            var baseObj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)nearestNode.Address;
+
+            if (!baseObj->GetIsTargetable())
+                return;
+
+            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
+            var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
+
+            if (Svc.ClientState.LocalPlayer.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() != 2 && (job is 0 or 1 or 2 or 3))
+                return;
+
+            if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id != 16 && !TaskManager.IsBusy)
             {
-                slowCheckRemaining = slowCheckInterval;
-
-                if (Svc.ClientState.LocalPlayer.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() != 2)
-                    return;
-
-                if (P.TaskManager.NumQueuedTasks > 0)
-                    return;
-
-                var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) < 5).ToList();
-                if (nearbyNodes.Count == 0)
-                    return;
-
-                var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
-                var baseObj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)nearestNode.Address;
-
-                if (!baseObj->GetIsTargetable())
-                    return;
-
-                var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
-                var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
-
-                if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id != 16 && !P.TaskManager.IsBusy)
-                {
-                    P.TaskManager.Enqueue(() => SwitchJobGearset(16), 1000);
-                    return;
-                }
-                if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id != 17 && !P.TaskManager.IsBusy)
-                {
-                    P.TaskManager.Enqueue(() => SwitchJobGearset(17), 1000);
-                    return;
-                }
+                TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => SwitchJobGearset(16));
+            }
+            if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id != 17 && !TaskManager.IsBusy)
+            {
+                TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => SwitchJobGearset(17));
+            }
+            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id != 18 && !TaskManager.IsBusy)
+            {
+                TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => SwitchJobGearset(18));
             }
         }
 
@@ -99,6 +98,7 @@ namespace PandorasBox.Features.Other
 
         public override void Disable()
         {
+            SaveConfig(Config);
             Svc.Framework.Update -= RunFeature;
             base.Disable();
         }

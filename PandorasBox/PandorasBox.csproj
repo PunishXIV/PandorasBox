@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>0.0.0.2</Version>
+        <Version>0.0.0.4</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -71,10 +71,10 @@
             <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <Reference Include="FFXIVClientStructs">
+        <!--<Reference Include="FFXIVClientStructs">
             <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
             <Private>False</Private>
-        </Reference>
+        </Reference>-->
         <Reference Include="ImGuiScene">
             <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
             <Private>False</Private>
@@ -91,6 +91,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\..\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj" />
       <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
     </ItemGroup>
 </Project>

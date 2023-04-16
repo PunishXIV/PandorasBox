@@ -11,6 +11,7 @@ using PandorasBox.Helpers;
 using System;
 using System.Linq;
 using System.Text;
+using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace PandorasBox.Features.Actions
 {
@@ -24,7 +25,7 @@ namespace PandorasBox.Features.Actions
 
         public class Configs : FeatureConfig
         {
-            public int Throttle = 100;
+            public float ThrottleF = 0.1f;
 
             public uint SelectedMount = 0;
 
@@ -52,7 +53,7 @@ namespace PandorasBox.Features.Actions
                 return;
             }
             TaskManager.DelayNext("MountTeleport", 600);
-            TaskManager.DelayNext("MountTeleport", Config.Throttle);
+            TaskManager.DelayNext("MountTeleport", (int)(Config.ThrottleF * 1000));
             TaskManager.Enqueue(TryMount);
         }
 
@@ -92,8 +93,8 @@ namespace PandorasBox.Features.Actions
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
-            ImGui.PushItemWidth(350);
-            ImGui.SliderInt("Set Delay (ms)", ref Config.Throttle, 100, 10000);
+            ImGui.PushItemWidth(300);
+            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
             var ps = PlayerState.Instance();
             string preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
             if (ImGui.BeginCombo("Select Mount", preview))

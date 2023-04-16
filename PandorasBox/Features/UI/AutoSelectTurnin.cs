@@ -1,16 +1,10 @@
 using Dalamud.Logging;
-using ECommons;
 using ECommons.DalamudServices;
-using ECommons.Loader;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
-using System;
 using System.Collections.Generic;
 using static ECommons.GenericHelpers;
-using static System.Collections.Specialized.BitVector32;
 
 namespace PandorasBox.Features.UI
 {
@@ -22,9 +16,6 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private const float slowCheckInterval = 0.1f;
-        private float slowCheckRemaining = 0.0f;
-
         List<int> SlotsFilled = new();
         public override void Enable()
         {
@@ -34,25 +25,24 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-            slowCheckRemaining -= (float)Svc.Framework.UpdateDelta.Milliseconds / 1000;
 
-            if (slowCheckRemaining <= 0.0f)
+            if (TryGetAddonByName<AddonRequest>("Request", out var addon))
             {
-                slowCheckRemaining = slowCheckInterval;
-                if (TryGetAddonByName<AddonRequest>("Request", out var addon))
+                for (int i = 1; i <= addon->EntryCount; i++)
                 {
-                    for (int i = 1; i <= addon->EntryCount; i++)
-                    {
-                        if (SlotsFilled.Contains(i)) return;
-                        int val = i;
-                        P.TaskManager.Enqueue(() => TryClickItem(addon, val));
-                    }
-                }
-                else
-                {
-                    SlotsFilled.Clear();
+                    if (SlotsFilled.Contains(addon->EntryCount)) TaskManager.Abort();
+                    if (SlotsFilled.Contains(i)) return;
+                    int val = i;
+                    TaskManager.DelayNext($"ClickTurnin{val}", 10);
+                    TaskManager.Enqueue(() => TryClickItem(addon, val));
                 }
             }
+            else
+            {
+                SlotsFilled.Clear();
+                TaskManager.Abort();
+            }
+
         }
 
         private bool? TryClickItem(AddonRequest* addon, int i)
@@ -60,22 +50,23 @@ namespace PandorasBox.Features.UI
             if (SlotsFilled.Contains(i)) return true;
 
             var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextIconMenu", 1);
-            if (contextMenu == null) return null;
 
-            if (!contextMenu->IsVisible)
+            if (contextMenu is null ||  !contextMenu->IsVisible)
             {
                 int slot = i - 1;
                 int unk = (44 * i) + (i - 1);
 
                 Callback(&addon->AtkUnitBase, 2, slot, 0, 0);
+
+                return false;
             }
             else
             {
                 Callback(contextMenu, 0, 0, 1021003, 0, 0);
+                PluginLog.Debug($"Filled slot {i}");
                 SlotsFilled.Add(i);
+                return true;
             }
-
-            return true;
         }
 
         public override void Disable()

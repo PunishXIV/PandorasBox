@@ -20,8 +20,8 @@ namespace PandorasBox.Features
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
-            public int Throttle = 100;
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
+            public float ThrottleF = 100;
 
             [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
@@ -48,7 +48,7 @@ namespace PandorasBox.Features
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
             {
-                TaskManager.Enqueue(() => EzThrottler.Throttle("Pelotoning", Config.Throttle));
+                TaskManager.Enqueue(() => EzThrottler.Throttle("Pelotoning", (int)(Config.ThrottleF * 1000)));
                 TaskManager.Enqueue(() => EzThrottler.Check("Pelotoning"));
                 TaskManager.Enqueue(UsePeloton);
             }

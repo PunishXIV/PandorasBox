@@ -21,8 +21,8 @@ namespace PandorasBox.Features.Actions
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
-            public int Throttle = 100;
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
+            public float ThrottleF = 0.1f;
 
             [FeatureConfigOption("Include Truth of Mountains/Forests", "", 1)]
             public bool AddTruth = false;
@@ -30,70 +30,51 @@ namespace PandorasBox.Features.Actions
 
         public Configs Config { get; private set; }
 
-        private uint? jobID;
-        public uint? JobID
+        
+        private void ActivateBuff(uint? jobValue)
         {
-            get => jobID;
-            set
-            {
-                if (jobID != value)
-                {
-                    if (value is 16 or 17)
-                    {
-                        TaskManager.DelayNext("ProspectTriangulate", Config.Throttle);
-                        TaskManager.Enqueue(() => ActivateBuff(value));
-                    }
-                }
-                jobID = value;
-            }
-        }
-
-        private bool? ActivateBuff(uint? value)
-        {
+            if (jobValue is null) return;
+            TaskManager.DelayNext(this.GetType().Name, (int)(Config.ThrottleF * 1000));
             ActionManager* am = ActionManager.Instance();   
-            if (Svc.ClientState.LocalPlayer.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
-                return true;
-
-            if (value == 16 && am->GetActionStatus(ActionType.Spell, 210) == 0)
+            if (Svc.ClientState.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
+                return;
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering])
             {
-                am->UseAction(ActionType.Spell, 210);
+                TaskManager.Abort();
+                return;
+            }
+
+            if (jobValue == 16 && am->GetActionStatus(ActionType.Spell, 210) == 0)
+            {
+                TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 210));
                 if (Config.AddTruth && am->GetActionStatus(ActionType.Spell, 221) == 0)
                 {
-                   TaskManager.EnqueueImmediate(() => am->UseAction(ActionType.Spell, 221));
+                   TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 221));
                 }
-                return true;
+                return;
             }
-            if (value == 17 && am->GetActionStatus(ActionType.Spell, 227) == 0)
+            if (jobValue == 17 && am->GetActionStatus(ActionType.Spell, 227) == 0)
             {
-                am->UseAction(ActionType.Spell, 227);
+                TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 227));
                 if (Config.AddTruth && am->GetActionStatus(ActionType.Spell, 238) == 0)
                 {
-                    TaskManager.EnqueueImmediate(() => am->UseAction(ActionType.Spell, 238));
+                    TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 238));
                 }
-                return true;
+                return;
             }
-
-            return false;
 
         }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
+            OnJobChanged += ActivateBuff;
             base.Enable();
-        }
-
-        private void RunFeature(Framework framework)
-        {
-            if (Svc.ClientState.LocalPlayer is null) return;
-            JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
         }
 
         public override void Disable()
         {
             SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
             base.Disable();
         }
     }

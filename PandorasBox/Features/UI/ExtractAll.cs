@@ -345,7 +345,7 @@ namespace PandorasBox.Features.UI
                     P.TaskManager.Enqueue(() => GenerateAndFireCallback());
                     P.TaskManager.Enqueue(() => IsMateriaMenuDialogOpen());
                     P.TaskManager.Enqueue(() => ConfirmMateriaDialog());
-                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 1000));
+                    P.TaskManager.Enqueue(() => EzThrottler.Throttle("Extracted", 100));
                     P.TaskManager.Enqueue(() => EzThrottler.Check("Extracted"));
                 }
             }
@@ -365,7 +365,7 @@ namespace PandorasBox.Features.UI
         public unsafe bool? SwitchTabs(int section)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Switching", 1000));
+            P.TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Switching", 300));
             P.TaskManager.EnqueueImmediate(() => EzThrottler.Check("Switching"));
 
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
@@ -393,11 +393,13 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        public unsafe bool ConfirmMateriaDialog()
+        public unsafe bool? ConfirmMateriaDialog()
         {
             try
             {
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
+                if (Svc.GameGui.GetAddonByName("Materialize") == IntPtr.Zero) return null;
+
                 var materializePTR = Svc.GameGui.GetAddonByName("MaterializeDialog", 1);
                 if (materializePTR == IntPtr.Zero)
                     return false;
@@ -441,6 +443,7 @@ namespace PandorasBox.Features.UI
             };
 
             var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
+            if (ptr == null) return null;
 
             ptr->FireCallback(2, values);
 

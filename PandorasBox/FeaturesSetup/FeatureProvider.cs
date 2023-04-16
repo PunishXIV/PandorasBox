@@ -3,8 +3,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features
 {
@@ -23,7 +21,7 @@ namespace PandorasBox.Features
 
         public virtual void LoadFeatures()
         {
-            foreach (var t in Assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(Feature))&& !x.IsAbstract))
+            foreach (var t in Assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(Feature)) && !x.IsAbstract))
             {
                 try
                 {
@@ -32,12 +30,15 @@ namespace PandorasBox.Features
                     feature.Setup();
                     if (feature.Ready && Config.EnabledFeatures.Contains(t.Name))
                     {
-                        feature.Enable();
+                        if (feature.FeatureType == FeaturesSetup.FeatureType.Disabled)
+                            feature.Disable();
+                        else
+                            feature.Enable();
                     }
 
                     Features.Add(feature);
                 }
-                catch (Exception ex) 
+                catch (Exception ex)
                 {
                     PluginLog.Error(ex, $"Feature not loaded: {t.Name}");
                 }

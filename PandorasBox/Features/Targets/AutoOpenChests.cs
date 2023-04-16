@@ -15,13 +15,10 @@ namespace PandorasBox.Features.Targets
 
         public override FeatureType FeatureType => FeatureType.Targeting;
 
-        private const float slowCheckInterval = 0.3f;
-        private float slowCheckRemaining = 0.0f;
-
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (ms)", IntMin = 100, IntMax = 10000, EditorSize = 350)]
-            public int Throttle = 500;
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
+            public float Throttle = 0.1f;
         }
 
         public Configs Config { get; private set; }
@@ -37,28 +34,25 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(Framework framework)
         {
-            slowCheckRemaining -= (float)Svc.Framework.UpdateDelta.Milliseconds / 1000;
+            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2).ToList();
+            if (nearbyNodes.Count == 0)
+                return;
 
-            if (slowCheckRemaining <= 0.0f)
+            var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
+            var baseObj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)nearestNode.Address;
+
+            if (!baseObj->GetIsTargetable())
+                return;
+
+            if (!TaskManager.IsBusy)
             {
-                slowCheckRemaining = slowCheckInterval;
-
-                var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) < 2).ToList();
-                if (nearbyNodes.Count == 0)
-                    return;
-
-                var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
-                var baseObj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)nearestNode.Address;
-
-                if (!baseObj->GetIsTargetable())
-                    return;
-
-                if (!TaskManager.IsBusy)
+                TaskManager.DelayNext("Chests", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() =>
                 {
-                    TaskManager.DelayNext("Chests", Config.Throttle);
-                    TaskManager.Enqueue(() => TargetSystem.Instance()->InteractWithObject(baseObj, true));
-                }
-
+                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return false;
+                    TargetSystem.Instance()->InteractWithObject(baseObj, true);
+                    return true;
+                });
             }
         }
 

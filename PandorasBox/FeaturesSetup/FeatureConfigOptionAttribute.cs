@@ -21,10 +21,21 @@ namespace PandorasBox.FeaturesSetup
 
         public bool ConditionalDisplay { get; set; } = false;
 
+        public int IntIncrements = 1;
+
+        public float FloatIncrements = 0.1f;
+
+        public string Format = $"%.1f";
         // Int 
         public int IntMin { get; set; } = int.MinValue;
         public int IntMax { get; set; } = int.MaxValue;
-        public IntEditType IntType { get; set; } = IntEditType.Slider;
+        public NumberEditType IntType { get; set; } = NumberEditType.Slider;
+
+        // Float
+        public float FloatMin { get; set; } = float.MinValue;
+        public float FloatMax { get; set; } = int.MaxValue;
+        public NumberEditType FloatType { get; set; } = NumberEditType.Slider;
+
 
         public bool EnforcedLimit { get; set; } = true;
 
@@ -32,7 +43,7 @@ namespace PandorasBox.FeaturesSetup
 
         public MethodInfo Editor { get; set; }
 
-        public enum IntEditType
+        public enum NumberEditType
         {
             Slider,
             Drag,

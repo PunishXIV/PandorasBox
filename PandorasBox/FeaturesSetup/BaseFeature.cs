@@ -1,21 +1,18 @@
+using Dalamud.Game;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using ECommons.Automation;
 using ECommons.DalamudServices;
-using ECommons.Reflection;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Newtonsoft.Json;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Numerics;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features
 {
@@ -27,7 +24,7 @@ namespace PandorasBox.Features
         protected TaskManager TaskManager;
         public FeatureProvider Provider { get; private set; } = null!;
 
-        public virtual bool Enabled { get; protected set; } 
+        public virtual bool Enabled { get; protected set; }
 
         public virtual string Name { get; }
 
@@ -35,12 +32,24 @@ namespace PandorasBox.Features
 
         public virtual string Description => null!;
 
-        
-
-        public virtual void Draw()
+        private uint? jobID = Svc.ClientState.LocalPlayer?.ClassJob.Id;
+        public uint? JobID
         {
-
+            get => jobID;
+            set
+            {
+                if (value != null && jobID != value)
+                {
+                    jobID = value;
+                    OnJobChanged?.Invoke(value);
+                }
+            }
         }
+
+        public delegate void OnJobChangeDelegate(uint? jobId);
+        public event OnJobChangeDelegate OnJobChanged;
+
+        public virtual void Draw() { }
 
         public virtual bool Ready { get; protected set; }
 
@@ -62,11 +71,19 @@ namespace PandorasBox.Features
 
         public virtual void Enable()
         {
+            Svc.Framework.Update += CheckJob;
             Enabled = true;
+        }
+
+        private void CheckJob(Framework framework)
+        {
+            if (Svc.ClientState.LocalPlayer is null) return;
+            JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
         }
 
         public virtual void Disable()
         {
+            Svc.Framework.Update -= CheckJob;
             Enabled = false;
         }
 
@@ -165,10 +182,17 @@ namespace PandorasBox.Features
                         ImGui.SetNextItemWidth(attr.EditorSize == -1 ? -1 : attr.EditorSize * ImGui.GetIO().FontGlobalScale);
                         var e = attr.IntType switch
                         {
-                            FeatureConfigOptionAttribute.IntEditType.Slider => ImGui.SliderInt($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v, attr.IntMin, attr.IntMax),
-                            FeatureConfigOptionAttribute.IntEditType.Drag => ImGui.DragInt($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v, 1f, attr.IntMin, attr.IntMax),
+                            FeatureConfigOptionAttribute.NumberEditType.Slider => ImGui.SliderInt($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v, attr.IntMin, attr.IntMax),
+                            FeatureConfigOptionAttribute.NumberEditType.Drag => ImGui.DragInt($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v, 1f, attr.IntMin, attr.IntMax),
                             _ => false
                         };
+
+                        if (v % attr.IntIncrements != 0)
+                        {
+                            v = v.RoundOff(attr.IntIncrements);
+                            if (v < attr.IntMin) v = attr.IntMin;
+                            if (v > attr.IntMax) v = attr.IntMax;
+                        }
 
                         if (attr.EnforcedLimit && v < attr.IntMin)
                         {
@@ -179,6 +203,42 @@ namespace PandorasBox.Features
                         if (attr.EnforcedLimit && v > attr.IntMax)
                         {
                             v = attr.IntMax;
+                            e = true;
+                        }
+
+                        if (e)
+                        {
+                            f.SetValue(configObj, v);
+                            configChanged = true;
+                        }
+                    }
+                    else if (f.FieldType == typeof(float))
+                    {
+                        var v = (float)f.GetValue(configObj);
+                        ImGui.SetNextItemWidth(attr.EditorSize == -1 ? -1 : attr.EditorSize * ImGui.GetIO().FontGlobalScale);
+                        var e = attr.IntType switch
+                        {
+                            FeatureConfigOptionAttribute.NumberEditType.Slider => ImGui.SliderFloat($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v, attr.FloatMin, attr.FloatMax, attr.Format),
+                            FeatureConfigOptionAttribute.NumberEditType.Drag => ImGui.DragFloat($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v, 1f, attr.FloatMin, attr.FloatMax, attr.Format),
+                            _ => false
+                        };
+
+                        if (v % attr.FloatIncrements != 0)
+                        {
+                            v = v.RoundOff(attr.FloatIncrements);
+                            if (v < attr.FloatMin) v = attr.FloatMin;
+                            if (v > attr.FloatMax) v = attr.FloatMax;
+                        }
+
+                        if (attr.EnforcedLimit && v < attr.FloatMin)
+                        {
+                            v = attr.FloatMin;
+                            e = true;
+                        }
+
+                        if (attr.EnforcedLimit && v > attr.FloatMax)
+                        {
+                            v = attr.FloatMax;
                             e = true;
                         }
 
@@ -257,6 +317,6 @@ namespace PandorasBox.Features
             return addon->UldManager.NodeList[9]->IsVisible;
         }
 
-        public unsafe bool IsMoving() => AgentMap.Instance()->IsPlayerMoving == 1; 
+        public unsafe bool IsMoving() => AgentMap.Instance()->IsPlayerMoving == 1;
     }
 }
