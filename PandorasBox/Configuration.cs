@@ -12,6 +12,8 @@ namespace PandorasBox
 
         public List<string> EnabledFeatures = new List<string>();
 
+        public bool DisabledTheme = false;
+
         [NonSerialized]
         private DalamudPluginInterface? PluginInterface;
 

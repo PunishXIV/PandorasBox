@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
+using Dalamud.Memory;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
@@ -67,7 +68,7 @@ namespace PandorasBox.Features.Targets
             }
 
             if (Config.InteractMethod is 2 or 3)
-            TaskManager.Enqueue(() => { if (!Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) TargetSystem.Instance()->OpenObjectInteraction(baseObj); }, 100);
+                TaskManager.Enqueue(() => { if (!Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) TargetSystem.Instance()->OpenObjectInteraction(baseObj); }, 100);
         }
 
         public override void Enable()
@@ -85,9 +86,13 @@ namespace PandorasBox.Features.Targets
         }
 
         private void RunFeature(Dalamud.Game.Framework framework)
-        { 
+        {
+            if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.CarryingItem] || Svc.Condition[ConditionFlag.CarryingObject])
+            {
+                TaskManager.Abort();
+                return;
+            }
             if (Svc.ClientState.LocalPlayer == null) return;
-            if (Svc.Condition[ConditionFlag.BetweenAreas | ConditionFlag.CarryingObject | ConditionFlag.CarryingItem]) { TaskManager.Abort(); return; }
 
             if (Svc.Condition[ConditionFlag.BoundByDuty])
             {
@@ -119,8 +124,9 @@ namespace PandorasBox.Features.Targets
                 foreach (var nearestNode in nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance))
                 {
                     var baseObj = (GameObject*)nearestNode.Address;
-                    if (baseObj->RenderFlags != 0) return;
-                    if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj)) return;
+                    if (baseObj->RenderFlags != 0) continue;
+                    if (*baseObj->Name == 0) continue;
+                    if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj)) continue;
 
                     var sheetItem = Svc.Data.GetExcelSheet<EObj>().FirstOrDefault(x => x.RowId == baseObj->DataID);
                     if (sheetItem != default)
@@ -128,13 +134,13 @@ namespace PandorasBox.Features.Targets
                         if (sheetItem.SgbPath.Value != null)
                         {
                             if ((sheetItem.SgbPath.Value.SgbPath.RawString.Contains("bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0005.sgb") || Exits.Contains(sheetItem.RowId)) && Config.ExcludeExit)
-                                return;
+                                continue;
                         }
                     }
 
                     if (!TaskManager.IsBusy)
                     {
-                        if (Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) return;
+                        if (Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) continue;
                         TaskManager.DelayNext($"InteractDung{baseObj->DataID}", (int)(Config.ThrottleF * 1000));
                         TaskManager.Enqueue(() => TryInteract(baseObj));
                     }

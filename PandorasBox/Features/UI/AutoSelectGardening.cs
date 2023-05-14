@@ -117,9 +117,51 @@ namespace PandorasBox.Features.UI
                 var invSoil = Soils.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).Select(x => x.Key).ToList();
                 var invSeeds = Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).Select(x => x.Key).ToList();
 
-                var soilIndex = invSoil.IndexOf(Config.SelectedSoil);
-                var seedIndex = invSeeds.IndexOf(Config.SelectedSeed);
+                InventoryManager* im = InventoryManager.Instance();
+                var inv1 = im->GetInventoryContainer(InventoryType.Inventory1);
+                var inv2 = im->GetInventoryContainer(InventoryType.Inventory2);
+                var inv3 = im->GetInventoryContainer(InventoryType.Inventory3);
+                var inv4 = im->GetInventoryContainer(InventoryType.Inventory4);
 
+                InventoryContainer*[] container =
+                {
+                            inv1, inv2, inv3, inv4
+                };
+
+                int soilIndex = 0;
+                foreach (var cont in container)
+                {
+                    for (int i = 0; i < cont->Size; i++)
+                    {
+                        if (invSoil.Any(x => cont->GetInventorySlot(i)->ItemID == x))
+                        {
+                            var item = cont->GetInventorySlot(i);
+                            if (item->ItemID == Config.SelectedSoil)
+                                goto SetSeed;
+                            else
+                                soilIndex++;
+                        }
+                    }
+                }
+
+            SetSeed:
+                int seedIndex = 0;
+                foreach (var cont in container)
+                {
+                    for (int i = 0; i < cont->Size; i++)
+                    {
+                        if (invSeeds.Any(x => cont->GetInventorySlot(i)->ItemID == x))
+                        {
+                            var item = cont->GetInventorySlot(i);
+                            if (item->ItemID == Config.SelectedSeed)
+                                goto ClickItem;
+                            else
+                                seedIndex++;
+                        }
+                    }
+                }
+
+            ClickItem:
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("HousingGardening");
 
                 if (!TaskManager.IsBusy)

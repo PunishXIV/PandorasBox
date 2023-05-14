@@ -1,11 +1,14 @@
 {
-    "Author": "Pun.ish",
-    "Name": "Pandora's Box'",
-    "Punchline": "A short one-liner that shows up in /xlplugins.",
-    "Description": "A description that shows up in /xlplugins. List any major slash-command(s).",
-    "InternalName": "Pandora's Box'",
+    "Author": "Taurenkey (Puni.sh)",
+    "Name": "Pandora's Box",
+    "Punchline": "Do you dare to open Pandora's Box?",
+    "Description": "Pandora's Box is a collection of major QoL tweaks and adjustments.\n\nOpen the box with /pandora",
+    "InternalName": "Pandora's Box",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 8,
+    "IconUrl": "https://love.puni.sh/resources/pandora.png",
+    "RepoUrl": "https://github.com/PunishXIV/PandorasBox",
+    "DownloadLinkTesting": "https://love.puni.sh/plugins/Pandora/Testing/latest.zip",
     "Tags": [
         "punish",
         "plugin"

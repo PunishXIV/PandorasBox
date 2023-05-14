@@ -21,7 +21,7 @@ namespace PandorasBox.Features
         public class Configs : FeatureConfig
         {
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
-            public float ThrottleF = 100;
+            public float ThrottleF = 0.1f;
 
             [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
@@ -56,6 +56,10 @@ namespace PandorasBox.Features
 
         private void UsePeloton()
         {
+            if (IsRpWalking() && !Config.RPWalk) return;
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (Svc.ClientState.LocalPlayer is null) return;
+
             ActionManager* am = ActionManager.Instance();
             bool isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
             bool hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);

@@ -1,8 +1,10 @@
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Statuses;
+using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -53,7 +55,8 @@ namespace PandorasBox.Features.Actions
 
         private void CheckParty(Framework framework)
         {
-            if (Config.ActivateOnDeath && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
+            if (Svc.Party.Count() == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
+            if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
             {
                 MainTank = Svc.Party.First(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).ObjectId;
             }
@@ -74,28 +77,32 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfDungeon(object sender, ushort e)
         {
-            TaskManager.DelayNext("WaitForDungeon", 1000);
-            TaskManager.Enqueue(() =>
+            if (Svc.ClientState.LocalPlayer?.ClassJob.Id is 1 or 19 or 3 or 21 or 32 or 37)
             {
-                if (!Svc.Condition[ConditionFlag.BetweenAreas])
+                if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 10 && Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 3) return;
+                TaskManager.DelayNext("WaitForDungeon", 3000);
+                TaskManager.Enqueue(() =>
                 {
-                    if (Svc.Condition[ConditionFlag.BoundByDuty])
+                    if (!Svc.Condition[ConditionFlag.BetweenAreas])
                     {
-                        EnableStance(Svc.ClientState.LocalPlayer.ClassJob.Id);
-                        TaskManager.Enqueue(() => TaskManager.Abort());
-                        return true;
+                        if (Svc.Condition[ConditionFlag.BoundByDuty])
+                        {
+                            TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer?.ClassJob.Id), "Enabling Stance on Dungeon");
+                            //TaskManager.Enqueue(() => TaskManager.Abort());
+                            return true;
+                        }
                     }
-                }
-                return false;
-            });
+                    return false;
+                });
+            }
         }
 
         private void RunFeature(uint? jobId)
         {
-            if (jobId.HasValue)
+            if (jobId.HasValue && (jobId.Value is 1 or 19 or 3 or 21 or 32 or 37))
             {
                 EnableStance(jobId);
-                TaskManager.Enqueue(() => TaskManager.Abort());
+                //TaskManager.Enqueue(() => TaskManager.Abort());
             }
         }
 
@@ -104,7 +111,7 @@ namespace PandorasBox.Features.Actions
             if (jobId.Value is 1 or 19 or 3 or 21 or 32 or 37)
             {
                 var am = ActionManager.Instance();
-                if (Svc.Condition[ConditionFlag.BetweenAreas]) return false;
+                if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
                 TaskManager.DelayNext("TankStance", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() =>
                 {

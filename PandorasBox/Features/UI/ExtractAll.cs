@@ -1,4 +1,5 @@
 using ClickLib.Clicks;
+using Dalamud.Game;
 using Dalamud.Interface;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -34,60 +35,69 @@ namespace PandorasBox.Features.UI
 
         public override void Draw()
         {
-            if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
+            try
             {
-                var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
-
-                var node = ptr->UldManager.NodeList[2];
-
-                if (node == null)
-                    return;
-
-                if (node->IsVisible)
-                    node->ToggleVisibility(false);
-
-                var position = AtkResNodeHelper.GetNodePosition(node);
-                var scale = AtkResNodeHelper.GetNodeScale(node);
-                var size = new Vector2(node->Width, node->Height) * scale;
-
-                ImGuiHelpers.ForceNextWindowMainViewport();
-                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
-
-                ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                float oldSize = ImGui.GetFont().Scale;
-                ImGui.GetFont().Scale *= scale.X;
-                ImGui.PushFont(ImGui.GetFont());
-                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
-                    | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
-
-
-                if (!Extracting)
+                if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
                 {
-                    if (ImGui.Button($"Extract All###StartExtract", size))
-                    {
-                        Extracting = true;
-                        TryExtractAll();
-                    }
-                }
-                else
-                {
-                    if (ImGui.Button($"Extracting. Click to abort.###AbortExtract", size))
-                    {
-                        Extracting = false;
-                        TaskManager.Abort();
-                    }
-                }
+                    var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
+                    if (!ptr->IsVisible)
+                        return;
 
-                ImGui.End();
-                ImGui.PopStyleVar(5);
-                ImGui.GetFont().Scale = oldSize;
-                ImGui.PopFont();
-                ImGui.PopStyleColor();
+                    var node = ptr->UldManager.NodeList[2];
+
+                    if (node == null)
+                        return;
+
+                    if (node->IsVisible)
+                        node->ToggleVisibility(false);
+
+                    var position = AtkResNodeHelper.GetNodePosition(node);
+                    var scale = AtkResNodeHelper.GetNodeScale(node);
+                    var size = new Vector2(node->Width, node->Height) * scale;
+
+                    ImGuiHelpers.ForceNextWindowMainViewport();
+                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
+
+                    ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
+                    float oldSize = ImGui.GetFont().Scale;
+                    ImGui.GetFont().Scale *= scale.X;
+                    ImGui.PushFont(ImGui.GetFont());
+                    ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5f.Scale());
+                    ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
+                    ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                        | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
+
+
+                    if (!Extracting)
+                    {
+                        if (ImGui.Button($"Extract All###StartExtract", size))
+                        {
+                            Extracting = true;
+                            TryExtractAll();
+                        }
+                    }
+                    else
+                    {
+                        if (ImGui.Button($"Extracting. Click to abort.###AbortExtract", size))
+                        {
+                            Extracting = false;
+                            TaskManager.Abort();
+                        }
+                    }
+
+                    ImGui.End();
+                    ImGui.PopStyleVar(5);
+                    ImGui.GetFont().Scale = oldSize;
+                    ImGui.PopFont();
+                    ImGui.PopStyleColor();
+
+                }
+            }
+            catch (Exception e)
+            {
 
             }
         }
@@ -159,6 +169,7 @@ namespace PandorasBox.Features.UI
             InventoryItem[] spiritBondedItems6 = Array.Empty<InventoryItem>();
             InventoryItem[] spiritBondedItems7 = Array.Empty<InventoryItem>();
 
+            TaskManager.Enqueue(() => YesAlready.DisableIfNeeded());
             //Container 1
             foreach (var container in container1)
             {
@@ -335,8 +346,8 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => ConfirmMateriaDialog());
                 }
             }
-
             TaskManager.Enqueue(() => { Extracting = false; return true; });
+            TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
         }
 
         public unsafe static void CloseMateriaMenu()
@@ -384,7 +395,7 @@ namespace PandorasBox.Features.UI
             try
             {
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-                if (Svc.GameGui.GetAddonByName("Materialize") == IntPtr.Zero) return null;
+                if (Svc.GameGui.GetAddonByName("Materialize") == IntPtr.Zero) return true;
 
                 var materializePTR = Svc.GameGui.GetAddonByName("MaterializeDialog", 1);
                 if (materializePTR == IntPtr.Zero)
@@ -396,7 +407,7 @@ namespace PandorasBox.Features.UI
 
                 ClickMaterializeDialog.Using(materializePTR).Materialize();
 
-                TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 1000));
+                TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 100));
                 TaskManager.EnqueueImmediate(() => EzThrottler.Check("Extracting"));
 
                 return true;
@@ -413,7 +424,7 @@ namespace PandorasBox.Features.UI
         public bool? GenerateAndFireCallback()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 1000));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 100));
             TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
 
             var values = stackalloc AtkValue[2];
@@ -429,7 +440,7 @@ namespace PandorasBox.Features.UI
             };
 
             var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
-            if (ptr == null) return null;
+            if (ptr == null) return true;
 
             ptr->FireCallback(2, values);
 
@@ -437,8 +448,8 @@ namespace PandorasBox.Features.UI
         }
         public override void Disable()
         {
-            P.Ws.RemoveWindow(OverlayWindow);
-            OverlayWindow = null;
+            //P.Ws.RemoveWindow(OverlayWindow);
+            //OverlayWindow = null;
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
                 var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
@@ -450,7 +461,6 @@ namespace PandorasBox.Features.UI
 
                 node->ToggleVisibility(true);
             }
-
             base.Disable();
         }
     }

@@ -7,10 +7,9 @@ namespace PandorasBox.UI
     internal class Overlays : Window
     {
         Feature Feature;
-        public Overlays(Feature t) : base($"###Overlay{t.Name}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar
-                    | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoNavFocus
-                    | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings)
+        public Overlays(Feature t) : base($"###Overlay{t.Name}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.AlwaysAutoResize, true)
         {
+            this.Position = new System.Numerics.Vector2(0, 0);
             Feature = t;
             IsOpen = true;
             ShowCloseButton = false;

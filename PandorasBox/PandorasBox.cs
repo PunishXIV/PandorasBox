@@ -5,8 +5,10 @@ using Dalamud.Plugin;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.Reflection;
 using PandorasBox.Features;
 using PandorasBox.UI;
+using PunishLib;
 using PunishLib.Sponsor;
 using System.Collections;
 using System.Collections.Generic;
@@ -39,7 +41,9 @@ public class PandorasBox : IDalamudPlugin
 
     private void Initialize()
     {
-        ECommonsMain.Init(pi, P);
+        ECommonsMain.Init(pi, P, ECommons.Module.All);
+        PunishLibMain.Init(pi, P);
+        
         FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
         FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
 
@@ -81,6 +85,7 @@ public class PandorasBox : IDalamudPlugin
         MainWindow = null;
         Ws = null;
         ECommonsMain.Dispose();
+        PunishLibMain.Dispose();
         FeatureProviders.Clear();
         Common.Shutdown();
         P = null;

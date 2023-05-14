@@ -1,9 +1,12 @@
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Text.SeStringHandling;
+using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
+using System;
 using System.Linq;
 
 namespace PandorasBox.Features.Targets
@@ -36,7 +39,17 @@ namespace PandorasBox.Features.Targets
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             Svc.Condition.ConditionChange += TriggerCooldown;
+            Svc.Toasts.ErrorToast += CheckIfLanding;
             base.Enable();
+        }
+
+        private void CheckIfLanding(ref SeString message, ref bool isHandled)
+        {
+            if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
+            {
+                TaskManager.Abort();
+                TaskManager.DelayNext("ErrorMessage", 2000);
+            }
         }
 
         private void TriggerCooldown(ConditionFlag flag, bool value)
@@ -47,13 +60,12 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-
             if (Svc.Condition[ConditionFlag.Gathering])
                 return;
 
             if (Svc.ClientState.LocalPlayer is null) return;
 
-            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) < 2).ToList();
+            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 

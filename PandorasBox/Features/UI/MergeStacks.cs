@@ -59,8 +59,13 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Framework framework)
         {
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return;
-            var addon = Common.GetAddonByID(AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID());
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied | Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting])
+            {
+                TaskManager.Abort();
+                return;
+            }
+            var id = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID();
+            var addon = Common.GetAddonByID(id);
             if (addon == null) return;
             if (addon->IsVisible && !InventoryOpened)
             {
@@ -71,6 +76,7 @@ namespace PandorasBox.Features.UI
                 for (int i = 1; i <= inv1->Size; i++)
                 {
                     var item = inv1->GetInventorySlot(i - 1);
+                    if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
                     InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory1, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
@@ -80,6 +86,7 @@ namespace PandorasBox.Features.UI
                 for (int i = 1; i <= inv2->Size; i++)
                 {
                     var item = inv2->GetInventorySlot(i - 1);
+                    if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
                     InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory2, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
@@ -89,6 +96,7 @@ namespace PandorasBox.Features.UI
                 for (int i = 1; i <= inv3->Size; i++)
                 {
                     var item = inv3->GetInventorySlot(i - 1);
+                    if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
                     InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory3, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
@@ -98,6 +106,7 @@ namespace PandorasBox.Features.UI
                 for (int i = 1; i <= inv4->Size; i++)
                 {
                     var item = inv4->GetInventorySlot(i - 1);
+                    if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
                     InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory4, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };

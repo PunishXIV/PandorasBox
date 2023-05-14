@@ -47,23 +47,26 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(object sender, ushort e)
         {
+            if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Mount) return;
+
             if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) 
             {
                 TaskManager.Abort();
                 return;
             }
-            TaskManager.DelayNext("MountTeleport", 600);
-            TaskManager.DelayNext("MountTeleport", (int)(Config.ThrottleF * 1000));
-            TaskManager.Enqueue(TryMount);
+            TaskManager.Enqueue(() => NotBetweenAreas);
+            TaskManager.DelayNext("MountTeleportTryMount", (int)(Config.ThrottleF * 1000));
+            TaskManager.Enqueue(() => TryMount());
         }
 
+        private bool NotBetweenAreas => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas];
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted]) return null;
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas] || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas51]) return false;
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted]) return true;
 
-            if (Config.AbortIfMoving && IsMoving()) return null;
+            if (Config.AbortIfMoving && IsMoving()) return true;
 
             if (IsMoving()) return false;
             ActionManager* am = ActionManager.Instance();
@@ -71,17 +74,18 @@ namespace PandorasBox.Features.Actions
             if (Config.SelectedMount > 0)
             {
                 if (am->GetActionStatus(ActionType.Mount, Config.SelectedMount) != 0) return false;
-                TaskManager.Enqueue(() => am->UseAction(ActionType.Mount, Config.SelectedMount));
+                am->UseAction(ActionType.Mount, Config.SelectedMount);
 
                 return true;
             }
             else
             {
                 if (am->GetActionStatus(ActionType.General, 9) != 0) return false;
-                TaskManager.Enqueue(() => am->UseAction(ActionType.General, 9));
+                am->UseAction(ActionType.General, 9);
 
                 return true;
             }
+
         }
 
         public override void Disable()

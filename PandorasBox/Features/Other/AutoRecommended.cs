@@ -1,4 +1,5 @@
 using ECommons.Automation;
+using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
@@ -36,11 +37,12 @@ namespace PandorasBox.Features.Other
 
         private void AutoEquip(uint? jobId)
         {
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
             var mod = RecommendEquipModule.Instance();
-            TaskManager.Abort();
-            TaskManager.DelayNext("EquipMod", 200);
-            TaskManager.Enqueue(() => mod->SetupRecommendedGear(), 50);
-            TaskManager.Enqueue(() => mod->EquipRecommendedGear(), 50);
+            //TaskManager.Abort();
+            TaskManager.DelayNext("EquipMod", 500);
+            TaskManager.Enqueue(() => mod->SetupRecommendedGear(), 500);
+            TaskManager.Enqueue(() => mod->EquipRecommendedGear(), 500);
 
             if (Config.UpdateGearset)
             {

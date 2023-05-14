@@ -54,10 +54,10 @@ namespace PandorasBox.Features.Targets
                 TaskManager.DelayNext("Chests", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() =>
                 {
-                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return false;
+                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return true;
                     TargetSystem.Instance()->InteractWithObject(baseObj, true);
                     return true;
-                });
+                }, 10, true);
             }
         }
 

@@ -39,24 +39,25 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(uint? jobId)
         {
-            if (JobID is 26 or 27 or 28)
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
+            if (jobId is 26 or 27 or 28)
             {
                 TaskManager.Abort();
                 TaskManager.DelayNext("Summoning", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => TrySummon(), 5000);
+                TaskManager.Enqueue(() => TrySummon(jobId), 5000);
             }
         }
 
-        public bool TrySummon()
+        public bool TrySummon(uint? jobId)
         {
             ActionManager* am = ActionManager.Instance();
-            if (JobID is 26 or 27)
+            if (jobId is 26 or 27)
             {
                 if (am->GetActionStatus(ActionType.Spell, 25798) != 0) return false;
 
                 am->UseAction(ActionType.Spell, 25798);
             }
-            if (JobID is 28)
+            if (jobId is 28)
             {
                 if (am->GetActionStatus(ActionType.Spell, 17215) != 0) return false;
                 switch (Config.SelectedFairy)

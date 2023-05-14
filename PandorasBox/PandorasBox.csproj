@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>0.0.0.5</Version>
+        <Version>1.0.0.0</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -30,8 +30,8 @@
     </PropertyGroup>
 
     <ItemGroup Condition="'$(Configuration)' == 'Release'">
-        <PackageReference Include="PunishLib" Version="1.0.1.2" />
-        <PackageReference Include="ECommons" Version="2.0.0.4" />
+        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
+        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(Configuration)' == 'Debug'">
@@ -50,6 +50,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="Dalamud.ContextMenu" Version="1.2.2" />
         <PackageReference Include="DalamudPackager" Version="2.1.10" />
         <Reference Include="Newtonsoft.Json">
             <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
@@ -85,7 +86,13 @@
       <None Update="Icon.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
+      <None Update="pandora.png">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
       <None Update="PandorasBox.json">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </None>
+      <None Update="pandora_g.png">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </None>
     </ItemGroup>
@@ -93,5 +100,11 @@
     <ItemGroup>
       <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
       <ProjectReference Include="..\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Compile Update="UI\MainWindow.cs">
+        <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      </Compile>
     </ItemGroup>
 </Project>

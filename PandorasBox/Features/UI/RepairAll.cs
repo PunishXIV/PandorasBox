@@ -37,64 +37,73 @@ namespace PandorasBox.Features
 
         public override void Draw()
         {
-            if (Svc.GameGui.GetAddonByName("Repair", 1) != IntPtr.Zero)
+            try
             {
-                var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Repair", 1);
-
-                var node = ptr->UldManager.NodeList[24];
-
-                if (node == null)
-                    return;
-
-                if (node->IsVisible)
-                    node->ToggleVisibility(false);
-
-                var position = AtkResNodeHelper.GetNodePosition(node);
-                var scale = AtkResNodeHelper.GetNodeScale(node);
-                var size = new Vector2(node->Width, node->Height) * scale;
-
-                ImGuiHelpers.ForceNextWindowMainViewport();
-                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
-
-                ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                float oldSize = ImGui.GetFont().Scale;
-                ImGui.GetFont().Scale *= scale.X;
-                ImGui.PushFont(ImGui.GetFont());
-                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
-                    | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
-
-
-                if (!Repairing)
+                if (Svc.GameGui.GetAddonByName("Repair", 1) != IntPtr.Zero)
                 {
-                    if (ImGui.Button($"Repair All###StartRepair", size))
+                    var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Repair", 1);
+                    if (!ptr->IsVisible)
+                        return;
+
+                    var node = ptr->UldManager.NodeList[24];
+
+                    if (node == null)
+                        return;
+
+                    if (node->IsVisible)
+                        node->ToggleVisibility(false);
+
+                    var position = AtkResNodeHelper.GetNodePosition(node);
+                    var scale = AtkResNodeHelper.GetNodeScale(node);
+                    var size = new Vector2(node->Width, node->Height) * scale;
+
+                    ImGuiHelpers.ForceNextWindowMainViewport();
+                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
+
+                    ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
+                    float oldSize = ImGui.GetFont().Scale;
+                    ImGui.GetFont().Scale *= scale.X;
+                    ImGui.PushFont(ImGui.GetFont());
+                    ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
+                    ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
+                    ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                        | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
+
+
+                    if (!Repairing)
                     {
-                        Repairing = true;
-                        TryRepairAll();
+                        if (ImGui.Button($"Repair All###StartRepair", size))
+                        {
+                            Repairing = true;
+                            TryRepairAll();
+                        }
+
+                        ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text);
+                    }
+                    else
+                    {
+                        if (ImGui.Button($"Repairing. Click to abort.###AbortRepair", size))
+                        {
+                            Repairing = false;
+                            P.TaskManager.Abort();
+                        }
+                        ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {P.TaskManager.NumQueuedTasks} tasks");
                     }
 
-                    ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text);
+                    ImGui.End();
+                    ImGui.PopStyleVar(5);
+                    ImGui.GetFont().Scale = oldSize;
+                    ImGui.PopFont();
+                    ImGui.PopStyleColor();
                 }
-                else
-                {
-                    if (ImGui.Button($"Repairing. Click to abort.###AbortRepair", size))
-                    {
-                        Repairing = false;
-                        P.TaskManager.Abort();
-                    }
-                    ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {P.TaskManager.NumQueuedTasks} tasks");
-                }
+            }
+            catch
+            {
 
-                ImGui.End();
-                ImGui.PopStyleVar(5);
-                ImGui.GetFont().Scale = oldSize;
-                ImGui.PopFont();
-                ImGui.PopStyleColor();
-            };
+            }
         }
 
         private void TryRepairAll()

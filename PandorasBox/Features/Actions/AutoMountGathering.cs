@@ -53,7 +53,7 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryMount()
         {
-            if (Config.AbortIfMoving && IsMoving()) return null;
+            if (Config.AbortIfMoving && IsMoving()) return true;
 
             if (IsMoving()) return false;
             ActionManager* am = ActionManager.Instance();

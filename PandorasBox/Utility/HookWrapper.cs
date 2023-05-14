@@ -1,7 +1,7 @@
-﻿using System;
+using System;
 using Dalamud.Hooking;
 
-namespace SimpleTweaksPlugin.Utility; 
+namespace PandorasBox.Utility; 
 
 public interface IHookWrapper : IDisposable {
     public void Enable();

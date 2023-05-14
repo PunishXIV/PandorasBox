@@ -1,8 +1,14 @@
 using Dalamud.Game;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -49,6 +55,7 @@ namespace PandorasBox.Features
         public delegate void OnJobChangeDelegate(uint? jobId);
         public event OnJobChangeDelegate OnJobChanged;
 
+        public static SeString PandoraPayload = new SeString(new UIForegroundPayload(43)).Append($"{SeIconChar.BoxedLetterP.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()}{SeIconChar.BoxedLetterN.ToIconString()}{SeIconChar.BoxedLetterD.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterR.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()} ").Append(new UIForegroundPayload(0));
         public virtual void Draw() { }
 
         public virtual bool Ready { get; protected set; }
@@ -66,6 +73,7 @@ namespace PandorasBox.Features
 
         public virtual void Setup()
         {
+            TaskManager.TimeoutSilently = true;
             Ready = true;
         }
 
@@ -311,10 +319,42 @@ namespace PandorasBox.Features
 
         public unsafe bool IsRpWalking()
         {
-            if (Svc.GameGui.GetAddonByName("_DTR") == IntPtr.Zero) return false;
+            var atkArrayDataHolder = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
+            if (atkArrayDataHolder.NumberArrays[72]->IntArray[6] == 1)
+                return true;
+            else
+                return false;
 
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_DTR");
-            return addon->UldManager.NodeList[9]->IsVisible;
+            //if (Svc.GameGui.GetAddonByName("_DTR") == IntPtr.Zero) return false;
+
+            //var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_DTR");
+            //if (addon->UldManager.NodeListCount < 9) return false;
+
+            //return addon->UldManager.NodeList[9]->IsVisible;
+        }
+
+        internal unsafe static int GetInventoryFreeSlotCount()
+        {
+            InventoryType[] types = new InventoryType[] { InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4 };
+            var c = InventoryManager.Instance();
+            var slots = 0;
+            foreach (var x in types)
+            {
+                var inv = c->GetInventoryContainer(x);
+                for (var i = 0; i < inv->Size; i++)
+                {
+                    if (inv->Items[i].ItemID == 0)
+                    {
+                        slots++;
+                    }
+                }
+            }
+            return slots;
+        }
+
+        internal static bool IsInventoryFree()
+        {
+            return GetInventoryFreeSlotCount() >= 1;
         }
 
         public unsafe bool IsMoving() => AgentMap.Instance()->IsPlayerMoving == 1;
