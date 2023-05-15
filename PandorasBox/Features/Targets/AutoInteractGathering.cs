@@ -93,6 +93,12 @@ namespace PandorasBox.Features.Targets
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
+            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !TaskManager.IsBusy)
+            {
+                TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
+                return;
+            }
 
         }
 
