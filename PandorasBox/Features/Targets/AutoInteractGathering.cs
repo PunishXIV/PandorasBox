@@ -1,8 +1,10 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
+using Dalamud.Logging;
 using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -14,7 +16,7 @@ namespace PandorasBox.Features.Targets
     public unsafe class AutoInteractGathering : Feature
     {
         public override string Name => "Auto-interact with Gathering Nodes";
-        public override string Description => "Interacts with trees and rocks when close enough and on the correct job.";
+        public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
 
         public override FeatureType FeatureType => FeatureType.Targeting;
 
@@ -60,12 +62,12 @@ namespace PandorasBox.Features.Targets
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-            if (Svc.Condition[ConditionFlag.Gathering])
+            if (Svc.Condition[ConditionFlag.Gathering] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent])
                 return;
 
             if (Svc.ClientState.LocalPlayer is null) return;
 
-            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
+            var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 
@@ -74,6 +76,16 @@ namespace PandorasBox.Features.Targets
 
             if (!baseObj->GetIsTargetable())
                 return;
+
+            if (nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
+            {
+                if (!TaskManager.IsBusy)
+                {
+                    TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                    TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
+                }
+                return;
+            }
 
             var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;

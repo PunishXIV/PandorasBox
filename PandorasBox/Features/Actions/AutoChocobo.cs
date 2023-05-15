@@ -11,9 +11,9 @@ namespace PandorasBox.Features.Actions
 {
     public unsafe class AutoChocobo : Feature
     {
-        public override string Name => "Auto Summon Chocobo";
+        public override string Name => "Auto-Summon Chocobo";
 
-        public override string Description => "Automatically consumes a gysahl green in the overworld if you don't have your bird out.";
+        public override string Description => "Automatically consumes a Gysahl Green in the overworld if you don't have your chocobo out.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
