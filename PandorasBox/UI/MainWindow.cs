@@ -183,12 +183,50 @@ internal class MainWindow : Window
                     case OpenWindow.Targets:
                         DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
                         break;
+                    case OpenWindow.Commands:
+                        DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
+                        break;
                     case OpenWindow.About:
                         AboutTab.Draw(P);
                         break;
                 }
             }
             ImGui.EndChild();
+
+            ImGui.EndTable();
+        }
+    }
+
+    private void DrawCommands(BaseFeature[] features)
+    {
+        if (features == null || !features.Any() || features.Count() == 0) return;
+        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
+        ImGui.Separator();
+
+        if (ImGui.BeginTable("###CommandsTable", 5, ImGuiTableFlags.Borders))
+        {
+            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Parameters", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Aliases", ImGuiTableColumnFlags.WidthFixed);
+
+            ImGui.TableHeadersRow();
+            foreach (var feature in features.Cast<CommandFeature>())
+            {
+                ImGui.TableNextRow();
+                ImGui.TableNextColumn();
+                ImGui.Text(feature.Name);
+                ImGui.TableNextColumn();
+                ImGui.Text(feature.Command);
+                ImGui.TableNextColumn();
+                ImGui.Text(string.Join(", ", feature.Parameters));
+                ImGui.TableNextColumn();
+                ImGui.Text($"{feature.Description}");
+                ImGui.TableNextColumn();
+                ImGui.Text($"{string.Join(", ", feature.Alias)}");
+
+            }
 
             ImGui.EndTable();
         }
@@ -253,5 +291,6 @@ public enum OpenWindow
     UI,
     Targets,
     Other,
+    Commands,
     About
 }

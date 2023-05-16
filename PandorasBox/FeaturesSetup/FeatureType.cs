@@ -12,6 +12,7 @@ namespace PandorasBox.FeaturesSetup
         Actions,
         UI,
         Targeting,
+        Commands,
         Other,
     }
 }

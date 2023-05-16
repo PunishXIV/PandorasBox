@@ -1,29 +1,36 @@
+using Dalamud.Game.Command;
+using ECommons.DalamudServices;
+using ECommons.Logging;
+using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.RegularExpressions;
-using Dalamud.Game.Command;
-using ECommons.DalamudServices;
-using ECommons.Logging;
 
 namespace PandorasBox.Features;
 
 public abstract class CommandFeature : Feature
 {
-    protected abstract string Command { get; }
-    protected virtual string[] Alias => Array.Empty<string>();
-    protected virtual string HelpMessage => $"[{P.Name} {Name}";
-    protected virtual bool ShowInHelp => true;
+    public abstract string Command { get; set; }
+    public virtual string[] Alias => Array.Empty<string>();
+    public virtual string HelpMessage => $"[{P.Name} {Name}]";
+    public virtual bool ShowInHelp => false;
+    public virtual List<string> Parameters => new List<string>();
+    public override FeatureType FeatureType => FeatureType.Commands;
 
-    protected abstract void OnCommand(string args);
+    protected abstract void OnCommand(List<string> args);
 
-    private void OnCommandInternal(string _, string args) => OnCommand(args);
+    private void OnCommandInternal(string _, string args)
+    {
+        args = args.ToLower();
+        OnCommand(args.Split(' ').ToList());
+    }
 
     private List<string> registeredCommands = new();
 
     public override void Enable()
     {
-        var c = Command.StartsWith("/") ? Command : $"/{Command}";
+        var c = Command.StartsWith("/pan") ? Command : $"/pan {Command}";
         if (Svc.Commands.Commands.ContainsKey(c))
         {
             PluginLog.Error($"Command '{c}' is already registered.");
@@ -41,7 +48,7 @@ public abstract class CommandFeature : Feature
 
         foreach (var a in Alias)
         {
-            var alias = a.StartsWith("/") ? a : $"/{a}";
+            var alias = a.StartsWith("/pan") ? a : $"/pan {a}";
             if (!Svc.Commands.Commands.ContainsKey(alias))
             {
                 Svc.Commands.AddHandler(alias, new CommandInfo(OnCommandInternal)
@@ -52,8 +59,6 @@ public abstract class CommandFeature : Feature
                 registeredCommands.Add(alias);
             }
         }
-
-        base.Enable();
     }
 
     public override void Disable()
@@ -66,11 +71,11 @@ public abstract class CommandFeature : Feature
         base.Disable();
     }
 
-    protected List<string> GetArgumentList(string args) => Regex.Matches(args, @"[\""].+?[\""]|[^ ]+")
-            .Select(m =>
-            {
-                if (m.Value.StartsWith('"') && m.Value.EndsWith('"')) { return m.Value.Substring(1, m.Value.Length - 2); }
-                return m.Value;
-            })
-            .ToList();
+    public List<string> GetArgumentList(string args) => Regex.Matches(args, @"[\""].+?[\""]|[^ ]+")
+    .Select(m =>
+    {
+        if (m.Value.StartsWith('"') && m.Value.EndsWith('"')) { return m.Value.Substring(1, m.Value.Length - 2); }
+        return m.Value;
+    })
+    .ToList();
 }

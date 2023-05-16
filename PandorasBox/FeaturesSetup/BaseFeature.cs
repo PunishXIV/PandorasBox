@@ -79,6 +79,7 @@ namespace PandorasBox.Features
 
         public virtual void Enable()
         {
+            PluginLog.Debug($"Enabling {Name}");
             Svc.Framework.Update += CheckJob;
             Enabled = true;
         }
