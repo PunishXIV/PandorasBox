@@ -1,4 +1,5 @@
 using Dalamud.Logging;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -56,13 +57,13 @@ namespace PandorasBox.Features.UI
                 int slot = i - 1;
                 int unk = (44 * i) + (i - 1);
 
-                Callback(&addon->AtkUnitBase, 2, slot, 0, 0);
+                Callback.Fire(&addon->AtkUnitBase,false, 2, slot, 0, 0);
 
                 return false;
             }
             else
             {
-                Callback(contextMenu, 0, 0, 1021003, 0, 0);
+                Callback.Fire(contextMenu, false, 0, 0, 1021003, 0, 0);
                 PluginLog.Debug($"Filled slot {i}");
                 SlotsFilled.Add(i);
                 return true;
