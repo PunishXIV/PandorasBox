@@ -1,3 +1,5 @@
+// Credit entirely to Bluefissure: https://github.com/Bluefissure/NoKillPlugin
+
 using Dalamud.Game;
 using Dalamud.Hooking;
 using Dalamud.Logging;
