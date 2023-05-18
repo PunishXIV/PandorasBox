@@ -25,7 +25,7 @@ namespace PandorasBox.Features.Other
             public bool QueueMode = false;
 
             [FeatureConfigOption("SaferMode: Filters invalid messages that may crash the client")]
-            public bool SaferMode = true;
+            public bool SaferMode = false;
         }
 
         public Configs Config { get; private set; }
