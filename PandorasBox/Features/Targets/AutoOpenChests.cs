@@ -14,6 +14,8 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoOpenChests : Feature
     {
+        private uint lastChestId = 0;
+
         public override string Name => "Automatically Open Chests";
 
         public override string Description => "Walk up to a chest to automatically open it.";
@@ -57,6 +59,9 @@ namespace PandorasBox.Features.Targets
             if (!baseObj->GetIsTargetable())
                 return;
 
+            //Opened it.
+            if (lastChestId == nearestNode.ObjectId) return;
+
             if (!TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Chests", (int)(Config.Throttle * 1000));
@@ -64,6 +69,7 @@ namespace PandorasBox.Features.Targets
                 {
                     if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return true;
                     TargetSystem.Instance()->InteractWithObject(baseObj, true);
+                    lastChestId = nearestNode.ObjectId;
                     if (Config.CloseLootWindow)
                     {
                         TaskManager.Enqueue(CloseWindow, 200, true);
