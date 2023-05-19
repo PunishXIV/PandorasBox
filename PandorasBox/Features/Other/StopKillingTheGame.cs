@@ -56,11 +56,6 @@ namespace PandorasBox.Features.Other
         private Hook<ResponseHandlerDelegate> ResponseHandlerHook;
         */
 
-        private void RunFeature(Framework framework)
-        {
-            return;
-        }
-
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
         {
             var a1_88 = (UInt16)Marshal.ReadInt16(new IntPtr(a1 + 88));
@@ -193,7 +188,6 @@ namespace PandorasBox.Features.Other
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
             this.LobbyErrorHandler = Svc.SigScanner.ScanText("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0");
             this.LobbyErrorHandlerHook = new Hook<LobbyErrorHandlerDelegate>(
                 LobbyErrorHandler,
@@ -251,7 +245,6 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
             this.LobbyErrorHandlerHook.Disable();
             this.StartHandlerHook.Disable();
             this.LoginHandlerHook.Disable();
