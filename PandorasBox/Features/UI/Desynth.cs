@@ -41,12 +41,12 @@ namespace PandorasBox.Features.UI
 
         private HookWrapper<PopulateItemList> populateHook;
 
-        private Dictionary<ulong, Item> ListItems = new Dictionary<ulong, Item>();
+        private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private Overlays Overlay;
+        private Overlays Overlay { get; set; }
 
-        private bool Desynthing = false;
+        private bool Desynthing { get; set; } = false;
         public override void Enable()
         {
             Overlay = new(this);
@@ -133,7 +133,7 @@ namespace PandorasBox.Features.UI
                     ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position + size with { Y = 0 });
 
                     ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                    float oldSize = ImGui.GetFont().Scale;
+                    var oldSize = ImGui.GetFont().Scale;
                     ImGui.GetFont().Scale *= scale.X;
                     ImGui.PushFont(ImGui.GetFont());
                     ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
@@ -217,7 +217,7 @@ namespace PandorasBox.Features.UI
             return true;
         }
 
-        private bool? DesynthFirst()
+        private static bool? DesynthFirst()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return false;
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1);

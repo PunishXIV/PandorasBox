@@ -10,6 +10,7 @@ using PandorasBox.Features;
 using PandorasBox.UI;
 using PunishLib;
 using PunishLib.Sponsor;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -73,6 +74,7 @@ public class PandorasBox : IDalamudPlugin
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         Svc.Commands.RemoveHandler(CommandName);
         foreach (var t in FeatureProviders.Where(t => !t.Disposed))
         {

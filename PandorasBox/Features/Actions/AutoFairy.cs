@@ -50,7 +50,7 @@ namespace PandorasBox.Features.Actions
 
         public bool TrySummon(uint? jobId)
         {
-            ActionManager* am = ActionManager.Instance();
+            var am = ActionManager.Instance();
             if (jobId is 26 or 27)
             {
                 if (am->GetActionStatus(ActionType.Spell, 25798) != 0) return false;

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 
 namespace PandorasBox.FeaturesSetup
 {
+    [AttributeUsage(AttributeTargets.All)]
     public class FeatureConfigOptionAttribute : Attribute
     {
 

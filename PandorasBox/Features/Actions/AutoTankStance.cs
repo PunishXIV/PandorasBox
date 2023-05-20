@@ -55,7 +55,7 @@ namespace PandorasBox.Features.Actions
 
         private void CheckParty(Framework framework)
         {
-            if (Svc.Party.Count() == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
+            if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
             {
                 MainTank = Svc.Party.First(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).ObjectId;
@@ -115,7 +115,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager.DelayNext("TankStance", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() =>
                 {
-                    if (Svc.Party.Count() > Config.MaxParty) return true;
+                    if (Svc.Party.Length > Config.MaxParty) return true;
                     if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
                     switch (jobId.Value)
                     {

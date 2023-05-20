@@ -41,8 +41,8 @@ namespace PandorasBox.Features.UI
 
         public Configs Config { get; private set; }
 
-        private bool Fertilized = false;
-        List<int> SlotsFilled = new();
+        private bool Fertilized { get; set; } = false;
+        private List<int> SlotsFilled { get; set; } = new();
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -67,7 +67,7 @@ namespace PandorasBox.Features.UI
                     var text = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(fertilizeText.String));
                     if (text.ExtractText() == AddonText[6417].Text.ExtractText())
                     {
-                        InventoryManager* im = InventoryManager.Instance();
+                        var im = InventoryManager.Instance();
                         var inv1 = im->GetInventoryContainer(InventoryType.Inventory1);
                         var inv2 = im->GetInventoryContainer(InventoryType.Inventory2);
                         var inv3 = im->GetInventoryContainer(InventoryType.Inventory3);
@@ -80,7 +80,7 @@ namespace PandorasBox.Features.UI
 
                         foreach (var cont in container)
                         {
-                            for (int i = 0; i < cont->Size; i++)
+                            for (var i = 0; i < cont->Size; i++)
                             {
                                 if (cont->GetInventorySlot(i)->ItemID == Config.SelectedFertilizer)
                                 {
@@ -118,7 +118,7 @@ namespace PandorasBox.Features.UI
                 var invSoil = Soils.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).Select(x => x.Key).ToList();
                 var invSeeds = Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).Select(x => x.Key).ToList();
 
-                InventoryManager* im = InventoryManager.Instance();
+                var im = InventoryManager.Instance();
                 var inv1 = im->GetInventoryContainer(InventoryType.Inventory1);
                 var inv2 = im->GetInventoryContainer(InventoryType.Inventory2);
                 var inv3 = im->GetInventoryContainer(InventoryType.Inventory3);
@@ -129,10 +129,10 @@ namespace PandorasBox.Features.UI
                             inv1, inv2, inv3, inv4
                 };
 
-                int soilIndex = 0;
+                var soilIndex = 0;
                 foreach (var cont in container)
                 {
-                    for (int i = 0; i < cont->Size; i++)
+                    for (var i = 0; i < cont->Size; i++)
                     {
                         if (invSoil.Any(x => cont->GetInventorySlot(i)->ItemID == x))
                         {
@@ -146,10 +146,10 @@ namespace PandorasBox.Features.UI
                 }
 
             SetSeed:
-                int seedIndex = 0;
+                var seedIndex = 0;
                 foreach (var cont in container)
                 {
-                    for (int i = 0; i < cont->Size; i++)
+                    for (var i = 0; i < cont->Size; i++)
                     {
                         if (invSeeds.Any(x => cont->GetInventorySlot(i)->ItemID == x))
                         {
@@ -201,7 +201,7 @@ namespace PandorasBox.Features.UI
 
             if (contextMenu is null || !contextMenu->IsVisible)
             {
-                int slot = i - 1;
+                var slot = i - 1;
 
                 PluginLog.Debug($"{slot}");
                 var values = stackalloc AtkValue[5];
@@ -237,7 +237,7 @@ namespace PandorasBox.Features.UI
             }
             else
             {
-                uint value = (uint)(i == 1 ? 27405 : 27451);
+                var value = (uint)(i == 1 ? 27405 : 27451);
                 var values = stackalloc AtkValue[5];
                 values[0] = new AtkValue()
                 {
@@ -307,7 +307,7 @@ namespace PandorasBox.Features.UI
             var invSeeds = Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray();
             var invFert = Fertilizers.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray();
 
-            string soilPrev = Config.SelectedSoil == 0 ? "" : Soils[Config.SelectedSoil].Name.ExtractText();
+            var soilPrev = Config.SelectedSoil == 0 ? "" : Soils[Config.SelectedSoil].Name.ExtractText();
             if (ImGui.BeginCombo("Soil", soilPrev))
             {
                 if (ImGui.Selectable("", Config.SelectedSoil == 0))
@@ -327,7 +327,7 @@ namespace PandorasBox.Features.UI
                 ImGui.EndCombo();
             }
 
-            string seedPrev = Config.SelectedSeed == 0 ? "" : Seeds[Config.SelectedSeed].Name.ExtractText();
+            var seedPrev = Config.SelectedSeed == 0 ? "" : Seeds[Config.SelectedSeed].Name.ExtractText();
             if (ImGui.BeginCombo("Seed", seedPrev))
             {
                 if (ImGui.Selectable("", Config.SelectedSeed == 0))
@@ -351,7 +351,7 @@ namespace PandorasBox.Features.UI
 
             if (Config.IncludeFertilzing)
             {
-                string fertPrev = Config.SelectedFertilizer == 0 ? "" : Fertilizers[Config.SelectedFertilizer].Name.ExtractText();
+                var fertPrev = Config.SelectedFertilizer == 0 ? "" : Fertilizers[Config.SelectedFertilizer].Name.ExtractText();
                 if (ImGui.BeginCombo("Fertilizer", fertPrev))
                 {
                     if (ImGui.Selectable("", Config.SelectedFertilizer == 0))

@@ -17,7 +17,7 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        List<int> SlotsFilled = new();
+        private List<int> SlotsFilled { get; set; } = new();
         public override void Enable()
         {
             Svc.Framework.Update += RunFeature;
@@ -29,11 +29,11 @@ namespace PandorasBox.Features.UI
 
             if (TryGetAddonByName<AddonRequest>("Request", out var addon))
             {
-                for (int i = 1; i <= addon->EntryCount; i++)
+                for (var i = 1; i <= addon->EntryCount; i++)
                 {
                     if (SlotsFilled.Contains(addon->EntryCount)) TaskManager.Abort();
                     if (SlotsFilled.Contains(i)) return;
-                    int val = i;
+                    var val = i;
                     TaskManager.DelayNext($"ClickTurnin{val}", 10);
                     TaskManager.Enqueue(() => TryClickItem(addon, val));
                 }
@@ -54,8 +54,8 @@ namespace PandorasBox.Features.UI
 
             if (contextMenu is null ||  !contextMenu->IsVisible)
             {
-                int slot = i - 1;
-                int unk = (44 * i) + (i - 1);
+                var slot = i - 1;
+                var unk = (44 * i) + (i - 1);
 
                 Callback.Fire(&addon->AtkUnitBase,false, 2, slot, 0, 0);
 

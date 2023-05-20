@@ -9,13 +9,13 @@ using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features;
 
-public abstract class CommandFeature : Feature
+public abstract partial class CommandFeature : Feature
 {
     public abstract string Command { get; set; }
     public virtual string[] Alias => Array.Empty<string>();
     public virtual string HelpMessage => $"[{P.Name} {Name}]";
     public virtual bool ShowInHelp => false;
-    public virtual List<string> Parameters => new List<string>();
+    public virtual List<string> Parameters => new();
     public override FeatureType FeatureType => FeatureType.Commands;
 
     protected abstract void OnCommand(List<string> args);
@@ -26,7 +26,7 @@ public abstract class CommandFeature : Feature
         OnCommand(args.Split(' ').ToList());
     }
 
-    private List<string> registeredCommands = new();
+    private readonly List<string> registeredCommands = new();
 
     public override void Enable()
     {
@@ -71,11 +71,15 @@ public abstract class CommandFeature : Feature
         base.Disable();
     }
 
-    public List<string> GetArgumentList(string args) => Regex.Matches(args, @"[\""].+?[\""]|[^ ]+")
+    public static List<string> GetArgumentList(string args) => ArgumentRegex().Matches(args)
     .Select(m =>
     {
-        if (m.Value.StartsWith('"') && m.Value.EndsWith('"')) { return m.Value.Substring(1, m.Value.Length - 2); }
+        if (m.Value.StartsWith('"') && m.Value.EndsWith('"')) { return m.Value[1..^1]; }
         return m.Value;
     })
     .ToList();
+
+
+    [GeneratedRegex("[\\\"].+?[\\\"]|[^ ]+")]
+    private static partial Regex ArgumentRegex();
 }

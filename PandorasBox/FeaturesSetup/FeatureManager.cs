@@ -13,7 +13,7 @@ namespace PandorasBox.Features
 
     public abstract class FeatureManager<T> : FeatureManager where T : BaseFeature
     {
-        public List<BaseFeature> BaseFeatures = new List<BaseFeature>();
+        public List<BaseFeature> BaseFeatures = new();
 
         public override List<BaseFeature> GetFeatures()
         {

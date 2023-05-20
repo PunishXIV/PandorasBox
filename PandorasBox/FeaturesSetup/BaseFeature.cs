@@ -55,7 +55,7 @@ namespace PandorasBox.Features
         public delegate void OnJobChangeDelegate(uint? jobId);
         public event OnJobChangeDelegate OnJobChanged;
 
-        public static SeString PandoraPayload = new SeString(new UIForegroundPayload(43)).Append($"{SeIconChar.BoxedLetterP.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()}{SeIconChar.BoxedLetterN.ToIconString()}{SeIconChar.BoxedLetterD.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterR.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()} ").Append(new UIForegroundPayload(0));
+        public static readonly SeString PandoraPayload = new SeString(new UIForegroundPayload(43)).Append($"{SeIconChar.BoxedLetterP.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()}{SeIconChar.BoxedLetterN.ToIconString()}{SeIconChar.BoxedLetterD.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterR.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()} ").Append(new UIForegroundPayload(0));
         public virtual void Draw() { }
 
         public virtual bool Ready { get; protected set; }
@@ -158,7 +158,7 @@ namespace PandorasBox.Features
                         var conditionalMethod = configObj.GetType().GetMethod($"ShouldShow{f.Name}", BindingFlags.Public | BindingFlags.Instance);
                         if (conditionalMethod != null)
                         {
-                            var shouldShow = (bool)(conditionalMethod.Invoke(configObj, Array.Empty<object?>()) ?? true);
+                            var shouldShow = (bool)(conditionalMethod.Invoke(configObj, Array.Empty<object>()) ?? true);
                             if (!shouldShow) continue;
                         }
                     }
@@ -334,9 +334,9 @@ namespace PandorasBox.Features
             //return addon->UldManager.NodeList[9]->IsVisible;
         }
 
-        internal unsafe static int GetInventoryFreeSlotCount()
+        internal static unsafe int GetInventoryFreeSlotCount()
         {
-            InventoryType[] types = new InventoryType[] { InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4 };
+            var types = new InventoryType[] { InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4 };
             var c = InventoryManager.Instance();
             var slots = 0;
             foreach (var x in types)

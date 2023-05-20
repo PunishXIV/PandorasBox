@@ -56,7 +56,7 @@ namespace PandorasBox.Features.Actions
             if (Config.AbortIfMoving && IsMoving()) return true;
 
             if (IsMoving()) return false;
-            ActionManager* am = ActionManager.Instance();
+            var am = ActionManager.Instance();
 
             if (Config.SelectedMount > 0)
             {
@@ -86,7 +86,7 @@ namespace PandorasBox.Features.Actions
             ImGui.PushItemWidth(300);
             ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
             var ps = PlayerState.Instance();
-            string preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
+            var preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
             if (ImGui.BeginCombo("Select Mount", preview))
             {
                 if (ImGui.Selectable("", Config.SelectedMount == 0))
@@ -98,7 +98,7 @@ namespace PandorasBox.Features.Actions
                 {
                     if (ps->IsMountUnlocked(mount.RowId))
                     {
-                        bool selected = ImGui.Selectable(mount.Singular.ExtractText().ToTitleCase(), Config.SelectedMount == mount.RowId);
+                        var selected = ImGui.Selectable(mount.Singular.ExtractText().ToTitleCase(), Config.SelectedMount == mount.RowId);
 
                         if (selected)
                         {

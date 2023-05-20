@@ -21,11 +21,11 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        public List<InventorySlot> inventorySlots = new List<InventorySlot>();
+        public List<InventorySlot> inventorySlots = new();
 
-        private bool InventoryOpened = false;
+        private bool InventoryOpened { get; set; } = false;
 
-        private Dictionary<uint, Item> Sheet;
+        private Dictionary<uint, Item> Sheet { get; set; }
 
         public class InventorySlot
         {
@@ -71,52 +71,52 @@ namespace PandorasBox.Features.UI
             {
                 InventoryOpened = true;
                 inventorySlots.Clear();
-                InventoryManager* inv = InventoryManager.Instance();
+                var inv = InventoryManager.Instance();
                 var inv1 = inv->GetInventoryContainer(InventoryType.Inventory1);
-                for (int i = 1; i <= inv1->Size; i++)
+                for (var i = 1; i <= inv1->Size; i++)
                 {
                     var item = inv1->GetInventorySlot(i - 1);
                     if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
-                    InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory1, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
+                    var slot = new InventorySlot() { Container = InventoryType.Inventory1, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
                     inventorySlots.Add(slot);
                 }
                 var inv2 = inv->GetInventoryContainer(InventoryType.Inventory2);
-                for (int i = 1; i <= inv2->Size; i++)
+                for (var i = 1; i <= inv2->Size; i++)
                 {
                     var item = inv2->GetInventorySlot(i - 1);
                     if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
-                    InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory2, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
+                    var slot = new InventorySlot() { Container = InventoryType.Inventory2, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
                     inventorySlots.Add(slot);
                 }
                 var inv3 = inv->GetInventoryContainer(InventoryType.Inventory3);
-                for (int i = 1; i <= inv3->Size; i++)
+                for (var i = 1; i <= inv3->Size; i++)
                 {
                     var item = inv3->GetInventorySlot(i - 1);
                     if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
-                    InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory3, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
+                    var slot = new InventorySlot() { Container = InventoryType.Inventory3, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
                     inventorySlots.Add(slot);
                 }
                 var inv4 = inv->GetInventoryContainer(InventoryType.Inventory4);
-                for (int i = 1; i <= inv4->Size; i++)
+                for (var i = 1; i <= inv4->Size; i++)
                 {
                     var item = inv4->GetInventorySlot(i - 1);
                     if (item->Flags.HasFlag(InventoryItem.ItemFlags.Collectable)) continue;
                     if (item->Quantity == Sheet[item->ItemID].StackSize || item->ItemID == 0)
                         continue;
-                    InventorySlot slot = new InventorySlot() { Container = InventoryType.Inventory4, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
+                    var slot = new InventorySlot() { Container = InventoryType.Inventory4, ItemID = item->ItemID, Slot = item->Slot, ItemHQ = item->Flags.HasFlag(InventoryItem.ItemFlags.HQ) };
                     inventorySlots.Add(slot);
                 }
 
                 foreach (var item in inventorySlots.GroupBy(x => new { x.ItemID, x.ItemHQ }).Where(x => x.Count() > 1))
                 {
                     var firstSlot = item.First();
-                    for (int i = 1; i < item.Count(); i++)
+                    for (var i = 1; i < item.Count(); i++)
                     {
                         var slot = item.ToList()[i];
                         inv->MoveItemSlot(slot.Container, slot.Slot, firstSlot.Container, firstSlot.Slot, 1);

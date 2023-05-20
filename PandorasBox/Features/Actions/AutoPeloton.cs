@@ -42,9 +42,9 @@ namespace PandorasBox.Features
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
 
-            ActionManager* am = ActionManager.Instance();
-            bool isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
-            bool hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+            var am = ActionManager.Instance();
+            var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
             {
@@ -60,9 +60,9 @@ namespace PandorasBox.Features
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
 
-            ActionManager* am = ActionManager.Instance();
-            bool isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
-            bool hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+            var am = ActionManager.Instance();
+            var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
             {

@@ -10,21 +10,21 @@ namespace PandorasBox
     {
         public int Version { get; set; } = 0;
 
-        public List<string> EnabledFeatures = new List<string>();
+        public List<string> EnabledFeatures = new();
 
         public bool DisabledTheme = false;
 
         [NonSerialized]
-        private DalamudPluginInterface? PluginInterface;
+        private DalamudPluginInterface pluginInterface;
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {
-            this.PluginInterface = pluginInterface;
+            this.pluginInterface = pluginInterface;
         }
 
         public void Save()
         {
-            this.PluginInterface!.SavePluginConfig(this);
+            this.pluginInterface!.SavePluginConfig(this);
         }
     }
 }

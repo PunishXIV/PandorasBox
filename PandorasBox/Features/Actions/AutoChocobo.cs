@@ -37,9 +37,9 @@ namespace PandorasBox.Features.Actions
         {
             if (!Svc.Condition[ConditionFlag.NormalConditions] || Svc.Condition[ConditionFlag.Casting] || IsMoving()) return;
             if (Svc.Condition[ConditionFlag.InCombat] && !Config.UseInCombat) return;
-            if (Svc.Party.Count() > 1 && !Config.UseInParty) return;
+            if (Svc.Party.Length > 1 && !Config.UseInParty) return;
 
-            ActionManager* am = ActionManager.Instance();
+            var am = ActionManager.Instance();
             if (UIState.Instance()->Buddy.TimeLeft <= Config.RemainingTimeLimit)
             {
                 if (am->GetActionStatus(ActionType.Item, 4868) != 0) return;
