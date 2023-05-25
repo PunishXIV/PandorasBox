@@ -1,5 +1,4 @@
 using Dalamud.ContextMenu;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons.Automation;
@@ -11,7 +10,6 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
-using static ECommons.GenericHelpers;
 
 
 namespace PandorasBox.Features.UI
@@ -56,7 +54,7 @@ namespace PandorasBox.Features.UI
         private unsafe bool? OpenItem(uint itemId)
         {
             var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID();
-            
+
             if (!IsInventoryFree())
             {
                 return null;
@@ -107,12 +105,12 @@ namespace PandorasBox.Features.UI
                             values[2] = new AtkValue()
                             {
                                 Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                                Unk = 0
+                                Int = 0
                             };
                             values[3] = new AtkValue()
                             {
                                 Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                                Unk = 0
+                                Int = 0
                             };
                             values[4] = new AtkValue()
                             {

@@ -48,7 +48,7 @@ namespace PandorasBox.Features.Other
             {
                 var id = RaptureGearsetModule.Instance()->CurrentGearsetIndex;
                 TaskManager.DelayNext("UpdatingGS", 1000);
-                TaskManager.Enqueue(() => RaptureGearsetModule.Instance()->UpdateGearSet(id));
+                TaskManager.Enqueue(() => RaptureGearsetModule.Instance()->UpdateGearset(id));
             }
         }
 

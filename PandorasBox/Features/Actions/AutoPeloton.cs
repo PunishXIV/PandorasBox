@@ -1,4 +1,6 @@
+using Dalamud.Configuration;
 using Dalamud.Game;
+using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -38,6 +40,8 @@ namespace PandorasBox.Features
 
         private void RunFeature(Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer == null) return;
+
             if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;

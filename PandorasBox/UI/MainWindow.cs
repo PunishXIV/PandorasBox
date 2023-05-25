@@ -139,6 +139,7 @@ internal class MainWindow : Window
                 foreach (var window in Enum.GetValues(typeof(OpenWindow)))
                 {
                     if ((OpenWindow)window == OpenWindow.None) continue;
+                    if ((OpenWindow)window == OpenWindow.Commands) continue;
 
                     if (ImGui.Selectable($"{window}", OpenWindow == (OpenWindow)window))
                     {

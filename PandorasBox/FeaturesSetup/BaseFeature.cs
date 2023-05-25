@@ -320,6 +320,7 @@ namespace PandorasBox.Features
 
         public unsafe bool IsRpWalking()
         {
+            if (Svc.ClientState.LocalPlayer == null) return false;
             var atkArrayDataHolder = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
             if (atkArrayDataHolder.NumberArrays[72]->IntArray[6] == 1)
                 return true;

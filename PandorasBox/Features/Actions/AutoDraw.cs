@@ -2,10 +2,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Linq;
 
 namespace PandorasBox.Features.Actions
 {
@@ -37,22 +34,12 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfDungeon(object sender, ushort e)
         {
-            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 10 && 
-                Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 3  &&
-                Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 17) return;
-            TaskManager.DelayNext("WaitForDungeon", 3000);
-            TaskManager.Enqueue(() =>
-            {
-                if (!Svc.Condition[ConditionFlag.BetweenAreas])
-                {
-                    if (Svc.Condition[ConditionFlag.BoundByDuty])
-                    {
-                        TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
-                        return true;
-                    }
-                }
-                return false;
-            });
+            if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
+
+            TaskManager.DelayNext("WaitForConditions",2000);
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent], "CheckConditionCutscene");
+            TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
         }
 
         private void DrawCard(uint? jobId)
@@ -63,10 +50,6 @@ namespace PandorasBox.Features.Actions
 
                 TaskManager.DelayNext("ASTCard", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => TryDrawCard());
-            }
-            else
-            {
-                TaskManager.Abort();
             }
         }
 

@@ -56,6 +56,7 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer == null) return;
             if (Config.IncludeFertilzing && Svc.GameGui.GetAddonByName("InventoryExpansion") != IntPtr.Zero && !Fertilized)
             {
                 if (Config.SelectedFertilizer == 0) goto SoilSeeds;
@@ -63,6 +64,7 @@ namespace PandorasBox.Features.UI
 
                 if (addon->IsVisible)
                 {
+                    if (addon->AtkValuesCount <= 5) return;
                     var fertilizeText = addon->AtkValues[5];
                     var text = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(fertilizeText.String));
                     if (text.ExtractText() == AddonText[6417].Text.ExtractText())
@@ -217,13 +219,13 @@ namespace PandorasBox.Features.UI
                 };
                 values[2] = new AtkValue()
                 {
-                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Unk,
-                    Unk = 0
+                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                    Int = 0
                 };
                 values[3] = new AtkValue()
                 {
-                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Unk,
-                    Unk = 0
+                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                    Int = 0
                 };
                 values[4] = new AtkValue()
                 {
@@ -261,7 +263,7 @@ namespace PandorasBox.Features.UI
                 };
                 values[4] = new AtkValue()
                 {
-                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Unk,
+                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
                     UInt = 0
                 };
 

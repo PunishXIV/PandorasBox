@@ -27,7 +27,7 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Throttle = 0.1f;
 
-            [FeatureConfigOption("Auto Close loot window")]
+            [FeatureConfigOption("Immediately Close Loot Window After Opening")]
             public bool CloseLootWindow = false;
         }
 
@@ -72,39 +72,33 @@ namespace PandorasBox.Features.Targets
                     lastChestId = nearestNode.ObjectId;
                     if (Config.CloseLootWindow)
                     {
-                        TaskManager.Enqueue(CloseWindow, 200, true);
+                        TaskManager.DelayNextImmediate(100);
+                        TaskManager.EnqueueImmediate(() => CloseWindow(), 5000, false);
                     }
                     return true;
                 }, 10, true);
             }
         }
 
-        private unsafe static bool? CloseWindow()
+        private static unsafe bool? CloseWindow()
         {
-            var needGreedWindow = Svc.GameGui.GetAddonByName("NeedGreed", 1);
-            if (needGreedWindow == IntPtr.Zero) return false;
-
-            var notification = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_Notification", 1);
-            if (notification == null) return false;
-
-            var atkValues = (AtkValue*)Marshal.AllocHGlobal(2 * sizeof(AtkValue));
-            atkValues[0].Type = atkValues[1].Type = ValueType.Int;
-            atkValues[0].Int = 0;
-            atkValues[1].Int = 2;
-            try
+            if (Svc.GameGui.GetAddonByName("NeedGreed", 1) != IntPtr.Zero)
             {
-                notification->FireCallback(2, atkValues);
-                return true;
+                var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1);
+                if (needGreedWindow == null) return false;
+
+                if (needGreedWindow->IsVisible)
+                {
+                    needGreedWindow->Close(true);
+                    return true;
+                }                
             }
-            catch (Exception ex)
+            else
             {
-                PluginLog.Warning(ex, "Failed to close the window!");
                 return false;
             }
-            finally
-            {
-                Marshal.FreeHGlobal(new IntPtr(atkValues));
-            }
+
+            return false;
         }
 
         public override void Disable()

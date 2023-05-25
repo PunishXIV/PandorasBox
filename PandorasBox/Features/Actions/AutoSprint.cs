@@ -43,6 +43,8 @@ namespace PandorasBox.Features
 
         private void RunFeature(Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer == null) return;
+
             if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
 

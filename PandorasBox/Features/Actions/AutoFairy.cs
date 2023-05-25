@@ -1,13 +1,7 @@
 using ECommons.DalamudServices;
-using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features.Actions
 {
@@ -22,8 +16,6 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
-            public uint SelectedFairy = 0;
         }
 
         public Configs Config { get; private set; }
@@ -60,16 +52,9 @@ namespace PandorasBox.Features.Actions
             if (jobId is 28)
             {
                 if (am->GetActionStatus(ActionType.Spell, 17215) != 0) return false;
-                switch (Config.SelectedFairy)
-                {
-                    case 0:
-                        am->UseAction(ActionType.Spell, 17215);
-                        return true;
-                    case 1:
-                        am->UseAction(ActionType.Spell, 17216);
-                        return true;
-                }
 
+                am->UseAction(ActionType.Spell, 17215);
+                return true;
             }
             return true;
         }
@@ -84,15 +69,15 @@ namespace PandorasBox.Features.Actions
         {
             ImGui.PushItemWidth(350);
             ImGui.SliderFloat("Set delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
-            
-            if (ImGui.RadioButton("Summon EoS", Config.SelectedFairy == 0))
-            {
-                Config.SelectedFairy = 0;
-            }
-            if (ImGui.RadioButton("Summon Selene", Config.SelectedFairy == 1))
-            {
-                Config.SelectedFairy = 1;
-            }
+
+            //if (ImGui.RadioButton("Summon EoS", Config.SelectedFairy == 0))
+            //{
+            //    Config.SelectedFairy = 0;
+            //}
+            //if (ImGui.RadioButton("Summon Selene", Config.SelectedFairy == 1))
+            //{
+            //    Config.SelectedFairy = 1;
+            //}
 
         };
     }
