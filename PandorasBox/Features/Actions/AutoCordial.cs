@@ -68,8 +68,9 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(Framework framework)
         {
-            if (Svc.Condition[ConditionFlag.InCombat] || Svc.ClientState.LocalPlayer.ClassJob.Id != 16 || Svc.ClientState.LocalPlayer.ClassJob.Id != 17) return;
+            if (!(Svc.ClientState.LocalPlayer.ClassJob.Id == 16) || !(Svc.ClientState.LocalPlayer.ClassJob.Id == 17)) return;
             if (Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !Config.UseOnFisher) return;
+
             if (!((Svc.ClientState.LocalPlayer.CurrentGp < Config.DefaultThreshold && Config.DirectionBelow) || (Svc.ClientState.LocalPlayer.CurrentGp > Config.DefaultThreshold && Config.DirectionAbove))) return;
 
             ActionManager* am = ActionManager.Instance();
