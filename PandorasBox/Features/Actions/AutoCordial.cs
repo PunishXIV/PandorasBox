@@ -9,6 +9,8 @@ using System.Linq;
 using ECommons.Throttlers;
 using ImGuiNET;
 using System.Collections.Generic;
+using Lumina.Excel.GeneratedSheets;
+using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features.Actions
 {
@@ -23,6 +25,21 @@ namespace PandorasBox.Features.Actions
         public Configs Config { get; private set; }
 
         public override bool UseAutoConfig => false;
+
+        // public Dictionary<uint, Item> Cordials { get; set; }
+
+        private static uint hi_cordial = 12669;
+        private static uint reg_cordial = 6141;
+        private static uint reg_cordial_hq = 1006141;
+        private static uint watered_cordial = 16911;
+        private static uint watered_cordial_hq = 1016911;
+        private List<uint> cordials = new List<uint>() { hi_cordial, reg_cordial_hq, reg_cordial, watered_cordial_hq, watered_cordial };
+        private static int hi_recovery = 400;
+        private static int reg_recovery_hq = 350;
+        private static int reg_recovery = 300;
+        private static int water_recovery_hq = 200;
+        private static int water_recovery = 150;
+        private List<int> recoveries = new List<int>() { hi_recovery, reg_recovery_hq, reg_recovery, water_recovery_hq, water_recovery };
 
         public class Configs : FeatureConfig
         {
@@ -64,6 +81,7 @@ namespace PandorasBox.Features.Actions
         private bool WillOvercap(int gp_recovery)
         {
             return Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery < Svc.ClientState.LocalPlayer.MaxGp;
+            // return Svc.ClientState.LocalPlayer.CurrentGp + (int)Regex.Match(Cordials.Description, @"\d+").value < Svc.ClientState.LocalPlayer.MaxGp;
         }
 
         private void RunFeature(Framework framework)
@@ -76,23 +94,9 @@ namespace PandorasBox.Features.Actions
 
             ActionManager* am = ActionManager.Instance();
 
-            uint hi_cordial = 12669;
-            uint reg_cordial = 6141;
-            uint reg_cordial_hq = 1006141;
-            uint watered_cordial = 16911;
-            uint watered_cordial_hq = 1016911;
-            List<uint> cordials = new List<uint>() { hi_cordial, reg_cordial_hq, reg_cordial, watered_cordial_hq, watered_cordial };
-
-            int hi_recovery = 400;
-            int reg_recovery_hq = 350;
-            int reg_recovery = 300;
-            int water_recovery_hq = 200;
-            int water_recovery = 150;
-            List<int> recoveries = new List<int>() { hi_recovery, reg_recovery_hq, reg_recovery, water_recovery_hq, water_recovery };
-
-
             if (!Config.InvertPriority)
             {
+                // static values version
                 for (int i = 0; i < cordials.Count; i++)
                 {
                     if (am->GetActionStatus(ActionType.Item, cordials[i]) == 0)
@@ -103,6 +107,18 @@ namespace PandorasBox.Features.Actions
                         }
                     }
                 }
+
+                // sheets version
+                // for (int i = 0; i < Cordials.Count; i++)
+                // {
+                //     if (am->GetActionStatus(ActionType.Item, Cordials[i].RowId) == 0)
+                //     {
+                //         if (Config.PreventOvercap && !WillOvercap(Cordials) || !Config.PreventOvercap)
+                //         {
+                //             am->UseAction(ActionType.Item, cordials[i], a4: 65535);
+                //         }
+                //     }
+                // }
             }
             else
             {
@@ -122,6 +138,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
+            // Cordials = Svc.Data.GetExcelSheet<Item>().Where(x => x.Singular.ToString().Contains("cordial")).ToDictionary(x => x.RowId, x => x);
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
