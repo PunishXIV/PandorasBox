@@ -51,7 +51,7 @@ namespace PandorasBox.Features.Actions
             if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat && !value)
             {
                 TaskManager.Enqueue(() => NotInCombat);
-                TaskManager.DelayNext("MountTeleportTryMount", (int)(Config.ThrottleF * 1000));
+                TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => TryMount());
             }
         }
