@@ -48,7 +48,6 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
         {
-            // param: object sender, ushort e
             if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat && !value)
             {
                 TaskManager.Enqueue(() => NotInCombat);
