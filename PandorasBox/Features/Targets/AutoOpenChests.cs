@@ -24,7 +24,7 @@ namespace PandorasBox.Features.Targets
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Throttle = 0.1f;
 
             [FeatureConfigOption("Auto Close loot window")]
