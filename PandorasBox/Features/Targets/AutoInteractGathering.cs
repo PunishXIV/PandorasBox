@@ -30,8 +30,11 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Cooldown after gathering (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Cooldown = 0.1f;
 
-            [FeatureConfigOption("Exclude Timed Nodes", "", 1)]
-            public bool ExcludeTimed = false;
+            [FeatureConfigOption("Exclude Timed Unspoiled Nodes", "", 1)]
+            public bool ExcludeTimedUnspoiled = false;
+
+            [FeatureConfigOption("Exclude Timed Ephemeral Nodes", "", 1)]
+            public bool ExcludeTimedEphermeral = false;
         }
 
         public Configs Config { get; private set; }
@@ -90,7 +93,9 @@ namespace PandorasBox.Features.Targets
             var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && (x.GatheringRarePopTimeTable.Value.RowId > 0 || x.EphemeralStartTime != 65535)) && Config.ExcludeTimed)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0) && Config.ExcludeTimedUnspoiled)
+                return;
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
                 return;
 
             if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && !TaskManager.IsBusy)
