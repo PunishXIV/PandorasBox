@@ -67,6 +67,7 @@ namespace PandorasBox.Features
 
         public void Dispose()
         {
+            GC.SuppressFinalize(this);
             UnloadFeatures();
             Disposed = true;
         }

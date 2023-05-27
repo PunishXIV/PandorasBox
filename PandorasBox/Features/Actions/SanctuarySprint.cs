@@ -37,9 +37,9 @@ namespace PandorasBox.Features
             if (MJIManager.Instance()->IsPlayerInSanctuary == 0)
                 return;
 
-            ActionManager* am = ActionManager.Instance();
-            bool isSprintReady = am->GetActionStatus(ActionType.Spell, 31314) == 0;
-            bool hasBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
+            var am = ActionManager.Instance();
+            var isSprintReady = am->GetActionStatus(ActionType.Spell, 31314) == 0;
+            var hasBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
 
             if (isSprintReady && !hasBuff && AgentMap.Instance()->IsPlayerMoving == 1)
                 am->UseAction(ActionType.Spell, 31314);

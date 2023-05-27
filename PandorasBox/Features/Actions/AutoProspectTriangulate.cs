@@ -37,7 +37,7 @@ namespace PandorasBox.Features.Actions
             if (jobValue is not (16 or 17)) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
             TaskManager.DelayNext(this.GetType().Name, (int)(Config.ThrottleF * 1000));
-            ActionManager* am = ActionManager.Instance();   
+            var am = ActionManager.Instance();   
             if (Svc.ClientState.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
                 return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering])

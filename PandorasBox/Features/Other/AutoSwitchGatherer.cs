@@ -70,7 +70,7 @@ namespace PandorasBox.Features.Other
             }
         }
 
-        private unsafe bool SwitchJobGearset(uint cjID)
+        private static unsafe bool SwitchJobGearset(uint cjID)
         {
             if (Svc.ClientState.LocalPlayer.ClassJob.Id == cjID) return true;
             var gs = GetGearsetForClassJob(cjID);
@@ -82,7 +82,7 @@ namespace PandorasBox.Features.Other
             return true;
         }
 
-        private unsafe static byte? GetGearsetForClassJob(uint cjId)
+        private static unsafe byte? GetGearsetForClassJob(uint cjId)
         {
             var gearsetModule = RaptureGearsetModule.Instance();
             for (var i = 0; i < 100; i++)

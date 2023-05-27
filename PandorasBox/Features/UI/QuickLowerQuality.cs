@@ -24,7 +24,7 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Common.AddonSetup += Common_AddonSetup;
+            Common.OnAddonSetup += Common_AddonSetup;
             base.Enable();
         }
 
@@ -52,7 +52,7 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            Common.AddonSetup -= Common_AddonSetup;
+            Common.OnAddonSetup -= Common_AddonSetup;
             base.Disable();
         }
     }

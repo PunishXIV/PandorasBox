@@ -30,7 +30,7 @@ internal class MainWindow : Window
         };
     }
 
-    public void Dispose()
+    public static void Dispose()
     {
 
     }
@@ -139,8 +139,9 @@ internal class MainWindow : Window
                 foreach (var window in Enum.GetValues(typeof(OpenWindow)))
                 {
                     if ((OpenWindow)window == OpenWindow.None) continue;
+                    if ((OpenWindow)window == OpenWindow.Commands) continue;
 
-                    if (ImGui.Selectable($"{window.ToString()}", OpenWindow == (OpenWindow)window))
+                    if (ImGui.Selectable($"{window}", OpenWindow == (OpenWindow)window))
                     {
                         OpenWindow = (OpenWindow)window;
                     }
@@ -197,9 +198,9 @@ internal class MainWindow : Window
         }
     }
 
-    private void DrawCommands(BaseFeature[] features)
+    private static void DrawCommands(BaseFeature[] features)
     {
-        if (features == null || !features.Any() || features.Count() == 0) return;
+        if (features == null || !features.Any() || features.Length == 0) return;
         ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
         ImGui.Separator();
 
@@ -232,16 +233,16 @@ internal class MainWindow : Window
         }
     }
 
-    private void DrawFeatures(IEnumerable<BaseFeature> features)
+    private static void DrawFeatures(IEnumerable<BaseFeature> features)
     {
-        if (features == null || !features.Any() || features.Count() == 0) return;
+        if (features == null || !features.Any() || !features.Any()) return;
 
         ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
         ImGui.Separator();
 
         foreach (var feature in features)
         {
-            bool enabled = feature.Enabled;
+            var enabled = feature.Enabled;
             if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
             {
                 if (enabled)

@@ -66,11 +66,11 @@ namespace PandorasBox.Features.Targets
             return Svc.Objects.Any(o => o.ObjectKind == ObjectKind.BattleNpc &&
                                     (BattleNpcSubKind)o.SubKind == BattleNpcSubKind.Enemy &&
                                     GameObjectIsTargetable(o) &&
-                                    PointInCone(o.Position - Svc.ClientState.LocalPlayer.Position, Svc.ClientState.LocalPlayer.Rotation, 0 + o.HitboxRadius / 2) &&
+                                    PointInCone(o.Position - Svc.ClientState.LocalPlayer.Position, Svc.ClientState.LocalPlayer.Rotation, 0 + (o.HitboxRadius / 2)) &&
                                     PointInCircle(o.Position - playerPos, Config.MaxDistance + o.HitboxRadius));
         }
 
-        public GameObject? NearestConeTarget()
+        public GameObject NearestConeTarget()
         {
             if (CanConeAoe())
             {
@@ -78,7 +78,7 @@ namespace PandorasBox.Features.Targets
                 var target = Svc.Objects.OrderBy(GameObjectHelper.GetTargetDistance).First(o => o.ObjectKind == ObjectKind.BattleNpc &&
                                                 (BattleNpcSubKind)o.SubKind == BattleNpcSubKind.Enemy &&
                                                 GameObjectIsTargetable(o) &&
-                                                PointInCone(o.Position - Svc.ClientState.LocalPlayer.Position, Svc.ClientState.LocalPlayer.Rotation, 0 + o.HitboxRadius / 2) &&
+                                                PointInCone(o.Position - Svc.ClientState.LocalPlayer.Position, Svc.ClientState.LocalPlayer.Rotation, 0 + (o.HitboxRadius / 2)) &&
                                                 PointInCircle(o.Position - playerPos, Config.MaxDistance + o.HitboxRadius));
 
                 return target;
@@ -87,11 +87,11 @@ namespace PandorasBox.Features.Targets
             return null;
         }
 
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(GameObject? obj)
+        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(GameObject obj)
         {
             return (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)obj?.Address;
         }
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(BattleChara? chara)
+        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(BattleChara chara)
         {
             return (FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)chara?.Address;
         }

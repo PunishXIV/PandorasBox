@@ -10,7 +10,7 @@ namespace PandorasBox.Helpers
     {
         public static int RoundOff(this int i, int sliderIncrement)
         {
-            double sliderAsDouble = Convert.ToDouble(sliderIncrement);
+            var sliderAsDouble = Convert.ToDouble(sliderIncrement);
             return ((int)Math.Round(i / sliderAsDouble)) * (int)sliderIncrement;
         }
 

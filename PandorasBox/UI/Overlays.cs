@@ -6,7 +6,7 @@ namespace PandorasBox.UI
 {
     internal class Overlays : Window
     {
-        Feature Feature;
+        private Feature Feature { get; set; }
         public Overlays(Feature t) : base($"###Overlay{t.Name}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.AlwaysAutoResize, true)
         {
             this.Position = new System.Numerics.Vector2(0, 0);

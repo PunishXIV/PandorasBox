@@ -14,7 +14,7 @@ public interface IHookWrapper : IDisposable {
     
 public class HookWrapper<T> : IHookWrapper where T : Delegate {
 
-    private Hook<T> wrappedHook;
+    private readonly Hook<T> wrappedHook;
 
     private bool disposed;
         
@@ -33,6 +33,7 @@ public class HookWrapper<T> : IHookWrapper where T : Delegate {
     }
         
     public void Dispose() {
+        GC.SuppressFinalize(this);
         Disable();
         disposed = true;
         wrappedHook?.Dispose();

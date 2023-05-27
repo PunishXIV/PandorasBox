@@ -43,15 +43,17 @@ namespace PandorasBox.Features
 
         private void RunFeature(Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer == null) return;
+
             if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;
 
-            ActionManager* am = ActionManager.Instance();
-            bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
-            bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+            var am = ActionManager.Instance();
+            var isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !P.TaskManager.IsBusy)
             {
@@ -63,9 +65,9 @@ namespace PandorasBox.Features
 
         private void UseSprint()
         {
-            ActionManager* am = ActionManager.Instance();
-            bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
-            bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+            var am = ActionManager.Instance();
+            var isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1)
             {
