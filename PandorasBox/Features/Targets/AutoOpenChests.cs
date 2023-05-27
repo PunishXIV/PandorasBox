@@ -1,6 +1,7 @@
 using Dalamud.Game;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -24,7 +25,7 @@ namespace PandorasBox.Features.Targets
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Throttle = 0.1f;
 
             [FeatureConfigOption("Immediately Close Loot Window After Opening")]
@@ -66,7 +67,8 @@ namespace PandorasBox.Features.Targets
                 TaskManager.DelayNext("Chests", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() =>
                 {
-                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return true;
+                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 0.5f) return true;
+
                     TargetSystem.Instance()->InteractWithObject(baseObj, true);
                     if (Config.CloseLootWindow)
                     {
