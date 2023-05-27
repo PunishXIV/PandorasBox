@@ -1,10 +1,13 @@
+using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Character = Dalamud.Game.ClientState.Objects.Types.Character;
 
 namespace PandorasBox.Features.Commands
@@ -12,11 +15,11 @@ namespace PandorasBox.Features.Commands
     public unsafe class ResetEnmity : CommandFeature
     {
         public override string Name => "Reset Enmity";
-        public override string Command { get; set; } = "/pan-resetenmity";
-        public override string[] Alias => new string[] { "/pan-re" };
+        public override string Command { get; set; } = "/presetenmity";
+        public override string[] Alias => new string[] { "/pre" };
 
         public override List<string> Parameters => new() { "t", "a" };
-        public override string Description => "Resets the enmity of all enemies targeting you. Useful for target dummies.";
+        public override string Description => "Resets the enmity of all enemies targeting you. Useful for target dummies. Accepts arguments for t(arget) or a(ll). Defaults to all.";
         protected override void OnCommand(List<string> args)
         {
             foreach (var p in Parameters)
@@ -30,20 +33,24 @@ namespace PandorasBox.Features.Commands
                         ResetAll();
                         break;
                 }
-                // if (args.Any(x => x == p))
-                // {
-                //     Svc.Chat.Print($"Test command executed with argument {p}.");
-                // }
             }
         }
 
-        private delegate long ExecuteCommandDele(int id, int a1, int a2, int a3, int a4);
-        private ExecuteCommandDele ExecuteCommand;
+        private delegate long ExecuteCommandDelegate(uint id, int a1, int a2, int a3, int a4);
+        private static Hook<ExecuteCommandDelegate>? ExecuteCommandHook { get; set; }
+        private ExecuteCommandDelegate ExecuteCommand;
 
         private void Reset(int objectId)
         {
-            PluginLog.Information($"[Pandora's Box] Resetting enmity {objectId:X}");
-            ExecuteCommand(0x140, objectId, 0, 0, 0);
+            // Reset enmity at target sig. This doesn't change often, but it does sometimes.
+            nint scanText = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 43 0A");
+            ExecuteCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
+
+            PluginLog.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
+            PluginLog.Information($"Resetting enmity {objectId:X}");
+
+            long success = ExecuteCommand(0x13f, objectId, 0, 0, 0);
+            PluginLog.Debug($"Reset enmity of {objectId:X} returned: {success}");
         }
 
         private void ResetTarget()
@@ -58,7 +65,8 @@ namespace PandorasBox.Features.Commands
             if (addonByName != IntPtr.Zero)
             {
                 var addon = (AddonEnemyList*)addonByName;
-                var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[19];
+                // the 21 works now, but if this doesn't in the future, check this. It used to be 19.
+                var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[21];
 
                 for (var i = 0; i < addon->EnemyCount; i++)
                 {
