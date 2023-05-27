@@ -30,6 +30,9 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Cooldown after gathering (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Cooldown = 0.1f;
 
+            [FeatureConfigOption("Required GP to Interact", IntMin = 0, IntMax = 1000, EditorSize = 300)]
+            public int RequiredGP = 0;
+
             [FeatureConfigOption("Exclude Timed Nodes", "", 1)]
             public bool ExcludeTimed = false;
         }
@@ -93,19 +96,19 @@ namespace PandorasBox.Features.Targets
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && (x.GatheringRarePopTimeTable.Value.RowId > 0 || x.EphemeralStartTime != 65535)) && Config.ExcludeTimed)
                 return;
 
-            if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && !TaskManager.IsBusy)
+            if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= Config.RequiredGP && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && !TaskManager.IsBusy)
+            if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= Config.RequiredGP && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !TaskManager.IsBusy)
+            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= Config.RequiredGP && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
