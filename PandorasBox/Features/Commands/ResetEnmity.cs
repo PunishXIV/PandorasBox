@@ -1,4 +1,3 @@
-using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
@@ -6,7 +5,6 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
 using System.Runtime.InteropServices;
 using Character = Dalamud.Game.ClientState.Objects.Types.Character;
 
@@ -37,7 +35,6 @@ namespace PandorasBox.Features.Commands
         }
 
         private delegate long ExecuteCommandDelegate(uint id, int a1, int a2, int a3, int a4);
-        private static Hook<ExecuteCommandDelegate>? ExecuteCommandHook { get; set; }
         private ExecuteCommandDelegate ExecuteCommand;
 
         private void Reset(int objectId)
