@@ -27,19 +27,20 @@ namespace PandorasBox.Features.Actions
         public override bool UseAutoConfig => false;
 
         // public Dictionary<uint, Item> Cordials { get; set; }
+        internal static (string Name, uint Id, uint ItemActionID, uint NQGP, uint HQGP)[] cordials;
 
-        private static uint hi_cordial = 12669;
-        private static uint reg_cordial = 6141;
-        private static uint reg_cordial_hq = 1006141;
-        private static uint watered_cordial = 16911;
-        private static uint watered_cordial_hq = 1016911;
-        private List<uint> cordials = new List<uint>() { hi_cordial, reg_cordial_hq, reg_cordial, watered_cordial_hq, watered_cordial };
-        private static int hi_recovery = 400;
-        private static int reg_recovery_hq = 350;
-        private static int reg_recovery = 300;
-        private static int water_recovery_hq = 200;
-        private static int water_recovery = 150;
-        private List<int> recoveries = new List<int>() { hi_recovery, reg_recovery_hq, reg_recovery, water_recovery_hq, water_recovery };
+        // private static uint hi_cordial = 12669;
+        // private static uint reg_cordial = 6141;
+        // private static uint reg_cordial_hq = 1006141;
+        // private static uint watered_cordial = 16911;
+        // private static uint watered_cordial_hq = 1016911;
+        // private List<uint> cordials = new List<uint>() { hi_cordial, reg_cordial_hq, reg_cordial, watered_cordial_hq, watered_cordial };
+        // private static int hi_recovery = 400;
+        // private static int reg_recovery_hq = 350;
+        // private static int reg_recovery = 300;
+        // private static int water_recovery_hq = 200;
+        // private static int water_recovery = 150;
+        // private List<int> recoveries = new List<int>() { hi_recovery, reg_recovery_hq, reg_recovery, water_recovery_hq, water_recovery };
 
         public class Configs : FeatureConfig
         {
@@ -81,7 +82,6 @@ namespace PandorasBox.Features.Actions
         private bool WillOvercap(int gp_recovery)
         {
             return Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery < Svc.ClientState.LocalPlayer.MaxGp;
-            // return Svc.ClientState.LocalPlayer.CurrentGp + (int)Regex.Match(Cordials.Description, @"\d+").value < Svc.ClientState.LocalPlayer.MaxGp;
         }
 
         private void RunFeature(Framework framework)
@@ -96,39 +96,26 @@ namespace PandorasBox.Features.Actions
 
             if (!Config.InvertPriority)
             {
-                // static values version
-                for (int i = 0; i < cordials.Count; i++)
+                for (int i = 0; i < cordials.Length; i++)
                 {
-                    if (am->GetActionStatus(ActionType.Item, cordials[i]) == 0)
+                    if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
                     {
-                        if (Config.PreventOvercap && !WillOvercap(recoveries[i]) || !Config.PreventOvercap)
+                        if (Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP) || !Config.PreventOvercap)
                         {
-                            am->UseAction(ActionType.Item, cordials[i], a4: 65535);
+                            am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
                         }
                     }
                 }
-
-                // sheets version
-                // for (int i = 0; i < Cordials.Count; i++)
-                // {
-                //     if (am->GetActionStatus(ActionType.Item, Cordials[i].RowId) == 0)
-                //     {
-                //         if (Config.PreventOvercap && !WillOvercap(Cordials) || !Config.PreventOvercap)
-                //         {
-                //             am->UseAction(ActionType.Item, cordials[i], a4: 65535);
-                //         }
-                //     }
-                // }
             }
             else
             {
-                for (int i = cordials.Count - 1; i >= 0; i--)
+                for (int i = cordials.Length - 1; i >= 0; i--)
                 {
-                    if (am->GetActionStatus(ActionType.Item, cordials[i]) == 0)
+                    if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
                     {
-                        if (Config.PreventOvercap && !WillOvercap(recoveries[i]) || !Config.PreventOvercap)
+                        if (Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP) || !Config.PreventOvercap)
                         {
-                            am->UseAction(ActionType.Item, cordials[i], a4: 65535);
+                            am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
                         }
                     }
                 }
@@ -138,7 +125,19 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            // Cordials = Svc.Data.GetExcelSheet<Item>().Where(x => x.Singular.ToString().Contains("cordial")).ToDictionary(x => x.RowId, x => x);
+            // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => x.Singular.ToString().Contains("cordial")).ToDictionary(x => x.RowId, x => x);
+            // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => (x.Name.ToString().Contains("cordial")).Select(x => (x.RowId, x.Name.ToString())).ToArray());
+            cordials = Svc.Data.GetExcelSheet<Item>()
+                .Where(row => row.Name.ToString().Contains("cordial")
+                .Select(row => (
+                    Name: row.Name,
+                    Id: row.RowId,
+                    ItemActionID: row.ItemAction,
+                    NQGP: Svc.Data.GetExcelSheet<ItemAction>()
+                        .First(actionRow => actionRow.RowId == row.ItemActionID).Data[0],
+                    HQGP: Svc.Data.GetExcelSheet<ItemAction>()
+                        .First(actionRow => actionRow.RowId == row.ItemActionID).Data{HQ}[0]
+                )));
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
