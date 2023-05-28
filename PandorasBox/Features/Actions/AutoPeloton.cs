@@ -5,6 +5,8 @@ using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
 
@@ -18,7 +20,7 @@ namespace PandorasBox.Features
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public override bool UseAutoConfig => true;
+        public override bool UseAutoConfig => false;
 
         public class Configs : FeatureConfig
         {
@@ -27,6 +29,9 @@ namespace PandorasBox.Features
 
             [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
+
+            [FeatureConfigOption("Exclude using in housing districts")]
+            public bool ExcludeHousing = false;
         }
 
         public Configs Config { get; private set; }
@@ -45,6 +50,7 @@ namespace PandorasBox.Features
             if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
+            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) return;
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
@@ -71,7 +77,7 @@ namespace PandorasBox.Features
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
             {
                 am->UseAction(ActionType.Spell, 7557);
-            } 
+            }
         }
 
 
@@ -81,5 +87,13 @@ namespace PandorasBox.Features
             SaveConfig(Config);
             base.Disable();
         }
+
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+{
+    ImGui.PushItemWidth(300);
+    ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+    ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
+    ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+};
     }
 }
