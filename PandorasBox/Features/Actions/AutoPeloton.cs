@@ -89,11 +89,11 @@ namespace PandorasBox.Features
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-{
-    ImGui.PushItemWidth(300);
-    ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
-    ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
-    ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
-};
+        {
+            ImGui.PushItemWidth(300);
+            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+            ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
+            ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+        };
     }
 }
