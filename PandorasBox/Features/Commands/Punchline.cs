@@ -107,7 +107,7 @@ namespace PandorasBox.Features.Commands
         protected override void OnCommand(List<string> args)
         {
             Random random = new Random();
-            Svc.Chat.Print($"{supposedlyJokes[random.Next(supposedlyJokes.Count)]}.");
+            Svc.Chat.Print($"{supposedlyJokes[random.Next(supposedlyJokes.Count)]}");
         }
     }
 }
