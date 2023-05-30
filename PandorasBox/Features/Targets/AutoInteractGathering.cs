@@ -30,20 +30,20 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Cooldown after gathering (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Cooldown = 0.1f;
 
-            [FeatureConfigOption("Exclude Timed Nodes", "", 1)]
+            [FeatureConfigOption("Exclude Timed Nodes", "", 5)]
             public bool ExcludeTimed = false;
 
-            [FeatureConfigOption("Exclude Island Nodes", "", 1)]
-            public bool ExcludeIsland = true;
+            [FeatureConfigOption("Exclude Island Nodes", "", 4)]
+            public bool ExcludeIsland = false;
 
-            [FeatureConfigOption("Exclude Miner Nodes", "", 1)]
-            public bool ExcludeMiner = true;
+            [FeatureConfigOption("Exclude Miner Nodes", "", 2)]
+            public bool ExcludeMiner = false;
 
             [FeatureConfigOption("Exclude Botanist Nodes", "", 1)]
-            public bool ExcludeBotanist = true;
+            public bool ExcludeBotanist = false;
 
-            [FeatureConfigOption("Exclude Spearfishing Nodes", "", 1)]
-            public bool ExcludeFishing = true;
+            [FeatureConfigOption("Exclude Spearfishing Nodes", "", 3)]
+            public bool ExcludeFishing = false;
         }
 
         public Configs Config { get; private set; }
