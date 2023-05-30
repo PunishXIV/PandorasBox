@@ -120,7 +120,7 @@ namespace PandorasBox.Features.Actions
             }
 
             ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
-            ImGui.Checkbox("Use on Island", ref Config.UseOnIsland);
+            ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland);
 
         };
     }
