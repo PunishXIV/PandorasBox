@@ -18,7 +18,7 @@ namespace PandorasBox.Features.Actions
     {
         public override string Name => "Auto-Mount after Gathering";
 
-        public override string Description => "Uses Mount Roulette or a specific mount upon finishing gathering from a node. Will try to execute for up to 3 seconds after the delay if moving.";
+        public override string Description => "Mounts upon finishing gathering from a node. Will try to execute for up to 3 seconds after the delay if moving.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 

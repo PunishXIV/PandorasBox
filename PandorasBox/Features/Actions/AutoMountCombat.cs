@@ -20,7 +20,7 @@ namespace PandorasBox.Features.Actions
     {
         public override string Name => "Auto-mount After Combat ";
 
-        public override string Description => "Uses Mount Roulette upon ending combat.";
+        public override string Description => "Mounts upon ending combat.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
