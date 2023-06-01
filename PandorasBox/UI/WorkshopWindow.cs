@@ -129,7 +129,13 @@ internal class WorkshopWindow : Window
 
             ImGui.EndCombo();
         }
-
+        if (ImGui.Button("Fire Schedule"))
+        {
+            // TBD
+        }
+        // list copied schedule here
+        ImGui.Separator();
+        // list of saved presets here to quick load
     }
 
     public static unsafe Vector2 GetNodePosition(AtkResNode* node)
