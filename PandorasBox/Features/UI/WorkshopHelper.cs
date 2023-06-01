@@ -56,7 +56,8 @@ namespace PandorasBox.Features.UI
         internal static Dictionary<int, Schedule> ScheduleImport(string input)
         {
             List<int> workshops = ParseWorkshops(input);
-            List<Item> items = ParseItems(input);
+            List<string> itemStrings = ParseItems(input);
+            List<Item> items = MatchItems(itemStrings);
 
             Dictionary<int, Schedule> schedules = new Dictionary<int, Schedule>();
             foreach (int workshop in workshops)
@@ -106,13 +107,26 @@ namespace PandorasBox.Features.UI
             return workshops;
         }
 
-        public static List<Item> ParseItems(string input)
+        internal static List<string> ParseItems(string input)
+        {
+            List<string> itemStrings = new List<string>();
+
+            string pattern = @@":([A-Za-z_]+):\s*(.*?)\s*\(\d+h\)";
+            MatchCollection matches = Regex.Matches(input, pattern);
+            foreach (Match match in matches)
+            {
+                string itemString = match.Groups[1].Value;
+                itemStrings.Add(itemString);
+            }
+
+            return itemStrings;
+        }
+
+
+        public static List<Item> MatchItems(List<string> itemStrings)
         {
             List<Item> items = new List<Item>();
-
-            string[] itemNames = input.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-
-            foreach (string itemName in itemNames)
+            foreach (string itemName in itemStrings)
             {
                 var matchedCraftable = Craftables.FirstOrDefault(c => c.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase));
 
