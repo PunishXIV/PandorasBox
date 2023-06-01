@@ -117,6 +117,7 @@ internal class WorkshopWindow : Window
             }
         }
         ImGui.SameLine();
+        // generates a null references?
         if (ImGui.BeginCombo("Cycle", ""))
         {
             for (var i = 0; i < Cycles.Count; i++)
