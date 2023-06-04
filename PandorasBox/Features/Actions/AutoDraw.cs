@@ -1,3 +1,4 @@
+using System;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
@@ -29,6 +30,7 @@ namespace PandorasBox.Features.Actions
             Config = LoadConfig<Configs>() ?? new Configs();
             OnJobChanged += DrawCard;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
+            Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
         }
 
@@ -36,10 +38,22 @@ namespace PandorasBox.Features.Actions
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
 
-            TaskManager.DelayNext("WaitForConditions",2000);
+            TaskManager.DelayNext("WaitForConditions", 2000);
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent], "CheckConditionCutscene");
             TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
+        }
+
+        private void CheckIfRespawned(ConditionFlag flag, bool value)
+        {
+            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.Unconscious && !value)
+            {
+                TaskManager.DelayNext("WaitForConditions", 2000);
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
+                TaskManager.DelayNext("WaitForActionReady", 1000);
+                TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
+            }
         }
 
         private void DrawCard(uint? jobId)
@@ -70,6 +84,7 @@ namespace PandorasBox.Features.Actions
             SaveConfig(Config);
             OnJobChanged -= DrawCard;
             Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
+            Svc.Condition.ConditionChange -= CheckIfRespawned;
             base.Disable();
         }
     }
