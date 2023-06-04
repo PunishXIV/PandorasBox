@@ -50,7 +50,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
                 TaskManager.DelayNext("WaitForActionReady", 1000);
-                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer.ClassJob.Id), 5000);
+                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
             }
         }
 
