@@ -6,6 +6,7 @@ using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.UI;
@@ -51,6 +52,7 @@ namespace PandorasBox.Features.UI
             public uint Key { get; set; }
             public string Name { get; set; }
             public ushort CraftingTime { get; set; }
+            public byte UIIndex { get; set; }
         }
 
         internal static Dictionary<int, Schedule> ScheduleImport(string input)
@@ -111,7 +113,7 @@ namespace PandorasBox.Features.UI
         {
             List<string> itemStrings = new List<string>();
 
-            string pattern = @@":([A-Za-z_]+):\s*(.*?)\s*\(\d+h\)";
+            string pattern = @"(?<=: )(.*?)(?= \()";
             MatchCollection matches = Regex.Matches(input, pattern);
             foreach (Match match in matches)
             {
@@ -128,7 +130,7 @@ namespace PandorasBox.Features.UI
             List<Item> items = new List<Item>();
             foreach (string itemName in itemStrings)
             {
-                var matchedCraftable = Craftables.FirstOrDefault(c => c.Name.Equals(itemName, StringComparison.OrdinalIgnoreCase));
+                var matchedCraftable = Craftables.FirstOrDefault(c => c.Name.Contains(itemName, StringComparison.OrdinalIgnoreCase));
 
                 if (matchedCraftable.Key != 0)
                 {
@@ -136,14 +138,15 @@ namespace PandorasBox.Features.UI
                     {
                         Key = matchedCraftable.Key,
                         Name = matchedCraftable.Name,
-                        CraftingTime = matchedCraftable.CraftingTime
+                        CraftingTime = matchedCraftable.CraftingTime,
+                        UIIndex = (byte)matchedCraftable.Key
                     };
 
                     items.Add(item);
                 }
                 else
                 {
-                    Console.WriteLine("Item not found: {0}", itemName);
+                    PluginLog.Log($"Item not found: {itemName}");
                 }
             }
 
@@ -238,59 +241,59 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private unsafe bool ScheduleItem(ItemValues key, int workshop)
-        {
-            var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
-            if (addon == IntPtr.Zero)
-                return false;
-            if (!GenericHelpers.IsAddonReady((AtkUnitBase*)addon)) return false;
+        // private unsafe bool ScheduleItem(ItemValues key, int workshop)
+        // {
+        //     var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
+        //     if (addon == IntPtr.Zero)
+        //         return false;
+        //     if (!GenericHelpers.IsAddonReady((AtkUnitBase*)addon)) return false;
 
-            try
-            {
-                var schedulerPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
-                if (schedulerPTR == IntPtr.Zero)
-                    return false;
-                var schedulerWindow = (AtkUnitBase*)schedulerPTR;
-                if (schedulerWindow == null)
-                    return false;
+        //     try
+        //     {
+        //         var schedulerPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
+        //         if (schedulerPTR == IntPtr.Zero)
+        //             return false;
+        //         var schedulerWindow = (AtkUnitBase*)schedulerPTR;
+        //         if (schedulerWindow == null)
+        //             return false;
 
-                Callback.Fire(schedulerWindow, false, 11, key.id);
-                Callback.Fire(schedulerWindow, false, 13);
-                schedulerWindow->Close(true);
+        //         Callback.Fire(schedulerWindow, false, 11, key.id);
+        //         Callback.Fire(schedulerWindow, false, 13);
+        //         schedulerWindow->Close(true);
 
-                // var SelectItem = stackalloc AtkValue[2];
-                // SelectItem[0] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                //     Int = 11,
-                // };
-                // SelectItem[1] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-                //     UInt = key.id,
-                // };
-                // schedulerWindow->FireCallback(1, SelectItem);
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Selecting Item", 300));
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Selecting Item"));
+        //         // var SelectItem = stackalloc AtkValue[2];
+        //         // SelectItem[0] = new()
+        //         // {
+        //         //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+        //         //     Int = 11,
+        //         // };
+        //         // SelectItem[1] = new()
+        //         // {
+        //         //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
+        //         //     UInt = key.id,
+        //         // };
+        //         // schedulerWindow->FireCallback(1, SelectItem);
+        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Selecting Item", 300));
+        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Selecting Item"));
 
-                // var Schedule = stackalloc AtkValue[1];
-                // Schedule[0] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                //     Int = 13,
-                // };
-                // schedulerWindow->FireCallback(1, Schedule);
-                // schedulerWindow->Close(true);
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Schedule Button", 300));
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Schedule Button"));
+        //         // var Schedule = stackalloc AtkValue[1];
+        //         // Schedule[0] = new()
+        //         // {
+        //         //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+        //         //     Int = 13,
+        //         // };
+        //         // schedulerWindow->FireCallback(1, Schedule);
+        //         // schedulerWindow->Close(true);
+        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Schedule Button", 300));
+        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Schedule Button"));
 
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
+        //         return true;
+        //     }
+        //     catch
+        //     {
+        //         return false;
+        //     }
+        // }
 
         public override void Enable()
         {

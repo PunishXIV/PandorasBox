@@ -46,7 +46,20 @@ internal class WorkshopWindow : Window
     {
         if (WorkshopHelper._enabled)
         {
-            DrawOptions();
+            if (ImGui.BeginTabBar("##ReSanctuary_MainWindowTabs", ImGuiTabBarFlags.None))
+            {
+                if (ImGui.BeginTabItem("Schedule Executor"))
+                {
+                    DrawOptions();
+                    ImGui.EndTabItem();
+                }
+
+                if (ImGui.BeginTabItem("Schedule Builder"))
+                {
+                    // DrawScheduleBuilder();
+                    ImGui.EndTabItem();
+                }
+            }
         }
     }
 
@@ -111,10 +124,10 @@ internal class WorkshopWindow : Window
             var text = ImGui.GetClipboardText();
             Dictionary<int, WorkshopHelper.Schedule> schedules = WorkshopHelper.ScheduleImport(text);
             // cannot convert error
-            foreach (WorkshopHelper.Item item in WorkshopHelper.CopiedSchedule.Values)
-            {
-                PluginLog.Log($"item: {item.Name}");
-            }
+            // foreach (WorkshopHelper.Item item in WorkshopHelper.CopiedSchedule.Values)
+            // {
+            //     PluginLog.Log($"item: {item.Name}");
+            // }
         }
         ImGui.SameLine();
         // generates a null references?
