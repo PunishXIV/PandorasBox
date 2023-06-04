@@ -1,9 +1,11 @@
+using ClickLib.Clicks;
 using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -37,6 +39,8 @@ namespace PandorasBox.Features.UI
 
             public bool IncludeFertilzing = false;
             public uint SelectedFertilizer = 0;
+
+            public bool AutoConfirm = false;
         }
 
         public Configs Config { get; private set; }
@@ -184,6 +188,13 @@ namespace PandorasBox.Features.UI
                         TaskManager.DelayNext($"Gardening2", 100);
                         TaskManager.Enqueue(() => TryClickItem(addon, 2, seedIndex));
                     }
+
+                    if (Config.AutoConfirm)
+                    {
+                        TaskManager.DelayNext($"Confirming", 100);
+                        TaskManager.Enqueue(() => Callback.Fire(addon, false, 0, 0, 0, 0, 0), 300, false);
+                        TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
+                    }
                 }
 
             }
@@ -291,6 +302,24 @@ namespace PandorasBox.Features.UI
             return true;
         }
 
+        internal static bool ConfirmYesNo()
+        {
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
+            var hg = (AtkUnitBase*)Svc.GameGui.GetAddonByName("HousingGardening");
+            if (hg == null) return false;
+
+            if (hg->IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
+                addon->AtkUnitBase.IsVisible &&
+                addon->YesButton->IsEnabled &&
+                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+            {
+                new ClickSelectYesNo((IntPtr)addon).Yes();
+                return true;
+            }
+
+            return false;
+        }
+
         public override void Disable()
         {
             SaveConfig(Config);
@@ -373,6 +402,8 @@ namespace PandorasBox.Features.UI
                     ImGui.EndCombo();
                 }
             }
+
+            ImGui.Checkbox("Auto Confirm", ref Config.AutoConfirm);
         };
     }
 }
