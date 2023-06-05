@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Conditions;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -18,27 +19,50 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        public override void Enable()
-        {
-            Svc.Framework.Update += RunFeature;
-            base.Enable();
-        }
+        private bool isNormalNode;
+        private bool isFirstCall = true;
 
+        // bool to track we're in the same gathering window
+        // bool if this is a non normal mode by presence of checkbox
+        // get the AtkComponentCheckbox is checked for each number (1-8 is the actual order)
+        // get the gathereditemid[num] of the same node
+        // check if it's a collectable via sheets
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-            if (Svc.GameGui.GetAddonByName("Gathering") != IntPtr.Zero)
+            var addon = Svc.GameGui.GetAddonByName("Gathering");
+            if (addon == IntPtr.Zero)
             {
-                var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
-                if (ptr == null) return;
+                isFirstCall = true;
+                return;
+            }
 
-                var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
+            var ptr = (AtkUnitBase*)addon;
+            if (ptr == null) return;
 
-                var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
 
-                // only function on Unspoiled nodes
-                if (!(Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0))) return;
+            var checkboxNode = ptr->UldManager.NodeList[10]; // quick gather checkbox
 
-                var checkboxNode = ptr->UldManager.NodeList[10]; // quick gather checkbox
+            if (isFirstCall)
+            {
+                if (checkboxNode->IsVisible)
+                {
+                    isNormalNode = true;
+                    isFirstCall = false;
+                }
+                else
+                {
+                    isNormalNode = false;
+                    isFirstCall = false;
+                }
+            }
+            else
+            {
+                isNormalNode = (checkboxNode->IsVisible) ? true : false;
+            }
+
+
+            if (!isNormalNode)
+            {
                 checkboxNode->ToggleVisibility(true);
                 try
                 {
@@ -78,6 +102,13 @@ namespace PandorasBox.Features.UI
                     return;
                 }
             }
+            // if (flag == ConditionFlag.Gathering && !value) isFirstCall = true;
+        }
+
+        public override void Enable()
+        {
+            Svc.Framework.Update += RunFeature;
+            base.Enable();
         }
 
         public override void Disable()
