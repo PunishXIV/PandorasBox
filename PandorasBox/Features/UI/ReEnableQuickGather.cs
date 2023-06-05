@@ -67,7 +67,7 @@ namespace PandorasBox.Features.UI
                         }
                     }
                     if (gatheredNode == -1) return;
-                    while (isChecked)
+                    if (isChecked)
                     {
                         TaskManager.DelayNext("GatheringDelay", 100);
                         TaskManager.Enqueue(() => Callback.Fire(ptr, false, gatheredNode));
