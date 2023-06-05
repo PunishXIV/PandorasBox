@@ -19,7 +19,7 @@ namespace PandorasBox.Features.Actions
     {
         public override string Name => "Auto-mount on Zone Change";
 
-        public override string Description => "Uses Mount Roulette on zone change if not already mounted.";
+        public override string Description => "Mounts on zone change if not already mounted.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 

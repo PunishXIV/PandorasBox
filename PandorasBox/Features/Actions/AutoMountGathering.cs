@@ -1,8 +1,10 @@
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -18,7 +20,7 @@ namespace PandorasBox.Features.Actions
     {
         public override string Name => "Auto-Mount after Gathering";
 
-        public override string Description => "Uses Mount Roulette or a specific mount upon finishing gathering from a node. Will try to execute for up to 3 seconds after the delay if moving.";
+        public override string Description => "Mounts upon finishing gathering from a node. Will try to execute for up to 3 seconds after the delay if moving.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
@@ -29,6 +31,8 @@ namespace PandorasBox.Features.Actions
             public uint SelectedMount = 0;
 
             public bool AbortIfMoving = false;
+
+            public bool UseOnIsland = false;
         }
 
         public Configs Config { get; private set; }
@@ -41,9 +45,14 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void RunFeature(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
+        private bool GatheredOnIsland(ConditionFlag flag, bool value)
         {
-            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering && !value)
+            return flag == ConditionFlag.OccupiedInQuestEvent && !value && MJIManager.Instance()->IsPlayerInSanctuary != 0;
+        }
+
+        private void RunFeature(ConditionFlag flag, bool value)
+        {
+            if (flag == ConditionFlag.Gathering && !value || (GatheredOnIsland(flag, value) && Config.UseOnIsland))
             {
                 TaskManager.Enqueue(() => EzThrottler.Throttle("GatherMount", (int)(Config.ThrottleF * 1000)));
                 TaskManager.Enqueue(() => EzThrottler.Check("GatherMount"));
@@ -111,6 +120,7 @@ namespace PandorasBox.Features.Actions
             }
 
             ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
+            ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland);
 
         };
     }
