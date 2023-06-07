@@ -41,20 +41,10 @@ namespace PandorasBox.Features.UI
         {
             try
             {
-                // var addon2 = Svc.GameGui.GetAddonByName("Gathering");
-                // if (Svc.GameGui.GetAddonByName("Gathering") == IntPtr.Zero) return;
                 if (TryGetAddonByName<AddonGathering>("Gathering", out var addon))
                 {
-
                     var ptr = (AtkUnitBase*)addon;
                     if (ptr == null) return;
-
-                    // var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
-
-                    // var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
-
-                    // only function on Unspoiled nodes
-                    // if (!(Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0))) return;
 
                     // return if it's a normal, diadem, or fishing node
                     var targetNode = Svc.Targets.Target;
@@ -93,9 +83,12 @@ namespace PandorasBox.Features.UI
                         }
                     }
 
-                    // var gatheredItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == gatherablesIds[gatheredItemIndex]).First();
-                    // ideally, if it's a collectable, uncheck the box as a form of in-game feedback that it's invalid
                     if (gatheredItemIndex == -1) return;
+
+                    // ideally, if it's a collectable, uncheck the box as a form of in-game feedback that it's invalid
+                    var gatheredItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == gatherablesIds[gatheredItemIndex]).First();
+                    if (gatheredItem.IsCollectable) return;
+
                     // unchecking mid operation does nothing?
                     // queue of callbacks persists between nodes, overriding QG checkbox
                     // rarely fires outside of a gathering node
