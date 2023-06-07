@@ -41,6 +41,8 @@ namespace PandorasBox.Features.UI
         {
             try
             {
+                // var addon2 = Svc.GameGui.GetAddonByName("Gathering");
+                // if (Svc.GameGui.GetAddonByName("Gathering") == IntPtr.Zero) return;
                 if (TryGetAddonByName<AddonGathering>("Gathering", out var addon))
                 {
 
@@ -95,11 +97,13 @@ namespace PandorasBox.Features.UI
                     // ideally, if it's a collectable, uncheck the box as a form of in-game feedback that it's invalid
                     if (gatheredItemIndex == -1) return;
                     // unchecking mid operation does nothing?
+                    // queue of callbacks persists between nodes, overriding QG checkbox
+                    // rarely fires outside of a gathering node
                     if (isChecked)
                     {
                         TaskManager.DelayNext("GatheringDelay", 100);
                         TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Gathering] && !Svc.Condition[ConditionFlag.Gathering42]);
-                        TaskManager.Enqueue(() => Callback.Fire(ptr, false, gatheredItemIndex));
+                        TaskManager.Enqueue(() => Callback.Fire(&addon->AtkUnitBase, false, gatheredItemIndex));
                     }
                 }
             }
