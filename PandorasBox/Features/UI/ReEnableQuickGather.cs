@@ -46,7 +46,7 @@ namespace PandorasBox.Features.UI
                     var ptr = (AtkUnitBase*)addon;
                     if (ptr == null) return;
 
-                    // return if it's a normal, diadem, or fishing node
+                    // return if it's not an unspoiled, leve, ephemeral, or folklore node
                     var targetNode = Svc.Targets.Target;
                     if (!(Svc.Data.GetExcelSheet<GatheringPoint>().Any(x => x.RowId == targetNode.DataId && x.Type is 2 or 3 or 4 or 5))) return;
 
@@ -89,15 +89,24 @@ namespace PandorasBox.Features.UI
                     var gatheredItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == gatherablesIds[gatheredItemIndex]).First();
                     if (gatheredItem.IsCollectable) return;
 
-                    // unchecking mid operation does nothing?
-                    // queue of callbacks persists between nodes, overriding QG checkbox
-                    // rarely fires outside of a gathering node
+                    var gatheringWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                    if (gatheringWindow == null) return;
                     if (isChecked)
                     {
-                        TaskManager.DelayNext("GatheringDelay", 100);
-                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Gathering] && !Svc.Condition[ConditionFlag.Gathering42]);
-                        TaskManager.Enqueue(() => Callback.Fire(&addon->AtkUnitBase, false, gatheredItemIndex));
+                        // why does calling isChecked in here not work?
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42] && checkboxNode->GetAsAtkComponentCheckBox()->IsChecked);
+                        TaskManager.DelayNext("InteractCooldown", 100);
+                        TaskManager.Enqueue(() => Callback.Fire(gatheringWindow, false, gatheredItemIndex));
                     }
+                    else
+                    {
+                        // can't reset which item to gather here?
+                        TaskManager.Abort();
+                    }
+                }
+                else
+                {
+                    TaskManager.Abort();
                 }
             }
             catch
@@ -106,15 +115,34 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        // private void TryQuickGather(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
+        // {
+        //     if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering && !value)
+        //     {
+        //     }
+        // }
+
+        // private void TriggerCooldown(ConditionFlag flag, bool value)
+        // {
+        //     if ((flag == ConditionFlag.Gathering) && !value)
+        //     {
+        //         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+        //         TaskManager.DelayNext("InteractCooldown", 400);
+        //         TaskManager.Enqueue(() => Callback.Fire(&addon->AtkUnitBase, false, gatheredItemIndex));
+        //     }
+        // }
+
         public override void Enable()
         {
             Svc.Framework.Update += RunFeature;
+            // Svc.Condition.ConditionChange += TriggerCooldown;
             base.Enable();
         }
 
         public override void Disable()
         {
             Svc.Framework.Update -= RunFeature;
+            // Svc.Condition.ConditionChange -= TriggerCooldown;
             base.Disable();
         }
     }
