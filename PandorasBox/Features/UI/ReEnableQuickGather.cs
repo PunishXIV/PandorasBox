@@ -39,6 +39,7 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
+            // get rid of the try so I can actually see any errors in execution?
             try
             {
                 if (TryGetAddonByName<AddonGathering>("Gathering", out var addon))
@@ -67,6 +68,7 @@ namespace PandorasBox.Features.UI
                       ptr->UldManager.NodeList[18]->GetAsAtkComponentCheckBox()->IsChecked
                     };
 
+                    // this shit idea probably isn't needed now
                     // var nodeIntegrity = 4;
                     // var locationEffectNode = ptr->UldManager.NodeList[8];
                     // if (locationEffectNode->IsVisible) nodeIntegrity = 4 + Regex.Match(locationEffectNode->GetAsAtkTextNode()->NodeText.ToString(), @"Gathering Attempts/Integrity \+(\d+)").Groups[1].Value;
@@ -89,6 +91,7 @@ namespace PandorasBox.Features.UI
                     var gatheredItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == gatherablesIds[gatheredItemIndex]).First();
                     if (gatheredItem.IsCollectable) return;
 
+                    // do I even need to do this here or can I just keep using &addon->AtkUnitBase in the callback?
                     var gatheringWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering", 1);
                     if (gatheringWindow == null) return;
                     if (isChecked)
@@ -101,6 +104,8 @@ namespace PandorasBox.Features.UI
                     else
                     {
                         // can't reset which item to gather here?
+                        gatheredItemIndex = -1;
+                        // this abort is probably not needed
                         TaskManager.Abort();
                     }
                 }
