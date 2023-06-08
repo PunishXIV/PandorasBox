@@ -37,6 +37,12 @@ namespace PandorasBox.Features.UI
             DiademClouded,  // diadem special
         }
 
+        private int gatheredItemIndex = -1;
+
+        // curent problems:
+        // when re-enabling quick gather mid node it will quick gather what was gathered last, not resetting the choice
+        // quick gather is somehow auto selected on normal nodes (simpletweaks issue actually)
+
         private void RunFeature(Dalamud.Game.Framework framework)
         {
             // get rid of the try so I can actually see any errors in execution?
@@ -53,10 +59,11 @@ namespace PandorasBox.Features.UI
 
                     var checkboxNode = ptr->UldManager.NodeList[10];
                     checkboxNode->ToggleVisibility(true);
+
                     bool isChecked = checkboxNode->GetAsAtkComponentCheckBox()->IsChecked;
                     if (!isChecked) return;
 
-                    var items = new List<bool>
+                    var gatherablesSlots = new List<bool>
                     {
                       ptr->UldManager.NodeList[25]->GetAsAtkComponentCheckBox()->IsChecked,
                       ptr->UldManager.NodeList[24]->GetAsAtkComponentCheckBox()->IsChecked,
@@ -76,10 +83,9 @@ namespace PandorasBox.Features.UI
                     var gatherablesIds = new List<uint> {
                         addon->GatheredItemId1, addon->GatheredItemId2, addon->GatheredItemId3, addon->GatheredItemId4, addon->GatheredItemId5, addon->GatheredItemId6, addon->GatheredItemId7, addon->GatheredItemId8
                     };
-                    int gatheredItemIndex = -1;
-                    for (var i = 0; i < items.Count; i++)
+                    for (var i = 0; i < gatherablesSlots.Count; i++)
                     {
-                        if (items[i])
+                        if (gatherablesSlots[i])
                         {
                             gatheredItemIndex = i;
                         }
@@ -87,9 +93,13 @@ namespace PandorasBox.Features.UI
 
                     if (gatheredItemIndex == -1) return;
 
-                    // ideally, if it's a collectable, uncheck the box as a form of in-game feedback that it's invalid
                     var gatheredItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == gatherablesIds[gatheredItemIndex]).First();
-                    if (gatheredItem.IsCollectable) return;
+                    if (gatheredItem.IsCollectable)
+                    {
+                        checkboxNode->GetAsAtkComponentNode()->Component->UldManager.NodeList[2]->ToggleVisibility(false);
+                        gatheredItemIndex = -1;
+                        return;
+                    }
 
                     // do I even need to do this here or can I just keep using &addon->AtkUnitBase in the callback?
                     var gatheringWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering", 1);
@@ -105,12 +115,13 @@ namespace PandorasBox.Features.UI
                     {
                         // can't reset which item to gather here?
                         gatheredItemIndex = -1;
-                        // this abort is probably not needed
-                        TaskManager.Abort();
+                        // this abort is probably not needed?
+                        // TaskManager.Abort();
                     }
                 }
                 else
                 {
+                    gatheredItemIndex = -1;
                     TaskManager.Abort();
                 }
             }
@@ -120,34 +131,15 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        // private void TryQuickGather(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
-        // {
-        //     if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering && !value)
-        //     {
-        //     }
-        // }
-
-        // private void TriggerCooldown(ConditionFlag flag, bool value)
-        // {
-        //     if ((flag == ConditionFlag.Gathering) && !value)
-        //     {
-        //         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-        //         TaskManager.DelayNext("InteractCooldown", 400);
-        //         TaskManager.Enqueue(() => Callback.Fire(&addon->AtkUnitBase, false, gatheredItemIndex));
-        //     }
-        // }
-
         public override void Enable()
         {
             Svc.Framework.Update += RunFeature;
-            // Svc.Condition.ConditionChange += TriggerCooldown;
             base.Enable();
         }
 
         public override void Disable()
         {
             Svc.Framework.Update -= RunFeature;
-            // Svc.Condition.ConditionChange -= TriggerCooldown;
             base.Disable();
         }
     }
