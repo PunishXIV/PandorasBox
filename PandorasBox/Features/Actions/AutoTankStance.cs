@@ -1,7 +1,6 @@
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
-using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using PandorasBox.FeaturesSetup;
