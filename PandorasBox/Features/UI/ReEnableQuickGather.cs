@@ -103,6 +103,7 @@ namespace PandorasBox.Features.UI
                     if (isChecked)
                     {
                         // why does calling isChecked in here not work?
+                        // this will *sometimes* generate a NRE if it fires off in the wrong tick after the last gather. Doesn't cause issues aside from polluting the log though
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42] && checkboxNode->GetAsAtkComponentCheckBox()->IsChecked);
                         TaskManager.DelayNext("InteractCooldown", 100);
                         TaskManager.Enqueue(() => Callback.Fire(gatheringWindow, false, gatheredItemIndex));
