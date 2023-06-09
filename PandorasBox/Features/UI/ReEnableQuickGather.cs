@@ -39,10 +39,6 @@ namespace PandorasBox.Features.UI
 
         private int gatheredItemIndex = -1;
 
-        // curent problems:
-        // when re-enabling quick gather mid node it will quick gather what was gathered last, not resetting the choice
-        // quick gather is somehow auto selected on normal nodes (simpletweaks issue actually)
-
         private void RunFeature(Dalamud.Game.Framework framework)
         {
             // get rid of the try so I can actually see any errors in execution?
@@ -61,7 +57,7 @@ namespace PandorasBox.Features.UI
                     checkboxNode->ToggleVisibility(true);
 
                     bool isChecked = checkboxNode->GetAsAtkComponentCheckBox()->IsChecked;
-                    if (!isChecked) return;
+                    if (!isChecked) { TaskManager.Abort(); gatheredItemIndex = -1; return; }
 
                     var gatherablesSlots = new List<bool>
                     {
@@ -110,13 +106,6 @@ namespace PandorasBox.Features.UI
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42] && checkboxNode->GetAsAtkComponentCheckBox()->IsChecked);
                         TaskManager.DelayNext("InteractCooldown", 100);
                         TaskManager.Enqueue(() => Callback.Fire(gatheringWindow, false, gatheredItemIndex));
-                    }
-                    else
-                    {
-                        // can't reset which item to gather here?
-                        gatheredItemIndex = -1;
-                        // this abort is probably not needed?
-                        // TaskManager.Abort();
                     }
                 }
                 else
