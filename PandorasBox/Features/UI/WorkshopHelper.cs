@@ -259,10 +259,10 @@ namespace PandorasBox.Features.UI
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
     {
-        var x1 = new Item { Key = Craftables[63].Key, Name = Craftables[63].Name, CraftingTime = Craftables[63].CraftingTime, UIIndex = Craftables[0].Key-- };
-        var x2 = new Item { Key = Craftables[21].Key, Name = Craftables[21].Name, CraftingTime = Craftables[21].CraftingTime, UIIndex = Craftables[0].Key-- };
-        var x3 = new Item { Key = Craftables[16].Key, Name = Craftables[16].Name, CraftingTime = Craftables[16].CraftingTime, UIIndex = Craftables[0].Key-- };
-        var x4 = new Item { Key = Craftables[24].Key, Name = Craftables[24].Name, CraftingTime = Craftables[24].CraftingTime, UIIndex = Craftables[0].Key-- };
+        var x1 = new Item { Key = Craftables[0].Key, Name = Craftables[0].Name, CraftingTime = Craftables[0].CraftingTime, UIIndex = Craftables[0].Key - 1 };
+        var x2 = new Item { Key = Craftables[21].Key, Name = Craftables[21].Name, CraftingTime = Craftables[21].CraftingTime, UIIndex = Craftables[0].Key - 1 };
+        var x3 = new Item { Key = Craftables[16].Key, Name = Craftables[16].Name, CraftingTime = Craftables[16].CraftingTime, UIIndex = Craftables[0].Key - 1 };
+        var x4 = new Item { Key = Craftables[24].Key, Name = Craftables[24].Name, CraftingTime = Craftables[24].CraftingTime, UIIndex = Craftables[0].Key - 1 };
         if (ImGui.Button("Debug Craftables"))
         {
             List<Item> items = new List<Item>();
@@ -272,7 +272,7 @@ namespace PandorasBox.Features.UI
         }
         if (ImGui.Button("Debug List"))
         {
-            PluginLog.Log($"K: {Craftables[63].Key}, N: {Craftables[63].Name}, CT: {Craftables[63].CraftingTime}, UI: {Craftables[63].Key - 1}");
+            PluginLog.Log($"K: {Craftables[0].Key}, N: {Craftables[0].Name}, CT: {Craftables[0].CraftingTime}, UI: {Craftables[0].Key - 1}");
             PluginLog.Log($"K: {x1.Key}, N: {x1.Name}, CT: {x1.CraftingTime}, UI: {x1.UIIndex}");
             // PluginLog.Log($"K: {x2.Key}, N: {x2.Name}, CT: {x2.CraftingTime}, UI: {x2.UIIndex}");
             // PluginLog.Log($"K: {x3.Key}, N: {x3.Name}, CT: {x3.CraftingTime}, UI: {x3.UIIndex}");
@@ -299,7 +299,7 @@ namespace PandorasBox.Features.UI
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
-                .Where(x => !string.IsNullOrEmpty(x.Item.Value.Name.RawString))
+                .Where(x => x.Item.Row > 0)
                 .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime))
                 .ToArray();
             WorkshopWindow = new();
