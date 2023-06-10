@@ -46,7 +46,7 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfRespawned(ConditionFlag flag, bool value)
         {
-            if (flag == ConditionFlag.Unconscious && !value)
+            if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");

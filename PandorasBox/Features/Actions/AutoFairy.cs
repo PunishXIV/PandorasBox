@@ -33,7 +33,7 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(uint? jobId)
         {
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
+            if (Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (jobId is 26 or 27 or 28)
             {
                 TaskManager.Abort();
@@ -44,7 +44,7 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfRespawned(ConditionFlag flag, bool value)
         {
-            if (flag == ConditionFlag.Unconscious && !value)
+            if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
