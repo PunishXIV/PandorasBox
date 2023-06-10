@@ -17,7 +17,7 @@ namespace PandorasBox.Features
 {
     public unsafe class AutoSprint : Feature
     {
-        public override string Name => "Auto-sprint in Sanctuaries";
+        public override string Name => "Auto-Sprint in Sanctuaries";
 
         public override string Description => "Automatically uses sprint when in an area you are gaining rested experience, such as cities.";
 

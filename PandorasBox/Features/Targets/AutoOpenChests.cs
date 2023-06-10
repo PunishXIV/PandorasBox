@@ -48,7 +48,7 @@ namespace PandorasBox.Features.Targets
         }
 
         private void RunFeature(Framework framework)
-        {
+        { 
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
             {
                 TaskManager.Abort();
