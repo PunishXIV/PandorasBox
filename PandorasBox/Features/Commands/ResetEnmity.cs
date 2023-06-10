@@ -13,7 +13,7 @@ namespace PandorasBox.Features.Commands
     public unsafe class ResetEnmity : CommandFeature
     {
         public override string Name => "Reset Enmity";
-        public override string Command { get; set; } = "/presetenmity";
+        public override string Command { get; set; } = "/p-resetenmity";
         public override string[] Alias => new string[] { "/pre" };
 
         public override List<string> Parameters => new() { "t", "a" };
@@ -44,10 +44,10 @@ namespace PandorasBox.Features.Commands
             ExecuteCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
 
             PluginLog.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
-            PluginLog.Information($"Resetting enmity {objectId:X}");
+            PluginLog.Information($"Resetting enmity {objectId}");
 
             long success = ExecuteCommand(0x13f, objectId, 0, 0, 0);
-            PluginLog.Debug($"Reset enmity of {objectId:X} returned: {success}");
+            PluginLog.Debug($"Reset enmity of {objectId} returned: {success}");
         }
 
         private void ResetTarget()

@@ -18,6 +18,7 @@ namespace PandorasBox.UI
             {
                 MaximumSize = new System.Numerics.Vector2(0, 0),
             };
+            P.Ws.AddWindow(this);
         }
 
         public override void Draw() => Feature.Draw();
