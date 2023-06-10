@@ -30,29 +30,28 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Cooldown after gathering (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Cooldown = 0.1f;
 
-
             [FeatureConfigOption("Exclude Timed Unspoiled Nodes", "", 1)]
             public bool ExcludeTimedUnspoiled = false;
 
-            [FeatureConfigOption("Exclude Timed Ephemeral Nodes", "", 1)]
+            [FeatureConfigOption("Exclude Timed Ephemeral Nodes", "", 2)]
             public bool ExcludeTimedEphermeral = false;
+
+            [FeatureConfigOption("Exclude Timed Legendary Nodes", "", 3)]
+            public bool ExcludeTimedLegendary = false;
 
             [FeatureConfigOption("Required GP to Interact (>=)", IntMin = 0, IntMax = 1000, EditorSize = 300)]
             public int RequiredGP = 0;
 
-            [FeatureConfigOption("Exclude Timed Nodes", "", 1)]
-            public bool ExcludeTimed = false;
-
-            [FeatureConfigOption("Exclude Island Nodes", "", 4)]
+            [FeatureConfigOption("Exclude Island Nodes", "", 7)]
             public bool ExcludeIsland = false;
 
-            [FeatureConfigOption("Exclude Miner Nodes", "", 2)]
+            [FeatureConfigOption("Exclude Miner Nodes", "", 4)]
             public bool ExcludeMiner = false;
 
-            [FeatureConfigOption("Exclude Botanist Nodes", "", 1)]
+            [FeatureConfigOption("Exclude Botanist Nodes", "", 5)]
             public bool ExcludeBotanist = false;
 
-            [FeatureConfigOption("Exclude Spearfishing Nodes", "", 3)]
+            [FeatureConfigOption("Exclude Spearfishing Nodes", "", 6)]
             public bool ExcludeFishing = false;
 
         }
@@ -114,9 +113,13 @@ namespace PandorasBox.Features.Targets
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0) && Config.ExcludeTimedUnspoiled)
+            var Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
+
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
                 return;
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
+                return;
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.Row != 0) && Config.ExcludeTimedLegendary)
                 return;
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
