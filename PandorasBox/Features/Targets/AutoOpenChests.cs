@@ -1,12 +1,15 @@
 using Dalamud.Game;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
@@ -14,8 +17,6 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoOpenChests : Feature
     {
-        private uint lastChestId = 0;
-
         public override string Name => "Automatically Open Chests";
 
         public override string Description => "Walk up to a chest to automatically open it.";
@@ -49,7 +50,9 @@ namespace PandorasBox.Features.Targets
                 TaskManager.Abort();
                 return;
             }
-            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2).ToList();
+
+            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure
+                && GameObjectHelper.GetTargetDistance(x) <= 0.5f && !IsOpened(x.ObjectId)).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 
@@ -59,17 +62,14 @@ namespace PandorasBox.Features.Targets
             if (!baseObj->GetIsTargetable())
                 return;
 
-            //Opened it.
-            if (lastChestId == nearestNode.ObjectId) return;
-
             if (!TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Chests", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() =>
                 {
-                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return true;
+                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 0.5f) return true;
+
                     TargetSystem.Instance()->InteractWithObject(baseObj, true);
-                    lastChestId = nearestNode.ObjectId;
                     if (Config.CloseLootWindow)
                     {
                         TaskManager.DelayNextImmediate(100);
@@ -78,6 +78,16 @@ namespace PandorasBox.Features.Targets
                     return true;
                 }, 10, true);
             }
+        }
+
+        private bool IsOpened(uint objectId)
+        {
+            //Well IDK why in the release version instead of submodule, I can get Loot.Instance()->ItemArraySpan.
+            foreach (var item in new Span<LootItem>(Unsafe.AsPointer(ref Loot.Instance()->ItemArray[0]), 16))
+            {
+                if (item.ChestObjectId == objectId) return true;
+            }
+            return false;
         }
 
         private static unsafe bool? CloseWindow()
