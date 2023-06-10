@@ -153,6 +153,20 @@ namespace PandorasBox.Features.UI
             return items;
         }
 
+        public static void TestSchedule()
+        {
+            List<string> itemStrings = new List<string> { "Isleworks Firesand", "Isleworks Garnet Rapier", "Isleworks Earrings", "Isleworks Silver Ear Cuffs" };
+
+            List<Item> items = MatchItems(itemStrings);
+            List<int> workshops = new List<int> { 1 };
+            int hours = 0;
+            foreach (Item item in items)
+            {
+                TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, workshops[0], hours));
+            }
+            return;
+        }
+
         private bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
 
         private unsafe bool OpenCycle(int cycle_day)

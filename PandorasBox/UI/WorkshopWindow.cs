@@ -145,7 +145,7 @@ internal class WorkshopWindow : Window
         }
         if (ImGui.Button("Fire Schedule"))
         {
-            // TBD
+            WorkshopHelper.TestSchedule();
         }
         // list copied schedule here
         ImGui.Separator();
