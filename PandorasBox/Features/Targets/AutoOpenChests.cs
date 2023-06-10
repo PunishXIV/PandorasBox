@@ -1,8 +1,10 @@
 using Dalamud.Game;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
@@ -27,8 +29,11 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Throttle = 0.1f;
 
-            [FeatureConfigOption("Immediately Close Loot Window After Opening")]
+            [FeatureConfigOption("Immediately Close Loot Window After Opening", "", 1)]
             public bool CloseLootWindow = false;
+
+            [FeatureConfigOption("Open Chests in High End Duties", "", 2)]
+            public bool OpenInHighEndDuty = false;
         }
 
         public Configs Config { get; private set; }
@@ -49,6 +54,14 @@ namespace PandorasBox.Features.Targets
                 TaskManager.Abort();
                 return;
             }
+
+            var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+            if (!Config.OpenInHighEndDuty && contentFinderInfo.HighEndDuty)
+            {
+                TaskManager.Abort();
+                return;
+            }
+
             var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2).ToList();
             if (nearbyNodes.Count == 0)
                 return;
@@ -91,7 +104,7 @@ namespace PandorasBox.Features.Targets
                 {
                     needGreedWindow->Close(true);
                     return true;
-                }                
+                }
             }
             else
             {
