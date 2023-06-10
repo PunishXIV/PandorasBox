@@ -2,9 +2,11 @@ using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
+using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace PandorasBox.Features.Actions
 {
@@ -33,6 +35,9 @@ namespace PandorasBox.Features.Actions
 
             [FeatureConfigOption("Only activate on entrance if no other tank has stance", "", 2)]
             public bool NoOtherTanks = false;
+
+            [FeatureConfigOption("Activate when synced to a fate", "", 3)]
+            public bool ActivateInFate = false;
         }
 
         public Configs Config { get; private set; }
@@ -46,6 +51,7 @@ namespace PandorasBox.Features.Actions
             OnJobChanged += RunFeature;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
             Svc.Framework.Update += CheckParty;
+            Svc.Framework.Update += CheckForFateSync;
             base.Enable();
         }
 
@@ -80,6 +86,15 @@ namespace PandorasBox.Features.Actions
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent], "TankCheckConditionCutscene");
             TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer?.ClassJob.Id), "TankStanceDungeonEnabled");
 
+        }
+
+        private void CheckForFateSync(Framework framework)
+        {
+            var ps = PlayerState.Instance();
+            if (Config.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
+            {
+                TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer.ClassJob.Id));
+            }
         }
 
         private void RunFeature(uint? jobId)
@@ -153,6 +168,7 @@ namespace PandorasBox.Features.Actions
             OnJobChanged -= RunFeature;
             Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
             Svc.Framework.Update -= CheckParty;
+            Svc.Framework.Update -= CheckForFateSync;
             base.Disable();
         }
     }
