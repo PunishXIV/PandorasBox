@@ -30,6 +30,13 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Cooldown after gathering (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Cooldown = 0.1f;
 
+
+            [FeatureConfigOption("Exclude Timed Unspoiled Nodes", "", 1)]
+            public bool ExcludeTimedUnspoiled = false;
+
+            [FeatureConfigOption("Exclude Timed Ephemeral Nodes", "", 1)]
+            public bool ExcludeTimedEphermeral = false;
+
             [FeatureConfigOption("Required GP to Interact (>=)", IntMin = 0, IntMax = 1000, EditorSize = 300)]
             public int RequiredGP = 0;
 
@@ -47,6 +54,7 @@ namespace PandorasBox.Features.Targets
 
             [FeatureConfigOption("Exclude Spearfishing Nodes", "", 3)]
             public bool ExcludeFishing = false;
+
         }
 
         public Configs Config { get; private set; }
@@ -106,7 +114,9 @@ namespace PandorasBox.Features.Targets
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && (x.GatheringRarePopTimeTable.Value.RowId > 0 || x.EphemeralStartTime != 65535)) && Config.ExcludeTimed)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0) && Config.ExcludeTimedUnspoiled)
+                return;
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
                 return;
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
