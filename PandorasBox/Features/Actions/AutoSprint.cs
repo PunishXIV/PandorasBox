@@ -6,6 +6,8 @@ using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.ComponentModel.Design;
@@ -21,15 +23,13 @@ namespace PandorasBox.Features
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public override bool UseAutoConfig => true;
+        public override bool UseAutoConfig => false;
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
-
-            [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
+            public bool ExcludeHousing = false;
         }
 
         public Configs Config { get; private set; }
@@ -47,6 +47,8 @@ namespace PandorasBox.Features
 
             if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
+
+            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) return;
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;
@@ -81,5 +83,14 @@ namespace PandorasBox.Features
             SaveConfig(Config);
             base.Disable();
         }
+
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        {
+            ImGui.PushItemWidth(300);
+            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+            ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
+            ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+
+        };
     }
 }

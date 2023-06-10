@@ -50,7 +50,6 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Overlay = new(this);
-            P.Ws.AddWindow(Overlay);
             updateItemHook ??= Common.Hook<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
             updateItemHook?.Enable();
             updateListHook ??= Common.Hook<UpdateListDelegate>("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0", UpdateListDetour);

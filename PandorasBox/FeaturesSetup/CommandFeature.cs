@@ -30,33 +30,31 @@ public abstract partial class CommandFeature : Feature
 
     public override void Enable()
     {
-        var c = Command.StartsWith("/pan") ? Command : $"/pan {Command}";
-        if (Svc.Commands.Commands.ContainsKey(c))
+        if (Svc.Commands.Commands.ContainsKey(Command))
         {
-            PluginLog.Error($"Command '{c}' is already registered.");
+            PluginLog.Error($"Command '{Command}' is already registered.");
         }
         else
         {
-            Svc.Commands.AddHandler(c, new CommandInfo(OnCommandInternal)
+            Svc.Commands.AddHandler(Command, new CommandInfo(OnCommandInternal)
             {
                 HelpMessage = HelpMessage,
                 ShowInHelp = ShowInHelp
             });
 
-            registeredCommands.Add(c);
+            registeredCommands.Add(Command);
         }
 
         foreach (var a in Alias)
         {
-            var alias = a.StartsWith("/pan") ? a : $"/pan {a}";
-            if (!Svc.Commands.Commands.ContainsKey(alias))
+            if (!Svc.Commands.Commands.ContainsKey(a))
             {
-                Svc.Commands.AddHandler(alias, new CommandInfo(OnCommandInternal)
+                Svc.Commands.AddHandler(a, new CommandInfo(OnCommandInternal)
                 {
                     HelpMessage = HelpMessage,
                     ShowInHelp = false
                 });
-                registeredCommands.Add(alias);
+                registeredCommands.Add(a);
             }
         }
     }
