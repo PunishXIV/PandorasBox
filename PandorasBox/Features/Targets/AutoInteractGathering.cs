@@ -113,7 +113,10 @@ namespace PandorasBox.Features.Targets
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
 
-            var Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
+            string Folklore = "";
+
+            if (gatheringPoint.GatheringSubCategory.IsValueCreated && gatheringPoint.GatheringSubCategory.Value.FolkloreBook != null)
+            Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
 
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
                 return;
