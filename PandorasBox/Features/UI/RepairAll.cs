@@ -31,7 +31,6 @@ namespace PandorasBox.Features
         public override void Enable()
         {
             window = new(this);
-            P.Ws.AddWindow(window);
             base.Enable();
         }
 

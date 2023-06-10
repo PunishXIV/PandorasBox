@@ -139,7 +139,6 @@ internal class MainWindow : Window
                 foreach (var window in Enum.GetValues(typeof(OpenWindow)))
                 {
                     if ((OpenWindow)window == OpenWindow.None) continue;
-                    if ((OpenWindow)window == OpenWindow.Commands) continue;
 
                     if (ImGui.Selectable($"{window}", OpenWindow == (OpenWindow)window))
                     {
@@ -206,26 +205,26 @@ internal class MainWindow : Window
 
         if (ImGui.BeginTable("###CommandsTable", 5, ImGuiTableFlags.Borders))
         {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Parameters", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Aliases", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Command");
+            ImGui.TableSetupColumn("Parameters");
+            ImGui.TableSetupColumn("Description");
+            ImGui.TableSetupColumn("Aliases");
 
             ImGui.TableHeadersRow();
             foreach (var feature in features.Cast<CommandFeature>())
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGui.Text(feature.Name);
+                ImGui.TextWrapped(feature.Name);
                 ImGui.TableNextColumn();
-                ImGui.Text(feature.Command);
+                ImGui.TextWrapped(feature.Command);
                 ImGui.TableNextColumn();
-                ImGui.Text(string.Join(", ", feature.Parameters));
+                ImGui.TextWrapped(string.Join(", ", feature.Parameters));
                 ImGui.TableNextColumn();
-                ImGui.Text($"{feature.Description}");
+                ImGui.TextWrapped($"{feature.Description}");
                 ImGui.TableNextColumn();
-                ImGui.Text($"{string.Join(", ", feature.Alias)}");
+                ImGui.TextWrapped($"{string.Join(", ", feature.Alias)}");
 
             }
 
