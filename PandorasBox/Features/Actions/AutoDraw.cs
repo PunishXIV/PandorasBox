@@ -46,12 +46,13 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfRespawned(ConditionFlag flag, bool value)
         {
-            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.Unconscious && !value)
+            if (flag == ConditionFlag.Unconscious && !value)
             {
-                TaskManager.DelayNext("WaitForConditions", 2000);
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
-                TaskManager.DelayNext("WaitForActionReady", 1000);
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Spell, 7) == 0);
+                TaskManager.DelayNext("WaitForActionReady", 2500);
+                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
             }
         }
