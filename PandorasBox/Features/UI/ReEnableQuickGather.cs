@@ -41,7 +41,6 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-            // get rid of the try so I can actually see any errors in execution?
             try
             {
                 if (TryGetAddonByName<AddonGathering>("Gathering", out var addon))
@@ -70,11 +69,6 @@ namespace PandorasBox.Features.UI
                       ptr->UldManager.NodeList[19]->GetAsAtkComponentCheckBox()->IsChecked,
                       ptr->UldManager.NodeList[18]->GetAsAtkComponentCheckBox()->IsChecked
                     };
-
-                    // this shit idea probably isn't needed now
-                    // var nodeIntegrity = 4;
-                    // var locationEffectNode = ptr->UldManager.NodeList[8];
-                    // if (locationEffectNode->IsVisible) nodeIntegrity = 4 + Regex.Match(locationEffectNode->GetAsAtkTextNode()->NodeText.ToString(), @"Gathering Attempts/Integrity \+(\d+)").Groups[1].Value;
 
                     var gatherablesIds = new List<uint> {
                         addon->GatheredItemId1, addon->GatheredItemId2, addon->GatheredItemId3, addon->GatheredItemId4, addon->GatheredItemId5, addon->GatheredItemId6, addon->GatheredItemId7, addon->GatheredItemId8
