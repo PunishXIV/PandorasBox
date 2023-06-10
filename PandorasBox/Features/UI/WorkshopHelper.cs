@@ -52,117 +52,65 @@ namespace PandorasBox.Features.UI
             public uint Key { get; set; }
             public string Name { get; set; }
             public ushort CraftingTime { get; set; }
-            public byte UIIndex { get; set; }
+            public uint UIIndex { get; set; }
         }
 
-        internal static Dictionary<int, Schedule> ScheduleImport(string input)
-        {
-            List<int> workshops = ParseWorkshops(input);
-            List<string> itemStrings = ParseItems(input);
-            List<Item> items = MatchItems(itemStrings);
+        // internal static Dictionary<int, Schedule> ScheduleImport(string input)
+        // {
+        //     List<Item> items = ParseItems(itemStrings);
 
-            Dictionary<int, Schedule> schedules = new Dictionary<int, Schedule>();
-            foreach (int workshop in workshops)
-            {
-                schedules[workshop] = new Schedule(items);
-            }
+        //     Dictionary<int, Schedule> schedules = new Dictionary<int, Schedule>();
+        //     foreach (int workshop in workshops)
+        //     {
+        //         schedules[workshop] = new Schedule(items);
+        //     }
 
-            CopiedSchedule = schedules;
-            return schedules;
-        }
+        //     CopiedSchedule = schedules;
+        //     return schedules;
+        // }
 
-        public static List<int> ParseWorkshops(string input)
-        {
-            List<int> workshops = new List<int>();
-
-            string pattern = @"Workshops #(\d+)-?(\d+)? Rec|All Workshops|All";
-            Match match = Regex.Match(input, pattern);
-
-            if (match.Success)
-            {
-                if (match.Groups[1].Success) // Single workshop
-                {
-                    int workshopNumber = int.Parse(match.Groups[1].Value);
-                    workshops.Add(workshopNumber);
-                }
-                else if (match.Groups[2].Success) // Range of workshops
-                {
-                    int start = int.Parse(match.Groups[1].Value);
-                    int end = int.Parse(match.Groups[2].Value);
-
-                    for (int i = start; i <= end; i++)
-                    {
-                        workshops.Add(i);
-                    }
-                }
-                else if (match.Value.Equals("All Workshops", StringComparison.OrdinalIgnoreCase) ||
-                         match.Value.Equals("All", StringComparison.OrdinalIgnoreCase))
-                {
-                    // Add all workshops (1, 2, 3, 4) to the list
-                    for (int i = 1; i <= 4; i++)
-                    {
-                        workshops.Add(i);
-                    }
-                }
-            }
-
-            return workshops;
-        }
-
-        internal static List<string> ParseItems(string input)
-        {
-            List<string> itemStrings = new List<string>();
-
-            string pattern = @"(?<=: )(.*?)(?= \()";
-            MatchCollection matches = Regex.Matches(input, pattern);
-            foreach (Match match in matches)
-            {
-                string itemString = match.Groups[1].Value;
-                itemStrings.Add(itemString);
-            }
-
-            return itemStrings;
-        }
-
-
-        public static List<Item> MatchItems(List<string> itemStrings)
+        public static List<Item> ParseItems(List<string> itemStrings)
         {
             List<Item> items = new List<Item>();
-            foreach (string itemName in itemStrings)
+            foreach (var itemString in itemStrings)
             {
-                var matchedCraftable = Craftables.FirstOrDefault(c => c.Name.Contains(itemName, StringComparison.OrdinalIgnoreCase));
-
-                if (matchedCraftable.Key != 0)
+                foreach (var craftable in Craftables)
                 {
-                    Item item = new Item
+                    string craftableNoPrefix = craftable.Name.Replace("Isleworks ", "");
+                    if (itemString.Contains(craftableNoPrefix))
                     {
-                        Key = matchedCraftable.Key,
-                        Name = matchedCraftable.Name,
-                        CraftingTime = matchedCraftable.CraftingTime,
-                        UIIndex = (byte)matchedCraftable.Key
-                    };
+                        Item item = new Item
+                        {
+                            Key = craftable.Key,
+                            Name = craftable.Name,
+                            CraftingTime = craftable.CraftingTime,
+                            UIIndex = craftable.Key - 1
+                        };
+                        // PluginLog.Log($"matched {itemString} to {craftable.Name}");
 
-                    items.Add(item);
-                }
-                else
-                {
-                    PluginLog.Log($"Item not found: {itemName}");
+                        items.Add(item);
+                    }
+                    // else { PluginLog.Log($"failed to match {itemString} to {craftableNoPrefix}"); }
                 }
             }
 
             return items;
         }
 
-        public static void TestSchedule()
+        public void TestSchedule()
         {
-            List<string> itemStrings = new List<string> { "Isleworks Firesand", "Isleworks Garnet Rapier", "Isleworks Earrings", "Isleworks Silver Ear Cuffs" };
+            PluginLog.Log($"entering test schedule");
+            List<string> itemStrings = new List<string> { "Firesand", "Garnet Rapier", "Earrings", "Silver Ear Cuffs" };
 
-            List<Item> items = MatchItems(itemStrings);
+            List<Item> items = ParseItems(itemStrings);
             List<int> workshops = new List<int> { 1 };
             int hours = 0;
             foreach (Item item in items)
             {
+                PluginLog.Log($"queueing agenda open");
                 TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, workshops[0], hours));
+                PluginLog.Log($"queueing schedule");
+                TaskManager.Enqueue(() => ScheduleItem(item, workshops[0]));
             }
             return;
         }
@@ -209,7 +157,7 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private unsafe bool OpenAgenda(int index, int workshop, int prevHours)
+        private unsafe bool OpenAgenda(uint index, int workshop, int prevHours)
         {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
@@ -255,66 +203,104 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        // private unsafe bool ScheduleItem(ItemValues key, int workshop)
-        // {
-        //     var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
-        //     if (addon == IntPtr.Zero)
-        //         return false;
-        //     if (!GenericHelpers.IsAddonReady((AtkUnitBase*)addon)) return false;
+        private unsafe bool ScheduleItem(Item item, int workshop)
+        {
+            var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
+            if (addon == IntPtr.Zero)
+                return false;
+            if (!GenericHelpers.IsAddonReady((AtkUnitBase*)addon)) return false;
 
-        //     try
-        //     {
-        //         var schedulerPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
-        //         if (schedulerPTR == IntPtr.Zero)
-        //             return false;
-        //         var schedulerWindow = (AtkUnitBase*)schedulerPTR;
-        //         if (schedulerWindow == null)
-        //             return false;
+            try
+            {
+                var schedulerPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
+                if (schedulerPTR == IntPtr.Zero)
+                    return false;
+                var schedulerWindow = (AtkUnitBase*)schedulerPTR;
+                if (schedulerWindow == null)
+                    return false;
 
-        //         Callback.Fire(schedulerWindow, false, 11, key.id);
-        //         Callback.Fire(schedulerWindow, false, 13);
-        //         schedulerWindow->Close(true);
+                Callback.Fire(schedulerWindow, false, 11, item.Key);
+                Callback.Fire(schedulerWindow, false, 13);
+                schedulerWindow->Close(true);
 
-        //         // var SelectItem = stackalloc AtkValue[2];
-        //         // SelectItem[0] = new()
-        //         // {
-        //         //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-        //         //     Int = 11,
-        //         // };
-        //         // SelectItem[1] = new()
-        //         // {
-        //         //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-        //         //     UInt = key.id,
-        //         // };
-        //         // schedulerWindow->FireCallback(1, SelectItem);
-        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Selecting Item", 300));
-        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Selecting Item"));
+                // var SelectItem = stackalloc AtkValue[2];
+                // SelectItem[0] = new()
+                // {
+                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                //     Int = 11,
+                // };
+                // SelectItem[1] = new()
+                // {
+                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
+                //     UInt = key.id,
+                // };
+                // schedulerWindow->FireCallback(1, SelectItem);
+                // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Selecting Item", 300));
+                // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Selecting Item"));
 
-        //         // var Schedule = stackalloc AtkValue[1];
-        //         // Schedule[0] = new()
-        //         // {
-        //         //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-        //         //     Int = 13,
-        //         // };
-        //         // schedulerWindow->FireCallback(1, Schedule);
-        //         // schedulerWindow->Close(true);
-        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Schedule Button", 300));
-        //         // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Schedule Button"));
+                // var Schedule = stackalloc AtkValue[1];
+                // Schedule[0] = new()
+                // {
+                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                //     Int = 13,
+                // };
+                // schedulerWindow->FireCallback(1, Schedule);
+                // schedulerWindow->Close(true);
+                // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Schedule Button", 300));
+                // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Schedule Button"));
 
-        //         return true;
-        //     }
-        //     catch
-        //     {
-        //         return false;
-        //     }
-        // }
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+    {
+        var x1 = new Item { Key = Craftables[63].Key, Name = Craftables[63].Name, CraftingTime = Craftables[63].CraftingTime, UIIndex = Craftables[0].Key-- };
+        var x2 = new Item { Key = Craftables[21].Key, Name = Craftables[21].Name, CraftingTime = Craftables[21].CraftingTime, UIIndex = Craftables[0].Key-- };
+        var x3 = new Item { Key = Craftables[16].Key, Name = Craftables[16].Name, CraftingTime = Craftables[16].CraftingTime, UIIndex = Craftables[0].Key-- };
+        var x4 = new Item { Key = Craftables[24].Key, Name = Craftables[24].Name, CraftingTime = Craftables[24].CraftingTime, UIIndex = Craftables[0].Key-- };
+        if (ImGui.Button("Debug Craftables"))
+        {
+            List<Item> items = new List<Item>();
+            foreach (var x in Craftables)
+                // items.Add(new Item(x.Key, x.Name, x.CraftingTime, x.Key-1));
+                PluginLog.Log($"K: {x.Key}, N: {x.Name}, CT: {x.CraftingTime}, UI: {x.Key - 1}");
+        }
+        if (ImGui.Button("Debug List"))
+        {
+            PluginLog.Log($"K: {Craftables[63].Key}, N: {Craftables[63].Name}, CT: {Craftables[63].CraftingTime}, UI: {Craftables[63].Key - 1}");
+            PluginLog.Log($"K: {x1.Key}, N: {x1.Name}, CT: {x1.CraftingTime}, UI: {x1.UIIndex}");
+            // PluginLog.Log($"K: {x2.Key}, N: {x2.Name}, CT: {x2.CraftingTime}, UI: {x2.UIIndex}");
+            // PluginLog.Log($"K: {x3.Key}, N: {x3.Name}, CT: {x3.CraftingTime}, UI: {x3.UIIndex}");
+            // PluginLog.Log($"K: {x4.Key}, N: {x4.Name}, CT: {x4.CraftingTime}, UI: {x4.UIIndex}");
+            // PluginLog.Log($"K: {x1.Key}, K-1= UI: {x1.UIIndex}");
+            // PluginLog.Log($"K: {x2.Key}, K-1= UI: {x2.UIIndex}");
+            // PluginLog.Log($"K: {x3.Key}, K-1= UI: {x3.UIIndex}");
+            // PluginLog.Log($"K: {x4.Key}, K-1= UI: {x4.UIIndex}");
+        }
+        if (ImGui.Button("Schedule"))
+        {
+            TaskManager.Enqueue(() => OpenAgenda(x1.UIIndex, 1, 0));
+            TaskManager.Enqueue(() => ScheduleItem(x1, 1));
+            TaskManager.Enqueue(() => OpenAgenda(x2.UIIndex, 1, x1.CraftingTime));
+            TaskManager.Enqueue(() => ScheduleItem(x2, 1));
+            TaskManager.Enqueue(() => OpenAgenda(x3.UIIndex, 1, x2.CraftingTime));
+            TaskManager.Enqueue(() => ScheduleItem(x3, 1));
+            TaskManager.Enqueue(() => OpenAgenda(x4.UIIndex, 1, x3.CraftingTime));
+            TaskManager.Enqueue(() => ScheduleItem(x4, 1));
+        }
+    };
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
-                .Where(x => !string.IsNullOrEmpty(x.Item.ToString()) || !string.IsNullOrEmpty(x.Theme.ToString()))
-                .Select(x => (x.RowId, x.Item.Value.ToString(), x.CraftingTime))
+                .Where(x => !string.IsNullOrEmpty(x.Item.Value.Name.RawString))
+                .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime))
                 .ToArray();
             WorkshopWindow = new();
             P.Ws.AddWindow(WorkshopWindow);

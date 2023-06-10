@@ -121,8 +121,8 @@ internal class WorkshopWindow : Window
     {
         if (ImGui.Button("Import Cycle Schedule From Clipboard"))
         {
-            var text = ImGui.GetClipboardText();
-            Dictionary<int, WorkshopHelper.Schedule> schedules = WorkshopHelper.ScheduleImport(text);
+            // var text = ImGui.GetClipboardText();
+            // Dictionary<int, WorkshopHelper.Schedule> schedules = WorkshopHelper.ScheduleImport(text);
             // cannot convert error
             // foreach (WorkshopHelper.Item item in WorkshopHelper.CopiedSchedule.Values)
             // {
@@ -145,7 +145,7 @@ internal class WorkshopWindow : Window
         }
         if (ImGui.Button("Fire Schedule"))
         {
-            WorkshopHelper.TestSchedule();
+            helper.TestSchedule();
         }
         // list copied schedule here
         ImGui.Separator();
