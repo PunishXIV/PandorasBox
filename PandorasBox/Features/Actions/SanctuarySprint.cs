@@ -14,7 +14,7 @@ namespace PandorasBox.Features
 {
     public unsafe class SanctuarySprint : Feature
     {
-        public override string Name => "Auto-sprint on Island Sanctuary";
+        public override string Name => "Auto-Sprint on Island Sanctuary";
 
         public override string Description => "Automatically uses Isle Sprint.";
 

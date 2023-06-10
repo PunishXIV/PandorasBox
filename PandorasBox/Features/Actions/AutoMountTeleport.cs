@@ -17,7 +17,7 @@ namespace PandorasBox.Features.Actions
 {
     public unsafe class AutoMountZoneChange : Feature
     {
-        public override string Name => "Auto-mount on Zone Change";
+        public override string Name => "Auto-Mount on Zone Change";
 
         public override string Description => "Mounts on zone change if not already mounted.";
 
