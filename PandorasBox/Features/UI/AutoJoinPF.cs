@@ -3,7 +3,6 @@ using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
 using static ECommons.GenericHelpers;
