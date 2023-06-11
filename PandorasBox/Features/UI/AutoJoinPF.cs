@@ -25,9 +25,10 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-            // 111 is the lock icon for private pfs
-            if (TryGetAddonByName<AddonLookingForGroupDetail>("LookingForGroupDetail", out var addon) && !(addon->AtkUnitBase.UldManager.NodeList[111]->IsVisible))
+            if (TryGetAddonByName<AddonLookingForGroupDetail>("LookingForGroupDetail", out var addon))
             {
+                if (IsPrivatePF(addon) || IsSelfParty(addon)) { TaskManager.Abort(); return; }
+                TaskManager.Enqueue(() => !(IsPrivatePF(addon) || IsSelfParty(addon)));
                 TaskManager.DelayNext($"ClickingJoin", 300);
                 TaskManager.Enqueue(() => Callback.Fire((AtkUnitBase*)addon, false, 0));
                 TaskManager.Enqueue(() => ConfirmYesNo());
@@ -36,6 +37,18 @@ namespace PandorasBox.Features.UI
             {
                 TaskManager.Abort();
             }
+        }
+
+        private bool IsPrivatePF(AddonLookingForGroupDetail* addon)
+        {
+            // 111 is the lock icon
+            return addon->AtkUnitBase.UldManager.NodeList[111]->IsVisible;
+        }
+
+        private bool IsSelfParty(AddonLookingForGroupDetail* addon)
+        {
+            // 113 is the party host's name
+            return addon->AtkUnitBase.UldManager.NodeList[113]->GetAsAtkTextNode()->NodeText.ToString() == Svc.ClientState.LocalPlayer.Name.TextValue;
         }
 
         internal static bool ConfirmYesNo()
