@@ -118,11 +118,11 @@ namespace PandorasBox.Features.Targets
             if (gatheringPoint.GatheringSubCategory.IsValueCreated && gatheringPoint.GatheringSubCategory.Value.FolkloreBook != null)
             Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
                 return;
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
                 return;
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.Row != 0) && Config.ExcludeTimedLegendary)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row != 0) && Config.ExcludeTimedLegendary)
                 return;
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
