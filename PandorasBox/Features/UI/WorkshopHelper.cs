@@ -27,24 +27,20 @@ namespace PandorasBox.Features.UI
         public override FeatureType FeatureType => FeatureType.UI;
         internal WorkshopWindow WorkshopWindow { get; set; }
         internal static (uint Key, string Name, ushort CraftingTime)[] Craftables;
-        public static Dictionary<int, Schedule> CopiedSchedule;
+        public static List<Item> CopiedSchedule;
         public static bool _enabled;
 
         public class Configs : FeatureConfig
         {
+            public List<bool> Workshops = new List<bool> { true, true, true, true };
             public int SelectedCycle = 1;
         }
 
         public Configs Config { get; private set; }
 
-        public class Schedule
+        public class SchedulePreset
         {
             public List<Item> Items { get; }
-
-            public Schedule(List<Item> items)
-            {
-                Items = items;
-            }
         }
 
         public class Item
@@ -55,19 +51,12 @@ namespace PandorasBox.Features.UI
             public uint UIIndex { get; set; }
         }
 
-        // internal static Dictionary<int, Schedule> ScheduleImport(string input)
-        // {
-        //     List<Item> items = ParseItems(itemStrings);
-
-        //     Dictionary<int, Schedule> schedules = new Dictionary<int, Schedule>();
-        //     foreach (int workshop in workshops)
-        //     {
-        //         schedules[workshop] = new Schedule(items);
-        //     }
-
-        //     CopiedSchedule = schedules;
-        //     return schedules;
-        // }
+        internal static List<Item> ScheduleImport(List<string> rawItemStrings)
+        {
+            List<Item> items = ParseItems(rawItemStrings);
+            CopiedSchedule = items;
+            return CopiedSchedule;
+        }
 
         public static List<Item> ParseItems(List<string> itemStrings)
         {
@@ -107,9 +96,7 @@ namespace PandorasBox.Features.UI
             int hours = 0;
             foreach (Item item in items)
             {
-                PluginLog.Log($"queueing agenda open");
                 TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, workshops[0], hours));
-                PluginLog.Log($"queueing schedule");
                 TaskManager.Enqueue(() => ScheduleItem(item, workshops[0]));
             }
             return;
@@ -219,7 +206,7 @@ namespace PandorasBox.Features.UI
                 if (schedulerWindow == null)
                     return false;
 
-                Callback.Fire(schedulerWindow, false, 11, item.Key);
+                Callback.Fire(schedulerWindow, false, 11, item.UIIndex);
                 Callback.Fire(schedulerWindow, false, 13);
                 schedulerWindow->Close(true);
 
@@ -257,43 +244,62 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-    {
-        var x1 = new Item { Key = Craftables[0].Key, Name = Craftables[0].Name, CraftingTime = Craftables[0].CraftingTime, UIIndex = Craftables[0].Key - 1 };
-        var x2 = new Item { Key = Craftables[21].Key, Name = Craftables[21].Name, CraftingTime = Craftables[21].CraftingTime, UIIndex = Craftables[0].Key - 1 };
-        var x3 = new Item { Key = Craftables[16].Key, Name = Craftables[16].Name, CraftingTime = Craftables[16].CraftingTime, UIIndex = Craftables[0].Key - 1 };
-        var x4 = new Item { Key = Craftables[24].Key, Name = Craftables[24].Name, CraftingTime = Craftables[24].CraftingTime, UIIndex = Craftables[0].Key - 1 };
-        if (ImGui.Button("Debug Craftables"))
+        public void ScheduleList()
         {
-            List<Item> items = new List<Item>();
-            foreach (var x in Craftables)
-                // items.Add(new Item(x.Key, x.Name, x.CraftingTime, x.Key-1));
-                PluginLog.Log($"K: {x.Key}, N: {x.Name}, CT: {x.CraftingTime}, UI: {x.Key - 1}");
+            int hours = 0;
+            foreach (var ws in Config.Workshops)
+            {
+                if (ws)
+                {
+                    TaskManager.Enqueue(() => hours = 0);
+                    foreach (Item item in CopiedSchedule)
+                    {
+                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, Config.Workshops.IndexOf(ws) + 1, hours));
+                        TaskManager.Enqueue(() => ScheduleItem(item, Config.Workshops.IndexOf(ws) + 1));
+                        TaskManager.Enqueue(() => hours += item.CraftingTime);
+                    }
+                }
+            }
         }
-        if (ImGui.Button("Debug List"))
-        {
-            PluginLog.Log($"K: {Craftables[0].Key}, N: {Craftables[0].Name}, CT: {Craftables[0].CraftingTime}, UI: {Craftables[0].Key - 1}");
-            PluginLog.Log($"K: {x1.Key}, N: {x1.Name}, CT: {x1.CraftingTime}, UI: {x1.UIIndex}");
-            // PluginLog.Log($"K: {x2.Key}, N: {x2.Name}, CT: {x2.CraftingTime}, UI: {x2.UIIndex}");
-            // PluginLog.Log($"K: {x3.Key}, N: {x3.Name}, CT: {x3.CraftingTime}, UI: {x3.UIIndex}");
-            // PluginLog.Log($"K: {x4.Key}, N: {x4.Name}, CT: {x4.CraftingTime}, UI: {x4.UIIndex}");
-            // PluginLog.Log($"K: {x1.Key}, K-1= UI: {x1.UIIndex}");
-            // PluginLog.Log($"K: {x2.Key}, K-1= UI: {x2.UIIndex}");
-            // PluginLog.Log($"K: {x3.Key}, K-1= UI: {x3.UIIndex}");
-            // PluginLog.Log($"K: {x4.Key}, K-1= UI: {x4.UIIndex}");
-        }
-        if (ImGui.Button("Schedule"))
-        {
-            TaskManager.Enqueue(() => OpenAgenda(x1.UIIndex, 1, 0));
-            TaskManager.Enqueue(() => ScheduleItem(x1, 1));
-            TaskManager.Enqueue(() => OpenAgenda(x2.UIIndex, 1, x1.CraftingTime));
-            TaskManager.Enqueue(() => ScheduleItem(x2, 1));
-            TaskManager.Enqueue(() => OpenAgenda(x3.UIIndex, 1, x2.CraftingTime));
-            TaskManager.Enqueue(() => ScheduleItem(x3, 1));
-            TaskManager.Enqueue(() => OpenAgenda(x4.UIIndex, 1, x3.CraftingTime));
-            TaskManager.Enqueue(() => ScheduleItem(x4, 1));
-        }
-    };
+
+        // protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        // {
+        //     if (ImGui.Button("Import from clipboard")) { }
+        //     if (ImGui.Checkbox("W1", ref Config.w1)) { Config.Workshops.Add(1); }
+        //     ImGui.SameLine();
+        //     if (ImGui.Checkbox("W2", ref Config.w2)) { Config.Workshops.Add(2); }
+        //     ImGui.SameLine();
+        //     if (ImGui.Checkbox("W3", ref Config.w3)) { Config.Workshops.Add(3); }
+        //     ImGui.SameLine();
+        //     if (ImGui.Checkbox("W4", ref Config.w4)) { Config.Workshops.Add(4); }
+        //     if (ImGui.Button("Fire Schedule"))
+        //     {
+        //         List<string> itemStrings = new List<string> { "Firesand", "Garnet Rapier", "Earrings", "Silver Ear Cuffs" };
+
+        //         List<Item> items = ParseItems(itemStrings);
+        //         List<int> workshops = new List<int> { 1, 3 };
+        //         int hours = 0;
+        //         foreach (var ws in workshops)
+        //         {
+        //             TaskManager.Enqueue(() => hours = 0);
+        //             foreach (Item item in items)
+        //             {
+        //                 TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
+        //                 TaskManager.Enqueue(() => ScheduleItem(item, ws));
+        //                 TaskManager.Enqueue(() => hours += item.CraftingTime);
+        //             }
+        //         }
+        //         List<string> is2 = new List<string> { "Powdered Paprika", "Vegetable Juice", "Powdered Paprika", "Vegetable Juice", "Powdered Paprika" };
+        //         List<Item> i2 = ParseItems(is2);
+        //         TaskManager.Enqueue(() => hours = 0);
+        //         foreach (Item item in i2)
+        //         {
+        //             TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, 4, hours));
+        //             TaskManager.Enqueue(() => ScheduleItem(item, 4));
+        //             TaskManager.Enqueue(() => hours += item.CraftingTime);
+        //         }
+        //     }
+        // };
 
         public override void Enable()
         {

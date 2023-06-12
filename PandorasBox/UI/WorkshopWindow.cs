@@ -16,7 +16,8 @@ using System.Numerics;
 namespace PandorasBox.UI;
 internal class WorkshopWindow : Window
 {
-    WorkshopHelper helper = new WorkshopHelper();
+    WorkshopHelper WH = new WorkshopHelper();
+    List<WorkshopHelper.Item> items;
     public static bool ResetPosition = false;
     public WorkshopWindow() : base($"###WorkshopWindow", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoNavInputs)
     {
@@ -46,24 +47,11 @@ internal class WorkshopWindow : Window
     {
         if (WorkshopHelper._enabled)
         {
-            if (ImGui.BeginTabBar("##ReSanctuary_MainWindowTabs", ImGuiTabBarFlags.None))
-            {
-                if (ImGui.BeginTabItem("Schedule Executor"))
-                {
-                    DrawOptions();
-                    ImGui.EndTabItem();
-                }
-
-                if (ImGui.BeginTabItem("Schedule Builder"))
-                {
-                    // DrawScheduleBuilder();
-                    ImGui.EndTabItem();
-                }
-            }
+            DrawSchedulerUI();
         }
     }
 
-    public unsafe void DrawOptions()
+    public unsafe void DrawSchedulerUI()
     {
         var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
         if (workshopWindow == IntPtr.Zero)
@@ -108,48 +96,63 @@ internal class WorkshopWindow : Window
                 ImGui.Begin($"###Options{node->NodeID}", ImGuiWindowFlags.NoScrollbar
                     | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.AlwaysUseWindowPadding);
 
-                DrawScheduleMenu();
+                DrawSchedulerOptions();
 
                 ImGui.End();
                 ImGui.PopStyleVar(2);
             }
         }
-
     }
 
-    private void DrawScheduleMenu()
+    private void DrawSchedulerOptions()
     {
-        if (ImGui.Button("Import Cycle Schedule From Clipboard"))
+        ImGui.Columns(2, "SchedulerOptionsColumns", true);
+
+        ImGui.Text("First column");
+        if (ImGui.Button("Import"))
         {
-            // var text = ImGui.GetClipboardText();
-            // Dictionary<int, WorkshopHelper.Schedule> schedules = WorkshopHelper.ScheduleImport(text);
-            // cannot convert error
-            // foreach (WorkshopHelper.Item item in WorkshopHelper.CopiedSchedule.Values)
-            // {
-            //     PluginLog.Log($"item: {item.Name}");
-            // }
+            var text = ImGui.GetClipboardText();
+            List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+            items = WorkshopHelper.ScheduleImport(rawItemStrings);
         }
-        ImGui.SameLine();
-        // generates a null references?
-        if (ImGui.BeginCombo("Cycle", ""))
+
+        if (ImGui.BeginListBox("##Listbox", new Vector2(ImGui.GetColumnWidth(), 100)))
         {
-            for (var i = 0; i < Cycles.Count; i++)
+            if (items != null)
             {
-                if (ImGui.Selectable(Cycles[i], helper.Config.SelectedCycle == i + 1))
+                foreach (WorkshopHelper.Item item in items)
                 {
-                    helper.Config.SelectedCycle = i;
+                    if (ImGui.Selectable(item.Name)) return;
                 }
             }
+            ImGui.EndListBox();
+        }
 
+        if (ImGui.Button("Fire")) { WH.ScheduleList(); }
+
+        ImGui.NextColumn();
+        ImGui.Text("Second column");
+
+        if (ImGui.BeginCombo("Cycles", Cycles[0]))
+        {
+            for (int i = 0; i < Cycles.Count; i++)
+            {
+                bool isSelected = (Cycles[i] == Cycles[0]);
+                if (ImGui.Selectable(Cycles[i], isSelected))
+                    Cycles[0] = Cycles[i];
+
+                if (isSelected)
+                    ImGui.SetItemDefaultFocus();
+            }
             ImGui.EndCombo();
         }
-        if (ImGui.Button("Fire Schedule"))
-        {
-            helper.TestSchedule();
-        }
-        // list copied schedule here
-        ImGui.Separator();
-        // list of saved presets here to quick load
+        // for (var i = 0; i < WH.Config.Workshops.Count; i++)
+        // {
+        //     var configValue = WH.Config.Workshops[i];
+        //     if (ImGui.Checkbox($"W{i + 1}", ref configValue)) { WH.Config.Workshops[i] = configValue; }
+        // }
+
+        ImGui.Columns(1);
     }
 
     public static unsafe Vector2 GetNodePosition(AtkResNode* node)
