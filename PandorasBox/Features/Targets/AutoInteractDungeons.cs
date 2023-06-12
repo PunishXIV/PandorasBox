@@ -94,7 +94,7 @@ namespace PandorasBox.Features.Targets
             }
             if (Svc.ClientState.LocalPlayer == null) return;
 
-            if (Svc.Condition[ConditionFlag.BoundByDuty])
+            if (Svc.Condition[ConditionFlag.BoundByDuty] || Svc.Condition[ConditionFlag.BoundByDuty56] || Svc.Condition[ConditionFlag.BoundByDuty95] || Svc.Condition[ConditionFlag.BoundToDuty97])
             {
                 if (Svc.Condition[ConditionFlag.InCombat] && Config.ExcludeCombat) { TaskManager.Abort(); return; }
                 if (IsMoving() && Config.OnlyStanding) { TaskManager.Abort(); return; }

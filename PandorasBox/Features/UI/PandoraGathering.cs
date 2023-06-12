@@ -38,12 +38,16 @@ namespace PandorasBox.Features.UI
 
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("Enable Pandora Gathering")]
             public bool Gathering = false;
 
+            [FeatureConfigOption("Remember Item Between Nodes")]
             public bool RememberLastNode = false;
 
+            [FeatureConfigOption("Use King's Yield II / Blessed Harvest II")]
             public bool Use500GPYield = false;
 
+            [FeatureConfigOption("Use Bountiful Yield / Bountiful Harvest")]
             public bool Use100GPYield = false;
         }
 
@@ -54,7 +58,7 @@ namespace PandorasBox.Features.UI
 
         private Overlays Overlay;
 
-
+        public override bool UseAutoConfig => true;
 
         private ulong lastGatheredIndex = 10;
         private uint lastGatheredItem = 0;
@@ -110,17 +114,18 @@ namespace PandorasBox.Features.UI
 
                 ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode);
 
+                var language = Svc.ClientState.ClientLanguage;
                 switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
                 {
                     case 17:
                         ImGui.NextColumn();
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>().GetRow(4087).Name.RawString}", ref Config.Use100GPYield);
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>().GetRow(224).Name.RawString}", ref Config.Use500GPYield);
+                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString}", ref Config.Use100GPYield);
+                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString}", ref Config.Use500GPYield);
                         break;
                     case 16:
                         ImGui.NextColumn();
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>().GetRow(4073).Name.RawString}", ref Config.Use100GPYield);
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>().GetRow(241).Name.RawString}", ref Config.Use500GPYield);
+                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield);
+                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield);
                         break;
                 }
 
@@ -191,25 +196,22 @@ namespace PandorasBox.Features.UI
 
                         if (item == lastGatheredItem)
                         {
-                            if (!Svc.Data.GetExcelSheet<Item>().GetRow(item).IsCollectable)
+                            bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
+                            Dalamud.Logging.PluginLog.Debug($"{quickGathering}");
+                            if (quickGathering)
                             {
-                                bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
-                                Dalamud.Logging.PluginLog.Debug($"{quickGathering}");
-                                if (quickGathering)
-                                {
-                                    QuickGatherToggle(addon);
-                                }
-
-                                var receiveEventAddress = new IntPtr(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
-                                var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
-
-                                var target = AtkStage.GetSingleton();
-                                var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
-                                var inputData = InputData.Empty();
-
-                                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                                TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)lastGatheredIndex, eventData.Data, inputData.Data));
+                                QuickGatherToggle(addon);
                             }
+
+                            var receiveEventAddress = new IntPtr(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
+                            var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
+
+                            var target = AtkStage.GetSingleton();
+                            var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
+                            var inputData = InputData.Empty();
+
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)lastGatheredIndex, eventData.Data, inputData.Data));
                         }
                     }
                 });
