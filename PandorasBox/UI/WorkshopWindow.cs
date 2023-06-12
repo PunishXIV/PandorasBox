@@ -1,4 +1,5 @@
 using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using ECommons;
 using ECommons.DalamudServices;
@@ -92,7 +93,7 @@ internal class WorkshopWindow : Window
                 }
 
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(7f, 7f));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(0f, 0f));
+                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(400f, 400f));
                 ImGui.Begin($"###Options{node->NodeID}", ImGuiWindowFlags.NoScrollbar
                     | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.AlwaysUseWindowPadding);
 
@@ -109,12 +110,13 @@ internal class WorkshopWindow : Window
         ImGui.Columns(2, "SchedulerOptionsColumns", true);
 
         ImGui.Text("First column");
-        if (ImGui.Button("Import"))
+        if (ImGui.Button("Overseas Casuals Import"))
         {
             var text = ImGui.GetClipboardText();
             List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             items = WorkshopHelper.ScheduleImport(rawItemStrings);
         }
+        ImGuiComponents.HelpMarker("This importer detects the presence an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you can manually edit it.");
 
         if (ImGui.BeginListBox("##Listbox", new Vector2(ImGui.GetColumnWidth(), 100)))
         {
@@ -128,7 +130,9 @@ internal class WorkshopWindow : Window
             ImGui.EndListBox();
         }
 
-        if (ImGui.Button("Fire")) { WH.ScheduleList(); }
+        if (ImGui.Button("Execute Schedule")) { WH.ScheduleList(); }
+        ImGui.SameLine();
+        if (ImGui.Button("Clear Schedule")) { items = null; }
 
         ImGui.NextColumn();
         ImGui.Text("Second column");
@@ -146,6 +150,7 @@ internal class WorkshopWindow : Window
             }
             ImGui.EndCombo();
         }
+        ImGuiComponents.HelpMarker("Leave blank to execute the schedule on whichever cycle is currently loaded in the in-game menu.");
         // for (var i = 0; i < WH.Config.Workshops.Count; i++)
         // {
         //     var configValue = WH.Config.Workshops[i];
