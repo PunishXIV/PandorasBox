@@ -29,14 +29,15 @@ namespace PandorasBox.Features.UI
         internal static (uint Key, string Name, ushort CraftingTime)[] Craftables;
         public static List<Item> CopiedSchedule;
         public static bool _enabled;
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
-            public List<bool> Workshops = new List<bool> { true, true, true, true };
+            public List<bool> Workshops = new List<bool>() { true, true, true, true };
+            // = new List<bool>() { false, false, false, false, false, false, false };
             public int SelectedCycle = 1;
         }
 
-        public Configs Config { get; private set; }
 
         public class SchedulePreset
         {
@@ -261,45 +262,6 @@ namespace PandorasBox.Features.UI
                 }
             }
         }
-
-        // protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-        // {
-        //     if (ImGui.Button("Import from clipboard")) { }
-        //     if (ImGui.Checkbox("W1", ref Config.w1)) { Config.Workshops.Add(1); }
-        //     ImGui.SameLine();
-        //     if (ImGui.Checkbox("W2", ref Config.w2)) { Config.Workshops.Add(2); }
-        //     ImGui.SameLine();
-        //     if (ImGui.Checkbox("W3", ref Config.w3)) { Config.Workshops.Add(3); }
-        //     ImGui.SameLine();
-        //     if (ImGui.Checkbox("W4", ref Config.w4)) { Config.Workshops.Add(4); }
-        //     if (ImGui.Button("Fire Schedule"))
-        //     {
-        //         List<string> itemStrings = new List<string> { "Firesand", "Garnet Rapier", "Earrings", "Silver Ear Cuffs" };
-
-        //         List<Item> items = ParseItems(itemStrings);
-        //         List<int> workshops = new List<int> { 1, 3 };
-        //         int hours = 0;
-        //         foreach (var ws in workshops)
-        //         {
-        //             TaskManager.Enqueue(() => hours = 0);
-        //             foreach (Item item in items)
-        //             {
-        //                 TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
-        //                 TaskManager.Enqueue(() => ScheduleItem(item, ws));
-        //                 TaskManager.Enqueue(() => hours += item.CraftingTime);
-        //             }
-        //         }
-        //         List<string> is2 = new List<string> { "Powdered Paprika", "Vegetable Juice", "Powdered Paprika", "Vegetable Juice", "Powdered Paprika" };
-        //         List<Item> i2 = ParseItems(is2);
-        //         TaskManager.Enqueue(() => hours = 0);
-        //         foreach (Item item in i2)
-        //         {
-        //             TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, 4, hours));
-        //             TaskManager.Enqueue(() => ScheduleItem(item, 4));
-        //             TaskManager.Enqueue(() => hours += item.CraftingTime);
-        //         }
-        //     }
-        // };
 
         public override void Enable()
         {

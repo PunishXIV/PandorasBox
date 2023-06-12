@@ -35,6 +35,7 @@ internal class WorkshopWindow : Window
 
     private List<string> Cycles { get; set; } = new()
     {
+        "",
         "C1",
         "C2",
         "C3",
@@ -109,7 +110,6 @@ internal class WorkshopWindow : Window
     {
         ImGui.Columns(2, "SchedulerOptionsColumns", true);
 
-        ImGui.Text("First column");
         if (ImGui.Button("Overseas Casuals Import"))
         {
             var text = ImGui.GetClipboardText();
@@ -117,6 +117,16 @@ internal class WorkshopWindow : Window
             items = WorkshopHelper.ScheduleImport(rawItemStrings);
         }
         ImGuiComponents.HelpMarker("This importer detects the presence an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you can manually edit it.");
+        // ImGui.SameLine();
+        // ImGui.PushStyleColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(ImGui.ColorConvertHSVtoRGB(0 / 7.0f, 0.6f, 0.6f)));
+        // ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000);
+        // ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xDD000000);
+        // ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xAA000000);
+        // using (var font = ImRaii.PushFont(UiBuilder.IconFont))
+        // {
+        //     if (ImGui.Button(FontAwesomeIcon.Times.ToIconString())) { items = null; }
+        // }
+        // ImGui.PopStyleColor(3);
 
         if (ImGui.BeginListBox("##Listbox", new Vector2(ImGui.GetColumnWidth(), 100)))
         {
@@ -130,12 +140,10 @@ internal class WorkshopWindow : Window
             ImGui.EndListBox();
         }
 
-        if (ImGui.Button("Execute Schedule")) { WH.ScheduleList(); }
-        ImGui.SameLine();
-        if (ImGui.Button("Clear Schedule")) { items = null; }
+        try { if (ImGui.Button("Execute Schedule")) { WH.ScheduleList(); } }
+        catch { return; }
 
         ImGui.NextColumn();
-        ImGui.Text("Second column");
 
         if (ImGui.BeginCombo("Cycles", Cycles[0]))
         {
