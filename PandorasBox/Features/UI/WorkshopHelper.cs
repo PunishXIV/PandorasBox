@@ -33,8 +33,7 @@ namespace PandorasBox.Features.UI
 
         public class Configs : FeatureConfig
         {
-            public List<bool> Workshops = new List<bool>() { true, true, true, true };
-            // = new List<bool>() { false, false, false, false, false, false, false };
+            public List<bool> Workshops = new List<bool>() { true, false, false, true };
             public int SelectedCycle = 1;
         }
 
@@ -89,18 +88,18 @@ namespace PandorasBox.Features.UI
 
         public void TestSchedule()
         {
-            PluginLog.Log($"entering test schedule");
-            List<string> itemStrings = new List<string> { "Firesand", "Garnet Rapier", "Earrings", "Silver Ear Cuffs" };
+            PluginLog.Log($"selectedcycle = {Config.SelectedCycle}");
+            // List<string> itemStrings = new List<string> { "Firesand", "Garnet Rapier", "Earrings", "Silver Ear Cuffs" };
 
-            List<Item> items = ParseItems(itemStrings);
-            List<int> workshops = new List<int> { 1 };
-            int hours = 0;
-            foreach (Item item in items)
-            {
-                TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, workshops[0], hours));
-                TaskManager.Enqueue(() => ScheduleItem(item, workshops[0]));
-            }
-            return;
+            // List<Item> items = ParseItems(itemStrings);
+            // List<int> workshops = new List<int> { 1 };
+            // int hours = 0;
+            // foreach (Item item in items)
+            // {
+            //     TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, workshops[0], hours));
+            //     TaskManager.Enqueue(() => ScheduleItem(item, workshops[0]));
+            // }
+            // return;
         }
 
         private bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
@@ -248,15 +247,15 @@ namespace PandorasBox.Features.UI
         public void ScheduleList()
         {
             int hours = 0;
-            foreach (var ws in Config.Workshops)
+            for (var i = 0; i < Config.Workshops.Count; i++)
             {
-                if (ws)
+                if (Config.Workshops[i])
                 {
                     TaskManager.Enqueue(() => hours = 0);
                     foreach (Item item in CopiedSchedule)
                     {
-                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, Config.Workshops.IndexOf(ws) + 1, hours));
-                        TaskManager.Enqueue(() => ScheduleItem(item, Config.Workshops.IndexOf(ws) + 1));
+                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i + 1, hours));
+                        TaskManager.Enqueue(() => ScheduleItem(item, i + 1));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
                     }
                 }

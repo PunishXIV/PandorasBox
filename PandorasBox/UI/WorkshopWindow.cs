@@ -141,7 +141,10 @@ internal class WorkshopWindow : Window
         }
 
         try { if (ImGui.Button("Execute Schedule")) { WH.ScheduleList(); } }
-        catch { return; }
+        catch (Exception e) { PluginLog.Log(e.ToString()); return; }
+
+        try { if (ImGui.Button("debug config")) { WH.TestSchedule(); } }
+        catch (Exception e) { PluginLog.Log(e.ToString()); return; }
 
         ImGui.NextColumn();
 
