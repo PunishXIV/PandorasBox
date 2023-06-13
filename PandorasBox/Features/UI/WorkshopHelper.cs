@@ -117,9 +117,17 @@ namespace PandorasBox.Features.UI
 
             if (ImGui.Button("Overseas Casuals Import"))
             {
-                var text = ImGui.GetClipboardText();
-                List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                CopiedSchedule = WorkshopHelper.ScheduleImport(rawItemStrings);
+                try
+                {
+                    var text = ImGui.GetClipboardText();
+                    if (text.IsNullOrEmpty()) return;
+                    List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                    CopiedSchedule = WorkshopHelper.ScheduleImport(rawItemStrings);
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
+                }
             }
             ImGuiComponents.HelpMarker("This importer detects the presence an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you can manually edit it.");
             // ImGui.SameLine();
@@ -230,9 +238,18 @@ namespace PandorasBox.Features.UI
                         // PluginLog.Log($"matched {itemString} to {craftable.Name}");
 
                         items.Add(item);
+                        continue;
                     }
-                    // else { PluginLog.Log($"failed to match {itemString} to {craftableNoPrefix}"); }
                 }
+                PluginLog.Log($"invalid item {itemString}");
+                Item invalidItem = new Item
+                {
+                    Key = 0,
+                    Name = "Invalid",
+                    CraftingTime = 0,
+                    UIIndex = 0
+                };
+                items.Add(invalidItem);
             }
 
             return items;
