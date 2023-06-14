@@ -1,3 +1,4 @@
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
@@ -35,6 +36,7 @@ namespace PandorasBox.Features.UI
         public static List<Item> CopiedSchedule;
 
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
+        private int CurrentWorkshop;
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7 };
 
         public Configs Config { get; private set; }
@@ -184,7 +186,14 @@ namespace PandorasBox.Features.UI
                 if (i != Workshops.Count - 1) ImGui.SameLine();
             }
 
-            try { if (ImGui.Button("Execute Schedule")) { ScheduleList(); } }
+            try
+            {
+                if (ImGui.Button("Execute Schedule"))
+                {
+                    CurrentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
+                    ScheduleList();
+                }
+            }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
         }
 
@@ -412,7 +421,7 @@ namespace PandorasBox.Features.UI
             }
 
             int hours = 0;
-            for (var i = 0; i < Workshops.Count; i++)
+            for (var i = CurrentWorkshop; i < Workshops.Count; i++)
             {
                 var ws = 0;
                 if (Workshops[i])
@@ -424,9 +433,29 @@ namespace PandorasBox.Features.UI
                         TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
                         TaskManager.Enqueue(() => ScheduleItem(item));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
+                        TaskManager.Enqueue(() => CurrentWorkshop += 1);
                     }
                 }
             }
+            TaskManager.Enqueue(() => CurrentWorkshop = 0);
+        }
+
+        private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
+        {
+            if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 10146).Text.ExtractText())
+            {
+                TaskManager.Abort();
+                if (WorkshopsRemaining())
+                {
+                    TaskManager.Enqueue(() => CurrentWorkshop += 1);
+                    ScheduleList();
+                }
+            }
+        }
+
+        private bool WorkshopsRemaining()
+        {
+            return Workshops.Skip(CurrentWorkshop).Any(pair => pair.Value);
         }
 
         public override void Enable()
@@ -438,6 +467,7 @@ namespace PandorasBox.Features.UI
                 .ToArray();
             Overlay = new Overlays(this);
             _enabled = true;
+            Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
             base.Enable();
         }
 
@@ -446,6 +476,7 @@ namespace PandorasBox.Features.UI
             SaveConfig(Config);
             P.Ws.RemoveWindow(Overlay);
             _enabled = false;
+            Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
             base.Disable();
         }
     }
