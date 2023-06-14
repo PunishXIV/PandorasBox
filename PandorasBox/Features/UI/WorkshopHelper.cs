@@ -163,9 +163,6 @@ namespace PandorasBox.Features.UI
             try { if (ImGui.Button("Execute Schedule")) { ScheduleList(); } }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
 
-            try { if (ImGui.Button("debug config")) { DebugMethod(); } }
-            catch (Exception e) { PluginLog.Log(e.ToString()); return; }
-
             ImGui.NextColumn();
 
             if (ImGui.BeginCombo("Cycles", Cycles[0]))
@@ -243,7 +240,6 @@ namespace PandorasBox.Features.UI
                             CraftingTime = craftable.CraftingTime,
                             UIIndex = craftable.Key - 1
                         };
-                        // PluginLog.Log($"matched {itemString} to {craftable.Name}");
 
                         items.Add(item);
                         matchFound = true;
@@ -251,7 +247,7 @@ namespace PandorasBox.Features.UI
                 }
                 if (!matchFound)
                 {
-                    PluginLog.Log($"invalid item {itemString}");
+                    PluginLog.Log($"Failed to match string to craftable: {itemString}");
                     Item invalidItem = new Item
                     {
                         Key = 0,
@@ -310,7 +306,6 @@ namespace PandorasBox.Features.UI
 
         private unsafe bool OpenAgenda(uint index, int workshop, int prevHours)
         {
-            PluginLog.Log($"openagenda {workshop}");
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
             TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Opening Agenda", 300));
@@ -414,24 +409,19 @@ namespace PandorasBox.Features.UI
             int hours = 0;
             for (var i = 0; i < Workshops.Count; i++)
             {
-                // PluginLog.Log($"i outside loop: {i}");
+                var ws = 0;
                 if (Workshops[i])
                 {
                     TaskManager.Enqueue(() => hours = 0);
                     foreach (Item item in CopiedSchedule)
                     {
-                        PluginLog.Log($"i before pass: {i}");
-                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i, hours));
+                        ws = i;
+                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
                         TaskManager.Enqueue(() => ScheduleItem(item));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
                     }
                 }
             }
-        }
-
-        public void DebugMethod()
-        {
-            for (var i = 0; i < Workshops.Count; i++) PluginLog.Log(Workshops[i].ToString());
         }
 
         public override void Enable()
