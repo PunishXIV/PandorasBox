@@ -58,7 +58,7 @@ namespace PandorasBox.Features.UI
 
         public override void Draw()
         {
-            if (WorkshopHelper._enabled)
+            if (_enabled)
             {
                 var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
                 if (workshopWindow == IntPtr.Zero)
@@ -123,7 +123,7 @@ namespace PandorasBox.Features.UI
                     var text = ImGui.GetClipboardText();
                     if (text.IsNullOrEmpty()) return;
                     List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    CopiedSchedule = WorkshopHelper.ScheduleImport(rawItemStrings);
+                    CopiedSchedule = ScheduleImport(rawItemStrings);
                 }
                 catch (Exception e)
                 {
@@ -146,7 +146,7 @@ namespace PandorasBox.Features.UI
             {
                 if (CopiedSchedule != null)
                 {
-                    foreach (WorkshopHelper.Item item in CopiedSchedule)
+                    foreach (Item item in CopiedSchedule)
                     {
                         if (ImGui.Selectable(item.Name)) return;
                     }
@@ -224,6 +224,7 @@ namespace PandorasBox.Features.UI
             List<Item> items = new List<Item>();
             foreach (var itemString in itemStrings)
             {
+                bool matchFound = false;
                 foreach (var craftable in Craftables)
                 {
                     string craftableNoPrefix = craftable.Name.Replace("Isleworks ", "");
@@ -239,18 +240,21 @@ namespace PandorasBox.Features.UI
                         // PluginLog.Log($"matched {itemString} to {craftable.Name}");
 
                         items.Add(item);
-                        break;
+                        matchFound = true;
                     }
                 }
-                PluginLog.Log($"invalid item {itemString}");
-                Item invalidItem = new Item
+                if (!matchFound)
                 {
-                    Key = 0,
-                    Name = "Invalid",
-                    CraftingTime = 0,
-                    UIIndex = 0
-                };
-                items.Add(invalidItem);
+                    PluginLog.Log($"invalid item {itemString}");
+                    Item invalidItem = new Item
+                    {
+                        Key = 0,
+                        Name = "Invalid",
+                        CraftingTime = 0,
+                        UIIndex = 0
+                    };
+                    items.Add(invalidItem);
+                }
             }
 
             return items;
