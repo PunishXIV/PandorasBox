@@ -28,18 +28,20 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
         private Overlays Overlay;
-        public Configs Config { get; private set; }
+        public static bool ResetPosition = false;
+        public static bool _enabled;
+
         internal static (uint Key, string Name, ushort CraftingTime)[] Craftables;
         public static List<Item> CopiedSchedule;
-        public static bool _enabled;
-        private List<string> Cycles { get; set; } = new() { "", "C1", "C2", "C3", "C4", "C5", "C6", "C7" };
-        public static bool ResetPosition = false;
 
+        // private bool[] Workshops = new bool[4] { false, false, false, false };
+        private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
+        private List<string> Cycles { get; set; } = new() { "", "C1", "C2", "C3", "C4", "C5", "C6", "C7" };
+
+        public Configs Config { get; private set; }
         public class Configs : FeatureConfig
         {
-            public List<bool> Workshops { get; set; } = new() { true, false, false, true };
             public int SelectedCycle = 1;
-            public bool TestBool = false;
         }
 
 
@@ -111,6 +113,10 @@ namespace PandorasBox.Features.UI
                 }
             }
         }
+        //     protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        // {
+        //     if (ImGui.Button("Debug")) { DebugMethod(); }
+        // };
 
         private void DrawWindowContents()
         {
@@ -176,11 +182,11 @@ namespace PandorasBox.Features.UI
                 ImGui.EndCombo();
             }
             ImGuiComponents.HelpMarker("Leave blank to execute the schedule on whichever cycle is currently loaded in the in-game menu.");
-            // for (var i = 0; i < Config.Workshops.Count; i++)
-            // {
-            //     var configValue = Config.Workshops[i];
-            //     if (ImGui.Checkbox($"W{i + 1}", ref configValue)) { Config.Workshops[i] = configValue; }
-            // }
+            for (var i = 0; i < Workshops.Count; i++)
+            {
+                var configValue = Workshops[i];
+                if (ImGui.Checkbox($"W{i + 1}", ref configValue)) { Workshops[i] = configValue; }
+            }
 
             ImGui.Columns(1);
         }
@@ -304,6 +310,7 @@ namespace PandorasBox.Features.UI
 
         private unsafe bool OpenAgenda(uint index, int workshop, int prevHours)
         {
+            PluginLog.Log($"openagenda {workshop}");
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
             TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Opening Agenda", 300));
@@ -348,7 +355,7 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private unsafe bool ScheduleItem(Item item, int workshop)
+        private unsafe bool ScheduleItem(Item item)
         {
             var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (addon == IntPtr.Zero)
@@ -405,15 +412,17 @@ namespace PandorasBox.Features.UI
         public void ScheduleList()
         {
             int hours = 0;
-            for (var i = 0; i < Config.Workshops.Count; i++)
+            for (var i = 0; i < Workshops.Count; i++)
             {
-                if (Config.Workshops[i])
+                // PluginLog.Log($"i outside loop: {i}");
+                if (Workshops[i])
                 {
                     TaskManager.Enqueue(() => hours = 0);
                     foreach (Item item in CopiedSchedule)
                     {
+                        PluginLog.Log($"i before pass: {i}");
                         TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i + 1, hours));
-                        TaskManager.Enqueue(() => ScheduleItem(item, i + 1));
+                        TaskManager.Enqueue(() => ScheduleItem(item));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
                     }
                 }
@@ -422,8 +431,7 @@ namespace PandorasBox.Features.UI
 
         public void DebugMethod()
         {
-            Config.Workshops.ForEach(x => PluginLog.Log(x.ToString()));
-            // PluginLog.Log($"selectedcycle = {Config.SelectedCycle}");
+            for (var i = 0; i < Workshops.Count; i++) PluginLog.Log(Workshops[i].ToString());
         }
 
         public override void Enable()
