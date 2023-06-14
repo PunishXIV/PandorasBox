@@ -34,14 +34,13 @@ namespace PandorasBox.Features.UI
         internal static (uint Key, string Name, ushort CraftingTime)[] Craftables;
         public static List<Item> CopiedSchedule;
 
-        // private bool[] Workshops = new bool[4] { false, false, false, false };
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
-        private List<string> Cycles { get; set; } = new() { "", "C1", "C2", "C3", "C4", "C5", "C6", "C7" };
+        private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7 };
 
         public Configs Config { get; private set; }
         public class Configs : FeatureConfig
         {
-            public int SelectedCycle = 1;
+            public int SelectedCycle = 0;
         }
 
 
@@ -101,7 +100,7 @@ namespace PandorasBox.Features.UI
                         }
 
                         ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(7f, 7f));
-                        ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(400f, 400f));
+                        ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(200f, 200f));
                         ImGui.Begin($"###Options{node->NodeID}", ImGuiWindowFlags.NoScrollbar
                             | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.AlwaysUseWindowPadding);
 
@@ -116,8 +115,6 @@ namespace PandorasBox.Features.UI
 
         private void DrawWindowContents()
         {
-            ImGui.Columns(2, "SchedulerOptionsColumns", true);
-
             if (ImGui.Button("Overseas Casuals Import"))
             {
                 try
@@ -132,7 +129,10 @@ namespace PandorasBox.Features.UI
                     PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
                 }
             }
-            ImGuiComponents.HelpMarker("This importer detects the presence an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you can manually edit it.");
+            ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
+
+            // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
+
             // ImGui.SameLine();
             // ImGui.PushStyleColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(ImGui.ColorConvertHSVtoRGB(0 / 7.0f, 0.6f, 0.6f)));
             // ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000);
@@ -144,7 +144,9 @@ namespace PandorasBox.Features.UI
             // }
             // ImGui.PopStyleColor(3);
 
-            if (ImGui.BeginListBox("##Listbox", new Vector2(ImGui.GetColumnWidth(), 100)))
+            ImGui.Text("Import Preview");
+            ImGui.SetNextItemWidth(250);
+            if (ImGui.BeginListBox("##Listbox", new Vector2(250, 6 * ImGui.GetTextLineHeightWithSpacing())))
             {
                 if (CopiedSchedule != null)
                 {
@@ -156,32 +158,34 @@ namespace PandorasBox.Features.UI
                 ImGui.EndListBox();
             }
 
-            try { if (ImGui.Button("Execute Schedule")) { ScheduleList(); } }
-            catch (Exception e) { PluginLog.Log(e.ToString()); return; }
-
-            ImGui.NextColumn();
-
-            if (ImGui.BeginCombo("Cycles", Cycles[0]))
+            ImGui.Text("Select Cycle");
+            ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
+            ImGui.SetNextItemWidth(100);
+            var cyclePrev = Config.SelectedCycle == 0 ? "" : Cycles[Config.SelectedCycle - 1].ToString();
+            if (ImGui.BeginCombo("", cyclePrev))
             {
-                for (int i = 0; i < Cycles.Count; i++)
+                if (ImGui.Selectable("", Config.SelectedCycle == 0))
+                    Config.SelectedCycle = 0;
+                foreach (var cycle in Cycles)
                 {
-                    bool isSelected = (Cycles[i] == Cycles[0]);
-                    if (ImGui.Selectable(Cycles[i], isSelected))
-                        Cycles[0] = Cycles[i];
+                    var selected = ImGui.Selectable(cycle.ToString(), Config.SelectedCycle == cycle);
 
-                    if (isSelected)
-                        ImGui.SetItemDefaultFocus();
+                    if (selected)
+                        Config.SelectedCycle = cycle;
                 }
                 ImGui.EndCombo();
             }
-            ImGuiComponents.HelpMarker("Leave blank to execute the schedule on whichever cycle is currently loaded in the in-game menu.");
+
+            ImGui.Text("Select Workshops");
             for (var i = 0; i < Workshops.Count; i++)
             {
                 var configValue = Workshops[i];
-                if (ImGui.Checkbox($"W{i + 1}", ref configValue)) { Workshops[i] = configValue; }
+                if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
+                if (i != Workshops.Count - 1) ImGui.SameLine();
             }
 
-            ImGui.Columns(1);
+            try { if (ImGui.Button("Execute Schedule")) { ScheduleList(); } }
+            catch (Exception e) { PluginLog.Log(e.ToString()); return; }
         }
 
         public static unsafe Vector2 GetNodePosition(AtkResNode* node)
@@ -402,6 +406,11 @@ namespace PandorasBox.Features.UI
 
         public void ScheduleList()
         {
+            if (Config.SelectedCycle != 0)
+            {
+                TaskManager.Enqueue(() => OpenCycle(Config.SelectedCycle));
+            }
+
             int hours = 0;
             for (var i = 0; i < Workshops.Count; i++)
             {
