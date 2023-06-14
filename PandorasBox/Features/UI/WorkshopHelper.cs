@@ -327,7 +327,7 @@ namespace PandorasBox.Features.UI
                     return false;
 
 
-                Callback.Fire(workshopWindow, false, 16, (uint)(workshop - 1), (uint)(index == 0 ? 0 : prevHours));
+                Callback.Fire(workshopWindow, false, 16, (uint)(workshop), (uint)(index == 0 ? 0 : prevHours));
 
                 // var SelectAgenda = stackalloc AtkValue[3];
                 // SelectAgenda[0] = new()
@@ -338,7 +338,7 @@ namespace PandorasBox.Features.UI
                 // SelectAgenda[1] = new()
                 // {
                 //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-                //     UInt = (uint)(workshop - 1),
+                //     UInt = (uint)(workshop),
                 // };
                 // SelectAgenda[1] = new()
                 // {
@@ -421,7 +421,7 @@ namespace PandorasBox.Features.UI
                     foreach (Item item in CopiedSchedule)
                     {
                         PluginLog.Log($"i before pass: {i}");
-                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i + 1, hours));
+                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i, hours));
                         TaskManager.Enqueue(() => ScheduleItem(item));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
                     }
