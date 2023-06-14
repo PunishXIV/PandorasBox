@@ -113,10 +113,6 @@ namespace PandorasBox.Features.UI
                 }
             }
         }
-        //     protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-        // {
-        //     if (ImGui.Button("Debug")) { DebugMethod(); }
-        // };
 
         private void DrawWindowContents()
         {
