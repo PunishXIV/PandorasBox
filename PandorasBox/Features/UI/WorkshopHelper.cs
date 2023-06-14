@@ -39,6 +39,7 @@ namespace PandorasBox.Features.UI
         {
             public List<bool> Workshops { get; set; } = new() { true, false, false, true };
             public int SelectedCycle = 1;
+            public bool TestBool = false;
         }
 
 
@@ -238,7 +239,7 @@ namespace PandorasBox.Features.UI
                         // PluginLog.Log($"matched {itemString} to {craftable.Name}");
 
                         items.Add(item);
-                        continue;
+                        break;
                     }
                 }
                 PluginLog.Log($"invalid item {itemString}");
