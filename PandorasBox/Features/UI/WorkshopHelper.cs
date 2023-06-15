@@ -543,12 +543,13 @@ namespace PandorasBox.Features.UI
             return Workshops.Skip(CurrentWorkshop).Any(pair => pair.Value);
         }
 
-        public static void PrintPluginMessage(String msg)
+        public void PrintPluginMessage(String msg)
         {
             var message = new XivChatEntry
             {
                 Message = new SeStringBuilder()
-                .AddUiForeground($"[Pandora's Box] ", 45)
+                .AddUiForeground($"[{P.Name}] ", 45)
+                .AddUiForeground($"[{Name}] ", 62)
                 .AddText(msg)
                 .Build()
             };
