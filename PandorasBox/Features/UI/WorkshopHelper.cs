@@ -1,3 +1,4 @@
+using ClickLib.Clicks;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
@@ -8,6 +9,7 @@ using ECommons.DalamudServices;
 using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel;
@@ -19,6 +21,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
 {
@@ -453,13 +456,11 @@ namespace PandorasBox.Features.UI
                     return false;
 
                 var restDays = GetCurrentRestDays();
-                restDays.ForEach(x => PluginLog.Log(x.ToString()));
                 restDays[1] = Config.SelectedCycle - 1;
-                restDays.ForEach(x => PluginLog.Log(x.ToString()));
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
-                PluginLog.Log(restDaysMask.ToString());
-                Callback.Fire(schedulerWindow, false, 11, 8885u);
-                // schedulerWindow->Close(true);
+                Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
+
+                TaskManager.Enqueue(() => ConfirmYesNo());
 
                 return true;
             }
@@ -467,6 +468,23 @@ namespace PandorasBox.Features.UI
             {
                 return false;
             }
+        }
+
+        internal static bool ConfirmYesNo()
+        {
+            var mjiRest = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftScheduleMaintenance");
+            if (mjiRest == null) return false;
+
+            if (mjiRest->IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
+                addon->AtkUnitBase.IsVisible &&
+                addon->YesButton->IsEnabled &&
+                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+            {
+                new ClickSelectYesNo((IntPtr)addon).Yes();
+                return true;
+            }
+
+            return false;
         }
 
         public void ScheduleList()
