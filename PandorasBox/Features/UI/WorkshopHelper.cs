@@ -30,7 +30,7 @@ namespace PandorasBox.Features.UI
     {
         public override string Name => "Workshop Helper";
 
-        public override string Description => "Save/Load infinite presets. Set the schedule(s) for you. Can import from Overseas Casuals.";
+        public override string Description => "Adds a menu to the Island Sanctuary workshop to allow quick setting your daily schedules. Supports importing from Overseas Casuals.";
 
         public override FeatureType FeatureType => FeatureType.UI;
         private Overlays Overlay;
