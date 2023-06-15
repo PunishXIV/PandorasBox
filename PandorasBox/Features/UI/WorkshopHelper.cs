@@ -1,4 +1,5 @@
 using ClickLib.Clicks;
+using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
@@ -41,7 +42,7 @@ namespace PandorasBox.Features.UI
 
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
         private int CurrentWorkshop;
-        private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7 };
+        private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         private bool IsScheduleRest;
 
         public Configs Config { get; private set; }
@@ -202,7 +203,11 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Button("Execute Schedule"))
                 {
                     CurrentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    ScheduleList();
+                    var restDays = GetCurrentRestDays();
+                    if (restDays.Contains(Config.SelectedCycle - 1))
+                        PrintPluginMessage("Selected cycle is a rest day. Cannot schedule on a rest day.");
+                    else
+                        ScheduleList();
                 }
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
@@ -244,7 +249,6 @@ namespace PandorasBox.Features.UI
 
         public static List<Item> ParseItems(List<string> itemStrings)
         {
-            // add a match case for if it detects "rest"
             List<Item> items = new List<Item>();
             foreach (var itemString in itemStrings)
             {
@@ -537,6 +541,19 @@ namespace PandorasBox.Features.UI
         private bool WorkshopsRemaining()
         {
             return Workshops.Skip(CurrentWorkshop).Any(pair => pair.Value);
+        }
+
+        public static void PrintPluginMessage(String msg)
+        {
+            var message = new XivChatEntry
+            {
+                Message = new SeStringBuilder()
+                .AddUiForeground($"[Pandora's Box] ", 45)
+                .AddText(msg)
+                .Build()
+            };
+
+            Svc.Chat.PrintChat(message);
         }
 
         public override void Enable()
