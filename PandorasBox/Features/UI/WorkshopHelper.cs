@@ -7,6 +7,7 @@ using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Logging;
 using ECommons.Throttlers;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel;
@@ -38,6 +39,7 @@ namespace PandorasBox.Features.UI
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
         private int CurrentWorkshop;
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7 };
+        private bool IsScheduleRest;
 
         public Configs Config { get; private set; }
         public class Configs : FeatureConfig
@@ -134,6 +136,7 @@ namespace PandorasBox.Features.UI
             ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
 
             // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
+            // basically the same buttons from ReAction's stack tab
 
             // ImGui.SameLine();
             // ImGui.PushStyleColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(ImGui.ColorConvertHSVtoRGB(0 / 7.0f, 0.6f, 0.6f)));
@@ -176,6 +179,11 @@ namespace PandorasBox.Features.UI
                         Config.SelectedCycle = cycle;
                 }
                 ImGui.EndCombo();
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Set as Rest Day"))
+            {
+                TaskManager.Enqueue(() => SetRestDay());
             }
 
             ImGui.Text("Select Workshops");
@@ -233,6 +241,7 @@ namespace PandorasBox.Features.UI
 
         public static List<Item> ParseItems(List<string> itemStrings)
         {
+            // add a match case for if it detects "rest"
             List<Item> items = new List<Item>();
             foreach (var itemString in itemStrings)
             {
@@ -413,11 +422,64 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        private List<int> GetCurrentRestDays()
+        {
+            var restDays1 = MJIManager.Instance()->CraftworksRestDays[0];
+            var restDays2 = MJIManager.Instance()->CraftworksRestDays[1];
+            var restDays3 = MJIManager.Instance()->CraftworksRestDays[2];
+            var restDays4 = MJIManager.Instance()->CraftworksRestDays[3];
+            return new List<int> { restDays1, restDays2, restDays3, restDays4 };
+        }
+
+        private bool SetRestDay()
+        {
+            var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
+            if (addon == IntPtr.Zero)
+                return false;
+            if (!GenericHelpers.IsAddonReady((AtkUnitBase*)addon)) return false;
+
+            try
+            {
+                // open rest days addon
+                Callback.Fire((AtkUnitBase*)addon, false, 12);
+                TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Setting Rest Days", 300));
+                TaskManager.EnqueueImmediate(() => EzThrottler.Check("Setting Rest Days"));
+
+                var restDaysPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleMaintenance");
+                if (restDaysPTR == IntPtr.Zero)
+                    return false;
+                var schedulerWindow = (AtkUnitBase*)restDaysPTR;
+                if (schedulerWindow == null)
+                    return false;
+
+                var restDays = GetCurrentRestDays();
+                restDays.ForEach(x => PluginLog.Log(x.ToString()));
+                restDays[1] = Config.SelectedCycle - 1;
+                restDays.ForEach(x => PluginLog.Log(x.ToString()));
+                var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
+                PluginLog.Log(restDaysMask.ToString());
+                Callback.Fire(schedulerWindow, false, 11, 8885u);
+                // schedulerWindow->Close(true);
+
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public void ScheduleList()
         {
             if (Config.SelectedCycle != 0)
             {
                 TaskManager.Enqueue(() => OpenCycle(Config.SelectedCycle));
+            }
+
+            // add rest handling here when that's implemented
+            if (IsScheduleRest)
+            {
+                TaskManager.Enqueue(() => SetRestDay());
             }
 
             int hours = 0;
@@ -439,6 +501,7 @@ namespace PandorasBox.Features.UI
             }
             TaskManager.Enqueue(() => CurrentWorkshop = 0);
         }
+
 
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
