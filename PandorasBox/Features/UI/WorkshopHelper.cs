@@ -43,14 +43,8 @@ namespace PandorasBox.Features.UI
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
         private int CurrentWorkshop;
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
+        private int SelectedCycle = 0;
         private bool IsScheduleRest;
-
-        public Configs Config { get; private set; }
-        public class Configs : FeatureConfig
-        {
-            public int SelectedCycle = 0;
-        }
-
 
         public class SchedulePreset
         {
@@ -170,24 +164,29 @@ namespace PandorasBox.Features.UI
             ImGui.Text("Select Cycle");
             ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
             ImGui.SetNextItemWidth(100);
-            var cyclePrev = Config.SelectedCycle == 0 ? "" : Cycles[Config.SelectedCycle - 1].ToString();
+            var cyclePrev = SelectedCycle == 0 ? "" : Cycles[SelectedCycle - 1].ToString();
             if (ImGui.BeginCombo("", cyclePrev))
             {
-                if (ImGui.Selectable("", Config.SelectedCycle == 0))
-                    Config.SelectedCycle = 0;
+                if (ImGui.Selectable("", SelectedCycle == 0))
+                    SelectedCycle = 0;
                 foreach (var cycle in Cycles)
                 {
-                    var selected = ImGui.Selectable(cycle.ToString(), Config.SelectedCycle == cycle);
+                    var selected = ImGui.Selectable(cycle.ToString(), SelectedCycle == cycle);
 
                     if (selected)
-                        Config.SelectedCycle = cycle;
+                        SelectedCycle = cycle;
                 }
                 ImGui.EndCombo();
             }
             ImGui.SameLine();
-            if (ImGui.Button("Set as Rest Day"))
+            if (ImGui.Button("Set Rest"))
             {
                 TaskManager.Enqueue(() => SetRestDay());
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Goto Next"))
+            {
+                TaskManager.Enqueue(() => OpenCycle(SelectedCycle + 1));
             }
 
             ImGui.Text("Select Workshops");
@@ -207,7 +206,7 @@ namespace PandorasBox.Features.UI
                 {
                     CurrentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
                     var restDays = GetCurrentRestDays();
-                    if (restDays.Contains(Config.SelectedCycle - 1))
+                    if (restDays.Contains(SelectedCycle - 1))
                         PrintPluginMessage("Selected cycle is a rest day. Cannot schedule on a rest day.");
                     else
                         ScheduleList();
@@ -463,7 +462,7 @@ namespace PandorasBox.Features.UI
                     return false;
 
                 var restDays = GetCurrentRestDays();
-                restDays[1] = Config.SelectedCycle - 1;
+                restDays[1] = SelectedCycle - 1;
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
 
@@ -496,12 +495,11 @@ namespace PandorasBox.Features.UI
 
         public void ScheduleList()
         {
-            if (Config.SelectedCycle != 0)
+            if (SelectedCycle != 0)
             {
-                TaskManager.Enqueue(() => OpenCycle(Config.SelectedCycle));
+                TaskManager.Enqueue(() => OpenCycle(SelectedCycle));
             }
 
-            // add rest handling here when that's implemented
             if (IsScheduleRest)
             {
                 TaskManager.Enqueue(() => SetRestDay());
@@ -562,7 +560,6 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Config = LoadConfig<Configs>() ?? new Configs();
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
                 .Where(x => x.Item.Row > 0)
                 .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime))
@@ -575,7 +572,6 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            SaveConfig(Config);
             P.Ws.RemoveWindow(Overlay);
             _enabled = false;
             Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
