@@ -13,7 +13,7 @@ namespace PandorasBox.Features.UI
 {
     public unsafe class AutoNumerics : Feature
     {
-        public override string Name => "Auto-Numerics";
+        public override string Name => "Auto-Fill Numeric Dialogs";
 
         public override string Description => "Automatically confirms any numeric input dialog boxes (trading, FC chests, etc.)";
 
