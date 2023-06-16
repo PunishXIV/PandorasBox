@@ -184,9 +184,16 @@ namespace PandorasBox.Features.UI
                 TaskManager.Enqueue(() => SetRestDay());
             }
             ImGui.SameLine();
-            if (ImGui.Button("Goto Next"))
+            if (ImGui.Button("Prev"))
+            {
+                TaskManager.Enqueue(() => OpenCycle(SelectedCycle - 1));
+                TaskManager.Enqueue(() => SelectedCycle -= 1);
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Next"))
             {
                 TaskManager.Enqueue(() => OpenCycle(SelectedCycle + 1));
+                TaskManager.Enqueue(() => SelectedCycle += 1);
             }
 
             ImGui.Text("Select Workshops");
