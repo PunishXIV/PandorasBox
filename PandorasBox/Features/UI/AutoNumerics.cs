@@ -52,7 +52,6 @@ namespace PandorasBox.Features.UI
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
             if (numeric == null) return;
 
-            var fcChest = (AtkUnitBase*)Svc.GameGui.GetAddonByName("FreeCompanyChest");
             if (numeric->IsVisible)
             {
                 try
@@ -85,7 +84,7 @@ namespace PandorasBox.Features.UI
                         }
                     }
 
-                    if (fcChest != null && fcChest->IsVisible)
+                    if (InFcChest())
                     {
                         if (Config.FCChestMinOrMax == 0)
                         {
