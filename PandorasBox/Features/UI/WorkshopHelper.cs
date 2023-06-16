@@ -197,6 +197,9 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
                 if (i != Workshops.Count - 1) ImGui.SameLine();
             }
+            ImGui.SameLine();
+            if (ImGui.Button("Deselect"))
+                Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
 
             try
             {
