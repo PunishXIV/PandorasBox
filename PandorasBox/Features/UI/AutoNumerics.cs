@@ -173,7 +173,6 @@ namespace PandorasBox.Features.UI
 
         private unsafe byte* ConvertToByte(int x)
         {
-            // byte[] bArray = System.BitConverter.GetBytes(x);
             byte[] bArray = Encoding.Default.GetBytes(x.ToString());
             byte* ptr;
             fixed (byte* tmpPtr = bArray) { ptr = tmpPtr; }
@@ -274,7 +273,7 @@ namespace PandorasBox.Features.UI
             //     }
             //     if (Config.InventoryMinOrMax != -1) ImGui.Checkbox("Auto Confirm", ref Config.InventoryConfirm);
             //     ImGui.Unindent();
-            ImGui.PopID();
+            //     ImGui.PopID();
             // }
         };
     }
