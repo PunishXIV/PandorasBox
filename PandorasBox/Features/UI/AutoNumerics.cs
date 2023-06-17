@@ -1,11 +1,12 @@
 using System;
+using System.Linq;
 using System.Text;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Interface.Components;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 
 namespace PandorasBox.Features.UI
@@ -20,22 +21,28 @@ namespace PandorasBox.Features.UI
 
         public Configs Config { get; private set; }
 
+        private string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
+
         public class Configs : FeatureConfig
         {
             public bool WorkOnTrading = false;
             public int TradeMinOrMax = -1;
+            public bool TradeExcludeSplit = false;
             public bool TradeConfirm = false;
 
             public bool WorkOnFCChest = false;
             public int FCChestMinOrMax = 1;
+            public bool FCExcludeSplit = true;
             public bool FCChestConfirm = false;
 
             public bool WorkOnRetainers = false;
             public int RetainersMinOrMax = -1;
+            public bool RetainerExcludeSplit = false;
             public bool RetainersConfirm = false;
 
             public bool WorkOnInventory = false;
             public int InventoryMinOrMax = -1;
+            public bool InventoryExcludeSplit = false;
             public bool InventoryConfirm = false;
         }
 
@@ -51,8 +58,9 @@ namespace PandorasBox.Features.UI
         {
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
             if (numeric == null) return;
+            var numericTitleNode = numeric->UldManager.NodeList[5]->GetAsAtkTextNode();
 
-            if (numeric->IsVisible)
+            if (numeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(numeric))
             {
                 try
                 {
@@ -63,6 +71,7 @@ namespace PandorasBox.Features.UI
 
                     if (Svc.Condition[ConditionFlag.TradeOpen])
                     {
+                        if (Config.TradeExcludeSplit && IsSplitAddon()) return;
                         if (Config.TradeMinOrMax == 0)
                         {
                             TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
@@ -86,6 +95,7 @@ namespace PandorasBox.Features.UI
 
                     if (InFcChest())
                     {
+                        if (Config.FCExcludeSplit && IsSplitAddon()) { return; }
                         if (Config.FCChestMinOrMax == 0)
                         {
                             TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
@@ -109,6 +119,7 @@ namespace PandorasBox.Features.UI
 
                     if (Svc.Condition[ConditionFlag.OccupiedSummoningBell] && !InFcChest())
                     {
+                        if (Config.RetainerExcludeSplit && IsSplitAddon()) return;
                         if (Config.RetainersMinOrMax == 0)
                         {
                             TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
@@ -132,7 +143,8 @@ namespace PandorasBox.Features.UI
 
                     // if ([insert inventory conditions])
                     // {
-                    //     if (Config.InventoryMinOrMax == 0)
+                    // if (Config.InventoryExcludeSplit && IsSplitAddon()) return;
+                    // if (Config.InventoryMinOrMax == 0)
                     //     {
                     //         TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
                     //         if (Config.InventoryConfirm)
@@ -163,6 +175,13 @@ namespace PandorasBox.Features.UI
                 TaskManager.Abort();
                 return;
             }
+        }
+
+        private bool IsSplitAddon()
+        {
+            var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
+            var numericTitleText = numeric->UldManager.NodeList[5]->GetAsAtkTextNode()->NodeText.ToString();
+            return numericTitleText == splitText;
         }
 
         private bool InFcChest()
@@ -205,6 +224,7 @@ namespace PandorasBox.Features.UI
                 {
                     Config.TradeMinOrMax = -1;
                 }
+                ImGui.Checkbox("Exclude Split Dialog", ref Config.TradeExcludeSplit);
                 if (Config.TradeMinOrMax != -1) ImGui.Checkbox("Auto Confirm", ref Config.TradeConfirm);
                 ImGui.Unindent();
                 ImGui.PopID();
@@ -227,6 +247,7 @@ namespace PandorasBox.Features.UI
                 {
                     Config.FCChestMinOrMax = -1;
                 }
+                ImGui.Checkbox("Exclude Split Dialog", ref Config.FCExcludeSplit);
                 if (Config.FCChestMinOrMax != -1) ImGui.Checkbox("Auto Confirm", ref Config.FCChestConfirm);
                 ImGui.Unindent();
                 ImGui.PopID();
@@ -249,6 +270,7 @@ namespace PandorasBox.Features.UI
                 {
                     Config.RetainersMinOrMax = -1;
                 }
+                ImGui.Checkbox("Exclude Split Dialog", ref Config.RetainerExcludeSplit);
                 if (Config.RetainersMinOrMax != -1) ImGui.Checkbox("Auto Confirm", ref Config.RetainersConfirm);
                 ImGui.Unindent();
                 ImGui.PopID();
@@ -271,6 +293,7 @@ namespace PandorasBox.Features.UI
             //     {
             //         Config.InventoryMinOrMax = -1;
             //     }
+            //     ImGui.Checkbox("Exclude Split Dialog", ref Config.InventoryExcludeSplit);
             //     if (Config.InventoryMinOrMax != -1) ImGui.Checkbox("Auto Confirm", ref Config.InventoryConfirm);
             //     ImGui.Unindent();
             //     ImGui.PopID();
