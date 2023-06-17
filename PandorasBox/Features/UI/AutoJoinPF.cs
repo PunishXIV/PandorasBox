@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
+using System.Collections.Generic;
 using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
@@ -37,6 +38,28 @@ namespace PandorasBox.Features.UI
             public bool JoinDeepDungeons = false;
             public bool JoinFieldOperations = false;
             public bool JoinVC = false;
+
+            // private readonly List<T> configList = new List<T>();
+            // public T this[int index]
+            // {
+            //     get => configList[index];
+            //     set => configList[index] = value;
+            // }
+            // public int Count => configList.Count;
+            // public bool IsReadOnly => false;
+
+            // public void Add(T item)
+            // {
+            //     configList.Add(item);
+            // }
+
+            // private void SetConfig(int index, T value)
+            // {
+            //     if (index >= 0 && index < configList.Count)
+            //     {
+            //         configList[index] = value;
+            //     }
+            // }
         }
 
         public override void Enable()
@@ -107,58 +130,29 @@ namespace PandorasBox.Features.UI
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
-            if (ImGui.BeginTable("Party Types", 4))
-            {
-                ImGui.TableNextRow();
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Checkbox("None", ref Config.JoinNone);
-                ImGui.TableSetColumnIndex(1);
-                ImGui.Checkbox("Duty Roulette", ref Config.JoinDutyRoulette);
-                ImGui.TableSetColumnIndex(2);
-                ImGui.Checkbox("Dungeons", ref Config.JoinDungeons);
-                ImGui.TableSetColumnIndex(3);
-                ImGui.Checkbox("Guildhests", ref Config.JoinGuildhests);
-                ImGui.TableNextRow();
+            // int numColumns = 4;
+            // int numRows = (Config.Count + numColumns - 1) / numColumns;
 
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Checkbox("Trials", ref Config.JoinTrials);
-                ImGui.TableSetColumnIndex(1);
-                ImGui.Checkbox("High End", ref Config.JoinHighEnd);
-                ImGui.TableSetColumnIndex(2);
-                ImGui.Checkbox("PvP", ref Config.JoinPvP);
-                ImGui.TableSetColumnIndex(3);
-                ImGui.Checkbox("Quest Battles", ref Config.JoinQuestBattles);
-                ImGui.TableNextRow();
+            // ImGui.BeginTable("config_table", numColumns, ImGuiTableFlags.Borders);
 
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Checkbox("FATEs", ref Config.JoinFATEs);
-                ImGui.TableSetColumnIndex(1);
-                ImGui.Checkbox("Treasure Hunts", ref Config.JoinTreasureHunts);
-                ImGui.TableSetColumnIndex(2);
-                ImGui.Checkbox("The Hunt", ref Config.JoinTheHunts);
-                ImGui.TableSetColumnIndex(3);
-                ImGui.Checkbox("Gathering Forays", ref Config.JoinGatheringForays);
-                ImGui.TableNextRow();
+            // for (int row = 0; row < numRows; row++)
+            // {
+            //     ImGui.TableNextRow();
 
-                ImGui.TableSetColumnIndex(0);
-                ImGui.Checkbox("Deep Dungeons", ref Config.JoinDeepDungeons);
-                ImGui.TableSetColumnIndex(1);
-                ImGui.Checkbox("Field Operations", ref Config.JoinFieldOperations);
-                ImGui.TableSetColumnIndex(2);
-                ImGui.Checkbox("V&C", ref Config.JoinVC);
-                ImGui.EndTable();
-            }
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinTrials);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinHighEnd);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinPvP);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinQuestBattles);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinFATEs);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinTreasureHunts);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinTheHunts);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinGatheringForays);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinDeepDungeons);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinFieldOperations);
-            // ImGui.Checkbox("Hide Chat Message", ref Config.JoinVC);
+            //     for (int col = 0; col < numColumns; col++)
+            //     {
+            //         int index = row * numColumns + col;
+
+            //         if (index < Config.Count)
+            //         {
+            //             ImGui.TableSetColumnIndex(col);
+            //             bool value = Config[index];
+            //             ImGui.Checkbox($"##config_checkbox_{index}", ref value);
+            //             Config[index] = value;
+            //         }
+            //     }
+            // }
+            // ImGui.EndTable();
         };
     }
 }
