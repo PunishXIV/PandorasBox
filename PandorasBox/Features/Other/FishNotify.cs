@@ -1,16 +1,11 @@
-using Dalamud.Game.Network;
+using Dalamud.Game;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
-using Newtonsoft.Json;
+using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Media;
-using System.Net.Http;
-using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features.Other
 {
@@ -18,255 +13,277 @@ namespace PandorasBox.Features.Other
     {
         public override string Name => "Fish Notify";
 
-        public override string Description => "Play a sound when a fish is hooked.";
+        public override string Description => "Play a sound or send a chat message when a fish is hooked.";
 
         public override FeatureType FeatureType => FeatureType.Other;
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Chat Alerts")]
-            public bool ChatAlerts = true;
-
-            [FeatureConfigOption("Light Tugs")]
             public bool LightTugs = true;
+            public bool LightChat = true;
+            public bool PlayLightSound = true;
 
-            [FeatureConfigOption("Medium Tugs")]
-            public bool MediumTugs = true;
+            public bool StrongTugs = true;
+            public bool StrongChat = true;
+            public bool PlayStrongSound = true;
 
-            [FeatureConfigOption("Heavy Tugs")]
-            public bool HeavyTugs = true;
+            public bool LegendaryTugs = true;
+            public bool LegendaryChat = true;
+            public bool PlayLegendarySound = true;
         }
 
         public Configs Config { get; private set; }
 
-        public override bool UseAutoConfig => true;
-
-        private int expectedOpCode = -1;
-        private uint fishCount = 0;
-        private static readonly SoundPlayer player = new SoundPlayer();
-
-        public class OpcodeRegion
+        public enum FishingState : byte
         {
-            public string? Version { get; set; }
-            public string? Region { get; set; }
-            public Dictionary<string, List<OpcodeList>>? Lists { get; set; }
+            None = 0,
+            PoleOut = 1,
+            PullPoleIn = 2,
+            Quit = 3,
+            PoleReady = 4,
+            Bite = 5,
+            Reeling = 6,
+            Waiting = 8,
+            Waiting2 = 9,
         }
 
-        public class OpcodeList
+        public enum BiteType : byte
         {
-            public string? Name { get; set; }
-            public ushort Opcode { get; set; }
+            Unknown = 0,
+            Weak = 36,
+            Strong = 37,
+            Legendary = 38,
+            None = 255,
         }
 
-        private void ExtractOpCode(Task<string> task)
+        public static SeTugType TugType { get; set; } = null!;
+        private EventFramework eventFramework = new EventFramework(Svc.SigScanner);
+        private Helpers.AudioHandler audioHandler { get; init; }
+        private bool hasHooked = false;
+
+        // public FishNotify()
+        // {
+        //     audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds", "Light.wav"));
+        //     audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds", "Strong.wav"));
+        //     audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds", "Legendary.wav"));
+        // }
+
+        private void RunFeature(Framework framework)
+        {
+            if (!Svc.Condition[ConditionFlag.Fishing]) { hasHooked = false; return; }
+
+            var state = eventFramework.FishingState;
+            if (state != FishingState.Bite) return;
+
+            if (!hasHooked)
+                switch (TugType.Bite)
+                {
+                    case BiteType.Weak:
+                        hasHooked = true;
+                        if (Config.LightChat) TaskManager.Enqueue(() => SendChatAlert("light"));
+                        // if (Config.PlayLightSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Light);
+                        break;
+
+                    case BiteType.Strong:
+                        hasHooked = true;
+                        if (Config.StrongChat) TaskManager.Enqueue(() => SendChatAlert("strong"));
+                        // if (Config.PlayStrongSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Strong);
+                        break;
+
+                    case BiteType.Legendary:
+                        hasHooked = true;
+                        if (Config.LegendaryChat) TaskManager.Enqueue(() => SendChatAlert("legendary"));
+                        // if (Config.PlayLegendarySound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Legendary);
+                        break;
+
+                    default:
+                        break;
+                }
+            return;
+        }
+
+        private unsafe bool CheckIsSfxEnabled()
         {
             try
             {
-                var regions = JsonConvert.DeserializeObject<List<OpcodeRegion>>(task.Result);
-                if (regions == null)
+                var framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance();
+                var configBase = framework->SystemConfig.CommonSystemConfig.ConfigBase;
+
+                var seEnabled = false;
+                var masterEnabled = false;
+
+                for (var i = 0; i < configBase.ConfigCount; i++)
                 {
-                    PluginLog.Warning("No regions found in opcode list");
-                    return;
+                    var entry = configBase.ConfigEntry[i];
+
+                    if (entry.Name != null)
+                    {
+                        var name = Dalamud.Memory.MemoryHelper.ReadStringNullTerminated(new IntPtr(entry.Name));
+
+                        if (name == "IsSndSe")
+                        {
+                            var value = entry.Value.UInt;
+                            PluginLog.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
+
+                            seEnabled = value == 0;
+                        }
+
+                        if (name == "IsSndMaster")
+                        {
+                            var value = entry.Value.UInt;
+                            PluginLog.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
+
+                            masterEnabled = value == 0;
+                        }
+                    }
                 }
 
-                var region = regions.Find(r => r.Region == "Global");
-                if (region == null || region.Lists == null)
-                {
-                    PluginLog.Warning("No global region found in opcode list");
-                    return;
-                }
-
-                if (!region.Lists.TryGetValue("ServerZoneIpcType", out List<OpcodeList>? serverZoneIpcTypes) || serverZoneIpcTypes == null)
-                {
-                    PluginLog.Warning("No ServerZoneIpcType in opcode list");
-                    return;
-                }
-
-                var eventPlay = serverZoneIpcTypes.Find(opcode => opcode.Name == "EventPlay");
-                if (eventPlay == null)
-                {
-                    PluginLog.Warning("No EventPlay opcode in ServerZoneIpcType");
-                    return;
-                }
-
-                expectedOpCode = eventPlay.Opcode;
-                PluginLog.Debug($"Found EventPlay opcode {expectedOpCode:X4}");
+                return seEnabled && masterEnabled;
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                PluginLog.Error(e, "Could not download/extract opcodes: {}", e.Message);
-            }
-        }
-
-        private void OnNetworkMessage(IntPtr dataPtr, ushort opCode, uint sourceActorId, uint targetActorId, NetworkMessageDirection direction)
-        {
-            if (direction != NetworkMessageDirection.ZoneDown || opCode != expectedOpCode)
-                return;
-
-            var data = new byte[32];
-            Marshal.Copy(dataPtr, data, 0, data.Length);
-
-            int eventId = BitConverter.ToInt32(data, 8);
-            short scene = BitConverter.ToInt16(data, 12);
-            int param5 = BitConverter.ToInt32(data, 28);
-
-            // Fishing event?
-            if (eventId != 0x00150001)
-                return;
-
-            // Fish hooked?
-            if (scene != 5)
-                return;
-
-            switch (param5)
-            {
-
-                case 0x124:
-                    // light tug (!)
-                    if (!Config.LightTugs) return;
-                    ++fishCount;
-                    PlaySound(Resources.Info);
-                    SendChatAlert("light");
-                    break;
-
-                case 0x125:
-                    // medium tug (!!)
-                    if (!Config.MediumTugs) return;
-                    ++fishCount;
-                    PlaySound(Resources.Alert);
-                    SendChatAlert("medium");
-                    break;
-
-                case 0x126:
-                    // heavy tug (!!!)
-                    if (!Config.HeavyTugs) return;
-                    ++fishCount;
-                    PlaySound(Resources.Alarm);
-                    SendChatAlert("heavy");
-                    break;
-
-                default:
-                    StopSound();
-                    break;
+                PluginLog.Error(ex, $"[{Name}]: Error checking if sfx is enabled");
+                return true;
             }
         }
 
         private void SendChatAlert(string size)
         {
-            if (!Config.ChatAlerts) return;
+            if (!Config.LightChat) return;
 
             SeString message = new SeStringBuilder()
-            .AddUiForeground(45)
-            .Append("[Pandora's Box]")
-            .AddUiForeground(62)
-            .Append(" [FishNotify]")
-            .AddUiForegroundOff()
-            .Append($" You hook a fish with a ")
-            .AddUiForeground(576)
-            .Append(size)
-            .AddUiForegroundOff()
-            .Append(" bite.")
-            .Build();
+                .AddUiForeground($"[{P.Name}] ", 45)
+                .AddUiForeground($"[{Name}] ", 62)
+                .AddText($"You hook a fish with a ")
+                .AddUiForeground(size, 576)
+                .AddText(" bite.")
+                .Build();
             Svc.Chat.Print(message);
-        }
-
-        public static void PlaySound(Stream input)
-        {
-            lock (player)
-            {
-                StopSound();
-
-                player.Stream = input;
-                player.Play();
-            }
-        }
-
-        public static void StopSound()
-        {
-            lock (player)
-            {
-                player.Stop();
-                player.Stream = null;
-            }
         }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.GameNetwork.NetworkMessage += OnNetworkMessage;
-            var client = new HttpClient();
-            client.GetStringAsync("https://raw.githubusercontent.com/karashiiro/FFXIVOpcodes/master/opcodes.min.json")
-            .ContinueWith(ExtractOpCode);
+            Svc.Framework.Update += RunFeature;
+            TugType = new SeTugType(Svc.SigScanner);
+            // FishNotify fn = new FishNotify();
+            string assemblyLocation = Pi.AssemblyLocation?.FullName;
+            string directoryPath = Pi.AssemblyLocation?.Directory?.FullName;
+
+            PluginLog.Log("Assembly Location: " + assemblyLocation);
+            PluginLog.Log("Directory Path: " + directoryPath);
+
+            string lightFilePath = System.IO.Path.Combine(directoryPath, "Sounds", "Light.wav");
+            PluginLog.Log("Light File Path: " + lightFilePath);
             base.Enable();
         }
 
         public override void Disable()
         {
             SaveConfig(Config);
-            Svc.GameNetwork.NetworkMessage -= OnNetworkMessage;
+            Svc.Framework.Update -= RunFeature;
             base.Disable();
+        }
+
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        {
+            ImGui.Checkbox("Light Tugs", ref Config.LightTugs);
+            if (Config.LightTugs)
+            {
+                ImGui.Indent();
+                ImGui.Checkbox("Chat Alerts", ref Config.LightChat);
+                ImGui.Checkbox("Sound Effect", ref Config.PlayLightSound);
+                ImGui.Unindent();
+            }
+
+            ImGui.Checkbox("Strong Tugs", ref Config.StrongTugs);
+            if (Config.StrongTugs)
+            {
+                ImGui.Indent();
+                ImGui.Checkbox("Chat Alerts", ref Config.StrongChat);
+                ImGui.Checkbox("Sound Effect", ref Config.PlayStrongSound);
+                ImGui.Unindent();
+            }
+
+            ImGui.Checkbox("Legendary Tugs", ref Config.LegendaryTugs);
+            if (Config.StrongTugs)
+            {
+                ImGui.Indent();
+                ImGui.Checkbox("Chat Alerts", ref Config.LegendaryChat);
+                ImGui.Checkbox("Sound Effect", ref Config.PlayLegendarySound);
+                ImGui.Unindent();
+            }
+        };
+    }
+
+    public class SeAddressBase
+    {
+        public readonly IntPtr Address;
+
+        public SeAddressBase(Dalamud.Game.SigScanner sigScanner, string signature, int offset = 0)
+        {
+            Address = sigScanner.GetStaticAddressFromSig(signature);
+            if (Address != IntPtr.Zero)
+                Address += offset;
+            var baseOffset = (ulong)Address.ToInt64() - (ulong)sigScanner.Module.BaseAddress.ToInt64();
         }
     }
 
-    [global::System.CodeDom.Compiler.GeneratedCodeAttribute("System.Resources.Tools.StronglyTypedResourceBuilder", "16.0.0.0")]
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-    [global::System.Runtime.CompilerServices.CompilerGeneratedAttribute()]
-    internal class Resources
+    public sealed class SeTugType : SeAddressBase
     {
-        private static global::System.Resources.ResourceManager resourceMan;
-        private static global::System.Globalization.CultureInfo resourceCulture;
-        [global::System.Diagnostics.CodeAnalysis.SuppressMessageAttribute("Microsoft.Performance", "CA1811:AvoidUncalledPrivateCode")]
-        internal Resources() { }
+        public SeTugType(SigScanner sigScanner)
+            : base(sigScanner,
+                "4C 8D 0D ?? ?? ?? ?? 4D 8B 13 49 8B CB 45 0F B7 43 ?? 49 8B 93 ?? ?? ?? ?? 88 44 24 20 41 FF 92 ?? ?? ?? ?? 48 83 C4 38 C3")
+        { }
 
-        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Resources.ResourceManager ResourceManager
+        public unsafe FishNotify.BiteType Bite
+            => Address != IntPtr.Zero ? *(FishNotify.BiteType*)Address : FishNotify.BiteType.Unknown;
+    }
+
+    public sealed class EventFramework : SeAddressBase
+    {
+        private const int FishingManagerOffset = 0x70;
+        private const int FishingStateOffset = 0x220;
+
+        internal unsafe IntPtr FishingManager
         {
             get
             {
-                if (object.ReferenceEquals(resourceMan, null))
-                {
-                    global::System.Resources.ResourceManager temp = new global::System.Resources.ResourceManager("FishNotify.Resources", typeof(Resources).Assembly);
-                    resourceMan = temp;
-                }
-                return resourceMan;
+                if (Address == IntPtr.Zero)
+                    return IntPtr.Zero;
+
+                var managerPtr = *(IntPtr*)Address + FishingManagerOffset;
+                if (managerPtr == IntPtr.Zero)
+                    return IntPtr.Zero;
+
+                return *(IntPtr*)managerPtr;
             }
         }
 
-        [global::System.ComponentModel.EditorBrowsableAttribute(global::System.ComponentModel.EditorBrowsableState.Advanced)]
-        internal static global::System.Globalization.CultureInfo Culture
+        internal IntPtr FishingStatePtr
         {
             get
             {
-                return resourceCulture;
-            }
-            set
-            {
-                resourceCulture = value;
+                var ptr = FishingManager;
+                if (ptr == IntPtr.Zero)
+                    return IntPtr.Zero;
+
+                return ptr + FishingStateOffset;
             }
         }
 
-        internal static System.IO.UnmanagedMemoryStream Alarm
+        public unsafe FishNotify.FishingState FishingState
         {
             get
             {
-                return ResourceManager.GetStream("Alarm", resourceCulture);
+                var ptr = FishingStatePtr;
+                return ptr != IntPtr.Zero ? *(FishNotify.FishingState*)ptr : FishNotify.FishingState.None;
             }
         }
 
-        internal static System.IO.UnmanagedMemoryStream Alert
-        {
-            get
-            {
-                return ResourceManager.GetStream("Alert", resourceCulture);
-            }
-        }
-
-        internal static System.IO.UnmanagedMemoryStream Info
-        {
-            get
-            {
-                return ResourceManager.GetStream("Info", resourceCulture);
-            }
-        }
+        public EventFramework(Dalamud.Game.SigScanner sigScanner)
+            : base(sigScanner,
+                "48 8B 2D ?? ?? ?? ?? 48 8B F1 48 8B 85 ?? ?? ?? ?? 48 8B 18 48 3B D8 74 35 0F 1F 00 F6 83 ?? ?? ?? ?? ?? 75 1D 48 8B 46 28 48 8D 4E 28 48 8B 93 ?? ?? ?? ??")
+        { }
     }
 }
