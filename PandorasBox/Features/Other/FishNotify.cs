@@ -167,14 +167,6 @@ namespace PandorasBox.Features.Other
             Svc.Framework.Update += RunFeature;
             TugType = new SeTugType(Svc.SigScanner);
             // FishNotify fn = new FishNotify();
-            string assemblyLocation = Pi.AssemblyLocation?.FullName;
-            string directoryPath = Pi.AssemblyLocation?.Directory?.FullName;
-
-            PluginLog.Log("Assembly Location: " + assemblyLocation);
-            PluginLog.Log("Directory Path: " + directoryPath);
-
-            string lightFilePath = System.IO.Path.Combine(directoryPath, "Sounds", "Light.wav");
-            PluginLog.Log("Light File Path: " + lightFilePath);
             base.Enable();
         }
 
