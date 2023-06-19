@@ -183,8 +183,8 @@ namespace PandorasBox.Features.Other
             if (Config.LightTugs)
             {
                 ImGui.Indent();
-                ImGui.Checkbox("Chat Alerts", ref Config.LightChat);
-                ImGui.Checkbox("Sound Effect", ref Config.PlayLightSound);
+                ImGui.Checkbox("Chat Alerts##Light", ref Config.LightChat);
+                ImGui.Checkbox("Sound Effect##Light", ref Config.PlayLightSound);
                 ImGui.Unindent();
             }
 
@@ -192,17 +192,17 @@ namespace PandorasBox.Features.Other
             if (Config.StrongTugs)
             {
                 ImGui.Indent();
-                ImGui.Checkbox("Chat Alerts", ref Config.StrongChat);
-                ImGui.Checkbox("Sound Effect", ref Config.PlayStrongSound);
+                ImGui.Checkbox("Chat Alerts##Strong", ref Config.StrongChat);
+                ImGui.Checkbox("Sound Effect##Strong", ref Config.PlayStrongSound);
                 ImGui.Unindent();
             }
 
             ImGui.Checkbox("Legendary Tugs", ref Config.LegendaryTugs);
-            if (Config.StrongTugs)
+            if (Config.LegendaryTugs)
             {
                 ImGui.Indent();
-                ImGui.Checkbox("Chat Alerts", ref Config.LegendaryChat);
-                ImGui.Checkbox("Sound Effect", ref Config.PlayLegendarySound);
+                ImGui.Checkbox("Chat Alerts##Legendary", ref Config.LegendaryChat);
+                ImGui.Checkbox("Sound Effect##Legendary", ref Config.PlayLegendarySound);
                 ImGui.Unindent();
             }
         };
