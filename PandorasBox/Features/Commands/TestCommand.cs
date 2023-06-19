@@ -1,5 +1,6 @@
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,8 @@ namespace PandorasBox.Features.Commands
 
         public override List<string> Parameters => new() { "test", "test2", "test3" };
         public override string Description => "This is a test command.";
+
+        public override FeatureType FeatureType => FeatureType.Disabled;
         protected override void OnCommand(List<string> args)
         {
             foreach (var p in Parameters)

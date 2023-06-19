@@ -31,7 +31,6 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             overlay = new(this);
-            P.Ws.AddWindow(overlay);
             base.Enable();
         }
 

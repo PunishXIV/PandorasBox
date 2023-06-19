@@ -19,7 +19,7 @@ namespace PandorasBox.Features.UI
 
         public override string Description => "When you open your inventory, the plugin will try and pull all stacks of the same item together.";
 
-        public override FeatureType FeatureType => FeatureType.UI;
+        public override FeatureType FeatureType => FeatureType.Disabled;
 
         public List<InventorySlot> inventorySlots = new();
 

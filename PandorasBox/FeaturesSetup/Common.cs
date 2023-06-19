@@ -16,6 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.Utility;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
@@ -438,19 +439,26 @@ public static unsafe class Common
     public const int UnitListCount = 18;
     public static AtkUnitBase* GetAddonByID(uint id)
     {
-        var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
-        for (var i = 0; i < UnitListCount; i++)
+        try
         {
-            var unitManager = &unitManagers[i];
-            var unitBaseArray = &(unitManager->AtkUnitEntries);
-            for (var j = 0; j < unitManager->Count; j++)
+            var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
+            for (var i = 0; i < UnitListCount; i++)
             {
-                var unitBase = unitBaseArray[j];
-                if (unitBase->ID == id)
+                var unitManager = &unitManagers[i];
+                var unitBaseArray = &(unitManager->AtkUnitEntries);
+                for (var j = 0; j < unitManager->Count; j++)
                 {
-                    return unitBase;
+                    var unitBase = unitBaseArray[j];
+                    if (unitBase != null && unitBase->ID == id)
+                    {
+                        return unitBase;
+                    }
                 }
             }
+        }
+        catch
+        {
+            return null;
         }
 
         return null;

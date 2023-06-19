@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
@@ -26,17 +27,31 @@ namespace PandorasBox.Features.Actions
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             OnJobChanged += RunFeature;
+            Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
         }
 
         private void RunFeature(uint? jobId)
         {
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
+            if (Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (jobId is 26 or 27 or 28)
             {
                 TaskManager.Abort();
                 TaskManager.DelayNext("Summoning", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => TrySummon(jobId), 5000);
+            }
+        }
+
+        private void CheckIfRespawned(ConditionFlag flag, bool value)
+        {
+            if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
+            {
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Spell, 7) == 0);
+                TaskManager.DelayNext("WaitForActionReady", 2500);
+                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
+                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
             }
         }
 
@@ -62,6 +77,7 @@ namespace PandorasBox.Features.Actions
         {
             SaveConfig(Config);
             OnJobChanged -= RunFeature;
+            Svc.Condition.ConditionChange -= CheckIfRespawned;
             base.Disable();
         }
 
