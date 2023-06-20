@@ -1,9 +1,6 @@
-using ECommons;
 using ECommons.Automation;
-using ECommons.DalamudServices;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ECommons.GenericHelpers;
@@ -17,7 +14,7 @@ namespace PandorasBox.Features.Commands
         public override string[] Alias => new string[] { "/pcall" };
 
         public override List<string> Parameters => new() { "addonName", "updateStateBool", "atkValues" };
-        public override string Description => $"Fires arbitrary callbacks to any addon of your choosing. Play with responsibly.";
+        public override string Description => "Fires arbitrary callbacks to any addon of your choosing. Play with responsibly.";
 
         protected override void OnCommandInternal(string _, string args)
         {
@@ -28,12 +25,12 @@ namespace PandorasBox.Features.Commands
         {
             if (!TryGetAddonByName<AtkUnitBase>(args[0], out var addonArg))
             {
-                PluginLog.Log($"Invalid addon {args[0]}");
+                PluginLog.Log($"Invalid addon {args[0]}. Please follow \"{Command} <addon> <bool> <atkValues>\"");
                 return;
             }
             if (!bool.TryParse(args[1], out var boolArg))
             {
-                PluginLog.Log("invalid bool");
+                PluginLog.Log($"Invalid bool. Please follow \"{Command} <addon> <bool> <atkValues>\"");
                 return;
             }
             var valueArgs = new List<object>();
