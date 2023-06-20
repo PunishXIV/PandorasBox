@@ -20,7 +20,7 @@ public abstract partial class CommandFeature : Feature
 
     protected abstract void OnCommand(List<string> args);
 
-    private void OnCommandInternal(string _, string args)
+    protected virtual void OnCommandInternal(string _, string args)
     {
         args = args.ToLower();
         OnCommand(args.Split(' ').ToList());
