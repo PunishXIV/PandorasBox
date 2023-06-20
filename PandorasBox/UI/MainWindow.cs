@@ -130,7 +130,7 @@ internal class MainWindow : Window
                 if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
                 {
                     ImGuiEx.ImGuiLineCentered("###Logo", () => { ImGui.Image(logo.ImGuiHandle, new(125f.Scale(), 125f.Scale())); });
-                    
+
                 }
 
                 ImGui.Spacing();
@@ -182,6 +182,9 @@ internal class MainWindow : Window
                         break;
                     case OpenWindow.Targets:
                         DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
+                        break;
+                    case OpenWindow.Chat:
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Chat).ToArray());
                         break;
                     case OpenWindow.Commands:
                         DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
@@ -290,6 +293,7 @@ public enum OpenWindow
     Actions,
     UI,
     Targets,
+    Chat,
     Other,
     Commands,
     About
