@@ -5,28 +5,22 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using ECommons.Logging;
-using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.MJI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features
 {
     public unsafe class CoordsToMapLink : Feature
     {
-        public override string Name => "Convert Coords to Clickable Map Link";
+        public override string Name => "Preserve Map Links in Clipboard";
 
-        public override string Description => "Convert Coords to Clickable Map Link";
+        public override string Description => "Makes it so map links copied to clipboard can still be interacted with after they're pasted back into chat.";
 
         public override FeatureType FeatureType => FeatureType.Chat;
 
@@ -158,7 +152,7 @@ namespace PandorasBox.Features
                     if (newMessage.Length + 1 > messageCapacity)
                     {
                         // FIXME: should call std::string#resize(or maybe _Reallocate_grow_by) here, but haven't found the signature yet
-                        PluginLog.LogError($"Sorry, message capacity not enough, abort conversion for {historyKey}");
+                        PluginLog.LogError($"Reached message capacity. Aborting conversion for {historyKey}");
                         return ret;
                     }
                     Marshal.WriteInt64(ret + 16, newMessage.Length + 1);
@@ -209,21 +203,6 @@ namespace PandorasBox.Features
                 PluginLog.Debug($"Exception on HandleChatMessage. {ex}");
             }
         }
-
-        // #region IDisposable Support
-        // protected virtual void Dispose(bool disposing)
-        // {
-        //     if (!disposing) return;
-        //     this.parseMessageHook.Dispose();
-        //     Svc.Chat.ChatMessage -= HandleChatMessage;
-        // }
-
-        // public void Dispose()
-        // {
-        //     Dispose(true);
-        //     GC.SuppressFinalize(this);
-        // }
-        // #endregion
 
         private readonly Random random = new();
         public int GenerateRawPosition(float visibleCoordinate, short offset, ushort factor)
