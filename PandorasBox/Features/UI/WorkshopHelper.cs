@@ -264,8 +264,10 @@ namespace PandorasBox.Features.UI
                 bool matchFound = false;
                 foreach (var craftable in Craftables)
                 {
-                    string craftableNoPrefix = craftable.Name.Replace("Isleworks ", "");
-                    if (itemString.Contains(craftableNoPrefix))
+                    string craftableNoPrefix = craftable.Name.Replace("Isleworks ", "")
+                        .Replace("Isleberry ", "")
+                        .Replace("Islefish ", "");
+                    if (itemString.ToLower().Contains(craftableNoPrefix.ToLower()))
                     {
                         Item item = new Item
                         {
