@@ -16,6 +16,7 @@ using PandorasBox.Helpers;
 using PandorasBox.UI;
 using PandorasBox.Utility;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -112,23 +113,27 @@ namespace PandorasBox.Features.UI
                 }
 
 
-                ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode);
+                if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
+                    SaveConfig(Config);
 
                 var language = Svc.ClientState.ClientLanguage;
                 switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
                 {
                     case 17:
                         ImGui.NextColumn();
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString}", ref Config.Use100GPYield);
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString}", ref Config.Use500GPYield);
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString}", ref Config.Use100GPYield))
+                            SaveConfig(Config);
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString}", ref Config.Use500GPYield))
+                            SaveConfig(Config);
                         break;
                     case 16:
                         ImGui.NextColumn();
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield);
-                        ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield);
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
+                            SaveConfig(Config);
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
+                            SaveConfig(Config);
                         break;
                 }
-
 
                 ImGui.Columns(1);
                 ImGui.End();
@@ -302,14 +307,14 @@ namespace PandorasBox.Features.UI
                     7 => addon->GatheredItemId8
                 };
 
-                if (item != lastGatheredItem)
+                if (item != lastGatheredItem && item != 0)
                 {
                     TaskManager.Abort();
                     lastGatheredIndex = index;
                     lastGatheredItem = item;
                 }
 
-                if (!Svc.Data.GetExcelSheet<Item>().GetRow(item).IsCollectable)
+                if (item != 0 && (Svc.Data.GetExcelSheet<Item>().GetRow(item) != null && !Svc.Data.GetExcelSheet<Item>().GetRow(item).IsCollectable) || Svc.Data.GetExcelSheet<Item>().GetRow(item) == null)
                 {
                     bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
                     Dalamud.Logging.PluginLog.Debug($"{quickGathering}");
