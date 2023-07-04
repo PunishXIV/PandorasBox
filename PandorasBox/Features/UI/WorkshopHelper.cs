@@ -24,6 +24,12 @@ using System.Numerics;
 using System.Text.RegularExpressions;
 using static ECommons.GenericHelpers;
 
+// TODO:
+// add config to auto select next cycle when opening workshop addon
+// prevent schedule from executing if workshop has anything filled in
+// add option to auto remove invalid entries
+// display other workshops in listbox if autoguess is on
+
 namespace PandorasBox.Features.UI
 {
     public unsafe class WorkshopHelper : Feature
@@ -38,13 +44,17 @@ namespace PandorasBox.Features.UI
         public static bool _enabled;
 
         internal static (uint Key, string Name, ushort CraftingTime)[] Craftables;
-        public static List<Item> CopiedSchedule;
+        public static List<Item> PrimarySchedule;
+        public static List<Item> SecondarySchedule;
 
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
         private int CurrentWorkshop;
+        private int MAX_WORKSHOPS = 4;
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         private int SelectedCycle = 0;
         private bool IsScheduleRest;
+        private bool AutoGuess;
+        private bool Fortuneteller;
 
         public class SchedulePreset
         {
@@ -124,7 +134,7 @@ namespace PandorasBox.Features.UI
                     var text = ImGui.GetClipboardText();
                     if (text.IsNullOrEmpty()) return;
                     List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-                    CopiedSchedule = ScheduleImport(rawItemStrings);
+                    ScheduleImport(rawItemStrings);
                 }
                 catch (Exception e)
                 {
@@ -132,6 +142,12 @@ namespace PandorasBox.Features.UI
                 }
             }
             ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
+            ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
+            if (!Fortuneteller)
+            {
+                ImGui.Checkbox("Guess Workshops", ref AutoGuess);
+                ImGuiComponents.HelpMarker("If the cumulative hours of your clipboard is >24, this will assume the first 24 hours\nare for workshops 1-3 and the remaining are for workshop 4. If it is 24 or less, it will apply to all four workshops.");
+            }
 
             // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
             // basically the same buttons from ReAction's stack tab
@@ -151,9 +167,9 @@ namespace PandorasBox.Features.UI
             ImGui.SetNextItemWidth(250);
             if (ImGui.BeginListBox("##Listbox", new Vector2(250, 6 * ImGui.GetTextLineHeightWithSpacing())))
             {
-                if (CopiedSchedule != null)
+                if (PrimarySchedule != null)
                 {
-                    foreach (Item item in CopiedSchedule)
+                    foreach (Item item in PrimarySchedule)
                     {
                         if (ImGui.Selectable(item.Name)) return;
                     }
@@ -161,51 +177,54 @@ namespace PandorasBox.Features.UI
                 ImGui.EndListBox();
             }
 
-            ImGui.Text("Select Cycle");
-            ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
-            ImGui.SetNextItemWidth(100);
-            var cyclePrev = SelectedCycle == 0 ? "" : Cycles[SelectedCycle - 1].ToString();
-            if (ImGui.BeginCombo("", cyclePrev))
+            if (!Fortuneteller)
             {
-                if (ImGui.Selectable("", SelectedCycle == 0))
-                    SelectedCycle = 0;
-                foreach (var cycle in Cycles)
+                ImGui.Text("Select Cycle");
+                ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
+                ImGui.SetNextItemWidth(100);
+                var cyclePrev = SelectedCycle == 0 ? "" : Cycles[SelectedCycle - 1].ToString();
+                if (ImGui.BeginCombo("", cyclePrev))
                 {
-                    var selected = ImGui.Selectable(cycle.ToString(), SelectedCycle == cycle);
+                    if (ImGui.Selectable("", SelectedCycle == 0))
+                        SelectedCycle = 0;
+                    foreach (var cycle in Cycles)
+                    {
+                        var selected = ImGui.Selectable(cycle.ToString(), SelectedCycle == cycle);
 
-                    if (selected)
-                        SelectedCycle = cycle;
+                        if (selected)
+                            SelectedCycle = cycle;
+                    }
+                    ImGui.EndCombo();
                 }
-                ImGui.EndCombo();
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Set Rest"))
-            {
-                TaskManager.Enqueue(() => SetRestDay());
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Prev"))
-            {
-                TaskManager.Enqueue(() => OpenCycle(SelectedCycle - 1));
-                TaskManager.Enqueue(() => SelectedCycle -= 1);
-            }
-            ImGui.SameLine();
-            if (ImGui.Button("Next"))
-            {
-                TaskManager.Enqueue(() => OpenCycle(SelectedCycle + 1));
-                TaskManager.Enqueue(() => SelectedCycle += 1);
-            }
+                ImGui.SameLine();
+                if (ImGui.Button("Set Rest"))
+                {
+                    TaskManager.Enqueue(() => SetRestDay());
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Prev"))
+                {
+                    TaskManager.Enqueue(() => OpenCycle(SelectedCycle - 1));
+                    TaskManager.Enqueue(() => SelectedCycle -= 1);
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Next"))
+                {
+                    TaskManager.Enqueue(() => OpenCycle(SelectedCycle + 1));
+                    TaskManager.Enqueue(() => SelectedCycle += 1);
+                }
 
-            ImGui.Text("Select Workshops");
-            for (var i = 0; i < Workshops.Count; i++)
-            {
-                var configValue = Workshops[i];
-                if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
-                if (i != Workshops.Count - 1) ImGui.SameLine();
+                ImGui.Text("Select Workshops");
+                for (var i = 0; i < Workshops.Count; i++)
+                {
+                    var configValue = Workshops[i];
+                    if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
+                    if (i != Workshops.Count - 1) ImGui.SameLine();
+                }
+                ImGui.SameLine();
+                if (ImGui.Button("Deselect"))
+                    Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
             }
-            ImGui.SameLine();
-            if (ImGui.Button("Deselect"))
-                Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
 
             try
             {
@@ -249,16 +268,18 @@ namespace PandorasBox.Features.UI
             return scale;
         }
 
-        internal static List<Item> ScheduleImport(List<string> rawItemStrings)
+        internal static void ScheduleImport(List<string> rawItemStrings)
         {
-            List<Item> items = ParseItems(rawItemStrings);
-            CopiedSchedule = items;
-            return CopiedSchedule;
+            (List<Item> items, List<Item> excessItems) = ParseItems(rawItemStrings);
+            PrimarySchedule = items;
+            SecondarySchedule = excessItems;
         }
 
-        public static List<Item> ParseItems(List<string> itemStrings)
+        public static (List<Item>, List<Item>) ParseItems(List<string> itemStrings)
         {
             List<Item> items = new List<Item>();
+            List<Item> excessItems = new List<Item>();
+            int hours = 0;
             foreach (var itemString in itemStrings)
             {
                 bool matchFound = false;
@@ -276,8 +297,11 @@ namespace PandorasBox.Features.UI
                             CraftingTime = craftable.CraftingTime,
                             UIIndex = craftable.Key - 1
                         };
-
-                        items.Add(item);
+                        hours += craftable.CraftingTime;
+                        if (hours < 24)
+                            items.Add(item);
+                        else
+                            excessItems.Add(item);
                         matchFound = true;
                     }
                 }
@@ -295,7 +319,7 @@ namespace PandorasBox.Features.UI
                 }
             }
 
-            return items;
+            return (items, excessItems);
         }
 
         private bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
@@ -515,26 +539,69 @@ namespace PandorasBox.Features.UI
             if (IsScheduleRest)
             {
                 TaskManager.Enqueue(() => SetRestDay());
+                return;
             }
 
             int hours = 0;
-            for (var i = CurrentWorkshop; i < Workshops.Count; i++)
+            if (AutoGuess)
             {
-                var ws = 0;
-                if (Workshops[i])
+                if (SecondarySchedule != null)
                 {
-                    TaskManager.Enqueue(() => hours = 0);
-                    foreach (Item item in CopiedSchedule)
+                    for (var i = 0; i < MAX_WORKSHOPS - 1; i++)
                     {
-                        ws = i;
-                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
+                        TaskManager.Enqueue(() => hours = 0);
+                        foreach (Item item in PrimarySchedule)
+                        {
+                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i, hours));
+                            TaskManager.Enqueue(() => ScheduleItem(item));
+                            TaskManager.Enqueue(() => hours += item.CraftingTime);
+                            TaskManager.Enqueue(() => CurrentWorkshop += 1);
+                        }
+                    }
+                    TaskManager.Enqueue(() => hours = 0);
+                    foreach (Item item in SecondarySchedule)
+                    {
+                        TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, 3, hours));
                         TaskManager.Enqueue(() => ScheduleItem(item));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
                         TaskManager.Enqueue(() => CurrentWorkshop += 1);
                     }
                 }
+                else
+                {
+                    for (var i = 0; i < MAX_WORKSHOPS; i++)
+                    {
+                        TaskManager.Enqueue(() => hours = 0);
+                        foreach (Item item in PrimarySchedule)
+                        {
+                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
+                            TaskManager.Enqueue(() => ScheduleItem(item));
+                            TaskManager.Enqueue(() => hours += item.CraftingTime);
+                            TaskManager.Enqueue(() => CurrentWorkshop += 1);
+                        }
+                    }
+                }
             }
-            TaskManager.Enqueue(() => CurrentWorkshop = 0);
+            else
+            {
+                for (var i = CurrentWorkshop; i < Workshops.Count; i++)
+                {
+                    var ws = 0;
+                    if (Workshops[i])
+                    {
+                        TaskManager.Enqueue(() => hours = 0);
+                        foreach (Item item in PrimarySchedule)
+                        {
+                            ws = i;
+                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
+                            TaskManager.Enqueue(() => ScheduleItem(item));
+                            TaskManager.Enqueue(() => hours += item.CraftingTime);
+                            TaskManager.Enqueue(() => CurrentWorkshop += 1);
+                        }
+                    }
+                }
+                TaskManager.Enqueue(() => CurrentWorkshop = 0);
+            }
         }
 
 
