@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using ImGuiNET;
@@ -61,9 +62,7 @@ namespace PandorasBox.Features.Targets
         {
             if (Config.InteractMethod is 1 or 3)
             {
-                if (!baseObj->GetIsTargetable())
-                    TargetSystem.Instance()->InteractWithObject(baseObj, false);
-                else
+                if (baseObj->GetIsTargetable())
                     TargetSystem.Instance()->InteractWithObject(baseObj, true);
             }
 
@@ -94,7 +93,7 @@ namespace PandorasBox.Features.Targets
             }
             if (Svc.ClientState.LocalPlayer == null) return;
 
-            if (Svc.Condition[ConditionFlag.BoundByDuty] || Svc.Condition[ConditionFlag.BoundByDuty56] || Svc.Condition[ConditionFlag.BoundByDuty95] || Svc.Condition[ConditionFlag.BoundToDuty97])
+            if (GameMain.Instance()->CurrentContentFinderConditionId > 0)
             {
                 if (Svc.Condition[ConditionFlag.InCombat] && Config.ExcludeCombat) { TaskManager.Abort(); return; }
                 if (IsMoving() && Config.OnlyStanding) { TaskManager.Abort(); return; }
