@@ -88,6 +88,7 @@ namespace PandorasBox.Features.Targets
                 return;
 
             if (Svc.ClientState.LocalPlayer is null) return;
+            if (Svc.ClientState.LocalPlayer.IsCasting) return;
 
             var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
             if (nearbyNodes.Count == 0)
