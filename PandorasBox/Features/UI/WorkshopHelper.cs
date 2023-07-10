@@ -45,6 +45,7 @@ namespace PandorasBox.Features.UI
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         private int SelectedCycle = 0;
         private bool IsScheduleRest;
+        private bool IsInsufficientRank;
 
         public class SchedulePreset
         {
@@ -209,6 +210,11 @@ namespace PandorasBox.Features.UI
 
             try
             {
+                if (IsInsufficientRank)
+                {
+                    ImGui.BeginDisabled();
+                    ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient Rank (items marked with *)");
+                }
                 if (ImGui.Button("Execute Schedule"))
                 {
                     CurrentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
@@ -218,6 +224,8 @@ namespace PandorasBox.Features.UI
                     else
                         ScheduleList();
                 }
+                if (IsInsufficientRank)
+                    ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
         }
@@ -276,6 +284,11 @@ namespace PandorasBox.Features.UI
                             CraftingTime = craftable.CraftingTime,
                             UIIndex = craftable.Key - 1
                         };
+                        if (!MJIManager.Instance()->IsRecipeUnlocked(item.Key))
+                        {
+                            IsInsufficientRank = true;
+                            item.Name = "*" + item.Name;
+                        }
 
                         items.Add(item);
                         matchFound = true;
@@ -291,7 +304,7 @@ namespace PandorasBox.Features.UI
                         CraftingTime = 0,
                         UIIndex = 0
                     };
-                    items.Add(invalidItem);
+                    // items.Add(invalidItem);
                 }
             }
 
@@ -572,7 +585,7 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
+            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>(Dalamud.ClientLanguage.English)
                 .Where(x => x.Item.Row > 0)
                 .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime))
                 .ToArray();
