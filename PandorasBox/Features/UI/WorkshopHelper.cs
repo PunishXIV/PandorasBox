@@ -7,6 +7,7 @@ using Dalamud.Interface.Windowing;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.ImGuiMethods;
 using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
@@ -45,7 +46,7 @@ namespace PandorasBox.Features.UI
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
         private int SelectedCycle = 0;
         private bool IsScheduleRest;
-        private bool IsInsufficientRank;
+        private static bool IsInsufficientRank;
 
         public class SchedulePreset
         {
