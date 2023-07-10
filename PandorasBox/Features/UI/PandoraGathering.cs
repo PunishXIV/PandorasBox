@@ -18,7 +18,6 @@ using PandorasBox.UI;
 using PandorasBox.Utility;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -48,39 +47,38 @@ namespace PandorasBox.Features.UI
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
         public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption("Hold Shift to Temporarily Disable on Starting a Node", "", 1)]
+        {            
             public bool ShiftStop = false;
-
-            [FeatureConfigOption("Enable Pandora Gathering", "", 2)]
+            
             public bool Gathering = false;
-
-            [FeatureConfigOption("Remember Item Between Nodes", "", 3)]
+            
             public bool RememberLastNode = false;
-
-            [FeatureConfigOption("Use King's Yield II / Blessed Harvest II", "", 4)]
+            
             public bool Use500GPYield = false;
-
-            [FeatureConfigOption("Use Bountiful Yield / Bountiful Harvest", "", 5)]
+          
+            public int GP500Yield = 500;
+         
             public bool Use100GPYield = false;
 
-            [FeatureConfigOption("Use Nald'thal's Tidings / Nophica's Tidings", "", 6)]
+            public int GP100Yield = 100;
+        
             public bool UseTidings = false;
 
-            [FeatureConfigOption("Min. Gatherer's Boon% For Tidings", "", 7, ConditionalDisplay = true, IntMin = 0, IntMax = 100, EditorSize = 300)]
+            public int GPTidings = 200;
+          
             public int GatherersBoon = 100;
-
-            [FeatureConfigOption("Use The Giving Land", "", 8)]
+          
             public bool UseGivingLand = false;
 
-            [FeatureConfigOption("Use The Twelves Bounty", "", 9)]
+            public int GPGivingLand = 200;
+           
             public bool UseTwelvesBounty = false;
 
-            [FeatureConfigOption("Use Solid Reason", "", 10)]
+            public int GPTwelvesBounty = 150;
+
             public bool UseSolidReason = false;
 
-            public bool ShouldShowGatherersBoon() => UseTidings;
-
+            public int GPSolidReason = 300;
         }
 
         public Configs Config { get; private set; }
@@ -298,15 +296,11 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        
+
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
             if (ImGui.Checkbox($"Hold Shift to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
                 SaveConfig(Config);
-
-            ImGui.Columns(2, null, false);
-
-            ImGui.Dummy(new Vector2(10));
 
             if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
             {
@@ -316,9 +310,6 @@ namespace PandorasBox.Features.UI
                 SaveConfig(Config);
             }
 
-            ImGui.NextColumn();
-
-            ImGui.Dummy(new Vector2(10));
             if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
                 SaveConfig(Config);
 
@@ -329,67 +320,68 @@ namespace PandorasBox.Features.UI
                 ImGui.EndTooltip();
             }
             var language = Svc.ClientState.ClientLanguage;
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
             {
-                case 17:
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString}", ref Config.Use100GPYield))
-                    {
-                        Config.UseGivingLand = false;
-                        Config.UseTwelvesBounty = false;
-                        SaveConfig(Config);
-                    }
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString}", ref Config.Use500GPYield))
-                    {
-                        Config.UseGivingLand = false;
-                        Config.UseTwelvesBounty = false;
-                        SaveConfig(Config);
-                    }
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.RawString}", ref Config.UseTidings))
-                    {
-                        Config.UseGivingLand = false;
-                        Config.UseTwelvesBounty = false;
-                        SaveConfig(Config);
-                    }
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.RawString}", ref Config.UseSolidReason))
-                    {
-                        SaveConfig(Config);
-                    }
-                    break;
-                case 16:
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
-                    {
-                        Config.UseGivingLand = false;
-                        Config.UseTwelvesBounty = false;
-                        SaveConfig(Config);
-                    }
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
-                    {
-                        Config.UseGivingLand = false;
-                        Config.UseTwelvesBounty = false;
-                        SaveConfig(Config);
-                    }
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.RawString}", ref Config.UseTidings))
-                    {
-                        Config.UseGivingLand = false;
-                        Config.UseTwelvesBounty = false;
-                        SaveConfig(Config);
-                    }
-                    ImGui.NextColumn();
-                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.RawString}", ref Config.UseSolidReason))
-                    {
-                        SaveConfig(Config);
-                    }
-                    break;
+                Config.UseGivingLand = false;
+                Config.UseTwelvesBounty = false;
+                SaveConfig(Config);
             }
 
-            ImGui.NextColumn();
+            if (Config.Use100GPYield)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP", ref Config.GP100Yield, 100, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
+            {
+                Config.UseGivingLand = false;
+                Config.UseTwelvesBounty = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.Use500GPYield)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP", ref Config.GP500Yield, 500, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.RawString}", ref Config.UseTidings))
+            {
+                Config.UseGivingLand = false;
+                Config.UseTwelvesBounty = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.UseTidings)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP", ref Config.GPTidings, 200, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (Config.UseTidings)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. Gatherer's Boon% For Tidings", ref Config.GatherersBoon, 1, 100))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.RawString}", ref Config.UseSolidReason))
+            {
+                SaveConfig(Config);
+            }
+
+            if (Config.UseSolidReason)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP", ref Config.GPSolidReason, 300, 1000))
+                    SaveConfig(Config);
+            }
+
             if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.RawString}", ref Config.UseGivingLand))
             {
                 Config.Use100GPYield = false;
@@ -398,7 +390,13 @@ namespace PandorasBox.Features.UI
                 SaveConfig(Config);
             }
 
-            ImGui.NextColumn();
+            if (Config.UseGivingLand)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP", ref Config.GPGivingLand, 200, 1000))
+                    SaveConfig(Config);
+            }
+
             if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.RawString.ToTitleCase()}", ref Config.UseTwelvesBounty))
             {
                 Config.Use100GPYield = false;
@@ -407,7 +405,13 @@ namespace PandorasBox.Features.UI
                 SaveConfig(Config);
             }
 
-            ImGui.Columns(1);
+            if (Config.UseTwelvesBounty)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP", ref Config.GPTwelvesBounty, 150, 1000))
+                    SaveConfig(Config);
+            }
+
         };
 
         private void CheckLastItem(SetupAddonArgs obj)
@@ -458,31 +462,31 @@ namespace PandorasBox.Features.UI
                     boonChances.Add(6, n7b);
                     boonChances.Add(7, n8b);
 
-                    if (Config.UseTidings && ((boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon) || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
+                    if (Config.GPTidings >= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && ((boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon) || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                     {
                         TaskManager.Enqueue(() => UseTidings(), "UseTidings");
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                     }
 
-                    if (Config.Use500GPYield)
+                    if (Config.GP500Yield >= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use500GPYield)
                     {
                         TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                     }
 
-                    if (Config.Use100GPYield)
+                    if (Config.GP100Yield >= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
                     {
                         TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                     }
 
-                    if (Config.UseTwelvesBounty)
+                    if (Config.GPTwelvesBounty >= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTwelvesBounty)
                     {
                         TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                     }
 
-                    if (Config.UseGivingLand)
+                    if (Config.GPGivingLand >= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseGivingLand)
                     {
                         TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
@@ -750,7 +754,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                     TaskManager.Enqueue(() =>
                     {
-                        if (Config.UseSolidReason && SwingCount >= 2)
+                        if (Config.GPSolidReason >= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
                         {
                             TaskManager.EnqueueImmediate(() => UseIntegrityAction());
                             TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
@@ -759,7 +763,7 @@ namespace PandorasBox.Features.UI
                     });
                     TaskManager.Enqueue(() =>
                     {
-                        if (Config.Use100GPYield)
+                        if (Config.GP100Yield >= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
                         {
                             TaskManager.EnqueueImmediate(() => Use100GPSkill());
                         }
