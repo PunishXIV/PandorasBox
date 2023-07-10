@@ -6,6 +6,7 @@ using Dalamud.Interface.Colors;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
+using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -19,7 +20,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using static ECommons.GenericHelpers;
+using Action = Lumina.Excel.GeneratedSheets.Action;
 
 namespace PandorasBox.Features.UI
 {
@@ -38,7 +39,17 @@ namespace PandorasBox.Features.UI
 
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("Enable Pandora Gathering")]
             public bool Gathering = false;
+
+            [FeatureConfigOption("Remember Item Between Nodes")]
+            public bool RememberLastNode = false;
+
+            [FeatureConfigOption("Use King's Yield II / Blessed Harvest II")]
+            public bool Use500GPYield = false;
+
+            [FeatureConfigOption("Use Bountiful Yield / Bountiful Harvest")]
+            public bool Use100GPYield = false;
         }
 
         public Configs Config { get; private set; }
@@ -48,9 +59,10 @@ namespace PandorasBox.Features.UI
 
         private Overlays Overlay;
 
-        
+        public override bool UseAutoConfig => true;
 
         private ulong lastGatheredIndex = 10;
+        private uint lastGatheredItem = 0;
 
         public unsafe override void Draw()
         {
@@ -77,9 +89,17 @@ namespace PandorasBox.Features.UI
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                ImGui.Begin($"###PandoraGathering{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+
+                ImGui.GetFont().Scale = scale.X;
+                var oldScale = ImGui.GetIO().FontGlobalScale;
+                ImGui.GetIO().FontGlobalScale = 0.9f;
+                ImGui.PushFont(ImGui.GetFont());
+
+
+                ImGui.Begin($"###PandoraGathering{node->NodeID}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                     | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
+                ImGui.Columns(2, null, false);
 
                 if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
                 {
@@ -92,7 +112,36 @@ namespace PandorasBox.Features.UI
                     SaveConfig(Config);
                 }
 
+
+                if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
+                    SaveConfig(Config);
+
+                var language = Svc.ClientState.ClientLanguage;
+                switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+                {
+                    case 17:
+                        ImGui.NextColumn();
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString}", ref Config.Use100GPYield))
+                            SaveConfig(Config);
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString}", ref Config.Use500GPYield))
+                            SaveConfig(Config);
+                        break;
+                    case 16:
+                        ImGui.NextColumn();
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
+                            SaveConfig(Config);
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
+                            SaveConfig(Config);
+                        break;
+                }
+
+                ImGui.Columns(1);
                 ImGui.End();
+
+                ImGui.GetFont().Scale = 1;
+                ImGui.GetIO().FontGlobalScale = oldScale;
+                ImGui.PopFont();
+
                 ImGui.PopStyleVar(4);
                 ImGui.PopStyleColor(2);
 
@@ -108,7 +157,126 @@ namespace PandorasBox.Features.UI
 
             quickGatherToggle ??= Common.Hook<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
 
+            Common.OnAddonSetup += CheckLastItem;
+
             base.Enable();
+        }
+
+        private void CheckLastItem(SetupAddonArgs obj)
+        {
+            if (obj.AddonName == "Gathering" && Config.Gathering)
+            {
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                TaskManager.Enqueue(() =>
+                {
+                    if (Config.Use500GPYield)
+                    {
+                        TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                    }
+
+                    if (Config.Use100GPYield)
+                    {
+                        TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                    }
+
+                    if (Config.RememberLastNode)
+                    {
+                        if (lastGatheredIndex > 7)
+                            return;
+
+                        var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                        var item = lastGatheredIndex switch
+                        {
+                            0 => addon->GatheredItemId1,
+                            1 => addon->GatheredItemId2,
+                            2 => addon->GatheredItemId3,
+                            3 => addon->GatheredItemId4,
+                            4 => addon->GatheredItemId5,
+                            5 => addon->GatheredItemId6,
+                            6 => addon->GatheredItemId7,
+                            7 => addon->GatheredItemId8
+                        };
+
+                        if (item == lastGatheredItem)
+                        {
+                            bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
+                            Dalamud.Logging.PluginLog.Debug($"{quickGathering}");
+                            if (quickGathering)
+                            {
+                                QuickGatherToggle(addon);
+                            }
+
+                            var receiveEventAddress = new IntPtr(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
+                            var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
+
+                            var target = AtkStage.GetSingleton();
+                            var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
+                            var inputData = InputData.Empty();
+
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)lastGatheredIndex, eventData.Data, inputData.Data));
+                        }
+                    }
+                });
+            }
+        }
+
+        private void Use100GPSkill()
+        {
+            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286 || x.StatusId == 756))
+                return;
+
+            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            {
+                case 17:
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 273) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 273);
+                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
+                    }
+                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4087) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 4087);
+                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
+                    }
+                    break;
+                case 16:
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 272) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 272);
+                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
+                    }
+                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4073) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 4073);
+                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
+                    }
+                    break;
+            }
+        }
+
+        private void Use500GPSkill()
+        {
+            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            {
+                case 17:
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 224) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 224);
+                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
+                    }
+                    break;
+                case 16:
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 241) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 241);
+                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
+                    }
+                    break;
+            }
+
         }
 
         private void QuickGatherToggle(AddonGathering* a1)
@@ -139,13 +307,14 @@ namespace PandorasBox.Features.UI
                     7 => addon->GatheredItemId8
                 };
 
-                if (item != lastGatheredIndex)
+                if (item != lastGatheredItem && item != 0)
                 {
                     TaskManager.Abort();
-                    lastGatheredIndex = item;
+                    lastGatheredIndex = index;
+                    lastGatheredItem = item;
                 }
 
-                if (!Svc.Data.GetExcelSheet<Item>().GetRow(item).IsCollectable)
+                if (item != 0 && (Svc.Data.GetExcelSheet<Item>().GetRow(item) != null && !Svc.Data.GetExcelSheet<Item>().GetRow(item).IsCollectable) || Svc.Data.GetExcelSheet<Item>().GetRow(item) == null)
                 {
                     bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
                     Dalamud.Logging.PluginLog.Debug($"{quickGathering}");
@@ -161,7 +330,15 @@ namespace PandorasBox.Features.UI
                     var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
                     var inputData = InputData.Empty();
 
+
                     TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                    TaskManager.Enqueue(() =>
+                    {
+                        if (Config.Use100GPYield)
+                        {
+                            TaskManager.EnqueueImmediate(() => Use100GPSkill());
+                        }
+                    });
                     TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)index, eventData.Data, inputData.Data));
                 }
 
