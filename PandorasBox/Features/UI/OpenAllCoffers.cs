@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -42,11 +43,12 @@ namespace PandorasBox.Features.UI
 
         private InventoryContextMenuItem CheckInventoryItem(uint itemId)
         {
-            var sheetItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == itemId).First();
-
-            if (sheetItem.StackSize <= 1) return null;
-            if (sheetItem.ItemAction.Row == 388 || sheetItem.ItemAction.Row == 367)
-                return new InventoryContextMenuItem(OpenString, _ => TaskManager.Enqueue(() => OpenItem(itemId), true), false);
+            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == itemId, out var sheetItem))
+            {
+                if (sheetItem.StackSize <= 1) return null;
+                if (sheetItem.ItemAction.Row == 388 || sheetItem.ItemAction.Row == 367)
+                    return new InventoryContextMenuItem(OpenString, _ => TaskManager.Enqueue(() => OpenItem(itemId), true), false);
+            }
 
             return null;
         }
