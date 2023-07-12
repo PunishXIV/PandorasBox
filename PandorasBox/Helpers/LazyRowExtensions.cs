@@ -10,7 +10,6 @@ namespace PandorasBox.Helpers
     {
         public static LazyRow<T> GetDifferentLanguage<T>(this LazyRow<T> row, ClientLanguage language) where T : ExcelRow
         {
-            var sheet = Svc.Data.Excel.GetSheet<T>();
             return new LazyRow<T>(Svc.Data.GameData, row.Row, language.ToLumina());
         }
     }
