@@ -48,8 +48,8 @@ namespace PandorasBox.Features.UI
         public static bool _enabled;
 
         internal static (uint Key, string Name, ushort CraftingTime, ushort LevelReq)[] Craftables;
-        public static List<Item> PrimarySchedule;
-        public static List<Item> SecondarySchedule;
+        public static List<Item> PrimarySchedule = new();
+        public static List<Item> SecondarySchedule = new();
 
         private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
         private int CurrentWorkshop;
