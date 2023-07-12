@@ -2,6 +2,7 @@ using ClickLib.Clicks;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using ECommons;
@@ -55,6 +56,7 @@ namespace PandorasBox.Features.UI
         private bool IsScheduleRest;
         private bool AutoGuess;
         private bool Fortuneteller;
+        private static bool IsInsufficientRank;
 
         public class SchedulePreset
         {
@@ -228,6 +230,11 @@ namespace PandorasBox.Features.UI
 
             try
             {
+                if (IsInsufficientRank)
+                {
+                    ImGui.BeginDisabled();
+                    ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient Rank (items marked with *)");
+                }
                 if (ImGui.Button("Execute Schedule"))
                 {
                     CurrentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
@@ -237,6 +244,8 @@ namespace PandorasBox.Features.UI
                     else
                         ScheduleList();
                 }
+                if (IsInsufficientRank)
+                    ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
         }
@@ -302,6 +311,13 @@ namespace PandorasBox.Features.UI
                             items.Add(item);
                         else
                             excessItems.Add(item);
+                        if (!MJIManager.Instance()->IsRecipeUnlocked((ushort)item.Key))
+                        {
+                            IsInsufficientRank = true;
+                            item.Name = "*" + item.Name;
+                        }
+
+                        items.Add(item);
                         matchFound = true;
                     }
                 }
@@ -315,7 +331,7 @@ namespace PandorasBox.Features.UI
                         CraftingTime = 0,
                         UIIndex = 0
                     };
-                    items.Add(invalidItem);
+                    // items.Add(invalidItem);
                 }
             }
 
@@ -639,7 +655,7 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
+            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>(Dalamud.ClientLanguage.English)
                 .Where(x => x.Item.Row > 0)
                 .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime))
                 .ToArray();
