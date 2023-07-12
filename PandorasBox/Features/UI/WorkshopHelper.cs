@@ -56,7 +56,6 @@ namespace PandorasBox.Features.UI
         private bool IsScheduleRest;
         private bool AutoGuess;
         private bool Fortuneteller;
-        private static bool IsInsufficientRank;
 
         public class SchedulePreset
         {
@@ -70,6 +69,7 @@ namespace PandorasBox.Features.UI
             public ushort CraftingTime { get; set; }
             public uint UIIndex { get; set; }
             public ushort LevelReq { get; set; }
+            public bool InsufficientRank {  get; set; }
         }
 
         public override void Draw()
@@ -145,8 +145,8 @@ namespace PandorasBox.Features.UI
                 }
             }
             ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
-            ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
-            ImGuiComponents.HelpMarker("ENGLISH ONLY. OVERSEAS CASUALS DISCORD ONLY. This follows the standard format the Casuals use where Cycle 1 & 2 are always rest.\nThis will read the items listed between \"Cycle\" lines and assume they are for Cycles 3 onwards.");
+            // ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
+            // ImGuiComponents.HelpMarker("ENGLISH ONLY. OVERSEAS CASUALS DISCORD ONLY. This follows the standard format the Casuals use where Cycle 1 & 2 are always rest.\nThis will read the items listed between \"Cycle\" lines and assume they are for Cycles 3 onwards.");
             if (!Fortuneteller)
             {
                 ImGui.Checkbox("Guess Workshops", ref AutoGuess);
@@ -221,6 +221,7 @@ namespace PandorasBox.Features.UI
                 if (AutoGuess)
                     ImGui.BeginDisabled();
                 ImGui.Text("Select Workshops");
+                var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
                 for (var i = 0; i < Workshops.Count; i++)
                 {
                     var configValue = Workshops[i];
@@ -236,29 +237,34 @@ namespace PandorasBox.Features.UI
 
             try
             {
+                var IsInsufficientRank = (PrimarySchedule != null && PrimarySchedule.Any(x => x.InsufficientRank))
+                    || (SecondarySchedule != null && SecondarySchedule.Any(x => x.InsufficientRank));
                 if (IsInsufficientRank)
                 {
                     ImGui.BeginDisabled();
-                    ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient Rank (items marked with *)");
+                    ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient rank to execute schedule");
+                }
+                var restDays = GetCurrentRestDays();
+                if (restDays.Contains(SelectedCycle - 1))
+                {
+                    ImGui.BeginDisabled();
+                    ImGui.TextColored(ImGuiColors.DalamudRed, "Selected cycle is a rest day. Cannot schedule on a rest day.");
                 }
                 if (ImGui.Button("Execute Schedule"))
                 {
                     CurrentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    var restDays = GetCurrentRestDays();
-                    if (restDays.Contains(SelectedCycle - 1))
-                        PrintPluginMessage("Selected cycle is a rest day. Cannot schedule on a rest day.");
-                    else if (Fortuneteller)
+                    if (Fortuneteller)
                         ScheduleFortuneteller();
                     else
                         ScheduleList();
                 }
-                if (IsInsufficientRank)
+                if (IsInsufficientRank || restDays.Contains(SelectedCycle - 1))
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
         }
 
-        private void DrawWorkshopListBox(string text, List<Item> schedule)
+        private static void DrawWorkshopListBox(string text, List<Item> schedule)
         {
             if (!text.IsNullOrEmpty())
                 ImGui.Text(text);
@@ -269,7 +275,13 @@ namespace PandorasBox.Features.UI
                 {
                     foreach (var item in schedule)
                     {
-                        if (ImGui.Selectable(item.Name)) return;
+                        if (item.InsufficientRank)
+                            ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
+
+                        ImGui.Text(item.Name);
+
+                        if (item.InsufficientRank)
+                            ImGui.PopStyleColor();
                     }
                 }
                 ImGui.EndListBox();
@@ -346,43 +358,30 @@ namespace PandorasBox.Features.UI
         {
             List<Item> items = new List<Item>();
             List<Item> excessItems = new List<Item>();
-            int hours = 0;
+            var hours = 0;
             foreach (var itemString in itemStrings)
             {
-                bool matchFound = false;
+                var matchFound = false;
                 foreach (var craftable in Craftables)
                 {
-                    string craftableNoPrefix = craftable.Name.Replace("Isleworks ", "")
-                        .Replace("Isleberry ", "")
-                        .Replace("Islefish ", "");
-                    if (itemString.ToLower().Contains(craftableNoPrefix.ToLower()))
+                    if (IsMatch(itemString.ToLower(), craftable.Name.ToLower()))
                     {
                         Item item = new Item
                         {
                             Key = craftable.Key,
-                            Name = craftable.Name,
+                            Name = Svc.Data.GetExcelSheet<MJICraftworksObject>().GetRow(craftable.Key).Item.Value.Name.RawString,
                             CraftingTime = craftable.CraftingTime,
                             UIIndex = craftable.Key - 1,
                             LevelReq = craftable.LevelReq
                         };
+                        item.InsufficientRank = isCraftworkObjectCraftable(item);
+                        PluginLog.Log($"{item.InsufficientRank}");
+
                         if (hours < 24)
-                        {
-                            if (!isCraftworkObjectCraftable(item))
-                            {
-                                IsInsufficientRank = true;
-                                item.Name = "*" + item.Name;
-                            }
                             items.Add(item);
-                        }
                         else
-                        {
-                            if (!isCraftworkObjectCraftable(item))
-                            {
-                                IsInsufficientRank = true;
-                                item.Name = "*" + item.Name;
-                            }
                             excessItems.Add(item);
-                        }
+
                         hours += craftable.CraftingTime;
                         matchFound = true;
                     }
@@ -403,6 +402,12 @@ namespace PandorasBox.Features.UI
             }
 
             return (items, excessItems);
+        }
+
+        private static bool IsMatch(string x, string y)
+        {
+            string pattern = $@"\b{Regex.Escape(y)}\b";
+            return Regex.IsMatch(x, pattern);
         }
 
         private static bool isCraftworkObjectCraftable(Item item) => !(MJIManager.Instance()->IslandState.CurrentRank < item.LevelReq);
@@ -732,7 +737,7 @@ namespace PandorasBox.Features.UI
         {
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>(Dalamud.ClientLanguage.English)
                 .Where(x => x.Item.Row > 0)
-                .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime, x.LevelReq))
+                .Select(x => (x.RowId, x.Item.Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
                 .ToArray();
             Overlay = new Overlays(this);
             _enabled = true;
