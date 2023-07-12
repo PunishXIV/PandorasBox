@@ -44,7 +44,7 @@ namespace PandorasBox.Features.UI
         public static bool ResetPosition = false;
         public static bool _enabled;
 
-        internal static (uint Key, string Name, ushort CraftingTime)[] Craftables;
+        internal static (uint Key, string Name, ushort CraftingTime, ushort LevelReq)[] Craftables;
         public static List<Item> PrimarySchedule;
         public static List<Item> SecondarySchedule;
 
@@ -69,6 +69,7 @@ namespace PandorasBox.Features.UI
             public string Name { get; set; }
             public ushort CraftingTime { get; set; }
             public uint UIIndex { get; set; }
+            public ushort LevelReq { get; set; }
         }
 
         public override void Draw()
@@ -304,14 +305,15 @@ namespace PandorasBox.Features.UI
                             Key = craftable.Key,
                             Name = craftable.Name,
                             CraftingTime = craftable.CraftingTime,
-                            UIIndex = craftable.Key - 1
+                            UIIndex = craftable.Key - 1,
+                            LevelReq = craftable.LevelReq
                         };
                         hours += craftable.CraftingTime;
                         if (hours < 24)
                             items.Add(item);
                         else
                             excessItems.Add(item);
-                        if (!MJIManager.Instance()->IsRecipeUnlocked((ushort)item.Key))
+                        if (!isCraftworkObjectCraftable(item))
                         {
                             IsInsufficientRank = true;
                             item.Name = "*" + item.Name;
@@ -329,7 +331,8 @@ namespace PandorasBox.Features.UI
                         Key = 0,
                         Name = "Invalid",
                         CraftingTime = 0,
-                        UIIndex = 0
+                        UIIndex = 0,
+                        LevelReq = 0
                     };
                     // items.Add(invalidItem);
                 }
@@ -337,6 +340,8 @@ namespace PandorasBox.Features.UI
 
             return (items, excessItems);
         }
+
+        private static bool isCraftworkObjectCraftable(Item item) => !(MJIManager.Instance()->IslandState.CurrentRank < item.LevelReq);
 
         private bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
 
@@ -657,7 +662,7 @@ namespace PandorasBox.Features.UI
         {
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>(Dalamud.ClientLanguage.English)
                 .Where(x => x.Item.Row > 0)
-                .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime))
+                .Select(x => (x.RowId, x.Item.Value.Name.RawString, x.CraftingTime, x.LevelReq))
                 .ToArray();
             Overlay = new Overlays(this);
             _enabled = true;
