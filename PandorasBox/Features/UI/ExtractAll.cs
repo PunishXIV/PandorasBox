@@ -85,6 +85,7 @@ namespace PandorasBox.Features.UI
                         {
                             Extracting = false;
                             TaskManager.Abort();
+                            TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
                         }
                     }
 

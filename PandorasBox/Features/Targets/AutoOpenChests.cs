@@ -62,7 +62,7 @@ namespace PandorasBox.Features.Targets
                 return;
             }
 
-            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2).ToList();
+            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2 && GameObjectHelper.GetHeightDifference(x) < 1).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 
