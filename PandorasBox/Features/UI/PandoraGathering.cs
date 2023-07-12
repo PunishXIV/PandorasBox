@@ -698,8 +698,6 @@ namespace PandorasBox.Features.UI
         {
             if (a1 == null && Svc.GameGui.GetAddonByName("Gathering") != IntPtr.Zero)
                 a1 = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
-            else
-                return;
 
             a1->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
             quickGatherToggle.Original(a1);
@@ -710,6 +708,12 @@ namespace PandorasBox.Features.UI
             SwingCount++;
             PluginLog.Debug($"SWING {SwingCount}");
             var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+            bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
+            if (quickGathering)
+            {
+                QuickGatherToggle(addon);
+            }
+
             if (addon != null && Config.Gathering)
             {
                 List<uint> ids = new List<uint>()
@@ -750,41 +754,38 @@ namespace PandorasBox.Features.UI
                     lastGatheredItem = item;
                 }
 
-                if (item != 0 && ((Svc.Data.GetExcelSheet<Item>().GetRow(item) != null && !Svc.Data.GetExcelSheet<Item>().GetRow(item).IsCollectable) || (Svc.Data.GetExcelSheet<Item>().GetRow(item) == null)))
+                if (item != 0)
                 {
-                    bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
-                    if (quickGathering)
+                    if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable)
                     {
-                        QuickGatherToggle(addon);
+                        var receiveEventAddress = new IntPtr(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
+                        var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
+
+                        var target = AtkStage.GetSingleton();
+                        var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
+                        var inputData = InputData.Empty();
+
+
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        TaskManager.Enqueue(() =>
+                        {
+                            if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
+                            {
+                                TaskManager.EnqueueImmediate(() => UseIntegrityAction());
+                                TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                TaskManager.EnqueueImmediate(() => UseWisdom());
+                            }
+                        });
+                        TaskManager.Enqueue(() =>
+                        {
+                            if (Config.GP100Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
+                            {
+                                TaskManager.EnqueueImmediate(() => Use100GPSkill());
+                            }
+                        });
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)index, eventData.Data, inputData.Data));
                     }
-
-                    var receiveEventAddress = new IntPtr(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
-                    var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
-
-                    var target = AtkStage.GetSingleton();
-                    var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
-                    var inputData = InputData.Empty();
-
-
-                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                    TaskManager.Enqueue(() =>
-                    {
-                        if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
-                        {
-                            TaskManager.EnqueueImmediate(() => UseIntegrityAction());
-                            TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                            TaskManager.EnqueueImmediate(() => UseWisdom());
-                        }
-                    });
-                    TaskManager.Enqueue(() =>
-                    {
-                        if (Config.GP100Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
-                        {
-                            TaskManager.EnqueueImmediate(() => Use100GPSkill());
-                        }
-                    });
-                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                    TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)index, eventData.Data, inputData.Data));
                 }
 
             }
