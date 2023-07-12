@@ -146,6 +146,7 @@ namespace PandorasBox.Features.UI
             }
             ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
             ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
+            ImGuiComponents.HelpMarker("ENGLISH ONLY. OVERSEAS CASUALS DISCORD ONLY. This follows the standard format the Casuals use where Cycle 1 & 2 are always rest.\nThis will read the items listed between \"Cycle\" lines and assume they are for Cycles 3 onwards.");
             if (!Fortuneteller)
             {
                 ImGui.Checkbox("Guess Workshops", ref AutoGuess);
@@ -167,18 +168,18 @@ namespace PandorasBox.Features.UI
             // ImGui.PopStyleColor(3);
 
             ImGui.Text("Import Preview");
-            ImGui.SetNextItemWidth(250);
-            if (ImGui.BeginListBox("##Listbox", new Vector2(250, 6 * ImGui.GetTextLineHeightWithSpacing())))
+            if (AutoGuess && SecondarySchedule == null)
             {
-                if (PrimarySchedule != null)
-                {
-                    foreach (Item item in PrimarySchedule)
-                    {
-                        if (ImGui.Selectable(item.Name)) return;
-                    }
-                }
-                ImGui.EndListBox();
+                DrawWorkshopListBox("Workshops 1-4", PrimarySchedule);
             }
+            else if (AutoGuess && SecondarySchedule != null)
+            {
+                DrawWorkshopListBox("Workshops 1-3", PrimarySchedule);
+                DrawWorkshopListBox("Workshop 4", SecondarySchedule);
+            }
+            else
+                DrawWorkshopListBox("", PrimarySchedule);
+
 
             if (!Fortuneteller)
             {
@@ -217,6 +218,8 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => SelectedCycle += 1);
                 }
 
+                if (AutoGuess)
+                    ImGui.BeginDisabled();
                 ImGui.Text("Select Workshops");
                 for (var i = 0; i < Workshops.Count; i++)
                 {
@@ -227,6 +230,8 @@ namespace PandorasBox.Features.UI
                 ImGui.SameLine();
                 if (ImGui.Button("Deselect"))
                     Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
+                if (AutoGuess)
+                    ImGui.EndDisabled();
             }
 
             try
@@ -242,6 +247,8 @@ namespace PandorasBox.Features.UI
                     var restDays = GetCurrentRestDays();
                     if (restDays.Contains(SelectedCycle - 1))
                         PrintPluginMessage("Selected cycle is a rest day. Cannot schedule on a rest day.");
+                    else if (Fortuneteller)
+                        ScheduleFortuneteller();
                     else
                         ScheduleList();
                 }
@@ -249,6 +256,24 @@ namespace PandorasBox.Features.UI
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
+        }
+
+        private void DrawWorkshopListBox(string text, List<Item> schedule)
+        {
+            if (!text.IsNullOrEmpty())
+                ImGui.Text(text);
+            ImGui.SetNextItemWidth(250);
+            if (ImGui.BeginListBox($"##Listbox{text}", new Vector2(250, 6 * ImGui.GetTextLineHeightWithSpacing())))
+            {
+                if (schedule != null)
+                {
+                    foreach (var item in schedule)
+                    {
+                        if (ImGui.Selectable(item.Name)) return;
+                    }
+                }
+                ImGui.EndListBox();
+            }
         }
 
         public static unsafe Vector2 GetNodePosition(AtkResNode* node)
@@ -278,11 +303,43 @@ namespace PandorasBox.Features.UI
             return scale;
         }
 
-        internal static void ScheduleImport(List<string> rawItemStrings)
+        internal void ScheduleImport(List<string> rawItemStrings)
         {
-            (List<Item> items, List<Item> excessItems) = ParseItems(rawItemStrings);
-            PrimarySchedule = items;
-            SecondarySchedule = excessItems;
+            if (!Fortuneteller)
+            {
+                (List<Item> items, List<Item> excessItems) = ParseItems(rawItemStrings);
+                PrimarySchedule = items;
+                SecondarySchedule = excessItems;
+            }
+            else
+            {
+                List<List<string>> fortuneCycles = new List<List<string>>();
+                List<string> currentCycle = new List<string>();
+                string pattern = @"Cycle\s+\d+\s+(.*?)(?=Cycle|$)";
+                MatchCollection matches = Regex.Matches(string.Join(Environment.NewLine, rawItemStrings), pattern, RegexOptions.Singleline);
+                foreach (Match match in matches)
+                {
+                    var extract = match.Groups[1].Value.Trim();
+                    if (extract.StartsWith("Cycle"))
+                        if (currentCycle.Count > 0)
+                        {
+                            fortuneCycles.Add(currentCycle);
+                            currentCycle = new List<string>();
+                        }
+                    else
+                        currentCycle.Add(extract);
+                }
+
+                if (currentCycle.Count > 0)
+                    fortuneCycles.Add(currentCycle);
+
+                foreach (var cycle in fortuneCycles)
+                {
+                    (List<Item> items, List<Item> excessItems) = ParseItems(cycle);
+                    PrimarySchedule = items;
+                    SecondarySchedule = excessItems;
+                }
+            }
         }
 
         public static (List<Item>, List<Item>) ParseItems(List<string> itemStrings)
@@ -308,18 +365,25 @@ namespace PandorasBox.Features.UI
                             UIIndex = craftable.Key - 1,
                             LevelReq = craftable.LevelReq
                         };
-                        hours += craftable.CraftingTime;
                         if (hours < 24)
-                            items.Add(item);
-                        else
-                            excessItems.Add(item);
-                        if (!isCraftworkObjectCraftable(item))
                         {
-                            IsInsufficientRank = true;
-                            item.Name = "*" + item.Name;
+                            if (!isCraftworkObjectCraftable(item))
+                            {
+                                IsInsufficientRank = true;
+                                item.Name = "*" + item.Name;
+                            }
+                            items.Add(item);
                         }
-
-                        items.Add(item);
+                        else
+                        {
+                            if (!isCraftworkObjectCraftable(item))
+                            {
+                                IsInsufficientRank = true;
+                                item.Name = "*" + item.Name;
+                            }
+                            excessItems.Add(item);
+                        }
+                        hours += craftable.CraftingTime;
                         matchFound = true;
                     }
                 }
@@ -563,20 +627,21 @@ namespace PandorasBox.Features.UI
                 return;
             }
 
-            int hours = 0;
+            var hours = 0;
             if (AutoGuess)
             {
                 if (SecondarySchedule != null)
                 {
                     for (var i = 0; i < MAX_WORKSHOPS - 1; i++)
                     {
+                        var ws = 0;
                         TaskManager.Enqueue(() => hours = 0);
                         foreach (Item item in PrimarySchedule)
                         {
-                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i, hours));
+                            ws = i;
+                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
                             TaskManager.Enqueue(() => ScheduleItem(item));
                             TaskManager.Enqueue(() => hours += item.CraftingTime);
-                            TaskManager.Enqueue(() => CurrentWorkshop += 1);
                         }
                     }
                     TaskManager.Enqueue(() => hours = 0);
@@ -585,20 +650,20 @@ namespace PandorasBox.Features.UI
                         TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, 3, hours));
                         TaskManager.Enqueue(() => ScheduleItem(item));
                         TaskManager.Enqueue(() => hours += item.CraftingTime);
-                        TaskManager.Enqueue(() => CurrentWorkshop += 1);
                     }
                 }
                 else
                 {
                     for (var i = 0; i < MAX_WORKSHOPS; i++)
                     {
+                        var ws = 0;
                         TaskManager.Enqueue(() => hours = 0);
                         foreach (Item item in PrimarySchedule)
                         {
-                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i, hours));
+                            ws = i;
+                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
                             TaskManager.Enqueue(() => ScheduleItem(item));
                             TaskManager.Enqueue(() => hours += item.CraftingTime);
-                            TaskManager.Enqueue(() => CurrentWorkshop += 1);
                         }
                     }
                 }
@@ -625,6 +690,11 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        public void ScheduleFortuneteller()
+        {
+            TaskManager.Enqueue(() => OpenCycle(2));
+            TaskManager.Enqueue(() => SetRestDay());
+        }
 
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
