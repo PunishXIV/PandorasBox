@@ -2,12 +2,12 @@ using ClickLib.Clicks;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
-using ECommons.ImGuiMethods;
 using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
@@ -285,7 +285,7 @@ namespace PandorasBox.Features.UI
                             CraftingTime = craftable.CraftingTime,
                             UIIndex = craftable.Key - 1
                         };
-                        if (!MJIManager.Instance()->IsRecipeUnlocked(item.Key))
+                        if (!MJIManager.Instance()->IsRecipeUnlocked((ushort)item.Key))
                         {
                             IsInsufficientRank = true;
                             item.Name = "*" + item.Name;
