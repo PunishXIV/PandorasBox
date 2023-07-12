@@ -211,14 +211,14 @@ namespace PandorasBox.Features.UI
                 ImGui.SameLine();
                 if (ImGui.Button("Prev"))
                 {
-                    SelectedCycle = SelectedCycle == 0 ? 0 : SelectedCycle - 1;
                     OpenCycle(SelectedCycle - 1);
+                    SelectedCycle = SelectedCycle == 0 ? 0 : SelectedCycle - 1;
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Next"))
                 {
-                    SelectedCycle = SelectedCycle == 14 ? 14 : SelectedCycle + 1;
                     OpenCycle(SelectedCycle + 1);
+                    SelectedCycle = SelectedCycle == 14 ? 14 : SelectedCycle + 1;
                 }
 
                 if (AutoGuess)
