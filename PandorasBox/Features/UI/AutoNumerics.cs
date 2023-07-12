@@ -15,13 +15,15 @@ namespace PandorasBox.Features.UI
     {
         public override string Name => "Auto-Fill Numeric Dialogs";
 
-        public override string Description => "Automatically fills any numeric input dialog boxes. Works on a whitelist system.";
+        public override string Description => "Automatically fills any numeric input dialog boxes. Works on a whitelist system. Hold shift when opening numeric to disable.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
         public Configs Config { get; private set; }
 
         private string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
+
+        private bool hasDisabled;
 
         public class Configs : FeatureConfig
         {
@@ -57,10 +59,12 @@ namespace PandorasBox.Features.UI
         private void RunFeature(Dalamud.Game.Framework framework)
         {
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
-            if (numeric == null) return;
+            if (numeric == null) { hasDisabled = false; return; }
             var numericTitleNode = numeric->UldManager.NodeList[5]->GetAsAtkTextNode();
 
-            if (numeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(numeric))
+            if (numeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(numeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
+
+            if (numeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(numeric) && !hasDisabled)
             {
                 try
                 {
