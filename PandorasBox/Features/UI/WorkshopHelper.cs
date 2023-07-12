@@ -590,7 +590,7 @@ namespace PandorasBox.Features.UI
                         TaskManager.Enqueue(() => hours = 0);
                         foreach (Item item in PrimarySchedule)
                         {
-                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, ws, hours));
+                            TaskManager.Enqueue(() => OpenAgenda(item.UIIndex, i, hours));
                             TaskManager.Enqueue(() => ScheduleItem(item));
                             TaskManager.Enqueue(() => hours += item.CraftingTime);
                             TaskManager.Enqueue(() => CurrentWorkshop += 1);
