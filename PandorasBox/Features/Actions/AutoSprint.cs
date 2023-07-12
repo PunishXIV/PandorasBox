@@ -12,6 +12,7 @@ using PandorasBox.FeaturesSetup;
 using System;
 using System.ComponentModel.Design;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features
 {
@@ -48,7 +49,8 @@ namespace PandorasBox.Features
             if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
 
-            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) return;
+            var r = new Regex("/hou/|/ind/");
+            if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;

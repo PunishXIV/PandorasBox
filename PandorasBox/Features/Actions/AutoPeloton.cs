@@ -9,6 +9,7 @@ using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features
 {
@@ -50,7 +51,8 @@ namespace PandorasBox.Features
             if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
-            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) return;
+            var r = new Regex("/hou/|/ind/");
+            if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
