@@ -171,14 +171,14 @@ namespace PandorasBox.Features.UI
             // ImGui.PopStyleColor(3);
 
             ImGui.Text("Import Preview");
-            if (AutoGuess && SecondarySchedule == null)
+            if (AutoGuess && SecondarySchedule.Count == 0)
             {
-                DrawWorkshopListBox("Workshops 1-4", PrimarySchedule);
+                DrawWorkshopListBox($"Workshops 1-4", PrimarySchedule);
             }
-            else if (AutoGuess && SecondarySchedule != null)
+            else if (AutoGuess && SecondarySchedule.Count > 0)
             {
-                DrawWorkshopListBox("Workshops 1-3", PrimarySchedule);
-                DrawWorkshopListBox("Workshop 4", SecondarySchedule);
+                DrawWorkshopListBox($"Workshops 1-3", PrimarySchedule);
+                DrawWorkshopListBox($"Workshop 4", SecondarySchedule);
             }
             else
                 DrawWorkshopListBox("", PrimarySchedule);
@@ -244,8 +244,8 @@ namespace PandorasBox.Features.UI
 
             try
             {
-                var IsInsufficientRank = (PrimarySchedule != null && PrimarySchedule.Any(x => x.InsufficientRank))
-                    || (SecondarySchedule != null && SecondarySchedule.Any(x => x.InsufficientRank));
+                var IsInsufficientRank = (PrimarySchedule.Count > 0 && PrimarySchedule.Any(x => x.InsufficientRank))
+                    || (SecondarySchedule.Count > 0 && SecondarySchedule.Any(x => x.InsufficientRank));
                 if (IsInsufficientRank)
                 {
                     ImGui.BeginDisabled();
@@ -315,7 +315,7 @@ namespace PandorasBox.Features.UI
             ImGui.SetNextItemWidth(250);
             if (ImGui.BeginListBox($"##Listbox{text}", new Vector2(250, 6 * ImGui.GetTextLineHeightWithSpacing())))
             {
-                if (schedule != null)
+                if (schedule.Count > 0)
                 {
                     foreach (var item in schedule)
                     {
@@ -679,7 +679,7 @@ namespace PandorasBox.Features.UI
             var hours = 0;
             if (AutoGuess)
             {
-                if (SecondarySchedule != null)
+                if (SecondarySchedule.Count > 0)
                 {
                     for (var i = 0; i < MAX_WORKSHOPS - 1; i++)
                     {
