@@ -45,8 +45,8 @@ public class PandorasBox : IDalamudPlugin
         ECommonsMain.Init(pi, P, ECommons.Module.All);
         PunishLibMain.Init(pi, P);
         
-        FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
-        FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
+        //FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
+        //FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
 
         SponsorManager.SetSponsorInfo("https://ko-fi.com/taurenkey");
         Ws = new();
