@@ -1,4 +1,5 @@
 using ClickLib.Clicks;
+using Dalamud;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
@@ -16,7 +17,9 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
+using Newtonsoft.Json.Linq;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using PandorasBox.UI;
 using System;
 using System.Collections.Generic;
@@ -224,9 +227,13 @@ namespace PandorasBox.Features.UI
                 var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
                 for (var i = 0; i < Workshops.Count; i++)
                 {
+                    if (!IsWorkshopUnlocked(i + 1))
+                        ImGui.BeginDisabled();
                     var configValue = Workshops[i];
                     if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
                     if (i != Workshops.Count - 1) ImGui.SameLine();
+                    if (!IsWorkshopUnlocked(i + 1))
+                        ImGui.EndDisabled();
                 }
                 ImGui.SameLine();
                 if (ImGui.Button("Deselect"))
@@ -262,6 +269,43 @@ namespace PandorasBox.Features.UI
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
+        }
+
+        private bool IsWorkshopUnlocked(int w)
+        {
+            var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
+            switch (w)
+            {
+                case 1:
+                    if (currentRank < 3)
+                    {
+                        MAX_WORKSHOPS = 0;
+                        return false;
+                    }
+                    break;
+                case 2:
+                    if (currentRank < 6)
+                    {
+                        MAX_WORKSHOPS = 1;
+                        return false;
+                    }
+                    break;
+                case 3:
+                    if (currentRank < 8)
+                    {
+                        MAX_WORKSHOPS = 2;
+                        return false;
+                    }
+                    break;
+                case 4:
+                    if (currentRank < 14)
+                    {
+                        MAX_WORKSHOPS = 3;
+                        return false;
+                    }
+                    break;
+            }
+            return true;
         }
 
         private static void DrawWorkshopListBox(string text, List<Item> schedule)
@@ -374,7 +418,7 @@ namespace PandorasBox.Features.UI
                             UIIndex = craftable.Key - 1,
                             LevelReq = craftable.LevelReq
                         };
-                        item.InsufficientRank = isCraftworkObjectCraftable(item);
+                        item.InsufficientRank = !isCraftworkObjectCraftable(item);
                         PluginLog.Log($"{item.InsufficientRank}");
 
                         if (hours < 24)
@@ -410,7 +454,7 @@ namespace PandorasBox.Features.UI
             return Regex.IsMatch(x, pattern);
         }
 
-        private static bool isCraftworkObjectCraftable(Item item) => !(MJIManager.Instance()->IslandState.CurrentRank < item.LevelReq);
+        private static bool isCraftworkObjectCraftable(Item item) => MJIManager.Instance()->IslandState.CurrentRank >= item.LevelReq;
 
         private bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
 
@@ -735,9 +779,9 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>(Dalamud.ClientLanguage.English)
+            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
                 .Where(x => x.Item.Row > 0)
-                .Select(x => (x.RowId, x.Item.Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
+                .Select(x => (x.RowId, x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
                 .ToArray();
             Overlay = new Overlays(this);
             _enabled = true;
