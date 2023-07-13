@@ -158,7 +158,7 @@ namespace PandorasBox.Features.UI
             if (!Fortuneteller)
             {
                 ImGui.Checkbox("Multi-Workshop Import", ref AutoGuess);
-                ImGuiComponents.HelpMarker("This is for importing an entire day's schedules at once\n" +
+                ImGuiComponents.HelpMarker("This is for importing an entire day's schedules at once and auto selecting workshops.\n" +
                     "If the cumulative hours of your clipboard is >24, this will assume the first 24 hours are for workshops 1-3\n" +
                     "and the remaining are for workshop 4. If it is 24 or less, it will apply to all four workshops.");
             }
