@@ -5,7 +5,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
-using Dalamud.Interface.Windowing;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -15,9 +14,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
-using Newtonsoft.Json.Linq;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
@@ -29,10 +26,7 @@ using System.Text.RegularExpressions;
 using static ECommons.GenericHelpers;
 
 // TODO:
-// add config to auto select next cycle when opening workshop addon
 // prevent schedule from executing if workshop has anything filled in
-// add option to auto remove invalid entries
-// display other workshops in listbox if autoguess is on
 
 namespace PandorasBox.Features.UI
 {
@@ -45,7 +39,15 @@ namespace PandorasBox.Features.UI
         public override FeatureType FeatureType => FeatureType.UI;
         private Overlays Overlay;
         public static bool ResetPosition = false;
-        public static bool _enabled;
+        public static bool enabled;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.")]
+            public bool OpenNextDay = false;
+        }
 
         internal static (uint Key, string Name, ushort CraftingTime, ushort LevelReq)[] Craftables;
         public static List<Item> PrimarySchedule = new();
@@ -59,6 +61,8 @@ namespace PandorasBox.Features.UI
         private bool IsScheduleRest;
         private bool AutoGuess;
         private bool Fortuneteller;
+        private bool ExecutionDisabled;
+        private bool HasOpened;
 
         public class SchedulePreset
         {
@@ -72,20 +76,28 @@ namespace PandorasBox.Features.UI
             public ushort CraftingTime { get; set; }
             public uint UIIndex { get; set; }
             public ushort LevelReq { get; set; }
-            public bool InsufficientRank {  get; set; }
+            public bool InsufficientRank { get; set; }
         }
 
         public override void Draw()
         {
-            if (_enabled)
+            if (enabled)
             {
                 var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
                 if (workshopWindow == IntPtr.Zero)
+                {
+                    HasOpened = false;
                     return;
-
+                }
                 var addonPtr = (AtkUnitBase*)workshopWindow;
                 if (addonPtr == null)
                     return;
+
+                if (!HasOpened && Config.OpenNextDay && IsAddonReady(addonPtr))
+                {
+                    OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
+                    HasOpened = true;
+                }
 
                 var baseX = addonPtr->X;
                 var baseY = addonPtr->Y;
@@ -141,19 +153,27 @@ namespace PandorasBox.Features.UI
                     if (text.IsNullOrEmpty()) return;
                     List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                     ScheduleImport(rawItemStrings);
+                    if (PrimarySchedule.Count == 0)
+                        PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                 }
                 catch (Exception e)
                 {
+                    PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                     PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
                 }
             }
-            ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
+            ImGuiComponents.HelpMarker("This is for importing schedules from the Overseas Casuals' Discord from your clipboard.\n" +
+                "This importer detects the presence of an item's name (not including \"Isleworks\" et al) on each line.\n" +
+                "You can copy an entire workshop's schedule from the discord, junk included.\n" +
+                "If you want to import the entire day's schedule for all workshops, tick 'Multi-Workshhop Import' checkbox below.");
             // ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
             // ImGuiComponents.HelpMarker("ENGLISH ONLY. OVERSEAS CASUALS DISCORD ONLY. This follows the standard format the Casuals use where Cycle 1 & 2 are always rest.\nThis will read the items listed between \"Cycle\" lines and assume they are for Cycles 3 onwards.");
             if (!Fortuneteller)
             {
-                ImGui.Checkbox("Guess Workshops", ref AutoGuess);
-                ImGuiComponents.HelpMarker("If the cumulative hours of your clipboard is >24, this will assume the first 24 hours\nare for workshops 1-3 and the remaining are for workshop 4. If it is 24 or less, it will apply to all four workshops.");
+                ImGui.Checkbox("Multi-Workshop Import", ref AutoGuess);
+                ImGuiComponents.HelpMarker("This is for importing an entire day's schedules at once and auto selecting workshops.\n" +
+                    "If the cumulative hours of your clipboard is >24, this will assume the first 24 hours are for workshops 1-3\n" +
+                    "and the remaining are for workshop 4. If it is 24 or less, it will apply to all four workshops.");
             }
 
             // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
@@ -246,16 +266,19 @@ namespace PandorasBox.Features.UI
             {
                 var IsInsufficientRank = (PrimarySchedule.Count > 0 && PrimarySchedule.Any(x => x.InsufficientRank))
                     || (SecondarySchedule.Count > 0 && SecondarySchedule.Any(x => x.InsufficientRank));
-                if (IsInsufficientRank)
-                {
-                    ImGui.BeginDisabled();
-                    ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient rank to execute schedule");
-                }
+                var ScheduleInProgress = SelectedCycle - 1 <= MJIManager.Instance()->CurrentCycleDay && SelectedCycle != 0;
                 var restDays = GetCurrentRestDays();
-                if (restDays.Contains(SelectedCycle - 1))
+                var SelectedIsRest = restDays.Contains(SelectedCycle - 1);
+                if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest)
                 {
                     ImGui.BeginDisabled();
-                    ImGui.TextColored(ImGuiColors.DalamudRed, "Selected cycle is a rest day. Cannot schedule on a rest day.");
+                    ExecutionDisabled = true;
+                    if (IsInsufficientRank)
+                        ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient rank to execute schedule");
+                    if (SelectedIsRest)
+                        ImGui.TextColored(ImGuiColors.DalamudRed, "Selected cycle is a rest day.\nCannot schedule on a rest day.");
+                    if (ScheduleInProgress)
+                        ImGui.TextColored(ImGuiColors.DalamudRed, "Cannot execute schedule on days\nin progress or passed");
                 }
                 if (ImGui.Button("Execute Schedule"))
                 {
@@ -265,7 +288,7 @@ namespace PandorasBox.Features.UI
                     else
                         ScheduleList();
                 }
-                if (IsInsufficientRank || restDays.Contains(SelectedCycle - 1))
+                if (ExecutionDisabled)
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
@@ -363,25 +386,27 @@ namespace PandorasBox.Features.UI
         {
             if (!Fortuneteller)
             {
-                (List<Item> items, List<Item> excessItems) = ParseItems(rawItemStrings);
+                (var items, var excessItems) = ParseItems(rawItemStrings);
                 PrimarySchedule = items;
                 SecondarySchedule = excessItems;
             }
             else
             {
-                List<List<string>> fortuneCycles = new List<List<string>>();
-                List<string> currentCycle = new List<string>();
-                string pattern = @"Cycle\s+\d+\s+(.*?)(?=Cycle|$)";
-                MatchCollection matches = Regex.Matches(string.Join(Environment.NewLine, rawItemStrings), pattern, RegexOptions.Singleline);
+                var fortuneCycles = new List<List<string>>();
+                var currentCycle = new List<string>();
+                var pattern = @"Cycle\s+\d+\s+(.*?)(?=Cycle|$)";
+                var matches = Regex.Matches(string.Join(Environment.NewLine, rawItemStrings), pattern, RegexOptions.Singleline);
                 foreach (Match match in matches)
                 {
                     var extract = match.Groups[1].Value.Trim();
                     if (extract.StartsWith("Cycle"))
+                    {
                         if (currentCycle.Count > 0)
                         {
                             fortuneCycles.Add(currentCycle);
                             currentCycle = new List<string>();
                         }
+                    }
                     else
                         currentCycle.Add(extract);
                 }
@@ -391,7 +416,7 @@ namespace PandorasBox.Features.UI
 
                 foreach (var cycle in fortuneCycles)
                 {
-                    (List<Item> items, List<Item> excessItems) = ParseItems(cycle);
+                    (var items, var excessItems) = ParseItems(cycle);
                     PrimarySchedule = items;
                     SecondarySchedule = excessItems;
                 }
@@ -400,8 +425,8 @@ namespace PandorasBox.Features.UI
 
         public static (List<Item>, List<Item>) ParseItems(List<string> itemStrings)
         {
-            List<Item> items = new List<Item>();
-            List<Item> excessItems = new List<Item>();
+            var items = new List<Item>();
+            var excessItems = new List<Item>();
             var hours = 0;
             foreach (var itemString in itemStrings)
             {
@@ -410,7 +435,7 @@ namespace PandorasBox.Features.UI
                 {
                     if (IsMatch(itemString.ToLower(), craftable.Name.ToLower()))
                     {
-                        Item item = new Item
+                        var item = new Item
                         {
                             Key = craftable.Key,
                             Name = Svc.Data.GetExcelSheet<MJICraftworksObject>().GetRow(craftable.Key).Item.Value.Name.RawString,
@@ -433,7 +458,7 @@ namespace PandorasBox.Features.UI
                 if (!matchFound)
                 {
                     PluginLog.Log($"Failed to match string to craftable: {itemString}");
-                    Item invalidItem = new Item
+                    var invalidItem = new Item
                     {
                         Key = 0,
                         Name = "Invalid",
@@ -450,7 +475,7 @@ namespace PandorasBox.Features.UI
 
         private static bool IsMatch(string x, string y)
         {
-            string pattern = $@"\b{Regex.Escape(y)}\b";
+            var pattern = $@"\b{Regex.Escape(y)}\b";
             return Regex.IsMatch(x, pattern);
         }
 
@@ -747,6 +772,7 @@ namespace PandorasBox.Features.UI
 
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
+            // Unable to set agenda. Insufficient time for handicraft production.
             if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 10146).Text.ExtractText())
             {
                 TaskManager.Abort();
@@ -779,20 +805,22 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
                 .Where(x => x.Item.Row > 0)
                 .Select(x => (x.RowId, x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
                 .ToArray();
             Overlay = new Overlays(this);
-            _enabled = true;
+            enabled = true;
             Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
             base.Enable();
         }
 
         public override void Disable()
         {
+            SaveConfig(Config);
             P.Ws.RemoveWindow(Overlay);
-            _enabled = false;
+            enabled = false;
             Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
             base.Disable();
         }
