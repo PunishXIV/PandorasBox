@@ -5,7 +5,6 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
-using Dalamud.Interface.Windowing;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -15,9 +14,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel;
 using Lumina.Excel.GeneratedSheets;
-using Newtonsoft.Json.Linq;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
@@ -29,7 +26,6 @@ using System.Text.RegularExpressions;
 using static ECommons.GenericHelpers;
 
 // TODO:
-// add config to auto select next cycle when opening workshop addon
 // prevent schedule from executing if workshop has anything filled in
 
 namespace PandorasBox.Features.UI
@@ -43,7 +39,15 @@ namespace PandorasBox.Features.UI
         public override FeatureType FeatureType => FeatureType.UI;
         private Overlays Overlay;
         public static bool ResetPosition = false;
-        public static bool _enabled;
+        public static bool enabled;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.")]
+            public bool OpenNextDay = false;
+        }
 
         internal static (uint Key, string Name, ushort CraftingTime, ushort LevelReq)[] Craftables;
         public static List<Item> PrimarySchedule = new();
@@ -58,6 +62,7 @@ namespace PandorasBox.Features.UI
         private bool AutoGuess;
         private bool Fortuneteller;
         private bool ExecutionDisabled;
+        private bool HasOpened;
 
         public class SchedulePreset
         {
@@ -76,15 +81,23 @@ namespace PandorasBox.Features.UI
 
         public override void Draw()
         {
-            if (_enabled)
+            if (enabled)
             {
                 var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
                 if (workshopWindow == IntPtr.Zero)
+                {
+                    HasOpened = false;
                     return;
-
+                }
                 var addonPtr = (AtkUnitBase*)workshopWindow;
                 if (addonPtr == null)
                     return;
+
+                if (!HasOpened && Config.OpenNextDay && IsAddonReady(addonPtr))
+                {
+                    OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
+                    HasOpened = true;
+                }
 
                 var baseX = addonPtr->X;
                 var baseY = addonPtr->Y;
@@ -145,7 +158,7 @@ namespace PandorasBox.Features.UI
                 }
                 catch (Exception e)
                 {
-                    PrintPluginMessage("Could not parse clipboard for schedule. Clipboard may be empty.");
+                    PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                     PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
                 }
             }
@@ -792,20 +805,22 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
                 .Where(x => x.Item.Row > 0)
                 .Select(x => (x.RowId, x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
                 .ToArray();
             Overlay = new Overlays(this);
-            _enabled = true;
+            enabled = true;
             Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
             base.Enable();
         }
 
         public override void Disable()
         {
+            SaveConfig(Config);
             P.Ws.RemoveWindow(Overlay);
-            _enabled = false;
+            enabled = false;
             Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
             base.Disable();
         }
