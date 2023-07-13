@@ -71,7 +71,7 @@ namespace PandorasBox.Features.UI
             public ushort CraftingTime { get; set; }
             public uint UIIndex { get; set; }
             public ushort LevelReq { get; set; }
-            public bool InsufficientRank {  get; set; }
+            public bool InsufficientRank { get; set; }
         }
 
         public override void Draw()
@@ -373,25 +373,27 @@ namespace PandorasBox.Features.UI
         {
             if (!Fortuneteller)
             {
-                (List<Item> items, List<Item> excessItems) = ParseItems(rawItemStrings);
+                (var items, var excessItems) = ParseItems(rawItemStrings);
                 PrimarySchedule = items;
                 SecondarySchedule = excessItems;
             }
             else
             {
-                List<List<string>> fortuneCycles = new List<List<string>>();
-                List<string> currentCycle = new List<string>();
-                string pattern = @"Cycle\s+\d+\s+(.*?)(?=Cycle|$)";
-                MatchCollection matches = Regex.Matches(string.Join(Environment.NewLine, rawItemStrings), pattern, RegexOptions.Singleline);
+                var fortuneCycles = new List<List<string>>();
+                var currentCycle = new List<string>();
+                var pattern = @"Cycle\s+\d+\s+(.*?)(?=Cycle|$)";
+                var matches = Regex.Matches(string.Join(Environment.NewLine, rawItemStrings), pattern, RegexOptions.Singleline);
                 foreach (Match match in matches)
                 {
                     var extract = match.Groups[1].Value.Trim();
                     if (extract.StartsWith("Cycle"))
+                    {
                         if (currentCycle.Count > 0)
                         {
                             fortuneCycles.Add(currentCycle);
                             currentCycle = new List<string>();
                         }
+                    }
                     else
                         currentCycle.Add(extract);
                 }
@@ -401,7 +403,7 @@ namespace PandorasBox.Features.UI
 
                 foreach (var cycle in fortuneCycles)
                 {
-                    (List<Item> items, List<Item> excessItems) = ParseItems(cycle);
+                    (var items, var excessItems) = ParseItems(cycle);
                     PrimarySchedule = items;
                     SecondarySchedule = excessItems;
                 }
@@ -410,8 +412,8 @@ namespace PandorasBox.Features.UI
 
         public static (List<Item>, List<Item>) ParseItems(List<string> itemStrings)
         {
-            List<Item> items = new List<Item>();
-            List<Item> excessItems = new List<Item>();
+            var items = new List<Item>();
+            var excessItems = new List<Item>();
             var hours = 0;
             foreach (var itemString in itemStrings)
             {
@@ -420,7 +422,7 @@ namespace PandorasBox.Features.UI
                 {
                     if (IsMatch(itemString.ToLower(), craftable.Name.ToLower()))
                     {
-                        Item item = new Item
+                        var item = new Item
                         {
                             Key = craftable.Key,
                             Name = Svc.Data.GetExcelSheet<MJICraftworksObject>().GetRow(craftable.Key).Item.Value.Name.RawString,
@@ -443,7 +445,7 @@ namespace PandorasBox.Features.UI
                 if (!matchFound)
                 {
                     PluginLog.Log($"Failed to match string to craftable: {itemString}");
-                    Item invalidItem = new Item
+                    var invalidItem = new Item
                     {
                         Key = 0,
                         Name = "Invalid",
@@ -460,7 +462,7 @@ namespace PandorasBox.Features.UI
 
         private static bool IsMatch(string x, string y)
         {
-            string pattern = $@"\b{Regex.Escape(y)}\b";
+            var pattern = $@"\b{Regex.Escape(y)}\b";
             return Regex.IsMatch(x, pattern);
         }
 
