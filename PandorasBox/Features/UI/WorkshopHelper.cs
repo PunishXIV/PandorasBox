@@ -757,6 +757,7 @@ namespace PandorasBox.Features.UI
 
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
+            // Unable to set agenda. Insufficient time for handicraft production.
             if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 10146).Text.ExtractText())
             {
                 TaskManager.Abort();
