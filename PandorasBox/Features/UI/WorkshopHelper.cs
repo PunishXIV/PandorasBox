@@ -140,6 +140,8 @@ namespace PandorasBox.Features.UI
                     if (text.IsNullOrEmpty()) return;
                     List<string> rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                     ScheduleImport(rawItemStrings);
+                    if (PrimarySchedule.Count == 0)
+                        PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                 }
                 catch (Exception e)
                 {
@@ -148,7 +150,7 @@ namespace PandorasBox.Features.UI
                 }
             }
             ImGuiComponents.HelpMarker("This is for importing schedules from the Overseas Casuals' Discord from your clipboard.\n" +
-                "This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\n" +
+                "This importer detects the presence of an item's name (not including \"Isleworks\" et al) on each line.\n" +
                 "You can copy an entire workshop's schedule from the discord, junk included.\n" +
                 "If you want to import the entire day's schedule for all workshops, tick 'Multi-Workshhop Import' checkbox below.");
             // ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
