@@ -31,8 +31,6 @@ using static ECommons.GenericHelpers;
 // TODO:
 // add config to auto select next cycle when opening workshop addon
 // prevent schedule from executing if workshop has anything filled in
-// add option to auto remove invalid entries
-// display other workshops in listbox if autoguess is on
 
 namespace PandorasBox.Features.UI
 {
@@ -59,6 +57,7 @@ namespace PandorasBox.Features.UI
         private bool IsScheduleRest;
         private bool AutoGuess;
         private bool Fortuneteller;
+        private bool ExecutionDisabled;
 
         public class SchedulePreset
         {
@@ -144,16 +143,22 @@ namespace PandorasBox.Features.UI
                 }
                 catch (Exception e)
                 {
+                    PrintPluginMessage("Could not parse clipboard for schedule. Clipboard may be empty.");
                     PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
                 }
             }
-            ImGuiComponents.HelpMarker("This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\nYou can copy the entire day's schedule from the discord, junk included. If anything is not matched properly, it will show as an invalid entry and you will need to reimport.");
+            ImGuiComponents.HelpMarker("This is for importing schedules from the Overseas Casuals' Discord from your clipboard.\n" +
+                "This importer detects the presence of an item's name (not including \"Isleworks\") on each line.\n" +
+                "You can copy an entire workshop's schedule from the discord, junk included.\n" +
+                "If you want to import the entire day's schedule for all workshops, tick 'Multi-Workshhop Import' checkbox below.");
             // ImGui.Checkbox("Fortuneteller Import", ref Fortuneteller);
             // ImGuiComponents.HelpMarker("ENGLISH ONLY. OVERSEAS CASUALS DISCORD ONLY. This follows the standard format the Casuals use where Cycle 1 & 2 are always rest.\nThis will read the items listed between \"Cycle\" lines and assume they are for Cycles 3 onwards.");
             if (!Fortuneteller)
             {
-                ImGui.Checkbox("Guess Workshops", ref AutoGuess);
-                ImGuiComponents.HelpMarker("If the cumulative hours of your clipboard is >24, this will assume the first 24 hours\nare for workshops 1-3 and the remaining are for workshop 4. If it is 24 or less, it will apply to all four workshops.");
+                ImGui.Checkbox("Multi-Workshop Import", ref AutoGuess);
+                ImGuiComponents.HelpMarker("This is for importing an entire day's schedules at once\n" +
+                    "If the cumulative hours of your clipboard is >24, this will assume the first 24 hours are for workshops 1-3\n" +
+                    "and the remaining are for workshop 4. If it is 24 or less, it will apply to all four workshops.");
             }
 
             // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
@@ -246,16 +251,19 @@ namespace PandorasBox.Features.UI
             {
                 var IsInsufficientRank = (PrimarySchedule.Count > 0 && PrimarySchedule.Any(x => x.InsufficientRank))
                     || (SecondarySchedule.Count > 0 && SecondarySchedule.Any(x => x.InsufficientRank));
-                if (IsInsufficientRank)
-                {
-                    ImGui.BeginDisabled();
-                    ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient rank to execute schedule");
-                }
+                var ScheduleInProgress = SelectedCycle - 1 <= MJIManager.Instance()->CurrentCycleDay && SelectedCycle != 0;
                 var restDays = GetCurrentRestDays();
-                if (restDays.Contains(SelectedCycle - 1))
+                var SelectedIsRest = restDays.Contains(SelectedCycle - 1);
+                if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest)
                 {
                     ImGui.BeginDisabled();
-                    ImGui.TextColored(ImGuiColors.DalamudRed, "Selected cycle is a rest day. Cannot schedule on a rest day.");
+                    ExecutionDisabled = true;
+                    if (IsInsufficientRank)
+                        ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient rank to execute schedule");
+                    if (SelectedIsRest)
+                        ImGui.TextColored(ImGuiColors.DalamudRed, "Selected cycle is a rest day.\nCannot schedule on a rest day.");
+                    if (ScheduleInProgress)
+                        ImGui.TextColored(ImGuiColors.DalamudRed, "Cannot execute schedule on days\nin progress or passed");
                 }
                 if (ImGui.Button("Execute Schedule"))
                 {
@@ -265,7 +273,7 @@ namespace PandorasBox.Features.UI
                     else
                         ScheduleList();
                 }
-                if (IsInsufficientRank || restDays.Contains(SelectedCycle - 1))
+                if (ExecutionDisabled)
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
