@@ -163,7 +163,7 @@ namespace PandorasBox.Features.UI
                     var rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
                     ScheduleImport(rawItemStrings);
 
-                    if (PrimarySchedule.Count == 0 || MultiCycleList.Count == 0)
+                    if (PrimarySchedule.Count == 0 || MultiCycleList.All(x => x.PrimarySchedule.Count == 0))
                         PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                 }
                 catch (Exception e)
@@ -332,10 +332,8 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Button("Execute Schedule"))
                 {
                     currentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    if (fortuneteller)
-                        ScheduleFortuneteller();
-                    else if (weekend)
-                        ScheduleWeekend();
+                    if (fortuneteller || weekend)
+                        ScheduleMultiCycleList();
                     else
                         ScheduleList();
                 }
@@ -835,31 +833,21 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        public void ScheduleFortuneteller()
+        public void ScheduleMultiCycleList()
         {
-            TaskManager.Enqueue(() => OpenCycle(2));
-            TaskManager.Enqueue(() => SetRestDay());
-            var currentDay = 3;
-            foreach (var cycle in MultiCycleList)
+            if (fortuneteller)
             {
-                TaskManager.Enqueue(() => OpenCycle(currentDay));
-                PrimarySchedule = cycle.PrimarySchedule;
-                SecondarySchedule = cycle.SecondarySchedule;
-                TaskManager.Enqueue(() => ScheduleList());
-                currentDay += 1;
+                TaskManager.Enqueue(() => OpenCycle(2));
+                TaskManager.Enqueue(() => SetRestDay());
             }
-        }
-
-        public void ScheduleWeekend()
-        {
-            var currentDay = 5;
+            var currentDay = fortuneteller ? 3 : 5;
             foreach (var cycle in MultiCycleList)
             {
                 TaskManager.Enqueue(() => OpenCycle(currentDay));
                 PrimarySchedule = cycle.PrimarySchedule;
                 SecondarySchedule = cycle.SecondarySchedule;
-                isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay;
                 TaskManager.Enqueue(() => ScheduleList());
+                isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay;
                 currentDay += 1;
             }
         }
