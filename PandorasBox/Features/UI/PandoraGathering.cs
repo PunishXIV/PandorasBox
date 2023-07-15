@@ -3,6 +3,7 @@ using ClickLib.Structures;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Components;
 using Dalamud.Logging;
 using ECommons;
 using ECommons.Automation;
@@ -29,6 +30,96 @@ namespace PandorasBox.Features.UI
     public unsafe class PandoraGathering : Feature
     {
 
+        public static readonly (uint ItemId, uint SeedId)[] Seeds =
+        {
+            (4785, 7715), // Paprika          
+            (4777, 7716), // Wild Onion       
+            (4778, 7717), // Coerthan Carrot  
+            (4782, 7718), // La Noscean Lettuce
+            (4804, 7719), // Cinderfoot Olive 
+            (4787, 7720), // Popoto           
+            (4821, 7721), // Millioncorn      
+            (4788, 7722), // Wizard Eggplant  
+            (4789, 7723), // Midland Cabbage  
+            (4809, 7725), // La Noscean Orange
+            (4808, 7726), // Lowland Grapes   
+            (4810, 7727), // Faerie Apple     
+            (4811, 7728), // Sun Lemon        
+            (4812, 7729), // Pixie Plums      
+            (4814, 7730), // Blood Currants   
+            (6146, 7731), // Mirror Apple     
+            (4815, 7732), // Rolanberry       
+            (4829, 7735), // Garlean Garlic   
+            (5539, 7736), // Lavender         
+            (4830, 7737), // Black Pepper     
+            (4835, 7738), // Ala Mhigan Mustard
+            (4836, 7739), // Pearl Ginger     
+            (5542, 7740), // Chamomile        
+            (5346, 7741), // Flax         
+            (4837, 7742), // Midland Basil
+            (5543, 7743), // Mandrake     
+            (4842, 7744), // Almonds
+
+            (29669, 29670), // Oddly Specific Latex                 
+            (29671, 29672), // Oddly Specific Obsidian              
+            (29674, 29675), // Oddly Specific Amber                 
+            (29676, 29677), // Oddly Specific Dark Matter           
+            (31125, 31126), // Oddly Specific Leafborne Aethersand  
+            (31130, 31131), // Oddly Specific Primordial Resin      
+            (31127, 31128), // Oddly Specific Landborne Aethersand  
+            (31132, 31133), // Oddly Specific Primordial Asphaltum  
+
+            (38788, 38789), // Splendorous Earth Shard
+            (38790, 38791), // Splendorous Water Shard
+            (38794, 38795), // Splendorous Lightning Shard
+            (38796, 38797), // Splendorous Fire Shard
+        };
+
+        public static readonly (uint ItemId, uint NodeId)[] Items =
+        {
+            (7758, 203),  // Grade 1 La Noscean Topsoil
+            (7761, 200),  // Grade 1 Shroud Topsoil   
+            (7764, 201),  // Grade 1 Thanalan Topsoil 
+            (7759, 150),  // Grade 2 La Noscean Topsoil
+            (7762, 209),  // Grade 2 Shroud Topsoil   
+            (7765, 151),  // Grade 2 Thanalan Topsoil 
+            (10092, 210), // Black Limestone          
+            (10094, 177), // Little Worm              
+            (10097, 133), // Yafaemi Wildgrass        
+            (12893, 295), // Dark Chestnut            
+            (15865, 30),  // Firelight Seeds          
+            (15866, 39),  // Icelight Seeds           
+            (15867, 21),  // Windlight Seeds          
+            (15868, 31),  // Earthlight Seeds         
+            (15869, 25),  // Levinlight Seeds         
+            (15870, 14),  // Waterlight Seeds
+            (12534, 285), // Mythrite Ore             
+            (12535, 353), // Hardsilver Ore           
+            (12537, 286), // Titanium Ore             
+            (12579, 356), // Birch Log                
+            (12878, 297), // Cyclops Onion            
+            (12879, 298), // Emerald Beans            
+        };
+
+        public static readonly (uint MapId, uint[] NodeIds)[] Maps =
+        {
+            (6688,  new uint[]{20, 49, 137, 140, 141, 180}),                                 // Leather
+            (6689,  new uint[]{46, 142, 143, 185, 186}),                                     // Goatskin
+            (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Toadskin
+            (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Boarskin
+            (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Peisteskin
+            (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),                     // Archaeoskin
+            (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Wyvernskin
+            (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Dragonskin
+            (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gaganaskin
+            (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gazelleskin
+            (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Gliderskin
+            (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Zonureskin
+            (36611, new uint[]{847, 848, 825, 826}),                                         // Saigaskin
+            (36612, new uint[]{847, 848, 825, 826}),                                         // Kumbhiraskin
+            (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
+         };
+
         private delegate void GatherEventDelegate(IntPtr a1, ulong a2, IntPtr a3, ulong a4);
         private HookWrapper<GatherEventDelegate> gatherEventHook;
 
@@ -50,31 +141,33 @@ namespace PandorasBox.Features.UI
         private string LocationEffect;
 
         public class Configs : FeatureConfig
-        {            
+        {
+            public bool CollectibleStop = false;
+
             public bool ShiftStop = false;
-            
+
             public bool Gathering = false;
-            
+
             public bool RememberLastNode = false;
-            
+
             public bool Use500GPYield = false;
-          
+
             public int GP500Yield = 500;
-         
+
             public bool Use100GPYield = false;
 
             public int GP100Yield = 100;
-        
+
             public bool UseTidings = false;
 
             public int GPTidings = 200;
-          
+
             public int GatherersBoon = 100;
-          
+
             public bool UseGivingLand = false;
 
             public int GPGivingLand = 200;
-           
+
             public bool UseTwelvesBounty = false;
 
             public int GPTwelvesBounty = 150;
@@ -82,6 +175,10 @@ namespace PandorasBox.Features.UI
             public bool UseSolidReason = false;
 
             public int GPSolidReason = 300;
+
+            public bool UseLuck = false;
+
+            public int GPLuck = 200;
         }
 
         public Configs Config { get; private set; }
@@ -144,12 +241,12 @@ namespace PandorasBox.Features.UI
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f.Scale());
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                
+
                 ImGui.GetFont().Scale = scale.X;
                 var oldScale = ImGui.GetIO().FontGlobalScale;
-                ImGui.GetIO().FontGlobalScale = 0.95f;
+                ImGui.GetIO().FontGlobalScale = 0.83f;
                 ImGui.PushFont(ImGui.GetFont());
-                size.Y *= 6.5f;
+                size.Y *= 6.3f;
                 size.X *= 1.065f;
                 position.X -= 15f * scale.X;
 
@@ -161,10 +258,10 @@ namespace PandorasBox.Features.UI
 
                 ImGui.Dummy(new Vector2(2f));
 
-                ImGui.Columns(2, null, false);
+                ImGui.Columns(3, null, false);
 
 
-                if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
+                if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
                 {
                     if (Config.Gathering && node->GetAsAtkComponentCheckBox()->IsChecked)
                         QuickGatherToggle(null);
@@ -177,7 +274,7 @@ namespace PandorasBox.Features.UI
 
                 ImGui.NextColumn();
 
-                if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
+                if (ImGui.Checkbox("Remember Item", ref Config.RememberLastNode))
                     SaveConfig(Config);
 
                 if (ImGui.IsItemHovered() && InDiadem)
@@ -265,9 +362,13 @@ namespace PandorasBox.Features.UI
                     SaveConfig(Config);
                 }
 
+                ImGui.NextColumn();
+                if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
+                    SaveConfig(Config);
+
                 ImGui.Columns(1);
 
-                if (LocationEffect.Length  > 0)
+                if (LocationEffect.Length > 0)
                 {
                     ImGuiEx.ImGuiLineCentered("###LocationEffect", () =>
                     {
@@ -315,6 +416,11 @@ namespace PandorasBox.Features.UI
         {
             if (ImGui.Checkbox($"Hold Shift to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
                 SaveConfig(Config);
+
+            if (ImGui.Checkbox($"Disable Starting Buffs on Nodes with Collectibles", ref Config.CollectibleStop))
+                SaveConfig(Config);
+
+            ImGuiComponents.HelpMarker("This will stop Pandora from using any actions when you start a node with a collectible on it. This is intended to prevent wasting GP on buffs that don't apply to collectibles.");
 
             if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
             {
@@ -426,13 +532,22 @@ namespace PandorasBox.Features.UI
                     SaveConfig(Config);
             }
 
+            if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
+                SaveConfig(Config);
+
+            if (Config.UseLuck)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP7", ref Config.GPLuck, 200, 1000))
+                    SaveConfig(Config); 
+            }
+
         };
 
         private void CheckLastItem(SetupAddonArgs obj)
         {
             if (obj.AddonName == "Gathering" && Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift) || (!Config.ShiftStop)))
             {
-                PluginLog.Debug($"{Svc.ClientState.LocalPlayer.CurrentGp}");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                 TaskManager.Enqueue(() =>
                 {
@@ -458,10 +573,10 @@ namespace PandorasBox.Features.UI
                         return;
                     }
 
-                    PluginLog.Debug($"{ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable))}");
-                    if (!ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable)))
+                    bool nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
+                    PluginLog.Debug($"{nodeHasCollectibles}");
+                    if ((nodeHasCollectibles && !Config.CollectibleStop) || !nodeHasCollectibles)
                     {
-
                         Dictionary<int, int> boonChances = new();
 
                         Int32.TryParse(addon->AtkUnitBase.UldManager.NodeList[25]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out int n1b);
@@ -481,6 +596,14 @@ namespace PandorasBox.Features.UI
                         boonChances.Add(5, n6b);
                         boonChances.Add(6, n7b);
                         boonChances.Add(7, n8b);
+
+                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck)
+                        {
+                            TaskManager.Enqueue(() => UseLuck(), "UseLuck");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => CheckLastItem(obj));
+                            return;
+                        }
 
                         if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && ((boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon) || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                         {
@@ -511,26 +634,19 @@ namespace PandorasBox.Features.UI
                             TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                         }
-                    }
 
+                    }
                     if (Config.RememberLastNode)
                     {
                         if (lastGatheredIndex > 7)
                             return;
 
-                        var item = lastGatheredIndex switch
+                        if (ids.Any(x => x == lastGatheredItem))
                         {
-                            0 => addon->GatheredItemId1,
-                            1 => addon->GatheredItemId2,
-                            2 => addon->GatheredItemId3,
-                            3 => addon->GatheredItemId4,
-                            4 => addon->GatheredItemId5,
-                            5 => addon->GatheredItemId6,
-                            6 => addon->GatheredItemId7,
-                            7 => addon->GatheredItemId8
-                        };
+                            lastGatheredIndex = (ulong)ids.IndexOf(lastGatheredItem);
+                        }
 
-                        if (item == lastGatheredItem || InDiadem)
+                        if (ids[(int)lastGatheredIndex] == lastGatheredItem || InDiadem)
                         {
                             bool quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
                             if (quickGathering)
@@ -551,6 +667,40 @@ namespace PandorasBox.Features.UI
                     }
                 });
             }
+        }
+
+        private void UseLuck()
+        {
+            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            {
+                case 17: //BTN
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4095) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 4095);
+                    }
+                    break;
+                case 16: //MIN
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4081) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Spell, 4081);
+                    }
+                    break;
+            }
+        }
+
+        private bool NodeHasHiddenItems(List<uint> ids)
+        {
+            foreach (var id in ids.Where(x => x != 0))
+            {
+                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
+            }
+            if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
+            var nodeId = Svc.ClientState.LocalPlayer.TargetObject?.DataId;
+            if (Items.Any(x => x.NodeId == nodeId)) return true;
+            if (Maps.Any(x => x.NodeIds.Any(y => y == nodeId))) return true;
+
+
+            return false;
         }
 
         private bool? UseIntegrityAction()

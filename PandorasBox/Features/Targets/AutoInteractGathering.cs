@@ -1,6 +1,5 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Logging;
 using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -15,6 +14,7 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoInteractGathering : Feature
     {
+
         public override string Name => "Auto-interact with Gathering Nodes";
         public override string Description => "Interacts with gathering nodes when close enough and on the correct job.";
 
@@ -117,7 +117,7 @@ namespace PandorasBox.Features.Targets
             string Folklore = "";
 
             if (gatheringPoint.GatheringSubCategory.IsValueCreated && gatheringPoint.GatheringSubCategory.Value.FolkloreBook != null)
-            Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
+                Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
 
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
                 return;
