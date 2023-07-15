@@ -336,7 +336,7 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Button("Execute Schedule"))
                 {
                     currentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    currentDay = fortuneteller ? 3 : 5;
+                    currentDay = fortuneteller ? 3 : 9;
                     if (fortuneteller || weekend)
                         ScheduleMultiCycleList();
                     else
@@ -866,7 +866,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay, $"MultiCycleCheckRestOn{currentDay}");
                     TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
                 }
-            });
+            }, "ScheduleMultiCycleForEach");
         }
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
