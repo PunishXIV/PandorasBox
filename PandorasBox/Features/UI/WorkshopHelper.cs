@@ -448,23 +448,22 @@ namespace PandorasBox.Features.UI
 
         internal void ScheduleImport(List<string> rawItemStrings)
         {
-            if (rawItemStrings.Any(x => x.ToLower().Contains("cycle")))
-                if (!fortuneteller && !weekend)
-                {
-                    (var items, var excessItems) = ParseItems(rawItemStrings);
-                    PrimarySchedule = items;
-                    SecondarySchedule = excessItems;
-                }
-                else
-                {
-                    var rawCycles = SplitCycles(rawItemStrings);
+            if (!fortuneteller && !weekend)
+            {
+                (var items, var excessItems) = ParseItems(rawItemStrings);
+                PrimarySchedule = items;
+                SecondarySchedule = excessItems;
+            }
+            else
+            {
+                var rawCycles = SplitCycles(rawItemStrings);
 
-                    foreach (var cycle in rawCycles)
-                    {
-                        (var items, var excessItems) = ParseItems(cycle);
-                        MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
-                    }
+                foreach (var cycle in rawCycles)
+                {
+                    (var items, var excessItems) = ParseItems(cycle);
+                    MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
                 }
+            }
         }
 
         public static List<List<string>> SplitCycles(List<string> rawLines)
@@ -478,11 +477,10 @@ namespace PandorasBox.Features.UI
                 {
                     if (currentCycle.Count > 0)
                     {
-                        cycles.Add(currentCycle);
+                        currentCycle[currentCycle.Count - 1] += " " + line; // Append "Cycle" line to the previous list
                     }
-                    currentCycle = new List<string> { line };
                 }
-                else if (currentCycle.Count > 0)
+                else
                     currentCycle.Add(line);
             }
             if (currentCycle.Count > 0)
@@ -800,7 +798,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"MultiCycleSetPrimaryCycleOn{currentDay}");
                     TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"MultiCyleSetSecondaryCycleOn{currentDay}");
                     TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
-                    TaskManager.Enqueue(() => isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay, $"MultiCycleCheckRestOn{currentDay}");
+                    TaskManager.Enqueue(() => { isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay; }, $"MultiCycleCheckRestOn{currentDay}");
                     TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
                 }
             }, "ScheduleMultiCycleForEach");
