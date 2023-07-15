@@ -559,8 +559,6 @@ namespace PandorasBox.Features.UI
         {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
-            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Selecting Cycle", 300));
-            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Selecting Cycle"));
 
             try
             {
@@ -574,19 +572,6 @@ namespace PandorasBox.Features.UI
 
                 Callback.Fire(workshopWindow, false, 19, (uint)(cycle_day - 1));
 
-                // var SelectCycle = stackalloc AtkValue[2];
-                // SelectCycle[0] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                //     Int = 19,
-                // };
-                // SelectCycle[1] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-                //     UInt = (uint)(cycle_day - 1),
-                // };
-                // workshopWindow->FireCallback(1, SelectCycle);
-
                 return true;
             }
             catch
@@ -599,8 +584,6 @@ namespace PandorasBox.Features.UI
         {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
-            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Opening Agenda", 300));
-            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Opening Agenda"));
 
             try
             {
@@ -614,24 +597,6 @@ namespace PandorasBox.Features.UI
 
 
                 Callback.Fire(workshopWindow, false, 16, (uint)(workshop), (uint)(index == 0 ? 0 : prevHours));
-
-                // var SelectAgenda = stackalloc AtkValue[3];
-                // SelectAgenda[0] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                //     Int = 16,
-                // };
-                // SelectAgenda[1] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-                //     UInt = (uint)(workshop),
-                // };
-                // SelectAgenda[1] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-                //     UInt = (uint)(index == 0 ? 0 : prevHours),
-                // };
-                // workshopWindow->FireCallback(1, SelectAgenda);
 
                 return true;
             }
@@ -661,32 +626,6 @@ namespace PandorasBox.Features.UI
                 Callback.Fire(schedulerWindow, false, 13);
                 schedulerWindow->Close(true);
 
-                // var SelectItem = stackalloc AtkValue[2];
-                // SelectItem[0] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                //     Int = 11,
-                // };
-                // SelectItem[1] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
-                //     UInt = key.id,
-                // };
-                // schedulerWindow->FireCallback(1, SelectItem);
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Selecting Item", 300));
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Selecting Item"));
-
-                // var Schedule = stackalloc AtkValue[1];
-                // Schedule[0] = new()
-                // {
-                //     Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                //     Int = 13,
-                // };
-                // schedulerWindow->FireCallback(1, Schedule);
-                // schedulerWindow->Close(true);
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Schedule Button", 300));
-                // TaskManager.EnqueueImmediate(() => EzThrottler.Check("Schedule Button"));
-
                 return true;
             }
             catch
@@ -715,8 +654,6 @@ namespace PandorasBox.Features.UI
             {
                 // open rest days addon
                 Callback.Fire((AtkUnitBase*)addon, false, 12);
-                TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Setting Rest Days", 300));
-                TaskManager.EnqueueImmediate(() => EzThrottler.Check("Setting Rest Days"));
 
                 var restDaysPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleMaintenance");
                 if (restDaysPTR == IntPtr.Zero)
