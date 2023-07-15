@@ -449,22 +449,22 @@ namespace PandorasBox.Features.UI
         internal void ScheduleImport(List<string> rawItemStrings)
         {
             if (rawItemStrings.Any(x => x.ToLower().Contains("cycle")))
-            if (!fortuneteller && !weekend)
-            {
-                (var items, var excessItems) = ParseItems(rawItemStrings);
-                PrimarySchedule = items;
-                SecondarySchedule = excessItems;
-            }
-            else
-            {
-                var rawCycles = SplitCycles(rawItemStrings);
-
-                foreach (var cycle in rawCycles)
+                if (!fortuneteller && !weekend)
                 {
-                    (var items, var excessItems) = ParseItems(cycle);
-                    MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
+                    (var items, var excessItems) = ParseItems(rawItemStrings);
+                    PrimarySchedule = items;
+                    SecondarySchedule = excessItems;
                 }
-            }
+                else
+                {
+                    var rawCycles = SplitCycles(rawItemStrings);
+
+                    foreach (var cycle in rawCycles)
+                    {
+                        (var items, var excessItems) = ParseItems(cycle);
+                        MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
+                    }
+                }
         }
 
         public static List<List<string>> SplitCycles(List<string> rawLines)
@@ -766,13 +766,13 @@ namespace PandorasBox.Features.UI
             {
                 if (selectedCycle != 0)
                 {
-                    TaskManager.EnqueueImmediate(() => OpenCycle(selectedCycle));
+                    TaskManager.EnqueueImmediate(() => OpenCycle(selectedCycle), $"MOpenCycle{selectedCycle}");
                 }
             }
 
             if (isScheduleRest)
             {
-                TaskManager.EnqueueImmediate(() => SetRestDay());
+                TaskManager.EnqueueImmediate(() => SetRestDay(), $"SetRest");
                 return true;
             }
 
@@ -784,25 +784,25 @@ namespace PandorasBox.Features.UI
                     for (var i = 0; i < maxWorkshops - 1; i++)
                     {
                         var ws = 0;
-                        TaskManager.EnqueueImmediate(() => hours = 0);
+                        TaskManager.EnqueueImmediate(() => hours = 0, $"PSSetHours0");
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("OpenAgendaDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours));
-                            TaskManager.DelayNextImmediate("ScheduleItemDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => ScheduleItem(item));
-                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime);
+                            TaskManager.DelayNextImmediate("PSOpenAgendaDelay", Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"PSOpenAgendaW{ws + 1}");
+                            TaskManager.DelayNextImmediate("PSScheduleItemDelay", Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSScheduleItemW{ws + 1}");
+                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"PSIncrementHoursW{ws + 1}");
                         }
                     }
-                    TaskManager.EnqueueImmediate(() => hours = 0);
+                    TaskManager.EnqueueImmediate(() => hours = 0, $"SSSetHours0");
                     foreach (var item in SecondarySchedule)
                     {
-                        TaskManager.DelayNextImmediate("OpenAgendaDelay", Config.taskDelay);
-                        TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, 3, hours));
-                        TaskManager.DelayNextImmediate("ScheduleItemDelay", Config.taskDelay);
-                        TaskManager.EnqueueImmediate(() => ScheduleItem(item));
-                        TaskManager.EnqueueImmediate(() => hours += item.CraftingTime);
+                        TaskManager.DelayNextImmediate("SSOpenAgendaDelay", Config.taskDelay);
+                        TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, 3, hours), $"SSOpenAgendaW{maxWorkshops}");
+                        TaskManager.DelayNextImmediate("SSScheduleItemDelay", Config.taskDelay);
+                        TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"SSScheduleW{maxWorkshops}");
+                        TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"SSIncrementHoursW{maxWorkshops}");
                     }
                 }
                 else
@@ -810,15 +810,15 @@ namespace PandorasBox.Features.UI
                     for (var i = 0; i < maxWorkshops; i++)
                     {
                         var ws = 0;
-                        TaskManager.EnqueueImmediate(() => hours = 0);
+                        TaskManager.EnqueueImmediate(() => hours = 0, $"PSOSetHours0");
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("OpenAgendaDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours));
-                            TaskManager.DelayNextImmediate("ScheduleItemDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => ScheduleItem(item));
-                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime);
+                            TaskManager.DelayNextImmediate("PSOOpenAgendaDelay", Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"PSOOpenAgendaW{ws + 1}");
+                            TaskManager.DelayNextImmediate("PSOScheduleItemDelay", Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSOScheduleW{ws + 1}");
+                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"PSOIncrementHoursW{ws + 1}");
                         }
                     }
                 }
@@ -830,20 +830,20 @@ namespace PandorasBox.Features.UI
                     var ws = 0;
                     if (Workshops[i])
                     {
-                        TaskManager.EnqueueImmediate(() => hours = 0);
+                        TaskManager.EnqueueImmediate(() => hours = 0, $"MSetHours0");
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("OpenAgendaDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours));
-                            TaskManager.DelayNextImmediate("ScheduleItemDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => ScheduleItem(item));
-                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime);
-                            TaskManager.EnqueueImmediate(() => currentWorkshop += 1);
+                            TaskManager.DelayNextImmediate("MOpenAgendaDelay", Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"MOpenAgendaW{ws + 1}");
+                            TaskManager.DelayNextImmediate("MScheduleItemDelay", Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"MScheduleW{ws + 1}");
+                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"MIncrementHoursW{ws + 1}");
+                            TaskManager.EnqueueImmediate(() => currentWorkshop += 1, $"MIncrementWFromW{ws + 1}");
                         }
                     }
                 }
-                TaskManager.EnqueueImmediate(() => currentWorkshop = 0);
+                TaskManager.EnqueueImmediate(() => currentWorkshop = 0, $"MSetWorkshop0");
             }
             return true;
         }
@@ -852,23 +852,22 @@ namespace PandorasBox.Features.UI
         {
             if (fortuneteller)
             {
-                TaskManager.Enqueue(() => OpenCycle(2));
-                TaskManager.Enqueue(() => SetRestDay());
+                TaskManager.Enqueue(() => OpenCycle(2), "FortuneTellerCycleOpen");
+                TaskManager.Enqueue(() => SetRestDay(), "FortuneTellerCycleSetRestDay");
             }
             TaskManager.Enqueue(() =>
             {
                 foreach (var cycle in MultiCycleList)
                 {
-                    TaskManager.Enqueue(() => OpenCycle(currentDay));
-                    TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule);
-                    TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule);
-                    TaskManager.Enqueue(() => ScheduleList());
-                    TaskManager.Enqueue(() => isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay);
-                    TaskManager.Enqueue(() => currentDay += 1);
+                    TaskManager.Enqueue(() => OpenCycle(currentDay), $"MultiCycleOpenCycleOn{currentDay}");
+                    TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"MultiCycleSetPrimaryCycleOn{currentDay}");
+                    TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"MultiCyleSetSecondaryCycleOn{currentDay}");
+                    TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
+                    TaskManager.Enqueue(() => isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay, $"MultiCycleCheckRestOn{currentDay}");
+                    TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
                 }
             });
         }
-
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
             // Unable to set agenda. Insufficient time for handicraft production.
