@@ -29,16 +29,6 @@
         <OutputPath>bin/Release</OutputPath>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(Configuration)' == 'Release'">
-        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
-        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
-        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
-    </ItemGroup>
-
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <OutputPath>$(DalamudDevPlugins)</OutputPath>
     </PropertyGroup>
@@ -99,7 +89,8 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
-      <!--<ProjectReference Include="..\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj" />-->
+        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
+        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
     </ItemGroup>
 
     <ItemGroup>
