@@ -4,6 +4,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Logging;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -45,6 +46,8 @@ namespace PandorasBox.Features.UI
         public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
 
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
+
+        private string LocationEffect;
 
         public class Configs : FeatureConfig
         {            
@@ -129,6 +132,7 @@ namespace PandorasBox.Features.UI
                     addon->UldManager.NodeList[8]->ToggleVisibility(false);
                 }
 
+                LocationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ExtractText();
                 if (color == 1)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
@@ -140,12 +144,12 @@ namespace PandorasBox.Features.UI
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f.Scale());
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-
+                
                 ImGui.GetFont().Scale = scale.X;
                 var oldScale = ImGui.GetIO().FontGlobalScale;
-                ImGui.GetIO().FontGlobalScale = 0.9f;
+                ImGui.GetIO().FontGlobalScale = 0.95f;
                 ImGui.PushFont(ImGui.GetFont());
-                size.Y *= 6;
+                size.Y *= 6.5f;
                 size.X *= 1.065f;
                 position.X -= 15f * scale.X;
 
@@ -155,9 +159,10 @@ namespace PandorasBox.Features.UI
                 ImGui.Begin($"###PandoraGathering{node->NodeID}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
                     | ImGuiWindowFlags.NoResize);
 
+                ImGui.Dummy(new Vector2(2f));
+
                 ImGui.Columns(2, null, false);
 
-                ImGui.Dummy(new Vector2(10));
 
                 if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
                 {
@@ -172,7 +177,6 @@ namespace PandorasBox.Features.UI
 
                 ImGui.NextColumn();
 
-                ImGui.Dummy(new Vector2(10));
                 if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
                     SaveConfig(Config);
 
@@ -262,6 +266,14 @@ namespace PandorasBox.Features.UI
                 }
 
                 ImGui.Columns(1);
+
+                if (LocationEffect.Length  > 0)
+                {
+                    ImGuiEx.ImGuiLineCentered("###LocationEffect", () =>
+                    {
+                        ImGui.Text($"{LocationEffect}");
+                    });
+                }
                 ImGui.End();
 
                 ImGui.GetFont().Scale = 1;
