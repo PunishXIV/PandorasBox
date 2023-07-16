@@ -477,14 +477,20 @@ namespace PandorasBox.Features.UI
                 {
                     if (currentCycle.Count > 0)
                     {
-                        currentCycle[currentCycle.Count - 1] += " " + line; // Append "Cycle" line to the previous list
+                        cycles.Add(currentCycle);
+                        currentCycle = new List<string> { line };
                     }
+                    if (currentCycle.Count == 0)
+                        currentCycle = new List<string>();
                 }
-                else
-                    currentCycle.Add(line);
+                currentCycle.Add(line);
             }
             if (currentCycle.Count > 0)
                 cycles.Add(currentCycle);
+
+            foreach(var cycle in cycles)
+                foreach(var item in cycle)
+                    PluginLog.Log($"{cycles.IndexOf(cycle)}: {item}");
 
             return cycles;
         }
