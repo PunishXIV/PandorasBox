@@ -188,7 +188,7 @@ namespace PandorasBox.Features.UI
 
             if (!fortuneteller)
             {
-                if (ImGui.Checkbox("Weekend Import", ref weekend))
+                if (ImGui.Checkbox("Weekend Mode", ref weekend))
                 {
                     autoWorkshopSelect = true;
                 }
@@ -197,7 +197,7 @@ namespace PandorasBox.Features.UI
 
             if (!weekend)
             {
-                if (ImGui.Checkbox("Fortuneteller Import", ref fortuneteller))
+                if (ImGui.Checkbox("Fortuneteller Mode", ref fortuneteller))
                 {
                     autoWorkshopSelect = true;
                 }
