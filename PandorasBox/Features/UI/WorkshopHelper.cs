@@ -48,7 +48,9 @@ namespace PandorasBox.Features.UI
         {
             [FeatureConfigOption("Execution Delay (ms)", "", 1, IntMin = 0, IntMax = 1000, EditorSize = 300)]
             public int taskDelay = 200;
-            [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.", "", 2)]
+            [FeatureConfigOption("Delay After Switching Cycles (ms)", "", 2, IntMin = 0, IntMax = 1000, EditorSize = 300)]
+            public int taskAfterCycleSwitchDelay = 500;
+            [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.", "", 3)]
             public bool OpenNextDay = false;
         }
 
@@ -488,10 +490,6 @@ namespace PandorasBox.Features.UI
             if (currentCycle.Count > 0)
                 cycles.Add(currentCycle);
 
-            foreach(var cycle in cycles)
-                foreach(var item in cycle)
-                    PluginLog.Log($"{cycles.IndexOf(cycle)}: {item}");
-
             return cycles;
         }
 
@@ -559,7 +557,7 @@ namespace PandorasBox.Features.UI
 
         private static bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
 
-        private unsafe bool OpenCycle(int cycle_day)
+        private static unsafe bool OpenCycle(int cycle_day)
         {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
@@ -729,7 +727,7 @@ namespace PandorasBox.Features.UI
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("PSOpenAgendaDelay", Config.taskDelay);
+                            TaskManager.DelayNextImmediate("PSOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"PSOpenAgendaW{ws + 1}");
                             TaskManager.DelayNextImmediate("PSScheduleItemDelay", Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSScheduleItemW{ws + 1}");
@@ -739,7 +737,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.EnqueueImmediate(() => hours = 0, $"SSSetHours0");
                     foreach (var item in SecondarySchedule)
                     {
-                        TaskManager.DelayNextImmediate("SSOpenAgendaDelay", Config.taskDelay);
+                        TaskManager.DelayNextImmediate("SSOpenAgendaDelay", SecondarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
                         TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, 3, hours), $"SSOpenAgendaW{maxWorkshops}");
                         TaskManager.DelayNextImmediate("SSScheduleItemDelay", Config.taskDelay);
                         TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"SSScheduleW{maxWorkshops}");
@@ -755,7 +753,7 @@ namespace PandorasBox.Features.UI
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("PSOOpenAgendaDelay", Config.taskDelay);
+                            TaskManager.DelayNextImmediate("PSOOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"PSOOpenAgendaW{ws + 1}");
                             TaskManager.DelayNextImmediate("PSOScheduleItemDelay", Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSOScheduleW{ws + 1}");
@@ -775,7 +773,7 @@ namespace PandorasBox.Features.UI
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("MOpenAgendaDelay", Config.taskDelay);
+                            TaskManager.DelayNextImmediate("MOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"MOpenAgendaW{ws + 1}");
                             TaskManager.DelayNextImmediate("MScheduleItemDelay", Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"MScheduleW{ws + 1}");
@@ -809,11 +807,13 @@ namespace PandorasBox.Features.UI
                 }
             }, "ScheduleMultiCycleForEach");
         }
+
         private void CheckIfInvalidSchedule(ref SeString message, ref bool isHandled)
         {
             // Unable to set agenda. Insufficient time for handicraft production.
             if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 10146).Text.ExtractText())
             {
+                PluginLog.Log("Detected error in scheduling. Aborting current workshop's queue.");
                 TaskManager.Abort();
                 if (WorkshopsRemaining())
                 {
