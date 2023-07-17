@@ -14,7 +14,7 @@ namespace PandorasBox.Helpers
     }
 
     // Cached sound concept lovingly borrowed from: https://markheath.net/post/fire-and-forget-audio-playback-with
-    class CachedSound
+    internal class CachedSound
     {
         internal float[] AudioData { get; private set; }
         internal WaveFormat WaveFormat { get; private set; }
@@ -35,7 +35,7 @@ namespace PandorasBox.Helpers
         }
     }
 
-    class CachedSoundSampleProvider : ISampleProvider
+    internal class CachedSoundSampleProvider : ISampleProvider
     {
         private readonly CachedSound cachedSound;
         private long position;
