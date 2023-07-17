@@ -45,7 +45,7 @@ namespace PandorasBox.Features
             { "游末邦**", "游末邦监狱" },
         };
 
-        [GeneratedRegex("\\uE0BB(?<map>.+?)(?<instance>[\\ue0b1-\\ue0b9])? \\( (?<x>\\d{1,2}\\.\\d)  , (?<y>\\d{1,2}\\.\\d) \\)", RegexOptions.Compiled)]
+        [GeneratedRegex("\\uE0BB(?<map>.+?)(?<instance>[\\ue0b1-\\ue0b9])? \\( (?<x>\\d{1,2}[\\,|\\.]\\d)  , (?<y>\\d{1,2}[\\,|\\.]\\d) \\)", RegexOptions.Compiled)]
         private static partial Regex MapLinkRegex();
         private readonly Regex mapLinkPattern = MapLinkRegex();
 
