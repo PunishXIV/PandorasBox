@@ -16,16 +16,16 @@ using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features
 {
-    public unsafe class CoordsToMapLink : Feature
+    public unsafe partial class CoordsToMapLink : Feature
     {
         public override string Name => "Preserve Map Links in Clipboard";
 
-        public override string Description => "Makes it so map links copied to clipboard can still be interacted with after they're pasted back into chat.";
+        public override string Description => "Preserves the formatting for map links so they can be interacted with after pasting.";
 
         public override FeatureType FeatureType => FeatureType.Chat;
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate IntPtr ParseMessageDelegate(IntPtr a, IntPtr b);
+        private delegate nint ParseMessageDelegate(nint a, nint b);
         private readonly Hook<ParseMessageDelegate> parseMessageHook;
 
         private readonly Dictionary<string, (uint, uint)> maps = new();
@@ -45,9 +45,9 @@ namespace PandorasBox.Features
             { "游末邦**", "游末邦监狱" },
         };
 
-        private readonly Regex mapLinkPattern = new(
-            @"\uE0BB(?<map>.+?)(?<instance>[\ue0b1-\ue0b9])? \( (?<x>\d{1,2}\.\d)  , (?<y>\d{1,2}\.\d) \)",
-            RegexOptions.Compiled);
+        [GeneratedRegex("\\uE0BB(?<map>.+?)(?<instance>[\\ue0b1-\\ue0b9])? \\( (?<x>\\d{1,2}\\.\\d)  , (?<y>\\d{1,2}\\.\\d) \\)", RegexOptions.Compiled)]
+        private static partial Regex MapLinkRegex();
+        private readonly Regex mapLinkPattern = MapLinkRegex();
 
         private readonly FieldInfo territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId",
             BindingFlags.NonPublic | BindingFlags.Instance);
@@ -60,22 +60,22 @@ namespace PandorasBox.Features
         {
             var parseMessageAddress = Svc.SigScanner.ScanText(
                 "E8 ???????? 48 8B D0 48 8D 4C 24 30 E8 ???????? 48 8B 44 24 30 80 38 00 0F 84");
-            this.parseMessageHook = Hook<ParseMessageDelegate>.FromAddress(parseMessageAddress, new(HandleParseMessageDetour));
-            this.parseMessageHook.Enable();
+            parseMessageHook = Hook<ParseMessageDelegate>.FromAddress(parseMessageAddress, new(HandleParseMessageDetour));
+            parseMessageHook.Enable();
 
             foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
             {
                 var name = territoryType.PlaceName.Value.Name.RawString;
-                if (name != "" && !this.maps.ContainsKey(name))
+                if (name != "" && !maps.ContainsKey(name))
                 {
-                    this.maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
+                    maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
                 }
             }
         }
 
-        private IntPtr HandleParseMessageDetour(IntPtr a, IntPtr b)
+        private nint HandleParseMessageDetour(nint a, nint b)
         {
-            var ret = this.parseMessageHook.Original(a, b);
+            var ret = parseMessageHook.Original(a, b);
             try
             {
                 var pMessage = Marshal.ReadIntPtr(ret);
@@ -108,28 +108,28 @@ namespace PandorasBox.Features
 
                     uint territoryId, mapId;
                     int rawX, rawY;
-                    if (this.historyCoordinates.TryGetValue(historyKey, out var history))
+                    if (historyCoordinates.TryGetValue(historyKey, out var history))
                     {
                         (territoryId, mapId, rawX, rawY) = history;
                         PluginLog.Log($"recall {historyKey} => {history}");
                     }
                     else
                     {
-                        if (!this.maps.TryGetValue(mapName, out var mapInfo))
+                        if (!maps.TryGetValue(mapName, out var mapInfo))
                         {
                             PluginLog.Warning($"Can't find map {mapName}");
                             continue;
                         }
                         (territoryId, mapId) = mapInfo;
                         var map = Svc.Data.GetExcelSheet<Map>().GetRow(mapId);
-                        rawX = this.GenerateRawPosition(float.Parse(match.Groups["x"].Value), map.OffsetX, map.SizeFactor);
-                        rawY = this.GenerateRawPosition(float.Parse(match.Groups["y"].Value), map.OffsetY, map.SizeFactor);
+                        rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value), map.OffsetX, map.SizeFactor);
+                        rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value), map.OffsetY, map.SizeFactor);
                         if (match.Groups["instance"].Value != "")
                         {
                             mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;
                         }
                         history = (territoryId, mapId, rawX, rawY);
-                        this.historyCoordinates[historyKey] = history;
+                        historyCoordinates[historyKey] = history;
                         PluginLog.Log($"generate {historyKey} => {history}");
                     }
 
@@ -184,15 +184,15 @@ namespace PandorasBox.Features
                     var mapName = historyKey[..(historyKey.LastIndexOf("(") - 1)];
                     if ('\ue0b1' <= mapName[^1] && mapName[^1] <= '\ue0b9')
                     {
-                        this.maps[mapName[0..^1]] = (territoryId, mapId);
+                        maps[mapName[0..^1]] = (territoryId, mapId);
                         mapId |= (mapName[^1] - 0xe0b0u) << 16;
                     }
                     else
                     {
-                        this.maps[mapName] = (territoryId, mapId);
+                        maps[mapName] = (territoryId, mapId);
                     }
                     var history = (territoryId, mapId, payload.RawX, payload.RawY);
-                    this.historyCoordinates[historyKey] = history;
+                    historyCoordinates[historyKey] = history;
                     PluginLog.Log($"memorize {historyKey} => {history}");
                     //PluginLog.Log(BitConverter.ToString(payload.Encode()));
                     //PluginLog.Log(BitConverter.ToString(payload.Encode(true)));
@@ -209,7 +209,7 @@ namespace PandorasBox.Features
         {
             visibleCoordinate += (float)random.NextDouble() * 0.07f;
             var scale = factor / 100.0f;
-            var scaledPos = ((((visibleCoordinate - 1.0f) * scale / 41.0f) * 2048.0f) - 1024.0f) / scale;
+            var scaledPos = (((visibleCoordinate - 1.0f) * scale / 41.0f * 2048.0f) - 1024.0f) / scale;
             return (int)Math.Ceiling(scaledPos - offset) * 1000;
         }
 
@@ -222,14 +222,9 @@ namespace PandorasBox.Features
         public override void Disable()
         {
             GC.SuppressFinalize(this);
-            this.parseMessageHook.Dispose();
+            parseMessageHook.Dispose();
             Svc.Chat.ChatMessage -= HandleChatMessage;
             base.Disable();
-        }
-
-        private void RunFeature(Framework framework)
-        {
-
         }
     }
 
