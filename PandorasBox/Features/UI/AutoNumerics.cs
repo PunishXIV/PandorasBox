@@ -15,7 +15,7 @@ namespace PandorasBox.Features.UI
     {
         public override string Name => "Auto-Fill Numeric Dialogs";
 
-        public override string Description => "Automatically fills any numeric input dialog boxes. Works on a whitelist system. Hold shift when opening numeric to disable.";
+        public override string Description => "Automatically fills any numeric input dialog boxes. Works on a whitelist system. Hold shift when opening a numeric dialog to disable.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
