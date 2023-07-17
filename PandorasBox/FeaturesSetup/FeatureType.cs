@@ -14,6 +14,6 @@ namespace PandorasBox.FeaturesSetup
         Targeting,
         Commands,
         Other,
-        Chat,
+        ChatFeature,
     }
 }
