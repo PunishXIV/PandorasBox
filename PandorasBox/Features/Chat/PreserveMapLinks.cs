@@ -22,7 +22,7 @@ namespace PandorasBox.Features
 
         public override string Description => "Preserves the formatting for map links so they can be interacted with after pasting.";
 
-        public override FeatureType FeatureType => FeatureType.Chat;
+        public override FeatureType FeatureType => FeatureType.ChatFeature;
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         private delegate nint ParseMessageDelegate(nint a, nint b);

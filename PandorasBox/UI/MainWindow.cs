@@ -184,7 +184,7 @@ internal class MainWindow : Window
                         DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
                         break;
                     case OpenWindow.Chat:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Chat).ToArray());
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
                         break;
                     case OpenWindow.Commands:
                         DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
