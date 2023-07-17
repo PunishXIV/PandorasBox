@@ -77,20 +77,20 @@ namespace PandorasBox.Features.Other
                 {
                     case BiteType.Weak:
                         hasHooked = true;
-                        if (Config.LightChat) TaskManager.Enqueue(() => SendChatAlert("light"));
-                        if (Config.PlayLightSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Light);
+                        if (Config.LightTugs && Config.LightChat) TaskManager.Enqueue(() => SendChatAlert("light"));
+                        if (Config.LightTugs && Config.PlayLightSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Light);
                         break;
 
                     case BiteType.Strong:
                         hasHooked = true;
-                        if (Config.StrongChat) TaskManager.Enqueue(() => SendChatAlert("strong"));
-                        if (Config.PlayStrongSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Strong);
+                        if (Config.StrongTugs && Config.StrongChat) TaskManager.Enqueue(() => SendChatAlert("strong"));
+                        if (Config.StrongTugs && Config.PlayStrongSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Strong);
                         break;
 
                     case BiteType.Legendary:
                         hasHooked = true;
-                        if (Config.LegendaryChat) TaskManager.Enqueue(() => SendChatAlert("legendary"));
-                        if (Config.PlayLegendarySound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Legendary);
+                        if (Config.LegendaryTugs && Config.LegendaryChat) TaskManager.Enqueue(() => SendChatAlert("legendary"));
+                        if (Config.LegendaryTugs && Config.PlayLegendarySound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Legendary);
                         break;
 
                     default:
