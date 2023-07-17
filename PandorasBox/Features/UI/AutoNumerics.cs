@@ -46,6 +46,11 @@ namespace PandorasBox.Features.UI
             public int InventoryMinOrMax = -1;
             public bool InventoryExcludeSplit = false;
             public bool InventoryConfirm = false;
+
+            public bool WorkOnMail = false;
+            public int MailMinOrMax = -1;
+            public bool MailExcludeSplit = false;
+            public bool MailConfirm = false;
         }
 
         public override void Enable()
@@ -91,8 +96,7 @@ namespace PandorasBox.Features.UI
                         if (Config.TradeMinOrMax == -1)
                         {
                             var currentAmt = numericTextNode->NodeText.ToString();
-                            int num;
-                            if (int.TryParse(currentAmt, out num) && num > 0 && !numericResNode->IsVisible)
+                            if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
                                 TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
                         }
                     }
@@ -115,8 +119,7 @@ namespace PandorasBox.Features.UI
                         if (Config.FCChestMinOrMax == -1)
                         {
                             var currentAmt = numericTextNode->NodeText.ToString();
-                            int num;
-                            if (int.TryParse(currentAmt, out num) && num > 0 && !numericResNode->IsVisible)
+                            if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
                                 TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
                         }
                     }
@@ -139,8 +142,7 @@ namespace PandorasBox.Features.UI
                         if (Config.RetainersMinOrMax == -1)
                         {
                             var currentAmt = numericTextNode->NodeText.ToString();
-                            int num;
-                            if (int.TryParse(currentAmt, out num) && num > 0 && !numericResNode->IsVisible)
+                            if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
                                 TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
                         }
                     }
@@ -163,11 +165,34 @@ namespace PandorasBox.Features.UI
                     //     if (Config.InventoryMinOrMax == -1)
                     //     {
                     //         var currentAmt = numericTextNode->NodeText.ToString();
-                    //         int num;
-                    //         if (int.TryParse(currentAmt, out num) && num > 0 && !numericResNode->IsVisible)
+                    //         if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
                     //             TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
                     //     }
                     // }
+
+
+                    if (InMail())
+                    {
+                        if (Config.MailExcludeSplit && IsSplitAddon()) return;
+                        if (Config.MailMinOrMax == 0)
+                        {
+                            TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
+                            if (Config.MailConfirm)
+                                TaskManager.Enqueue(() => Callback.Fire(numeric, true, minValue));
+                        }
+                        if (Config.MailMinOrMax == 1)
+                        {
+                            TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(maxValue)));
+                            if (Config.MailConfirm)
+                                TaskManager.Enqueue(() => Callback.Fire(numeric, true, maxValue));
+                        }
+                        if (Config.MailMinOrMax == -1)
+                        {
+                            var currentAmt = numericTextNode->NodeText.ToString();
+                            if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
+                                TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
+                        }
+                    }
                 }
                 catch
                 {
@@ -191,6 +216,12 @@ namespace PandorasBox.Features.UI
         private bool InFcChest()
         {
             var fcChest = (AtkUnitBase*)Svc.GameGui.GetAddonByName("FreeCompanyChest");
+            return fcChest != null && fcChest->IsVisible;
+        }
+
+        private bool InMail()
+        {
+            var fcChest = (AtkUnitBase*)Svc.GameGui.GetAddonByName("LetterList");
             return fcChest != null && fcChest->IsVisible;
         }
 
@@ -302,6 +333,29 @@ namespace PandorasBox.Features.UI
             //     ImGui.Unindent();
             //     ImGui.PopID();
             // }
+
+            ImGui.Checkbox("Work on Mail", ref Config.WorkOnMail);
+            if (Config.WorkOnMail)
+            {
+                ImGui.PushID("Mail");
+                ImGui.Indent();
+                if (ImGui.RadioButton($"Auto fill highest amount possible", Config.MailMinOrMax == 1))
+                {
+                    Config.MailMinOrMax = 1;
+                }
+                if (ImGui.RadioButton($"Auto fill lowest amount possible", Config.MailMinOrMax == 0))
+                {
+                    Config.MailMinOrMax = 0;
+                }
+                if (ImGui.RadioButton($"Auto OK on manually entered amounts", Config.MailMinOrMax == -1))
+                {
+                    Config.MailMinOrMax = -1;
+                }
+                ImGui.Checkbox("Exclude Split Dialog", ref Config.MailExcludeSplit);
+                if (Config.MailMinOrMax != -1) ImGui.Checkbox("Auto Confirm", ref Config.MailConfirm);
+                ImGui.Unindent();
+                ImGui.PopID();
+            }
         };
     }
 }
