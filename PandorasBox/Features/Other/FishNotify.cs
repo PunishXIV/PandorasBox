@@ -6,6 +6,7 @@ using ECommons.DalamudServices;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
+using System.Data;
 
 namespace PandorasBox.Features.Other
 {
@@ -19,6 +20,8 @@ namespace PandorasBox.Features.Other
 
         public class Configs : FeatureConfig
         {
+            public int Volume = 100;
+
             public bool LightTugs = true;
             public bool LightChat = true;
             public bool PlayLightSound = true;
@@ -64,6 +67,7 @@ namespace PandorasBox.Features.Other
         private void RunFeature(Framework framework)
         {
             if (!Svc.Condition[ConditionFlag.Fishing]) { hasHooked = false; return; }
+
 
             var state = eventFramework.FishingState;
             if (state != FishingState.Bite) return;
@@ -170,6 +174,12 @@ namespace PandorasBox.Features.Other
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Volume", ref Config.Volume, 0, 100))
+            {
+                audioHandler.Volume = Config.Volume / 100f;
+            }
+
             ImGui.Checkbox("Light Tugs", ref Config.LightTugs);
             if (Config.LightTugs)
             {
