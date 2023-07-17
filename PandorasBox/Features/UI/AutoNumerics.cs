@@ -221,13 +221,13 @@ namespace PandorasBox.Features.UI
 
         private bool InMail()
         {
-            var fcChest = (AtkUnitBase*)Svc.GameGui.GetAddonByName("LetterList");
-            return fcChest != null && fcChest->IsVisible;
+            var mail = (AtkUnitBase*)Svc.GameGui.GetAddonByName("LetterList");
+            return mail != null && mail->IsVisible;
         }
 
         private unsafe byte* ConvertToByte(int x)
         {
-            byte[] bArray = Encoding.Default.GetBytes(x.ToString());
+            var bArray = Encoding.Default.GetBytes(x.ToString());
             byte* ptr;
             fixed (byte* tmpPtr = bArray) { ptr = tmpPtr; }
             return ptr;
