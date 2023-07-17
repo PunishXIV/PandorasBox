@@ -57,16 +57,9 @@ namespace PandorasBox.Features.Other
         }
 
         public static SeTugType TugType { get; set; } = null!;
-        private EventFramework eventFramework = new EventFramework(Svc.SigScanner);
-        private Helpers.AudioHandler audioHandler { get; init; }
+        private readonly EventFramework eventFramework = new(Svc.SigScanner);
+        private Helpers.AudioHandler audioHandler { get; set; }
         private bool hasHooked = false;
-
-        // public FishNotify()
-        // {
-        //     audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds", "Light.wav"));
-        //     audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds", "Strong.wav"));
-        //     audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds", "Legendary.wav"));
-        // }
 
         private void RunFeature(Framework framework)
         {
@@ -81,19 +74,19 @@ namespace PandorasBox.Features.Other
                     case BiteType.Weak:
                         hasHooked = true;
                         if (Config.LightChat) TaskManager.Enqueue(() => SendChatAlert("light"));
-                        // if (Config.PlayLightSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Light);
+                        if (Config.PlayLightSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Light);
                         break;
 
                     case BiteType.Strong:
                         hasHooked = true;
                         if (Config.StrongChat) TaskManager.Enqueue(() => SendChatAlert("strong"));
-                        // if (Config.PlayStrongSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Strong);
+                        if (Config.PlayStrongSound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Strong);
                         break;
 
                     case BiteType.Legendary:
                         hasHooked = true;
                         if (Config.LegendaryChat) TaskManager.Enqueue(() => SendChatAlert("legendary"));
-                        // if (Config.PlayLegendarySound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Legendary);
+                        if (Config.PlayLegendarySound && CheckIsSfxEnabled()) audioHandler.PlaySound(Helpers.AudioTrigger.Legendary);
                         break;
 
                     default:
@@ -149,9 +142,7 @@ namespace PandorasBox.Features.Other
 
         private void SendChatAlert(string size)
         {
-            if (!Config.LightChat) return;
-
-            SeString message = new SeStringBuilder()
+            var message = new SeStringBuilder()
                 .AddUiForeground($"[{P.Name}] ", 45)
                 .AddUiForeground($"[{Name}] ", 62)
                 .AddText($"You hook a fish with a ")
@@ -166,7 +157,7 @@ namespace PandorasBox.Features.Other
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             TugType = new SeTugType(Svc.SigScanner);
-            // FishNotify fn = new FishNotify();
+            audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds"));
             base.Enable();
         }
 

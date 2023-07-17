@@ -77,10 +77,12 @@ namespace PandorasBox.Helpers
         public AudioHandler(string soundsPath)
         {
             outputDevice = new WaveOutEvent();
-            sounds = new Dictionary<AudioTrigger, CachedSound>();
-            sounds.Add(AudioTrigger.Light, new(soundsPath));
-            sounds.Add(AudioTrigger.Strong, new(soundsPath));
-            sounds.Add(AudioTrigger.Legendary, new(soundsPath));
+            sounds = new Dictionary<AudioTrigger, CachedSound>
+            {
+                { AudioTrigger.Light, new(System.IO.Path.Combine(soundsPath, "Light.wav")) },
+                { AudioTrigger.Strong, new(System.IO.Path.Combine(soundsPath, "Strong.wav")) },
+                { AudioTrigger.Legendary, new(System.IO.Path.Combine(soundsPath, "Legendary.wav")) }
+            };
             mixer = new(WaveFormat.CreateIeeeFloatWaveFormat(48000, 2));
             mixer.ReadFully = true;
             sampleProvider = new(mixer);
@@ -109,7 +111,7 @@ namespace PandorasBox.Helpers
 
         public void PlaySound(AudioTrigger trigger)
         {
-            AddMixerInput(new CachedSoundSampleProvider(sounds[trigger]));
+            AddMixerInput(new WdlResamplingSampleProvider(new CachedSoundSampleProvider(sounds[trigger]), mixer.WaveFormat.SampleRate));
         }
 
     }
