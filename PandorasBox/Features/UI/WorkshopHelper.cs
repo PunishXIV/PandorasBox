@@ -779,8 +779,11 @@ namespace PandorasBox.Features.UI
         {
             if (fortuneteller)
             {
+                var currentVal = selectedCycle;
                 TaskManager.Enqueue(() => OpenCycle(2), "FortuneTellerCycleOpen");
+                TaskManager.Enqueue(() => selectedCycle = 2, $"SetSelectedCycleTo2");
                 TaskManager.Enqueue(() => SetRestDay(), "FortuneTellerCycleSetRestDay");
+                TaskManager.Enqueue(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
             }
             TaskManager.Enqueue(() =>
             {
