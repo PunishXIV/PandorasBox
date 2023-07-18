@@ -36,7 +36,7 @@ namespace PandorasBox.Features.ChatFeature
             public bool IncludeSonar = false;
 
             [FeatureConfigOption("Set <flag> without opening the map")]
-            public bool DontOpenMap = true;
+            public bool DontOpenMap = false;
 
             public List<ushort> FilteredChannels = new();
         }
@@ -162,7 +162,7 @@ namespace PandorasBox.Features.ChatFeature
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
             ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar);
-            ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
+            //ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
 
             if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
             {
