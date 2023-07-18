@@ -236,7 +236,7 @@ namespace PandorasBox.Features.UI
 
             ImGui.Text("Import Preview");
 
-            ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
+            ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) || (MultiCycleList.Count == 1 && MultiCycleList[0].SecondarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
                 foreach (var cycle in MultiCycleList)
                 {
                     if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
