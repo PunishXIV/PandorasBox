@@ -699,7 +699,10 @@ namespace PandorasBox.Features.UI
         {
             if (isScheduleRest)
             {
+                var currentVal = selectedCycle;
+                TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
                 TaskManager.EnqueueImmediate(() => SetRestDay(), $"SetRest");
+                TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
                 return true;
             }
 
@@ -795,8 +798,8 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => OpenCycle(currentDay), $"MultiCycleOpenCycleOn{currentDay}");
                     TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"MultiCycleSetPrimaryCycleOn{currentDay}");
                     TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"MultiCyleSetSecondaryCycleOn{currentDay}");
-                    TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
                     TaskManager.Enqueue(() => { isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay; }, $"MultiCycleCheckRestOn{currentDay}");
+                    TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
                     TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
                 }
             }, "ScheduleMultiCycleForEach");
