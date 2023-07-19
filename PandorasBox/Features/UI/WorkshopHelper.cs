@@ -644,10 +644,13 @@ namespace PandorasBox.Features.UI
                     return false;
 
                 var restDays = GetCurrentRestDays();
-                if (selectedCycle <= 6)
+                if (selectedCycle <= 6 && selectedCycle > 0)
                     restDays[1] = selectedCycle - 1;
                 else if (selectedCycle >= 7)
                     restDays[3] = selectedCycle - 1;
+                else if (selectedCycle <= 0)
+                    restDays[1] = MJIManager.Instance()->CurrentCycleDay + 1;
+
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
 
