@@ -337,7 +337,7 @@ namespace PandorasBox.Features.UI
                 var ScheduleContainsRest = MultiCycleList.Any(x => x.PrimarySchedule.Any(y => y.OnRestDay == true));
                 if (ScheduleContainsRest)
                 {
-                    ImGui.TextColored(ImGuiColors.TankBlue, "Blue cycle will be set to rest");
+                    ImGui.TextColored(ImGuiColors.TankBlue, $"{(overrideRest ? "Blue cycle's rest will be overriden" : "Blue cycle will be set to rest")}");
                     ImGui.Checkbox("Override Rest?", ref overrideRest);
                 }
                 if (ImGui.Button("Execute Schedule"))
