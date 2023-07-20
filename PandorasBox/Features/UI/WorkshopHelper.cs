@@ -248,10 +248,19 @@ namespace PandorasBox.Features.UI
                 ImGui.EndCombo();
             }
             ImGui.SameLine();
+
+            var SelectedIsCurrent = selectedCycle - 1 == MJIManager.Instance()->CurrentCycleDay;
+            if (SelectedIsCurrent)
+                ImGui.BeginDisabled();
+
             if (ImGui.Button("Set Rest"))
             {
                 TaskManager.Enqueue(() => SetRestDay());
             }
+
+            if (SelectedIsCurrent)
+                ImGui.EndDisabled();
+
             ImGui.SameLine();
             if (ImGui.Button("Prev"))
             {
