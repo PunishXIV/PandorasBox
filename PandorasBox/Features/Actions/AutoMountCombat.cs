@@ -4,6 +4,7 @@ using ECommons;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
@@ -27,11 +28,9 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
             public uint SelectedMount = 0;
-
             public bool AbortIfMoving = false;
-
+            public bool DisableInFates = true;
             public bool ExcludeHousing = false;
         }
 
@@ -46,22 +45,25 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void RunFeature(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
+        private void RunFeature(ConditionFlag flag, bool value)
         {
-            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat && !value)
+            if (flag == ConditionFlag.InCombat && !value)
             {
-                TaskManager.Enqueue(() => NotInCombat);
-                TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => TryMount());
+                if (FateManager.Instance()->CurrentFate != null && !Config.DisableInFates)
+                {
+                    TaskManager.Enqueue(() => NotInCombat);
+                    TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
+                    TaskManager.Enqueue(() => TryMount());
+                }
             }
         }
 
-        private static bool NotInCombat => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat];
+        private static bool NotInCombat => !Svc.Condition[ConditionFlag.InCombat];
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted]) return true;
+            if (Svc.Condition[ConditionFlag.InCombat]) return false;
+            if (Svc.Condition[ConditionFlag.Mounted]) return true;
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Mount) return false;
 
             if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing)
@@ -129,6 +131,7 @@ namespace PandorasBox.Features.Actions
             }
 
             ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
+            ImGui.Checkbox("Disable in fates", ref Config.DisableInFates);
             ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
 
         };
