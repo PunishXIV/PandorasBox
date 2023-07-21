@@ -1,6 +1,9 @@
 using Dalamud.Logging;
+using Dalamud.Memory;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -24,11 +27,36 @@ namespace PandorasBox.Features.Commands
         {
             if (!int.TryParse(args[^1], out var noInts))
             {
-                PrintModuleMessage("test");
-                return; }
-                
+                PrintModuleMessage("Invalid glamour plate number");
+                return;
+            }
+
+            if (args.Count < 2)
+            {
+                PrintModuleMessage("Invalid number of arguments");
+                return;
+            }
+
             foreach (var p in Parameters)
             {
+                var jobNames = Svc.Data.GetExcelSheet<ClassJob>().First(x => x.Name.RawString.ToLower() == p.ToLower());
+                var jobAbbrs = Svc.Data.GetExcelSheet<ClassJob>().First(x => x.Abbreviation.RawString.ToLower() == p.ToLower());
+
+                var gearsetModule = RaptureGearsetModule.Instance();
+                var isGearsetName = false;
+                for (var i = 0; i < 100; i++)
+                {
+                    var gs = gearsetModule->Gearset[i];
+                    if (gs == null || !gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists) || gs->ID != i)
+                        continue;
+
+                    var name = MemoryHelper.ReadString(new IntPtr(gs->Name), 47);
+                    isGearsetName = p.ToLower() == name.ToLower() ? true : false;
+                }
+
+                if (jobNames != null || jobAbbrs != null || isGearsetName)
+                    return;
+
                 if (args.Any(x => x == p))
                 {
                     Svc.Chat.Print($"Test command executed with argument {p}.");
