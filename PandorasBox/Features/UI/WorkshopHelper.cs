@@ -215,20 +215,20 @@ namespace PandorasBox.Features.UI
             ImGui.Text("Import Preview");
 
             ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) || (MultiCycleList.Count == 1 && MultiCycleList[0].SecondarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
-                foreach (var cycle in MultiCycleList)
-                {
-                    if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
-                        continue;
+            foreach (var cycle in MultiCycleList)
+            {
+                if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
+                    continue;
 
-                    var cycleNum = MultiCycleList.IndexOf(cycle)
-                        + (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
-                        : selectedCycle);
+                var cycleNum = MultiCycleList.IndexOf(cycle)
+                    + (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
+                    : selectedCycle);
 
-                    DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
-                        if (cycle.SecondarySchedule.Count > 0 && autoWorkshopSelect)
-                            DrawWorkshopListBox($"Cycle {cycleNum} Workshop 4", cycle.SecondarySchedule);
-                }
-                ImGui.EndChild();
+                DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
+                if (cycle.SecondarySchedule.Count > 0 && autoWorkshopSelect)
+                    DrawWorkshopListBox($"Cycle {cycleNum} Workshop 4", cycle.SecondarySchedule);
+            }
+            ImGui.EndChild();
 
             ImGui.Text("Select Cycle");
             ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
@@ -249,8 +249,8 @@ namespace PandorasBox.Features.UI
             }
             ImGui.SameLine();
 
-            var SelectedIsCurrent = selectedCycle - 1 == MJIManager.Instance()->CurrentCycleDay;
-            if (SelectedIsCurrent)
+            var SelectedUnavailable = selectedCycle - 1 == MJIManager.Instance()->CurrentCycleDay || MJIManager.Instance()->CraftworksRestDays[1] <= MJIManager.Instance()->CurrentCycleDay;
+            if (SelectedUnavailable)
                 ImGui.BeginDisabled();
 
             if (ImGui.Button("Set Rest"))
@@ -258,7 +258,7 @@ namespace PandorasBox.Features.UI
                 TaskManager.Enqueue(() => SetRestDay());
             }
 
-            if (SelectedIsCurrent)
+            if (SelectedUnavailable)
                 ImGui.EndDisabled();
 
             ImGui.SameLine();
