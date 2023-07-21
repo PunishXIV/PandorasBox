@@ -452,6 +452,8 @@ namespace PandorasBox.Features.UI
             foreach (var cycle in rawCycles)
             {
                 (var items, var excessItems) = ParseItems(cycle);
+                if (items == null || items.Count == 0)
+                    continue;
                 MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
             }
         }
@@ -468,7 +470,7 @@ namespace PandorasBox.Features.UI
                     if (currentCycle.Count > 0)
                     {
                         cycles.Add(currentCycle);
-                        currentCycle = new List<string> { line };
+                        currentCycle = new List<string>();
                     }
                     if (currentCycle.Count == 0)
                         currentCycle = new List<string>();
