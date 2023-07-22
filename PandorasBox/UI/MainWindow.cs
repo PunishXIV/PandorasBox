@@ -130,7 +130,7 @@ internal class MainWindow : Window
                 if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
                 {
                     ImGuiEx.ImGuiLineCentered("###Logo", () => { ImGui.Image(logo.ImGuiHandle, new(125f.Scale(), 125f.Scale())); });
-                    
+
                 }
 
                 ImGui.Spacing();
