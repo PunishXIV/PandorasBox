@@ -23,7 +23,7 @@ namespace PandorasBox.Features.Commands
         public override string Command { get; set; } = "/pglamlink";
         public override string[] Alias => new string[] { "/pgl" };
 
-        public override List<string> Parameters => new() { "[-r <role>]", "[-j <jobs>]", "[-n plate number]" };
+        public override List<string> Parameters => new() { "[-r <role>]", "[-j <jobs>]", "[-g <gearset names/nums>]", "[-n plate number]" };
         public override string Description => "For quickly linking multiple gearsets to a glamour plate.";
 
         public override FeatureType FeatureType => FeatureType.Commands;
@@ -37,8 +37,8 @@ namespace PandorasBox.Features.Commands
             public byte GlamPlate { get; set; }
         }
 
-        private List<Gearset> gearsets = new();
-        private List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged" };
+        private readonly List<Gearset> gearsets = new();
+        private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged" };
         private List<ClassJob> jobsList = new();
         protected override void OnCommand(List<string> args)
         {
@@ -46,28 +46,26 @@ namespace PandorasBox.Features.Commands
 
             var sortedArgs = new Dictionary<string, List<string>>();
 
-            for (var i = 0; i < args.Count; i++)
+            for(var i = 0; i < args.Count; i++)
             {
                 var currentArg = args[i];
 
-                if (currentArg.StartsWith("-") && i + 1 < args.Count)
+                if (currentArg.StartsWith("-"))
                 {
                     var flag = currentArg;
                     var values = new List<string>();
 
-                    for (var j = i + 1; j < args.Count && !args[j].StartsWith("-"); j++)
+                    if (i + 1 < args.Count && !args[i + 1].StartsWith("-"))
                     {
-                        values.Add(args[j]);
-                        i = j;
+                        for (var j = i + 1; j < args.Count && !args[j].StartsWith("-"); j++)
+                        {
+                            values.Add(args[j]);
+                            i = j;
+                        }
                     }
 
                     sortedArgs[flag] = values;
                 }
-            }
-
-            foreach (var kvp in sortedArgs)
-            {
-                PluginLog.Log($"Key: {kvp.Key}, Value: {kvp.Value}");
             }
 
             if (sortedArgs.ContainsKey("-h"))
@@ -76,9 +74,21 @@ namespace PandorasBox.Features.Commands
                 return;
             }
 
-            if (!sortedArgs.ContainsKey("-n") && !sortedArgs.ContainsKey("-h"))
+            if (sortedArgs.TryGetValue("-j", out var plateValues) && plateValues.Count == 0)
             {
                 PrintModuleMessage("Invalid glamour plate number");
+                return;
+            }
+
+            if (sortedArgs.TryGetValue("-j", out var jobValues) && jobValues.Count == 0)
+            {
+                PrintModuleMessage("Invalid job names");
+                return;
+            }
+
+            if (sortedArgs.TryGetValue("-r", out var roleValues) && roleValues.Count == 0)
+            {
+                PrintModuleMessage($"Invalid role names\nValid role names: {string.Join(", ", roles)}");
                 return;
             }
 
@@ -125,6 +135,7 @@ namespace PandorasBox.Features.Commands
                             PrintModuleMessage($"Invalid role name passed as an argument.\nRoles: {string.Join(", ", roles)}");
                         }
                         break;
+                    case "-g":
                     case "-j":
                         ParseGearset(values, plate);
                         if (gearsets == null || gearsets.Count == 0)
