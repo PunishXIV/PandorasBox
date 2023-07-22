@@ -38,7 +38,7 @@ namespace PandorasBox.Features.Commands
         }
 
         private readonly List<Gearset> gearsets = new();
-        private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged" };
+        private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged", "doh", "crafters", "doh", "gatherers" };
         private List<ClassJob> jobsList = new();
         protected override void OnCommand(List<string> args)
         {
@@ -125,6 +125,14 @@ namespace PandorasBox.Features.Commands
                                     break;
                                 case "physical ranged":
                                     jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(3)).ToList();
+                                    break;
+                                case "crafters":
+                                case "doh":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(10)).ToList();
+                                    break;
+                                case "gatherers":
+                                case "dol":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(20)).ToList();
                                     break;
                             }
                             ParseGearset(jobsList.Select(job => job.Name.RawString).ToList(), plate);
