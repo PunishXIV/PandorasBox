@@ -183,6 +183,9 @@ internal class MainWindow : Window
                     case OpenWindow.Targets:
                         DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
                         break;
+                    case OpenWindow.Chat:
+                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
+                        break;
                     case OpenWindow.Commands:
                         DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
                         break;
@@ -290,6 +293,7 @@ public enum OpenWindow
     Actions,
     UI,
     Targets,
+    Chat,
     Other,
     Commands,
     About
