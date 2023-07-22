@@ -374,5 +374,19 @@ namespace PandorasBox.Features
 
             Svc.Chat.PrintChat(message);
         }
+
+        public void PrintModuleMessage(SeString msg)
+        {
+            var message = new XivChatEntry
+            {
+                Message = new SeStringBuilder()
+                .AddUiForeground($"[{P.Name}] ", 45)
+                .AddUiForeground($"[{Name}] ", 62)
+                .Append(msg)
+                .Build()
+            };
+
+            Svc.Chat.PrintChat(message);
+        }
     }
 }

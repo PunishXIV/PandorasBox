@@ -1,5 +1,7 @@
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Logging;
 using Dalamud.Memory;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
@@ -7,7 +9,9 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Security.Policy;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -19,7 +23,7 @@ namespace PandorasBox.Features.Commands
         public override string Command { get; set; } = "/pglamlink";
         public override string[] Alias => new string[] { "/pgl" };
 
-        public override List<string> Parameters => new() { "jobs", "num" };
+        public override List<string> Parameters => new() { "[-r <role>]", "[-j <jobs>]", "[-n plate number]" };
         public override string Description => "For quickly linking multiple gearsets to a glamour plate.";
 
         public override FeatureType FeatureType => FeatureType.Commands;
@@ -34,31 +38,109 @@ namespace PandorasBox.Features.Commands
         }
 
         private List<Gearset> gearsets = new();
-        private List<string> roles = new() { "tank", "healer", "dps", "caster", "melee", "physical ranged", "ranged", "magical ranged" };
+        private List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged" };
+        private List<ClassJob> jobsList = new();
         protected override void OnCommand(List<string> args)
         {
             gearsets.Clear();
 
-            if (args.Count < 2)
+            var sortedArgs = new Dictionary<string, List<string>>();
+
+            for (var i = 0; i < args.Count; i++)
             {
-                PrintModuleMessage("Invalid number of arguments");
+                var currentArg = args[i];
+
+                if (currentArg.StartsWith("-") && i + 1 < args.Count)
+                {
+                    var flag = currentArg;
+                    var values = new List<string>();
+
+                    for (var j = i + 1; j < args.Count && !args[j].StartsWith("-"); j++)
+                    {
+                        values.Add(args[j]);
+                        i = j;
+                    }
+
+                    sortedArgs[flag] = values;
+                }
+            }
+
+            foreach (var kvp in sortedArgs)
+            {
+                PluginLog.Log($"Key: {kvp.Key}, Value: {kvp.Value}");
+            }
+
+            if (sortedArgs.ContainsKey("-h"))
+            {
+                PrintModuleMessage("Usage: /pgl -j <jobs> <plate number>\n/pgl -r <role> <plate number>");
                 return;
             }
-            if (!int.TryParse(args[^1], out var noInts))
+
+            if (!sortedArgs.ContainsKey("-n") && !sortedArgs.ContainsKey("-h"))
             {
                 PrintModuleMessage("Invalid glamour plate number");
                 return;
             }
 
+            var plate = byte.Parse(sortedArgs["-n"][0]);
+            foreach (var kvp in sortedArgs)
+            {
+                var flag = kvp.Key;
+                var values = kvp.Value;
+                switch (flag)
+                {
+                    case "-r":
+                        if (IsRoleMatch(string.Join(" ", values), out var role))
+                        {
+                            switch (role)
+                            {
+                                case "tanks":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(1)).ToList();
+                                    break;
+                                case "healers":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(4)).ToList();
+                                    break;
+                                case "dps":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(2, 3)).ToList();
+                                    break;
+                                case "melees":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(2)).ToList();
+                                    break;
+                                case "ranged":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).EqualsAny<int>(3, 4)).ToList();
+                                    break;
+                                case "magical ranged":
+                                case "casters":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(4)).ToList();
+                                    break;
+                                case "physical ranged":
+                                    jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(3)).ToList();
+                                    break;
+                            }
+                            ParseGearset(jobsList.Select(job => job.Name.RawString).ToList(), plate);
+                            LinkPlateToGearset(plate);
+                        }
+                        else
+                        {
+                            PrintModuleMessage($"Invalid role name passed as an argument.\nRoles: {string.Join(", ", roles)}");
+                        }
+                        break;
+                    case "-j":
+                        ParseGearset(values, plate);
+                        if (gearsets == null || gearsets.Count == 0)
+                            PrintModuleMessage($"Unable to match {string.Join(" ", values)} to any gearsets");
+                        LinkPlateToGearset(plate);
+                        break;
+                }
+            }             
+        }
+
+        private void ParseGearset(List<string> args, byte plate)
+        {
             var gearsetModule = RaptureGearsetModule.Instance();
+
             foreach (var arg in args)
             {
-                //if (IsRoleMatch(arg, out var role))
-                //    switch (role)
-                //    {
-                //        case "tank":
-                //            break;
-                //    }
                 for (var i = 0; i < 100; i++)
                 {
                     var gs = gearsetModule->Gearset[i];
@@ -66,31 +148,46 @@ namespace PandorasBox.Features.Commands
                         continue;
 
                     var name = MemoryHelper.ReadString(new IntPtr(gs->Name), 47);
-
-                    if (arg.Equals(name, StringComparison.CurrentCultureIgnoreCase) || arg.Equals(gs->ID.ToString(), StringComparison.CurrentCultureIgnoreCase))
+                    var jobAbbrMatch = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Abbreviation.RawString.Equals(arg, StringComparison.CurrentCultureIgnoreCase)).ToList();
+                    
+                    if (arg.Equals(name, StringComparison.CurrentCultureIgnoreCase)
+                        || (jobAbbrMatch.Count > 0 && jobAbbrMatch[0].RowId.Equals(gs->ClassJob))
+                        || arg.Equals(gs->ID.ToString(), StringComparison.CurrentCultureIgnoreCase)
+                        || arg.Equals(gs->ClassJob.ToString(), StringComparison.CurrentCultureIgnoreCase))
+                    {
                         gearsets.Add(new Gearset
                         {
                             ID = gs->ID,
                             Slot = i + 1,
                             ClassJob = gs->ClassJob,
                             Name = name,
-                            GlamPlate = byte.Parse(args[^1]),
+                            GlamPlate = plate,
                         });
+                    }
                 }
             }
+        }
+
+        private void LinkPlateToGearset(byte plate)
+        {
+            var gearsetModule = RaptureGearsetModule.Instance();
 
             foreach (var gs in gearsets)
             {
                 gearsetModule->LinkGlamourPlate(gs.ID, gs.GlamPlate);
-                PrintModuleMessage($"Changed gearset {gs.Name} to use plate {gs.GlamPlate}");
+                var msg = new SeStringBuilder()
+                    .AddText("Changed gearset ")
+                    .AddUiForeground($"{gs.Name} ", 576)
+                    .AddText("to use plate ")
+                    .AddUiForeground($"{gs.GlamPlate}", 576)
+                    .Build();
+                PrintModuleMessage(msg);
             }
         }
+
         private bool IsRoleMatch(string input, out string matchedRole)
         {
-            // Split the input string into individual words
             var inputSplit = input.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-
-            // Find roles that partially match the input words
             matchedRole = roles.FirstOrDefault(role =>
             {
                 var rolesSplit = role.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
