@@ -109,6 +109,10 @@ internal class MainWindow : Window
         }
         base.PostDraw();
     }
+
+    private string searchString = string.Empty;
+    private List<BaseFeature> FilteredFeatures = new();
+
     public override void Draw()
     {
         var region = ImGui.GetContentRegionAvail();
@@ -163,35 +167,60 @@ internal class MainWindow : Window
                         Config.Save();
                     }
                 }
+
+                ImGui.SetCursorPosY(ImGui.GetContentRegionMax().Y - 50f);
+                ImGuiEx.ImGuiLineCentered("###Search", () => ImGui.Text($"Search"));
+                ImGuiEx.SetNextItemFullWidth();
+                if (ImGui.InputText("###FeatureSearch", ref searchString, 500))
+                {
+                    FilteredFeatures.Clear();
+                    if (searchString.Length > 0)
+                    {
+                        foreach (var feature in P.Features)
+                        {
+                            if (feature.Description.Contains(searchString, StringComparison.CurrentCultureIgnoreCase) ||
+                                feature.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase))
+                                FilteredFeatures.Add(feature);
+                        }
+                    }
+                }
+
             }
             ImGui.EndChild();
             ImGui.PopStyleVar();
             ImGui.TableNextColumn();
             if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (false ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
             {
-                switch (OpenWindow)
+                if (FilteredFeatures.Count() > 0)
                 {
-                    case OpenWindow.Actions:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Actions).ToArray());
-                        break;
-                    case OpenWindow.UI:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.UI).ToArray());
-                        break;
-                    case OpenWindow.Other:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Other).ToArray());
-                        break;
-                    case OpenWindow.Targets:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
-                        break;
-                    case OpenWindow.Chat:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
-                        break;
-                    case OpenWindow.Commands:
-                        DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
-                        break;
-                    case OpenWindow.About:
-                        AboutTab.Draw(P);
-                        break;
+                    DrawFeatures(FilteredFeatures.ToArray());
+                }
+                else
+                {
+                    switch (OpenWindow)
+                    {
+                        case OpenWindow.Actions:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Actions).ToArray());
+                            break;
+                        case OpenWindow.UI:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.UI).ToArray());
+                            break;
+                        case OpenWindow.Other:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Other).ToArray());
+                            break;
+                        case OpenWindow.Targets:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
+                            break;
+                        case OpenWindow.Chat:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
+                            break;
+                        case OpenWindow.Commands:
+                            DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
+                            break;
+                        case OpenWindow.About:
+                            AboutTab.Draw(P);
+                            break;
+                    }
                 }
             }
             ImGui.EndChild();
@@ -239,7 +268,15 @@ internal class MainWindow : Window
     {
         if (features == null || !features.Any() || !features.Any()) return;
 
-        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
+        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () =>
+        {
+            if (features.Select(x => x.FeatureType).Distinct().Count() > 0)
+            {
+                ImGui.Text($"Search Results");
+            }
+            else
+                ImGui.Text($"{features.First().FeatureType}");
+        });
         ImGui.Separator();
 
         foreach (var feature in features)
