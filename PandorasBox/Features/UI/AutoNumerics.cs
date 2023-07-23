@@ -78,7 +78,7 @@ namespace PandorasBox.Features.UI
                     var numericTextNode = numeric->UldManager.NodeList[4]->GetAsAtkComponentNode()->Component->UldManager.NodeList[4]->GetAsAtkTextNode();
                     var numericResNode = numeric->UldManager.NodeList[4]->GetAsAtkComponentNode()->Component->UldManager.NodeList[6];
 
-                    if (Svc.Condition[ConditionFlag.TradeOpen])
+                    if (Config.WorkOnTrading && Svc.Condition[ConditionFlag.TradeOpen])
                     {
                         if (Config.TradeExcludeSplit && IsSplitAddon()) return;
                         if (Config.TradeMinOrMax == 0)
@@ -101,7 +101,7 @@ namespace PandorasBox.Features.UI
                         }
                     }
 
-                    if (InFcChest())
+                    if (Config.WorkOnFCChest && InFcChest())
                     {
                         if (Config.FCExcludeSplit && IsSplitAddon()) { return; }
                         if (Config.FCChestMinOrMax == 0)
@@ -124,7 +124,7 @@ namespace PandorasBox.Features.UI
                         }
                     }
 
-                    if (Svc.Condition[ConditionFlag.OccupiedSummoningBell] && !InFcChest())
+                    if (Config.WorkOnRetainers && Svc.Condition[ConditionFlag.OccupiedSummoningBell] && !InFcChest())
                     {
                         if (Config.RetainerExcludeSplit && IsSplitAddon()) return;
                         if (Config.RetainersMinOrMax == 0)
@@ -171,7 +171,7 @@ namespace PandorasBox.Features.UI
                     // }
 
 
-                    if (InMail())
+                    if (Config.WorkOnMail && InMail())
                     {
                         if (Config.MailExcludeSplit && IsSplitAddon()) return;
                         if (Config.MailMinOrMax == 0)
