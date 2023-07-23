@@ -1,5 +1,8 @@
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
+using Dalamud.Utility;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
@@ -112,6 +115,7 @@ internal class MainWindow : Window
 
     private string searchString = string.Empty;
     private List<BaseFeature> FilteredFeatures = new();
+    private bool hornybonk;
 
     public override void Draw()
     {
@@ -168,11 +172,20 @@ internal class MainWindow : Window
                     }
                 }
 
-                ImGui.SetCursorPosY(ImGui.GetContentRegionMax().Y - 50f);
-                ImGuiEx.ImGuiLineCentered("###Search", () => ImGui.Text($"Search"));
+                ImGui.SetCursorPosY(ImGui.GetContentRegionMax().Y - 45f);
+                ImGuiEx.ImGuiLineCentered("###Search", () => { ImGui.Text($"Search"); ImGuiComponents.HelpMarker("Searches feature names and descriptions for a given word or phrase."); });
                 ImGuiEx.SetNextItemFullWidth();
                 if (ImGui.InputText("###FeatureSearch", ref searchString, 500))
                 {
+                    if (searchString.Equals("ERP", StringComparison.CurrentCultureIgnoreCase) && !hornybonk)
+                    {
+                        hornybonk = true;
+                        Util.OpenLink("https://www.youtube.com/watch?v=oO-gc3Lh-oI");
+                    }
+                    else
+                    {
+                        hornybonk = false;
+                    }
                     FilteredFeatures.Clear();
                     if (searchString.Length > 0)
                     {
@@ -264,13 +277,13 @@ internal class MainWindow : Window
         }
     }
 
-    private static void DrawFeatures(IEnumerable<BaseFeature> features)
+    private void DrawFeatures(IEnumerable<BaseFeature> features)
     {
         if (features == null || !features.Any() || !features.Any()) return;
 
         ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () =>
         {
-            if (features.Select(x => x.FeatureType).Distinct().Count() > 0)
+            if (FilteredFeatures.Count > 0)
             {
                 ImGui.Text($"Search Results");
             }
