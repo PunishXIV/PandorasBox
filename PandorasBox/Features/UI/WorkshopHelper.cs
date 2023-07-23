@@ -67,9 +67,8 @@ namespace PandorasBox.Features.UI
         private bool isScheduleRest;
         private bool overrideRest;
         private bool autoWorkshopSelect = true;
-        private bool fortuneteller;
-        private bool weekend;
         private bool executionDisabled;
+        private bool overrideExecutionDisable;
         private bool hasOpened;
         private int currentDay;
         private readonly int taskDelay = 100;
@@ -186,38 +185,17 @@ namespace PandorasBox.Features.UI
                 "This importer detects the presence of an item's name (not including \"Isleworks\" et al) on each line.\n" +
                 "You can copy an entire workshop's schedule from the discord, junk included.");
 
-            if (!fortuneteller)
+            if (ImGui.RadioButton($"Auto-Select Workshops", autoWorkshopSelect))
             {
-                if (ImGui.Checkbox("Weekend Mode", ref weekend))
-                {
-                    autoWorkshopSelect = true;
-                }
-                ImGuiComponents.HelpMarker("For importing cycles 5, 6, and 7 at once.\nQuick sets start day to cycle 5.");
+                autoWorkshopSelect = true;
             }
-
-            if (!weekend)
+            ImGuiComponents.HelpMarker("If the cumulative hours in clipboard is <24, this will apply to schedule to all workshops.\n" +
+                "If it is >24, this will apply the first 24hrs of items to workshops 1-3, and the remaining to workshop 4.");
+            if (ImGui.RadioButton($"Manually Select Workshops", !autoWorkshopSelect))
             {
-                if (ImGui.Checkbox("Fortuneteller Mode", ref fortuneteller))
-                {
-                    autoWorkshopSelect = true;
-                }
-                ImGuiComponents.HelpMarker("For importing cycles 3-7.\nSets cycle 2 to rest and starts on cycle 3.");
+                autoWorkshopSelect = false;
             }
-
-            if (!fortuneteller && !weekend)
-            {
-                if (ImGui.RadioButton($"Auto-Select Workshops", autoWorkshopSelect))
-                {
-                    autoWorkshopSelect = true;
-                }
-                ImGuiComponents.HelpMarker("If the cumulative hours in clipboard is <24, this will apply to schedule to all workshops.\n" +
-                    "If it is >24, this will apply the first 24hrs of items to workshops 1-3, and the remaining to workshop 4.");
-                if (ImGui.RadioButton($"Manually Select Workshops", !autoWorkshopSelect))
-                {
-                    autoWorkshopSelect = false;
-                }
-                ImGuiComponents.HelpMarker("For importing one workshop's worth of items at a time and allows you to select which workshops the schedule will apply to.");
-            }
+            ImGuiComponents.HelpMarker("For importing one workshop's worth of items at a time and allows you to select which workshops the schedule will apply to.");
 
 
             // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
@@ -237,93 +215,112 @@ namespace PandorasBox.Features.UI
             ImGui.Text("Import Preview");
 
             ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) || (MultiCycleList.Count == 1 && MultiCycleList[0].SecondarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
-                foreach (var cycle in MultiCycleList)
-                {
-                    if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
-                        continue;
-
-                    var cycleNum = MultiCycleList.IndexOf(cycle)
-                        + (weekend ? weekendOffset
-                        : (fortuneteller ? fortuneOffset
-                        : (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
-                        : selectedCycle)));
-
-                    DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
-                        if (cycle.SecondarySchedule.Count > 0 && autoWorkshopSelect)
-                            DrawWorkshopListBox($"Cycle {cycleNum} Workshop 4", cycle.SecondarySchedule);
-                }
-                ImGui.EndChild();
-
-            if (!fortuneteller && !weekend)
+            foreach (var cycle in MultiCycleList)
             {
-                ImGui.Text("Select Cycle");
-                ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
-                ImGui.SetNextItemWidth(100);
-                var cyclePrev = selectedCycle == 0 ? "" : Cycles[selectedCycle - 1].ToString();
-                if (ImGui.BeginCombo("", cyclePrev))
-                {
-                    if (ImGui.Selectable("", selectedCycle == 0))
-                        selectedCycle = 0;
-                    foreach (var cycle in Cycles)
-                    {
-                        var selected = ImGui.Selectable(cycle.ToString(), selectedCycle == cycle);
+                if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
+                    continue;
 
-                        if (selected)
-                            selectedCycle = cycle;
-                    }
-                    ImGui.EndCombo();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Set Rest"))
-                {
-                    TaskManager.Enqueue(() => SetRestDay());
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Prev"))
-                {
-                    OpenCycle(selectedCycle - 1);
-                    selectedCycle = selectedCycle == 0 ? 0 : selectedCycle - 1;
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Next"))
-                {
-                    OpenCycle(selectedCycle + 1);
-                    selectedCycle = selectedCycle == 14 ? 14 : selectedCycle + 1;
-                }
+                var cycleNum = MultiCycleList.IndexOf(cycle)
+                    + (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
+                    : selectedCycle);
 
-                if (autoWorkshopSelect)
+                DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
+                if (cycle.SecondarySchedule.Count > 0 && autoWorkshopSelect)
+                    DrawWorkshopListBox($"Cycle {cycleNum} Workshop 4", cycle.SecondarySchedule);
+            }
+            ImGui.EndChild();
+
+            ImGui.Text("Select Cycle");
+            ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
+            ImGui.SetNextItemWidth(100);
+            var cyclePrev = selectedCycle == 0 ? "" : Cycles[selectedCycle - 1].ToString();
+            if (ImGui.BeginCombo("", cyclePrev))
+            {
+                if (ImGui.Selectable("", selectedCycle == 0))
+                    selectedCycle = 0;
+                foreach (var cycle in Cycles)
+                {
+                    var selected = ImGui.Selectable(cycle.ToString(), selectedCycle == cycle);
+
+                    if (selected)
+                        selectedCycle = cycle;
+                }
+                ImGui.EndCombo();
+            }
+            ImGui.SameLine();
+
+            var SelectedUnavailable = selectedCycle - 1 == MJIManager.Instance()->CurrentCycleDay || MJIManager.Instance()->CraftworksRestDays[1] <= MJIManager.Instance()->CurrentCycleDay;
+            if (SelectedUnavailable)
+                ImGui.BeginDisabled();
+
+            if (ImGui.Button("Set Rest"))
+            {
+                TaskManager.Enqueue(() => SetRestDay());
+            }
+
+            if (SelectedUnavailable)
+                ImGui.EndDisabled();
+
+            ImGui.SameLine();
+            if (ImGui.Button("Prev"))
+            {
+                OpenCycle(selectedCycle - 1);
+                selectedCycle = selectedCycle == 0 ? 0 : selectedCycle - 1;
+            }
+            ImGui.SameLine();
+            if (ImGui.Button("Next"))
+            {
+                OpenCycle(selectedCycle + 1);
+                selectedCycle = selectedCycle == 14 ? 14 : selectedCycle + 1;
+            }
+
+            if (autoWorkshopSelect)
+                ImGui.BeginDisabled();
+            ImGui.Text("Select Workshops");
+            var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
+            for (var i = 0; i < Workshops.Count; i++)
+            {
+                if (!IsWorkshopUnlocked(i + 1))
                     ImGui.BeginDisabled();
-                ImGui.Text("Select Workshops");
-                var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
-                for (var i = 0; i < Workshops.Count; i++)
-                {
-                    if (!IsWorkshopUnlocked(i + 1))
-                        ImGui.BeginDisabled();
-                    var configValue = Workshops[i];
-                    if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
-                    if (i != Workshops.Count - 1) ImGui.SameLine();
-                    if (!IsWorkshopUnlocked(i + 1))
-                        ImGui.EndDisabled();
-                }
-                ImGui.SameLine();
-                if (ImGui.Button("Deselect"))
-                    Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
-                if (autoWorkshopSelect)
+                var configValue = Workshops[i];
+                if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
+                if (i != Workshops.Count - 1) ImGui.SameLine();
+                if (!IsWorkshopUnlocked(i + 1))
                     ImGui.EndDisabled();
             }
+            ImGui.SameLine();
+            if (ImGui.Button("Deselect"))
+                Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
+            if (autoWorkshopSelect)
+                ImGui.EndDisabled();
 
             try
             {
+                var ScheduleContainsRest = MultiCycleList.Any(x => x.PrimarySchedule.Any(y => y.OnRestDay == true));
+                if (ScheduleContainsRest)
+                {
+                    ImGui.TextColored(ImGuiColors.TankBlue, $"{(overrideRest ? "Blue cycle's rest will be overriden" : "Blue cycle will be set to rest")}");
+                    ImGui.Checkbox("Override Rest?", ref overrideRest);
+                }
+
+                var BadFortune = GetCurrentRestDays()[1] != 1 && MultiCycleList.Count == 5;
+                if (BadFortune)
+                {
+                    ImGui.TextColored(ImGuiColors.DalamudRed, "Detected Fortuneteller import.\nYour rest cycle isn't set to rest on cycle 2.");
+                    ImGui.Checkbox("Schedule anyway?", ref overrideExecutionDisable);
+                    ImGuiComponents.HelpMarker("Overseas Casuals always recommends resting on C1 and C2 when doing fortune teller recommendations.\n" +
+                        "Execution has been disabled as a sanity check, but if this import is on purpose, feel free to check the override box.");
+                }
+
                 var IsInsufficientRank = (PrimarySchedule.Count > 0 && PrimarySchedule.Any(x => x.InsufficientRank))
                     || (SecondarySchedule.Count > 0 && SecondarySchedule.Any(x => x.InsufficientRank));
                 var ScheduleInProgress = selectedCycle - 1 <= MJIManager.Instance()->CurrentCycleDay && selectedCycle != 0;
                 var restDays = GetCurrentRestDays();
                 var SelectedIsRest = restDays.Contains(selectedCycle - 1);
                 var NoWorkshopsSelected = Workshops.Values.All(x => !x) && !autoWorkshopSelect;
-                if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest || NoWorkshopsSelected)
+
+                if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest || NoWorkshopsSelected || (BadFortune && !overrideExecutionDisable))
                 {
-                    ImGui.BeginDisabled();
-                    executionDisabled = true;
                     if (IsInsufficientRank)
                         ImGui.TextColored(ImGuiColors.DalamudRed, "Insufficient rank to execute schedule");
                     if (SelectedIsRest)
@@ -332,21 +329,16 @@ namespace PandorasBox.Features.UI
                         ImGui.TextColored(ImGuiColors.DalamudRed, "Cannot execute schedule on days\nin progress or passed");
                     if (NoWorkshopsSelected)
                         ImGui.TextColored(ImGuiColors.DalamudRed, "No workshops selected.\nTurn on Auto-Select or select workshops.");
+
+                    ImGui.BeginDisabled();
+                    executionDisabled = true;
                 }
 
-                var ScheduleContainsRest = MultiCycleList.Any(x => x.PrimarySchedule.Any(y => y.OnRestDay == true));
-                if (ScheduleContainsRest)
-                {
-                    ImGui.TextColored(ImGuiColors.TankBlue, "Blue cycle will be set to rest");
-                    ImGui.Checkbox("Override Rest?", ref overrideRest);
-                }
                 if (ImGui.Button("Execute Schedule"))
                 {
                     currentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    currentDay = (weekend ? weekendOffset
-                        : (fortuneteller ? fortuneOffset
-                        : (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
-                        : selectedCycle)));
+                    currentDay = (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
+                        : selectedCycle);
                     ScheduleMultiCycleList();
                 }
                 if (executionDisabled)
@@ -460,6 +452,8 @@ namespace PandorasBox.Features.UI
             foreach (var cycle in rawCycles)
             {
                 (var items, var excessItems) = ParseItems(cycle);
+                if (items == null || items.Count == 0)
+                    continue;
                 MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
             }
         }
@@ -476,7 +470,7 @@ namespace PandorasBox.Features.UI
                     if (currentCycle.Count > 0)
                     {
                         cycles.Add(currentCycle);
-                        currentCycle = new List<string> { line };
+                        currentCycle = new List<string>();
                     }
                     if (currentCycle.Count == 0)
                         currentCycle = new List<string>();
@@ -661,10 +655,13 @@ namespace PandorasBox.Features.UI
                     return false;
 
                 var restDays = GetCurrentRestDays();
-                if (selectedCycle <= 6)
+                if (selectedCycle <= 6 && selectedCycle > 0)
                     restDays[1] = selectedCycle - 1;
                 else if (selectedCycle >= 7)
                     restDays[3] = selectedCycle - 1;
+                else if (selectedCycle <= 0)
+                    restDays[1] = MJIManager.Instance()->CurrentCycleDay + 1;
+
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
 
@@ -699,12 +696,15 @@ namespace PandorasBox.Features.UI
         {
             if (isScheduleRest)
             {
+                var currentVal = selectedCycle;
+                TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
                 TaskManager.EnqueueImmediate(() => SetRestDay(), $"SetRest");
+                TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
                 return true;
             }
 
             var hours = 0;
-            if (autoWorkshopSelect || fortuneteller || weekend)
+            if (autoWorkshopSelect)
             {
                 if (SecondarySchedule.Count > 0)
                 {
@@ -777,14 +777,6 @@ namespace PandorasBox.Features.UI
 
         public void ScheduleMultiCycleList()
         {
-            if (fortuneteller)
-            {
-                var currentVal = selectedCycle;
-                TaskManager.Enqueue(() => OpenCycle(2), "FortuneTellerCycleOpen");
-                TaskManager.Enqueue(() => selectedCycle = 2, $"SetSelectedCycleTo2");
-                TaskManager.Enqueue(() => SetRestDay(), "FortuneTellerCycleSetRestDay");
-                TaskManager.Enqueue(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
-            }
             TaskManager.Enqueue(() =>
             {
                 foreach (var cycle in MultiCycleList)
@@ -795,8 +787,8 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => OpenCycle(currentDay), $"MultiCycleOpenCycleOn{currentDay}");
                     TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"MultiCycleSetPrimaryCycleOn{currentDay}");
                     TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"MultiCyleSetSecondaryCycleOn{currentDay}");
-                    TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
                     TaskManager.Enqueue(() => { isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay; }, $"MultiCycleCheckRestOn{currentDay}");
+                    TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
                     TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
                 }
             }, "ScheduleMultiCycleForEach");
