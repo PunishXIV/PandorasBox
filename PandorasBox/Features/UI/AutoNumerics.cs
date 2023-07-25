@@ -103,6 +103,7 @@ namespace PandorasBox.Features.UI
 
                     if (Config.WorkOnFCChest && InFcChest())
                     {
+                        // regular fc chest numerics
                         if (Config.FCExcludeSplit && IsSplitAddon()) { return; }
                         if (Config.FCChestMinOrMax == 0)
                         {
@@ -197,6 +198,45 @@ namespace PandorasBox.Features.UI
                 catch
                 {
                     return;
+                }
+            }
+            else
+            {
+                TaskManager.Abort();
+                return;
+            }
+
+            // fc chest gil numerics
+            var bankNumeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Bank");
+            if (bankNumeric == null) { hasDisabled = false; return; }
+            var bankNumericTitleNode = bankNumeric->UldManager.NodeList[5]->GetAsAtkTextNode();
+
+            if (bankNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(bankNumeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
+
+            if (Config.WorkOnFCChest && bankNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(bankNumeric) && !hasDisabled)
+            {
+                var bMinValue = bankNumeric->AtkValues[5].Int;
+                var bMaxValue = bankNumeric->AtkValues[6].Int;
+                var bNumericTextNode = bankNumeric->UldManager.NodeList[4]->GetAsAtkComponentNode()->Component->UldManager.NodeList[4]->GetAsAtkTextNode();
+
+                if (Config.FCExcludeSplit && IsSplitAddon()) { return; }
+                if (Config.FCChestMinOrMax == 0)
+                {
+                    TaskManager.Enqueue(() => bNumericTextNode->SetText(ConvertToByte(bMinValue)));
+                    if (Config.FCChestConfirm)
+                        TaskManager.Enqueue(() => Callback.Fire(bankNumeric, true, 3, (uint)bMinValue));
+                }
+                if (Config.FCChestMinOrMax == 1)
+                {
+                    TaskManager.Enqueue(() => bNumericTextNode->SetText(ConvertToByte(bMaxValue)));
+                    if (Config.FCChestConfirm)
+                        TaskManager.Enqueue(() => Callback.Fire(bankNumeric, true, 3, (uint)bMaxValue));
+                }
+                if (Config.FCChestMinOrMax == -1)
+                {
+                    var currentAmt = bNumericTextNode->NodeText.ToString();
+                    if (int.TryParse(currentAmt, out var num) && num > 0 && bankNumeric->AtkValues[4].Int > 0)
+                        TaskManager.Enqueue(() => Callback.Fire(bankNumeric, true, 0));
                 }
             }
             else
