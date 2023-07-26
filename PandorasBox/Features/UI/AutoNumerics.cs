@@ -53,6 +53,11 @@ namespace PandorasBox.Features.UI
             public int MailMinOrMax = -1;
             public bool MailExcludeSplit = false;
             public bool MailConfirm = false;
+
+            public bool WorkOnTransmute = false;
+            public int TransmuteMinOrMax = 0;
+            public bool TransmuteExcludeSplit = true;
+            public bool TransmuteConfirm = true;
         }
 
         public override void Enable()
@@ -90,6 +95,9 @@ namespace PandorasBox.Features.UI
 
                     else if (Config.WorkOnMail && InMail())
                         TryFill(numeric, minValue, maxValue, Config.MailMinOrMax, Config.MailExcludeSplit, Config.MailConfirm);
+
+                    else if (Config.WorkOnTransmute && InTransmute())
+                        TryFill(numeric, minValue, maxValue, Config.TransmuteMinOrMax, Config.TransmuteExcludeSplit, Config.TransmuteConfirm);
 
                     else
                         return;
@@ -204,6 +212,12 @@ namespace PandorasBox.Features.UI
             return mail != null && mail->IsVisible;
         }
 
+        private bool InTransmute()
+        {
+            var trans = (AtkUnitBase*)Svc.GameGui.GetAddonByName("TradeMultiple");
+            return trans != null && trans->IsVisible;
+        }
+
         private unsafe byte* ConvertToByte(int x)
         {
             var bArray = Encoding.Default.GetBytes(x.ToString());
@@ -226,6 +240,7 @@ namespace PandorasBox.Features.UI
             DrawConfigsForAddon("FC Chests", ref Config.WorkOnFCChest, ref Config.FCChestMinOrMax, ref Config.FCExcludeSplit, ref Config.FCChestConfirm);
             DrawConfigsForAddon("Retainers", ref Config.WorkOnRetainers, ref Config.RetainersMinOrMax, ref Config.RetainerExcludeSplit, ref Config.RetainersConfirm);
             DrawConfigsForAddon("Mail", ref Config.WorkOnMail, ref Config.MailMinOrMax, ref Config.MailExcludeSplit, ref Config.MailConfirm);
+            DrawConfigsForAddon("Materia Transmutation", ref Config.WorkOnTransmute, ref Config.TransmuteMinOrMax, ref Config.TransmuteExcludeSplit, ref Config.TransmuteConfirm);
         };
 
         private static void DrawConfigsForAddon(string addonName, ref bool workOnAddon, ref int minOrMax, ref bool excludeSplit, ref bool autoConfirm)
