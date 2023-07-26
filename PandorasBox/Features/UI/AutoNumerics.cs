@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -22,7 +23,7 @@ namespace PandorasBox.Features.UI
 
         public Configs Config { get; private set; }
 
-        private string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
+        private readonly string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
 
         private bool hasDisabled;
 
@@ -58,11 +59,11 @@ namespace PandorasBox.Features.UI
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += FillRegularNumeric;
-            Svc.Framework.Update += FillBankNumeric;
+            //Svc.Framework.Update += FillBankNumeric;
             base.Enable();
         }
 
-        private void FillRegularNumeric(Dalamud.Game.Framework framework)
+        private void FillRegularNumeric(Framework framework)
         {
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
             if (numeric == null) { hasDisabled = false; return; }
@@ -80,37 +81,18 @@ namespace PandorasBox.Features.UI
 
                     if (Config.WorkOnTrading && Svc.Condition[ConditionFlag.TradeOpen])
                         TryFill(numeric, minValue, maxValue, Config.TradeMinOrMax, Config.TradeExcludeSplit, Config.TradeConfirm);
+
                     else if (Config.WorkOnFCChest && InFcChest())
                         TryFill(numeric, minValue, maxValue, Config.FCChestMinOrMax, Config.FCExcludeSplit, Config.FCChestConfirm);
+
                     else if (Config.WorkOnRetainers && Svc.Condition[ConditionFlag.OccupiedSummoningBell] && !InFcChest())
                         TryFill(numeric, minValue, maxValue, Config.RetainersMinOrMax, Config.RetainerExcludeSplit, Config.RetainersConfirm);
+
                     else if (Config.WorkOnMail && InMail())
                         TryFill(numeric, minValue, maxValue, Config.MailMinOrMax, Config.MailExcludeSplit, Config.MailConfirm);
+
                     else
                         return;
-
-                    // if ([insert inventory conditions])
-                    // {
-                    // if (Config.InventoryExcludeSplit && IsSplitAddon()) return;
-                    // if (Config.InventoryMinOrMax == 0)
-                    //     {
-                    //         TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
-                    //         if (Config.InventoryConfirm)
-                    //             TaskManager.Enqueue(() => Callback.Fire(numeric, true, minValue));
-                    //     }
-                    //     if (Config.InventoryMinOrMax == 1)
-                    //     {
-                    //         TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(maxValue)));
-                    //         if (Config.InventoryConfirm)
-                    //             TaskManager.Enqueue(() => Callback.Fire(numeric, true, maxValue));
-                    //     }
-                    //     if (Config.InventoryMinOrMax == -1)
-                    //     {
-                    //         var currentAmt = numericTextNode->NodeText.ToString();
-                    //         if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
-                    //             TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
-                    //     }
-                    // }
                 }
                 catch
                 {
@@ -159,14 +141,36 @@ namespace PandorasBox.Features.UI
 
             if (Config.WorkOnFCChest && bankNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(bankNumeric) && !hasDisabled)
             {
-                var bMinValue = bankNumeric->AtkValues[5].Int;
-                var bMaxValue = bankNumeric->AtkValues[6].Int;
-                var bNumericTextNode = bankNumeric->UldManager.NodeList[4]->GetAsAtkComponentNode()->Component->UldManager.NodeList[4]->GetAsAtkTextNode();
+                try
+                {
+                    var bMinValue = bankNumeric->AtkValues[5].Int;
+                    var bMaxValue = bankNumeric->AtkValues[6].Int;
+                    var bNumericTextNode = bankNumeric->UldManager.NodeList[4]->GetAsAtkComponentNode()->Component->UldManager.NodeList[4]->GetAsAtkTextNode();
 
-                if (Config.WorkOnFCChest && InFcChest())
-                    TryFill(bankNumeric, bMinValue, bMaxValue, Config.FCChestMinOrMax, Config.FCExcludeSplit, Config.FCChestConfirm);
-                else
+                    if (Config.FCExcludeSplit && IsSplitAddon()) { return; }
+                    if (Config.FCChestMinOrMax == 0)
+                    {
+                        TaskManager.Enqueue(() => bNumericTextNode->SetText(ConvertToByte(bMinValue)));
+                        if (Config.FCChestConfirm)
+                            TaskManager.Enqueue(() => Callback.Fire(bankNumeric, true, 3, (uint)bMinValue));
+                    }
+                    if (Config.FCChestMinOrMax == 1)
+                    {
+                        TaskManager.Enqueue(() => bNumericTextNode->SetText(ConvertToByte(bMaxValue)));
+                        if (Config.FCChestConfirm)
+                            TaskManager.Enqueue(() => Callback.Fire(bankNumeric, true, 3, (uint)bMaxValue));
+                    }
+                    if (Config.FCChestMinOrMax == -1)
+                    {
+                        var currentAmt = bNumericTextNode->NodeText.ToString();
+                        if (int.TryParse(currentAmt, out var num) && num > 0 && bankNumeric->AtkValues[4].Int > 0)
+                            TaskManager.Enqueue(() => Callback.Fire(bankNumeric, true, 0));
+                    }
+                }
+                catch
+                {
                     return;
+                }
             }
             else
             {
@@ -188,6 +192,12 @@ namespace PandorasBox.Features.UI
             return fcChest != null && fcChest->IsVisible;
         }
 
+        private bool InFcBank()
+        {
+            var fcBank = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Bank");
+            return fcBank != null && fcBank->IsVisible;
+        }
+
         private bool InMail()
         {
             var mail = (AtkUnitBase*)Svc.GameGui.GetAddonByName("LetterList");
@@ -206,6 +216,7 @@ namespace PandorasBox.Features.UI
         {
             SaveConfig(Config);
             Svc.Framework.Update -= FillRegularNumeric;
+            //Svc.Framework.Update -= FillBankNumeric;
             base.Disable();
         }
 
@@ -217,7 +228,7 @@ namespace PandorasBox.Features.UI
             DrawConfigsForAddon("Mail", ref Config.WorkOnMail, ref Config.MailMinOrMax, ref Config.MailExcludeSplit, ref Config.MailConfirm);
         };
 
-        private void DrawConfigsForAddon(string addonName, ref bool workOnAddon, ref int minOrMax, ref bool excludeSplit, ref bool autoConfirm)
+        private static void DrawConfigsForAddon(string addonName, ref bool workOnAddon, ref int minOrMax, ref bool excludeSplit, ref bool autoConfirm)
         {
             ImGui.Checkbox($"Work on {addonName}", ref workOnAddon);
             if (workOnAddon)
