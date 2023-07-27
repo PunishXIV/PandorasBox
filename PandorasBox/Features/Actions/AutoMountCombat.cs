@@ -1,3 +1,4 @@
+using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using ECommons;
@@ -49,12 +50,9 @@ namespace PandorasBox.Features.Actions
         {
             if (flag == ConditionFlag.InCombat && !value)
             {
-                if (FateManager.Instance()->CurrentFate != null && !Config.DisableInFates)
-                {
                     TaskManager.Enqueue(() => NotInCombat);
                     TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
                     TaskManager.Enqueue(() => TryMount());
-                }
             }
         }
 
@@ -63,6 +61,7 @@ namespace PandorasBox.Features.Actions
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
             if (Svc.Condition[ConditionFlag.InCombat]) return false;
+            if (Config.DisableInFates && FateManager.Instance()->CurrentFate != null) return false;
             if (Svc.Condition[ConditionFlag.Mounted]) return true;
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Mount) return false;
 
