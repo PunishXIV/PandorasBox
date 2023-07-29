@@ -28,6 +28,7 @@ using static ECommons.GenericHelpers;
 
 // TODO:
 // prevent schedule from executing if workshop has anything filled in
+// schedule with rest on second week
 
 namespace PandorasBox.Features.UI
 {
@@ -59,7 +60,7 @@ namespace PandorasBox.Features.UI
         public static List<Item> SecondarySchedule = new();
         public static List<CyclePreset> MultiCycleList = new();
 
-        private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
+        private Dictionary<int, bool> Workshops = new() { [0] = false, [1] = false, [2] = false, [3] = false };
         private int currentWorkshop;
         private int maxWorkshops = 4;
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -71,7 +72,6 @@ namespace PandorasBox.Features.UI
         private bool overrideExecutionDisable;
         private bool hasOpened;
         private int currentDay;
-        private readonly int taskDelay = 100;
 
         private const int weekendOffset = 5;
         private const int fortuneOffset = 3;
@@ -197,24 +197,22 @@ namespace PandorasBox.Features.UI
             }
             ImGuiComponents.HelpMarker("For importing one workshop's worth of items at a time and allows you to select which workshops the schedule will apply to.");
 
-
-            // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
-            // basically the same buttons from ReAction's stack tab
-
-            // ImGui.SameLine();
-            // ImGui.PushStyleColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(ImGui.ColorConvertHSVtoRGB(0 / 7.0f, 0.6f, 0.6f)));
-            // ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000);
-            // ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xDD000000);
-            // ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xAA000000);
-            // using (var font = ImRaii.PushFont(UiBuilder.IconFont))
-            // {
-            //     if (ImGui.Button(FontAwesomeIcon.Times.ToIconString())) { items = null; }
-            // }
-            // ImGui.PopStyleColor(3);
-
             ImGui.Text("Import Preview");
 
             ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) || (MultiCycleList.Count == 1 && MultiCycleList[0].SecondarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
+
+            // if I want to actually use this code I need to take into account rest overrides and the outcome of a schedule being executed
+
+            //var initialCycleNum = selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset : selectedCycle;
+            //var adjustedCycleNums = MultiCycleList.Select((cycle, index) =>
+            //{
+            //    var cycleNum = initialCycleNum + index;
+            //    var daysToAdd = 0;
+            //    while (GetCurrentRestDays().Any(x => x == cycleNum - 1 + daysToAdd))
+            //        daysToAdd++;
+            //    return cycleNum + daysToAdd;
+            //}).ToList();
+
             foreach (var cycle in MultiCycleList)
             {
                 if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
@@ -223,6 +221,8 @@ namespace PandorasBox.Features.UI
                 var cycleNum = MultiCycleList.IndexOf(cycle)
                     + (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
                     : selectedCycle);
+
+                //var cycleNum = adjustedCycleNums[MultiCycleList.IndexOf(cycle)];
 
                 DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
                 if (cycle.SecondarySchedule.Count > 0 && autoWorkshopSelect)
@@ -255,7 +255,7 @@ namespace PandorasBox.Features.UI
 
             if (ImGui.Button("Set Rest"))
             {
-                TaskManager.Enqueue(() => SetRestDay());
+                TaskManager.Enqueue(() => SetRestDay(selectedCycle));
             }
 
             if (SelectedUnavailable)
@@ -445,7 +445,7 @@ namespace PandorasBox.Features.UI
             return scale;
         }
 
-        internal void ScheduleImport(List<string> rawItemStrings)
+        internal static void ScheduleImport(List<string> rawItemStrings)
         {
             var rawCycles = SplitCycles(rawItemStrings);
 
@@ -521,7 +521,7 @@ namespace PandorasBox.Features.UI
                 }
                 if (!matchFound)
                 {
-                    PluginLog.Log($"Failed to match string to craftable: {itemString}");
+                    PluginLog.Debug($"Failed to match string to craftable: {itemString}");
                     var invalidItem = new Item
                     {
                         Key = 0,
@@ -635,7 +635,7 @@ namespace PandorasBox.Features.UI
             return new List<int> { restDays1, restDays2, restDays3, restDays4 };
         }
 
-        private bool SetRestDay()
+        private bool SetRestDay(int cycle)
         {
             var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (addon == IntPtr.Zero)
@@ -655,16 +655,24 @@ namespace PandorasBox.Features.UI
                     return false;
 
                 var restDays = GetCurrentRestDays();
-                if (selectedCycle <= 6 && selectedCycle > 0)
-                    restDays[1] = selectedCycle - 1;
-                else if (selectedCycle >= 7)
-                    restDays[3] = selectedCycle - 1;
-                else if (selectedCycle <= 0)
+                if (cycle <= 7 && cycle > 0)
+                    restDays[1] = cycle - 1;
+                else if (cycle > 7)
+                    restDays[3] = cycle - 1;
+                else if (cycle <= 0)
                     restDays[1] = MJIManager.Instance()->CurrentCycleDay + 1;
+
+                //if (selectedCycle <= 6 && selectedCycle > 0)
+                //    restDays[1] = selectedCycle - 1;
+                //else if (selectedCycle >= 7)
+                //    restDays[3] = selectedCycle - 1;
+                //else if (selectedCycle <= 0)
+                //    restDays[1] = 1JIManager.Instance()->CurrentCycleDay + 1;
 
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
 
+                PluginLog.Debug($"Setting Rest Days to {string.Join("", restDays)} => {restDaysMask}");
                 TaskManager.Enqueue(() => ConfirmYesNo());
 
                 return true;
@@ -696,10 +704,10 @@ namespace PandorasBox.Features.UI
         {
             if (isScheduleRest)
             {
-                var currentVal = selectedCycle;
-                TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
-                TaskManager.EnqueueImmediate(() => SetRestDay(), $"SetRest");
-                TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
+                //var currentVal = selectedCycle;
+                //TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
+                //TaskManager.EnqueueImmediate(() => SetRestDay(currentVal), $"SetRest");
+                //TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
                 return true;
             }
 
@@ -777,6 +785,13 @@ namespace PandorasBox.Features.UI
 
         public void ScheduleMultiCycleList()
         {
+            var restCycleIndex = MultiCycleList.FindIndex(x => x.PrimarySchedule.Any(y => y.OnRestDay == true));
+            if (restCycleIndex != -1 && !overrideRest)
+            {
+                // delay when cycle that is open is the one being set to rest?
+                TaskManager.Enqueue(() => SetRestDay(currentDay + restCycleIndex), $"MultiCycleSetRestOn{currentDay + restCycleIndex}");
+            }
+
             TaskManager.Enqueue(() =>
             {
                 foreach (var cycle in MultiCycleList)
