@@ -14,14 +14,24 @@ namespace PandorasBox.Features
 {
     public unsafe class SanctuarySprint : Feature
     {
-        public override string Name => "Auto-sprint on Island Sanctuary";
+        public override string Name => "Auto-Sprint on Island Sanctuary";
 
         public override string Description => "Automatically uses Isle Sprint.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
+
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Use whilst walk status is toggled", "", 1)]
+            public bool RPWalk = false;
+        }
+
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
@@ -29,12 +39,16 @@ namespace PandorasBox.Features
         public override void Disable()
         {
             Svc.Framework.Update -= RunFeature;
+            SaveConfig(Config);
             base.Disable();
         }
 
         private void RunFeature(Framework framework)
         {
             if (MJIManager.Instance()->IsPlayerInSanctuary == 0)
+                return;
+
+            if (IsRpWalking() && !Config.RPWalk)
                 return;
 
             var am = ActionManager.Instance();

@@ -33,6 +33,10 @@ namespace PandorasBox.Features.UI
             if (obj.AddonName == "SelectYesno")
             {
                 var seString = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(obj.Addon->AtkValues[0].String));
+                if (seString.Payloads.Count < 3 || seString.Payloads[2] is not TextPayload)
+                {
+                    return;
+                }
                 var sheetText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 155).First().Text.Payloads[2].RawString.Trim();
                 var rawText = ((TextPayload)seString.Payloads[2]).Text.Trim();
                 var trimmedText = rawText.Remove(rawText.LastIndexOf(' ')).TrimEnd();

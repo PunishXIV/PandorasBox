@@ -30,8 +30,30 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Cooldown after gathering (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
             public float Cooldown = 0.1f;
 
-            [FeatureConfigOption("Exclude Timed Nodes", "", 1)]
-            public bool ExcludeTimed = false;
+            [FeatureConfigOption("Exclude Timed Unspoiled Nodes", "", 1)]
+            public bool ExcludeTimedUnspoiled = false;
+
+            [FeatureConfigOption("Exclude Timed Ephemeral Nodes", "", 2)]
+            public bool ExcludeTimedEphermeral = false;
+
+            [FeatureConfigOption("Exclude Timed Legendary Nodes", "", 3)]
+            public bool ExcludeTimedLegendary = false;
+
+            [FeatureConfigOption("Required GP to Interact (>=)", IntMin = 0, IntMax = 1000, EditorSize = 300)]
+            public int RequiredGP = 0;
+
+            [FeatureConfigOption("Exclude Island Nodes", "", 7)]
+            public bool ExcludeIsland = false;
+
+            [FeatureConfigOption("Exclude Miner Nodes", "", 4)]
+            public bool ExcludeMiner = false;
+
+            [FeatureConfigOption("Exclude Botanist Nodes", "", 5)]
+            public bool ExcludeBotanist = false;
+
+            [FeatureConfigOption("Exclude Spearfishing Nodes", "", 6)]
+            public bool ExcludeFishing = false;
+
         }
 
         public Configs Config { get; private set; }
@@ -77,7 +99,7 @@ namespace PandorasBox.Features.Targets
             if (!baseObj->GetIsTargetable())
                 return;
 
-            if (nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
+            if (!Config.ExcludeIsland && nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
             {
                 if (!TaskManager.IsBusy)
                 {
@@ -89,23 +111,33 @@ namespace PandorasBox.Features.Targets
 
             var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
+            var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && (x.GatheringRarePopTimeTable.Value.RowId > 0 || x.EphemeralStartTime != 65535)) && Config.ExcludeTimed)
+            string Folklore = "";
+
+            if (gatheringPoint.GatheringSubCategory.IsValueCreated && gatheringPoint.GatheringSubCategory.Value.FolkloreBook != null)
+            Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
+
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
+                return;
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
+                return;
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row != 0) && Config.ExcludeTimedLegendary)
                 return;
 
-            if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && !TaskManager.IsBusy)
+            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && !TaskManager.IsBusy)
+            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !TaskManager.IsBusy)
+            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);

@@ -31,7 +31,6 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             overlay = new(this);
-            P.Ws.AddWindow(overlay);
             base.Enable();
         }
 
@@ -103,12 +102,12 @@ namespace PandorasBox.Features.UI
             if (listCount == 0)
             {
                 Trading = false;
+                TaskManager.Abort();
                 return;
             }
 
             for (var i = 1; i <= listCount; i++)
             {
-
                 TaskManager.Enqueue(() =>
                 {
                     if (Svc.GameGui.GetAddonByName("SelectYesno") != IntPtr.Zero)
@@ -120,7 +119,7 @@ namespace PandorasBox.Features.UI
                 TaskManager.Enqueue(() => Callback.Fire(addon, false, 15, (uint)0), $"Trading{i}");
                 TaskManager.DelayNext($"Trade{i}", 500);
             }
-            TaskManager.Enqueue(() => Trading = false);
+            TaskManager.Enqueue(() => { Trading = false; TaskManager.Abort(); });
         }
 
         public override void Disable()
