@@ -400,18 +400,15 @@ namespace PandorasBox.Features.UI
                     {
                         if (item.OnRestDay || item.InsufficientRank)
                         {
-                            colour = true;
-
-                            if (item.OnRestDay)
-                                ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.TankBlue);
-                            if (item.InsufficientRank)
-                                ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
+                            if (item.OnRestDay && !item.InsufficientRank)
+                                ImGui.TextColored(ImGuiColors.TankBlue, item.Name);
+                            else if (item.InsufficientRank && !item.OnRestDay)
+                                ImGui.TextColored(ImGuiColors.DalamudRed, item.Name);
+                            else if (item.OnRestDay && item.InsufficientRank)
+                                ECommons.ImGuiMethods.ImGuiEx.Text(ECommons.ImGuiMethods.GradientColor.Get(ImGuiColors.DalamudRed, ImGuiColors.TankBlue), item.Name);
+                            else
+                                ImGui.Text(item.Name);
                         }
-
-                        ImGui.Text(item.Name);
-
-                        if (colour)
-                            ImGui.PopStyleColor();
                     }
                 }
                 ImGui.EndListBox();
