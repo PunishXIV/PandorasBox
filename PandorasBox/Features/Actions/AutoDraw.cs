@@ -17,6 +17,9 @@ namespace PandorasBox.Features.Actions
         {
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
+
+            [FeatureConfigOption("Function only in a duty")]
+            public bool OnlyInDuty = false;
         }
 
         public Configs Config { get; private set; }
@@ -70,6 +73,8 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryDrawCard()
         {
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
+
             if (Svc.Gauges.Get<ASTGauge>().DrawnCard == Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE)
             {
                 var am = ActionManager.Instance();

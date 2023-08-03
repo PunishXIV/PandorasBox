@@ -1,5 +1,6 @@
 using Dalamud.Configuration;
 using Dalamud.Game;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
@@ -27,6 +28,9 @@ namespace PandorasBox.Features
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
 
+            [FeatureConfigOption("Function only in a duty")]
+            public bool OnlyInDuty = false;
+
             [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
 
@@ -48,7 +52,7 @@ namespace PandorasBox.Features
             if (Svc.ClientState.LocalPlayer == null) return;
 
             if (IsRpWalking() && !Config.RPWalk) return;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (Svc.Condition[ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
             if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) return;
 
@@ -67,8 +71,9 @@ namespace PandorasBox.Features
         private void UsePeloton()
         {
             if (IsRpWalking() && !Config.RPWalk) return;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (Svc.Condition[ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return;
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
@@ -92,6 +97,7 @@ namespace PandorasBox.Features
         {
             ImGui.PushItemWidth(300);
             ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+            ImGui.Checkbox("Function only in a duty", ref Config.OnlyInDuty);
             ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
             ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
         };
