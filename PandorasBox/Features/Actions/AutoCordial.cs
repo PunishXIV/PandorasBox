@@ -79,7 +79,7 @@ namespace PandorasBox.Features.Actions
             ImGui.Checkbox("Use on Fisher", ref Config.UseOnFisher);
         };
 
-        private bool WillOvercap(int gp_recovery)
+        private static bool WillOvercap(int gp_recovery)
         {
             return Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery < Svc.ClientState.LocalPlayer.MaxGp;
         }
@@ -92,34 +92,47 @@ namespace PandorasBox.Features.Actions
 
             if (!((Svc.ClientState.LocalPlayer.CurrentGp < Config.DefaultThreshold && Config.DirectionBelow) || (Svc.ClientState.LocalPlayer.CurrentGp > Config.DefaultThreshold && Config.DirectionAbove))) return;
 
-            ActionManager* am = ActionManager.Instance();
+            var am = ActionManager.Instance();
+            //var start = Config.InvertPriority ? cordials.Length - 1 : 0;
+            //var end = Config.InvertPriority ? -1 : cordials.Length;
+            //var step = Config.InvertPriority ? -1 : 1;
 
-            if (!Config.InvertPriority)
+            for (var i = Config.InvertPriority ? cordials.Length - 1 : 0; Config.InvertPriority ? i >= 0 : i < cordials.Length; i += Config.InvertPriority ? -1 : 1)
             {
-                for (int i = 0; i < cordials.Length; i++)
+                if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0 &&
+                    ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap))
                 {
-                    if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
-                    {
-                        if (Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP) || !Config.PreventOvercap)
-                        {
-                            am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
-                        }
-                    }
+                    am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
                 }
             }
-            else
-            {
-                for (int i = cordials.Length - 1; i >= 0; i--)
-                {
-                    if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
-                    {
-                        if (Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP) || !Config.PreventOvercap)
-                        {
-                            am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
-                        }
-                    }
-                }
-            }
+
+
+            //if (!Config.InvertPriority)
+            //{
+            //    for (var i = 0; i < cordials.Length; i++)
+            //    {
+            //        if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
+            //        {
+            //            if ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap)
+            //            {
+            //                am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
+            //            }
+            //        }
+            //    }
+            //}
+            //else
+            //{
+            //    for (var i = cordials.Length - 1; i >= 0; i--)
+            //    {
+            //        if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
+            //        {
+            //            if ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap)
+            //            {
+            //                am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         public override void Enable()
