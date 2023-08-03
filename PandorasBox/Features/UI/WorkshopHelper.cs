@@ -231,7 +231,7 @@ namespace PandorasBox.Features.UI
             ImGui.EndChild();
 
             ImGui.Text("Select Cycle");
-            ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
+            ImGuiComponents.HelpMarker("Leave blank to execute on next available day.");
             ImGui.SetNextItemWidth(100);
             var cyclePrev = selectedCycle == 0 ? "" : Cycles[selectedCycle - 1].ToString();
             if (ImGui.BeginCombo("", cyclePrev))
