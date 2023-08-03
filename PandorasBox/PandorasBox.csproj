@@ -72,10 +72,10 @@
             <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <!--<Reference Include="FFXIVClientStructs">
+        <Reference Include="FFXIVClientStructs">
             <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
             <Private>False</Private>
-        </Reference>-->
+        </Reference>
         <Reference Include="ImGuiScene">
             <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
             <Private>False</Private>
@@ -99,7 +99,6 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
-      <ProjectReference Include="..\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj" />
     </ItemGroup>
 
     <ItemGroup>
