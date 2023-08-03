@@ -52,7 +52,7 @@ namespace PandorasBox.Features
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
             var r = new Regex("/hou/|/ind/");
-            if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
+            if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;

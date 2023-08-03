@@ -73,6 +73,11 @@ namespace PandorasBox.Features.Other
             (38790, 38791), // Splendorous Water Shard
             (38794, 38795), // Splendorous Lightning Shard
             (38796, 38797), // Splendorous Fire Shard
+
+            (39805, 39806), // Custom Ice Crystal
+            (39807, 39808), // Custom Wind Crystal
+            (39811, 39812), // Brilliant Lightning Cluster
+            (39813, 39814), // Brilliant Earth Cluster
         };
 
         public static readonly (uint ItemId, uint NodeId)[] Items =
@@ -567,7 +572,7 @@ namespace PandorasBox.Features.Other
                     };
 
                     PluginLog.Debug($"{string.Join(", ", ids)}");
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x)))
+                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
                         Disable();
@@ -893,7 +898,7 @@ namespace PandorasBox.Features.Other
                     addon->GatheredItemId8
                 };
 
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x)))
+                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
                         Disable();
@@ -921,7 +926,7 @@ namespace PandorasBox.Features.Other
 
                     if (item != 0)
                     {
-                        if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable)
+                        if ((Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
                         {
                             var receiveEventAddress = new nint(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
                             var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;

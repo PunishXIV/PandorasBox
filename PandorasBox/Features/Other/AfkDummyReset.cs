@@ -1,4 +1,5 @@
 using Dalamud.Hooking;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -44,15 +45,24 @@ namespace PandorasBox.Features.Other
 
         private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8)
         {
-            if (TaskManager.IsBusy)
+            if (type is ActionType.Spell or ActionType.Ability)
             {
-                TaskManager.Abort();
+                try
+                {
+                    if (TaskManager.IsBusy)
+                    {
+                        TaskManager.Abort();
+                    }
+
+                    var delay = (Config.InactivityTimer * 1000) + (Svc.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>().GetRow(am->GetAdjustedActionId(acId)).Cast100ms * 100);
+                    TaskManager.DelayNext($"AfkDummyTimerDelay{delay}", delay);
+                    TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/presetenmity"); });
+                }
+                catch(Exception ex)
+                {
+                    ex.Log();
+                }
             }
-
-            var delay = (Config.InactivityTimer * 1000) + (Svc.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>().GetRow(am->GetAdjustedActionId(acId)).Cast100ms * 100);
-            TaskManager.DelayNext($"AfkDummyTimerDelay{delay}", delay);
-            TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/presetenmity"); });
-
             return UseActionHook.Original(am, type, acId, target, a5, a6, a7, a8);
         }
 

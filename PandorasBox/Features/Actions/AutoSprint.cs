@@ -50,7 +50,8 @@ namespace PandorasBox.Features
                 return;
 
             var r = new Regex("/hou/|/ind/");
-            if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
+            var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString;
+            if (r.IsMatch(loc) && Config.ExcludeHousing) return;
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;
