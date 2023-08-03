@@ -8,8 +8,8 @@ using Dalamud.Interface.Components;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.ImGuiMethods;
 using ECommons.Logging;
-using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -20,7 +20,6 @@ using PandorasBox.Helpers;
 using PandorasBox.UI;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
@@ -28,6 +27,7 @@ using static ECommons.GenericHelpers;
 
 // TODO:
 // prevent schedule from executing if workshop has anything filled in
+// schedule with rest on second week
 
 namespace PandorasBox.Features.UI
 {
@@ -40,7 +40,6 @@ namespace PandorasBox.Features.UI
         public override FeatureType FeatureType => FeatureType.UI;
         private Overlays overlay;
         public static bool ResetPosition = false;
-        public static bool enabled;
 
         public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
@@ -59,7 +58,7 @@ namespace PandorasBox.Features.UI
         public static List<Item> SecondarySchedule = new();
         public static List<CyclePreset> MultiCycleList = new();
 
-        private Dictionary<int, bool> Workshops = new Dictionary<int, bool> { [0] = false, [1] = false, [2] = false, [3] = false };
+        internal Dictionary<int, bool> Workshops = new() { [0] = false, [1] = false, [2] = false, [3] = false };
         private int currentWorkshop;
         private int maxWorkshops = 4;
         private List<int> Cycles { get; set; } = new() { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 };
@@ -67,15 +66,13 @@ namespace PandorasBox.Features.UI
         private bool isScheduleRest;
         private bool overrideRest;
         private bool autoWorkshopSelect = true;
-        private bool executionDisabled;
         private bool overrideExecutionDisable;
         private bool hasOpened;
         private int currentDay;
-        private readonly int taskDelay = 100;
 
-        private const int weekendOffset = 5;
-        private const int fortuneOffset = 3;
-        private const int nextDayOffset = 2;
+        internal const int weekendOffset = 5;
+        internal const int fortuneOffset = 3;
+        internal const int nextDayOffset = 2;
 
         public class CyclePreset
         {
@@ -96,64 +93,48 @@ namespace PandorasBox.Features.UI
 
         public override void Draw()
         {
-            if (enabled)
+            var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
+            if (workshopWindow == IntPtr.Zero)
             {
-                var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
-                if (workshopWindow == IntPtr.Zero)
+                hasOpened = false;
+                return;
+            }
+            var addonPtr = (AtkUnitBase*)workshopWindow;
+            if (addonPtr == null)
+                return;
+
+            if (!hasOpened && Config.OpenNextDay && IsAddonReady(addonPtr))
+            {
+                OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
+                hasOpened = true;
+            }
+
+            if (addonPtr->UldManager.NodeListCount > 1)
+            {
+                if (addonPtr->UldManager.NodeList[1]->IsVisible)
                 {
-                    hasOpened = false;
-                    return;
-                }
-                var addonPtr = (AtkUnitBase*)workshopWindow;
-                if (addonPtr == null)
-                    return;
+                    var node = addonPtr->UldManager.NodeList[1];
 
-                if (!hasOpened && Config.OpenNextDay && IsAddonReady(addonPtr))
-                {
-                    OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
-                    hasOpened = true;
-                }
+                    if (!node->IsVisible)
+                        return;
 
-                var baseX = addonPtr->X;
-                var baseY = addonPtr->Y;
+                    var position = AtkResNodeHelper.GetNodePosition(node);
+                    var scale = AtkResNodeHelper.GetNodeScale(node);
+                    var size = new Vector2(node->Width, node->Height) * scale;
+                    var center = new Vector2((position.X + size.X) / 2, (position.Y - size.Y) / 2);
 
-                if (addonPtr->UldManager.NodeListCount > 1)
-                {
-                    if (addonPtr->UldManager.NodeList[1]->IsVisible)
-                    {
-                        var node = addonPtr->UldManager.NodeList[1];
+                    ImGuiHelpers.ForceNextWindowMainViewport();
+                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(new Vector2(position.X + size.X + 7, position.Y + 7), ImGuiCond.Always);
 
-                        if (!node->IsVisible)
-                            return;
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(7f, 7f));
+                    ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(200f, 200f));
+                    ImGui.Begin($"###WorkshopHelper", ImGuiWindowFlags.NoScrollbar
+                        | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.AlwaysUseWindowPadding);
 
-                        var position = GetNodePosition(node);
-                        var scale = GetNodeScale(node);
-                        var size = new Vector2(node->Width, node->Height) * scale;
-                        var center = new Vector2((position.X + size.X) / 2, (position.Y - size.Y) / 2);
-                        //position += ImGuiHelpers.MainViewport.Pos;
+                    DrawWindowContents();
 
-                        ImGuiHelpers.ForceNextWindowMainViewport();
-
-                        if ((ResetPosition && position.X != 0))
-                        {
-                            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(new Vector2(position.X + size.X + 7, position.Y + 7), ImGuiCond.Always);
-                            ResetPosition = false;
-                        }
-                        else
-                        {
-                            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(new Vector2(position.X + size.X + 7, position.Y + 7), ImGuiCond.FirstUseEver);
-                        }
-
-                        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(7f, 7f));
-                        ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(200f, 200f));
-                        ImGui.Begin($"###Options{node->NodeID}", ImGuiWindowFlags.NoScrollbar
-                            | ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.AlwaysUseWindowPadding);
-
-                        DrawWindowContents();
-
-                        ImGui.End();
-                        ImGui.PopStyleVar(2);
-                    }
+                    ImGui.End();
+                    ImGui.PopStyleVar(2);
                 }
             }
         }
@@ -181,6 +162,7 @@ namespace PandorasBox.Features.UI
                     PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
                 }
             }
+
             ImGuiComponents.HelpMarker("This is for importing schedules from the Overseas Casuals' Discord from your clipboard.\n" +
                 "This importer detects the presence of an item's name (not including \"Isleworks\" et al) on each line.\n" +
                 "You can copy an entire workshop's schedule from the discord, junk included.");
@@ -189,32 +171,33 @@ namespace PandorasBox.Features.UI
             {
                 autoWorkshopSelect = true;
             }
+
             ImGuiComponents.HelpMarker("If the cumulative hours in clipboard is <24, this will apply to schedule to all workshops.\n" +
                 "If it is >24, this will apply the first 24hrs of items to workshops 1-3, and the remaining to workshop 4.");
+
             if (ImGui.RadioButton($"Manually Select Workshops", !autoWorkshopSelect))
             {
                 autoWorkshopSelect = false;
             }
+
             ImGuiComponents.HelpMarker("For importing one workshop's worth of items at a time and allows you to select which workshops the schedule will apply to.");
-
-
-            // eventual plan to add entries manually, rearrange and edit existing ones (to fix any invalid entries)
-            // basically the same buttons from ReAction's stack tab
-
-            // ImGui.SameLine();
-            // ImGui.PushStyleColor(ImGuiCol.Button, ImGui.ColorConvertFloat4ToU32(ImGui.ColorConvertHSVtoRGB(0 / 7.0f, 0.6f, 0.6f)));
-            // ImGui.PushStyleColor(ImGuiCol.Button, 0xFF000000);
-            // ImGui.PushStyleColor(ImGuiCol.ButtonActive, 0xDD000000);
-            // ImGui.PushStyleColor(ImGuiCol.ButtonHovered, 0xAA000000);
-            // using (var font = ImRaii.PushFont(UiBuilder.IconFont))
-            // {
-            //     if (ImGui.Button(FontAwesomeIcon.Times.ToIconString())) { items = null; }
-            // }
-            // ImGui.PopStyleColor(3);
 
             ImGui.Text("Import Preview");
 
             ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) || (MultiCycleList.Count == 1 && MultiCycleList[0].SecondarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
+
+            // if I want to actually use this code I need to take into account rest overrides and the outcome of a schedule being executed
+
+            //var initialCycleNum = selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset : selectedCycle;
+            //var adjustedCycleNums = MultiCycleList.Select((cycle, index) =>
+            //{
+            //    var cycleNum = initialCycleNum + index;
+            //    var daysToAdd = 0;
+            //    while (GetCurrentRestDays().Any(x => x == cycleNum - 1 + daysToAdd))
+            //        daysToAdd++;
+            //    return cycleNum + daysToAdd;
+            //}).ToList();
+
             foreach (var cycle in MultiCycleList)
             {
                 if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
@@ -224,20 +207,26 @@ namespace PandorasBox.Features.UI
                     + (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
                     : selectedCycle);
 
+                //var cycleNum = adjustedCycleNums[MultiCycleList.IndexOf(cycle)];
+
                 DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
+
                 if (cycle.SecondarySchedule.Count > 0 && autoWorkshopSelect)
                     DrawWorkshopListBox($"Cycle {cycleNum} Workshop 4", cycle.SecondarySchedule);
             }
             ImGui.EndChild();
 
             ImGui.Text("Select Cycle");
-            ImGuiComponents.HelpMarker("Leave blank to execute on open cycle.");
+
+            ImGuiComponents.HelpMarker("Leave blank to execute on next available day.");
+
             ImGui.SetNextItemWidth(100);
             var cyclePrev = selectedCycle == 0 ? "" : Cycles[selectedCycle - 1].ToString();
             if (ImGui.BeginCombo("", cyclePrev))
             {
                 if (ImGui.Selectable("", selectedCycle == 0))
                     selectedCycle = 0;
+
                 foreach (var cycle in Cycles)
                 {
                     var selected = ImGui.Selectable(cycle.ToString(), selectedCycle == cycle);
@@ -255,7 +244,7 @@ namespace PandorasBox.Features.UI
 
             if (ImGui.Button("Set Rest"))
             {
-                TaskManager.Enqueue(() => SetRestDay());
+                TaskManager.Enqueue(() => SetRestDay(selectedCycle));
             }
 
             if (SelectedUnavailable)
@@ -267,6 +256,7 @@ namespace PandorasBox.Features.UI
                 OpenCycle(selectedCycle - 1);
                 selectedCycle = selectedCycle == 0 ? 0 : selectedCycle - 1;
             }
+
             ImGui.SameLine();
             if (ImGui.Button("Next"))
             {
@@ -276,21 +266,44 @@ namespace PandorasBox.Features.UI
 
             if (autoWorkshopSelect)
                 ImGui.BeginDisabled();
-            ImGui.Text("Select Workshops");
-            var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
-            for (var i = 0; i < Workshops.Count; i++)
+
+            try
             {
-                if (!IsWorkshopUnlocked(i + 1))
-                    ImGui.BeginDisabled();
-                var configValue = Workshops[i];
-                if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
-                if (i != Workshops.Count - 1) ImGui.SameLine();
-                if (!IsWorkshopUnlocked(i + 1))
-                    ImGui.EndDisabled();
+                ImGui.Text("Select Workshops");
+
+                if (!autoWorkshopSelect)
+                {
+                    for (var i = 0; i < Workshops.Count; i++)
+                    {
+                        if (!IsWorkshopUnlocked(i + 1))
+                            ImGui.BeginDisabled();
+
+                        try
+                        {
+                            var configValue = Workshops[i];
+                            if (ImGui.Checkbox($"{i + 1}", ref configValue)) { Workshops[i] = configValue; }
+                            if (i != Workshops.Count - 1) ImGui.SameLine();
+                        }
+                        catch (Exception ex)
+                        {
+                            ex.Log();
+                        }
+
+                        if (!IsWorkshopUnlocked(i + 1))
+                            ImGui.EndDisabled();
+                    }
+
+                    ImGui.SameLine();
+                }
+
+
+                if (ImGui.Button("Deselect"))
+                    Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
             }
-            ImGui.SameLine();
-            if (ImGui.Button("Deselect"))
-                Workshops.Keys.ToList().ForEach(key => Workshops[key] = false);
+            catch (Exception ex)
+            {
+                ex.Log();
+            }
             if (autoWorkshopSelect)
                 ImGui.EndDisabled();
 
@@ -331,7 +344,6 @@ namespace PandorasBox.Features.UI
                         ImGui.TextColored(ImGuiColors.DalamudRed, "No workshops selected.\nTurn on Auto-Select or select workshops.");
 
                     ImGui.BeginDisabled();
-                    executionDisabled = true;
                 }
 
                 if (ImGui.Button("Execute Schedule"))
@@ -341,7 +353,8 @@ namespace PandorasBox.Features.UI
                         : selectedCycle);
                     ScheduleMultiCycleList();
                 }
-                if (executionDisabled)
+
+                if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest || NoWorkshopsSelected || (BadFortune && !overrideExecutionDisable))
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
@@ -349,45 +362,51 @@ namespace PandorasBox.Features.UI
 
         private bool IsWorkshopUnlocked(int w)
         {
-            var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
-            switch (w)
+            try
             {
-                case 1:
-                    if (currentRank < 3)
-                    {
-                        maxWorkshops = 0;
-                        return false;
-                    }
-                    break;
-                case 2:
-                    if (currentRank < 6)
-                    {
-                        maxWorkshops = 1;
-                        return false;
-                    }
-                    break;
-                case 3:
-                    if (currentRank < 8)
-                    {
-                        maxWorkshops = 2;
-                        return false;
-                    }
-                    break;
-                case 4:
-                    if (currentRank < 14)
-                    {
-                        maxWorkshops = 3;
-                        return false;
-                    }
-                    break;
+                var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
+                switch (w)
+                {
+                    case 1:
+                        if (currentRank < 3)
+                        {
+                            maxWorkshops = 0;
+                            return false;
+                        }
+                        break;
+                    case 2:
+                        if (currentRank < 6)
+                        {
+                            maxWorkshops = 1;
+                            return false;
+                        }
+                        break;
+                    case 3:
+                        if (currentRank < 8)
+                        {
+                            maxWorkshops = 2;
+                            return false;
+                        }
+                        break;
+                    case 4:
+                        if (currentRank < 14)
+                        {
+                            maxWorkshops = 3;
+                            return false;
+                        }
+                        break;
+                }
+                return true;
             }
-            return true;
+            catch (Exception ex)
+            {
+                ex.Log();
+                return false;
+            }
         }
 
         private static void DrawWorkshopListBox(string text, List<Item> schedule)
         {
-            var colour = false;
-
             if (!text.IsNullOrEmpty())
                 ImGui.Text(text);
 
@@ -400,52 +419,22 @@ namespace PandorasBox.Features.UI
                     {
                         if (item.OnRestDay || item.InsufficientRank)
                         {
-                            colour = true;
-
-                            if (item.OnRestDay)
-                                ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.TankBlue);
-                            if (item.InsufficientRank)
-                                ImGui.PushStyleColor(ImGuiCol.Text, ImGuiColors.DalamudRed);
+                            if (item.OnRestDay && !item.InsufficientRank)
+                                ImGui.TextColored(ImGuiColors.TankBlue, item.Name);
+                            else if (item.InsufficientRank && !item.OnRestDay)
+                                ImGui.TextColored(ImGuiColors.DalamudRed, item.Name);
+                            else if (item.OnRestDay && item.InsufficientRank)
+                                ImGuiEx.Text(GradientColor.Get(ImGuiColors.DalamudRed, ImGuiColors.TankBlue), item.Name);
                         }
-
-                        ImGui.Text(item.Name);
-
-                        if (colour)
-                            ImGui.PopStyleColor();
+                        else
+                            ImGui.Text(item.Name);
                     }
                 }
                 ImGui.EndListBox();
             }
         }
 
-        public static unsafe Vector2 GetNodePosition(AtkResNode* node)
-        {
-            var pos = new Vector2(node->X, node->Y);
-            var par = node->ParentNode;
-            while (par != null)
-            {
-                pos *= new Vector2(par->ScaleX, par->ScaleY);
-                pos += new Vector2(par->X, par->Y);
-                par = par->ParentNode;
-            }
-
-            return pos;
-        }
-
-        public static unsafe Vector2 GetNodeScale(AtkResNode* node)
-        {
-            if (node == null) return new Vector2(1, 1);
-            var scale = new Vector2(node->ScaleX, node->ScaleY);
-            while (node->ParentNode != null)
-            {
-                node = node->ParentNode;
-                scale *= new Vector2(node->ScaleX, node->ScaleY);
-            }
-
-            return scale;
-        }
-
-        internal void ScheduleImport(List<string> rawItemStrings)
+        internal static void ScheduleImport(List<string> rawItemStrings)
         {
             var rawCycles = SplitCycles(rawItemStrings);
 
@@ -521,7 +510,7 @@ namespace PandorasBox.Features.UI
                 }
                 if (!matchFound)
                 {
-                    PluginLog.Log($"Failed to match string to craftable: {itemString}");
+                    PluginLog.Debug($"Failed to match string to craftable: {itemString}");
                     var invalidItem = new Item
                     {
                         Key = 0,
@@ -635,7 +624,7 @@ namespace PandorasBox.Features.UI
             return new List<int> { restDays1, restDays2, restDays3, restDays4 };
         }
 
-        private bool SetRestDay()
+        private bool SetRestDay(int cycle)
         {
             var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
             if (addon == IntPtr.Zero)
@@ -655,16 +644,24 @@ namespace PandorasBox.Features.UI
                     return false;
 
                 var restDays = GetCurrentRestDays();
-                if (selectedCycle <= 6 && selectedCycle > 0)
-                    restDays[1] = selectedCycle - 1;
-                else if (selectedCycle >= 7)
-                    restDays[3] = selectedCycle - 1;
-                else if (selectedCycle <= 0)
+                if (cycle <= 7 && cycle > 0)
+                    restDays[1] = cycle - 1;
+                else if (cycle > 7)
+                    restDays[3] = cycle - 1;
+                else if (cycle <= 0)
                     restDays[1] = MJIManager.Instance()->CurrentCycleDay + 1;
+
+                //if (selectedCycle <= 6 && selectedCycle > 0)
+                //    restDays[1] = selectedCycle - 1;
+                //else if (selectedCycle >= 7)
+                //    restDays[3] = selectedCycle - 1;
+                //else if (selectedCycle <= 0)
+                //    restDays[1] = 1JIManager.Instance()->CurrentCycleDay + 1;
 
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
 
+                PluginLog.Debug($"Setting Rest Days to {string.Join("", restDays)} => {restDaysMask}");
                 TaskManager.Enqueue(() => ConfirmYesNo());
 
                 return true;
@@ -696,10 +693,10 @@ namespace PandorasBox.Features.UI
         {
             if (isScheduleRest)
             {
-                var currentVal = selectedCycle;
-                TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
-                TaskManager.EnqueueImmediate(() => SetRestDay(), $"SetRest");
-                TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
+                //var currentVal = selectedCycle;
+                //TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
+                //TaskManager.EnqueueImmediate(() => SetRestDay(currentVal), $"SetRest");
+                //TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
                 return true;
             }
 
@@ -777,6 +774,13 @@ namespace PandorasBox.Features.UI
 
         public void ScheduleMultiCycleList()
         {
+            var restCycleIndex = MultiCycleList.FindIndex(x => x.PrimarySchedule.Any(y => y.OnRestDay == true));
+            if (restCycleIndex != -1 && !overrideRest)
+            {
+                // delay when cycle that is open is the one being set to rest?
+                TaskManager.Enqueue(() => SetRestDay(currentDay + restCycleIndex), $"MultiCycleSetRestOn{currentDay + restCycleIndex}");
+            }
+
             TaskManager.Enqueue(() =>
             {
                 foreach (var cycle in MultiCycleList)
@@ -836,7 +840,6 @@ namespace PandorasBox.Features.UI
                 .Select(x => (x.RowId, x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
                 .ToArray();
             overlay = new Overlays(this);
-            enabled = true;
             Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
             base.Enable();
         }
@@ -845,7 +848,6 @@ namespace PandorasBox.Features.UI
         {
             SaveConfig(Config);
             P.Ws.RemoveWindow(overlay);
-            enabled = false;
             Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
             base.Disable();
         }
