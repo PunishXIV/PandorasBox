@@ -119,7 +119,7 @@ public class AutoVoteMvp : Feature
     {
         if (Svc.Party.Any())
         {
-            if (Config.ResetOnWipe && Svc.Party.All(x => x.GameObject.IsDead))
+            if (Config.ResetOnWipe && Svc.Party.All(x => x.GameObject?.IsDead == true))
             {
                 DeathTracker.Clear();
             }

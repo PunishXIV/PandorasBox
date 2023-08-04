@@ -360,5 +360,33 @@ namespace PandorasBox.Features
         }
 
         public unsafe bool IsMoving() => AgentMap.Instance()->IsPlayerMoving == 1;
+
+        public void PrintModuleMessage(String msg)
+        {
+            var message = new XivChatEntry
+            {
+                Message = new SeStringBuilder()
+                .AddUiForeground($"[{P.Name}] ", 45)
+                .AddUiForeground($"[{Name}] ", 62)
+                .AddText(msg)
+                .Build()
+            };
+
+            Svc.Chat.PrintChat(message);
+        }
+
+        public void PrintModuleMessage(SeString msg)
+        {
+            var message = new XivChatEntry
+            {
+                Message = new SeStringBuilder()
+                .AddUiForeground($"[{P.Name}] ", 45)
+                .AddUiForeground($"[{Name}] ", 62)
+                .Append(msg)
+                .Build()
+            };
+
+            Svc.Chat.PrintChat(message);
+        }
     }
 }
