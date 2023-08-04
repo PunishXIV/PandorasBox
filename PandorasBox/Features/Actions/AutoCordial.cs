@@ -27,7 +27,8 @@ namespace PandorasBox.Features.Actions
         public override bool UseAutoConfig => false;
 
         // public Dictionary<uint, Item> Cordials { get; set; }
-        internal static (string Name, uint Id, uint ItemActionID, uint NQGP, uint HQGP)[] cordials;
+        internal static readonly List<uint> cordialRowIDs = new() { 6141, 12669, 16911 };
+        internal static (string Name, uint Id, ushort NQGP, ushort HQGP)[] cordials;
 
         // private static uint hi_cordial = 12669;
         // private static uint reg_cordial = 6141;
@@ -140,17 +141,18 @@ namespace PandorasBox.Features.Actions
             Config = LoadConfig<Configs>() ?? new Configs();
             // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => x.Singular.ToString().Contains("cordial")).ToDictionary(x => x.RowId, x => x);
             // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => (x.Name.ToString().Contains("cordial")).Select(x => (x.RowId, x.Name.ToString())).ToArray());
-            cordials = Svc.Data.GetExcelSheet<Item>()
-                .Where(row => row.Name.ToString().Contains("cordial")
+            cordials = ((string Name, uint Id, ushort NQGP, ushort HQGP)[])Svc.Data.GetExcelSheet<Item>()
+                .Where(row => cordialRowIDs.Any(num => num == row.RowId))
                 .Select(row => (
-                    Name: row.Name,
+                    Name: row.Name.RawString,
                     Id: row.RowId,
-                    ItemActionID: row.ItemAction,
-                    NQGP: Svc.Data.GetExcelSheet<ItemAction>()
-                        .First(actionRow => actionRow.RowId == row.ItemActionID).Data[0],
-                    HQGP: Svc.Data.GetExcelSheet<ItemAction>()
-                        .First(actionRow => actionRow.RowId == row.ItemActionID).Data{HQ}[0]
-                )));
+                    NQGP: row.ItemAction.Value.Data[0],
+                    HQGP: row.ItemAction.Value.DataHQ[0]
+                ));
+                    //NQGP: Svc.Data.GetExcelSheet<ItemAction>()
+                    //    .First(actionRow => actionRow.RowId == row.ItemAction).Data[0],
+                    //HQGP: Svc.Data.GetExcelSheet<ItemAction>()
+                    //    .First(actionRow => actionRow.RowId == row.ItemAction).DataHQ[0]
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
