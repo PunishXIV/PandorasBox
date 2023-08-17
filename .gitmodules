@@ -7,9 +7,6 @@
 [submodule "ECommons"]
 	path = ECommons
 	url = https://github.com/Taurenkey/ECommons
-[submodule "FFXIVClientStructs"]
-	path = FFXIVClientStructs
-	url = https://github.com/Taurenkey/FFXIVClientStructs.git
 [submodule "ClickLib"]
 	path = ClickLib
 	url = https://github.com/Limiana/ClickLib.git
