@@ -97,6 +97,17 @@ namespace PandorasBox.Features.UI
             if (workshopWindow == IntPtr.Zero)
             {
                 hasOpened = false;
+                PrimarySchedule.Clear();
+                SecondarySchedule.Clear();
+                MultiCycleList.Clear();
+                currentWorkshop = 0;
+                maxWorkshops = 4;
+                selectedCycle = 0;
+                isScheduleRest = false;
+                overrideRest = false;
+                autoWorkshopSelect = true;
+                overrideExecutionDisable = false;
+                currentDay = 0;
                 return;
             }
             var addonPtr = (AtkUnitBase*)workshopWindow;
