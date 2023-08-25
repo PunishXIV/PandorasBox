@@ -37,8 +37,9 @@ namespace PandorasBox.Features.Commands
             for (var i = 2; i < args.Count; i++)
             {
                 var current = args[i];
-                if (int.TryParse(current, out int iValue)) valueArgs.Add(iValue);
-                else if (uint.TryParse(current.TrimEnd('U', 'u'), out uint uValue)) valueArgs.Add(uValue);
+                if (int.TryParse(current, out var iValue)) valueArgs.Add(iValue);
+                else if (uint.TryParse(current.TrimEnd('U', 'u'), out var uValue)) valueArgs.Add(uValue);
+                else if (bool.TryParse(current, out var bValue)) valueArgs.Add(bValue);
                 else valueArgs.Add(current);
             }
             Callback.Fire(addonArg, boolArg, valueArgs.ToArray());
