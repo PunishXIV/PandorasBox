@@ -30,13 +30,16 @@ namespace PandorasBox.Features.Actions
             [FeatureConfigOption("Activate when party size is less than or equal to", IntMin = 1, IntMax = 8, EditorSize = 300)]
             public int MaxParty = 1;
 
-            [FeatureConfigOption("Activate if main tank dies (respects party size option)", "", 1)]
+            [FeatureConfigOption("Function only in a duty", "", 1)]
+            public bool OnlyInDuty = false;
+
+            [FeatureConfigOption("Activate if main tank dies (respects party size option)", "", 2)]
             public bool ActivateOnDeath = false;
 
-            [FeatureConfigOption("Only activate on entrance if no other tank has stance", "", 2)]
+            [FeatureConfigOption("Only activate on entrance if no other tank has stance", "", 3)]
             public bool NoOtherTanks = false;
 
-            [FeatureConfigOption("Activate when synced to a fate", "", 3)]
+            [FeatureConfigOption("Activate when synced to a fate", "", 4)]
             public bool ActivateInFate = false;
         }
 
@@ -108,6 +111,7 @@ namespace PandorasBox.Features.Actions
         private bool EnableStance(uint? jobId)
         {
             if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role != 1) return true;
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
 
             var am = ActionManager.Instance();
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;

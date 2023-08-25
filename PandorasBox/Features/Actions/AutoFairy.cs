@@ -16,12 +16,16 @@ namespace PandorasBox.Features.Actions
 
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
+
+            [FeatureConfigOption("Function only in a duty")]
+            public bool OnlyInDuty = false;
         }
 
         public Configs Config { get; private set; }
 
-        public override bool UseAutoConfig => false;
+        public override bool UseAutoConfig => true;
 
         public override void Enable()
         {
@@ -57,6 +61,8 @@ namespace PandorasBox.Features.Actions
 
         public bool TrySummon(uint? jobId)
         {
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
+
             var am = ActionManager.Instance();
             if (jobId is 26 or 27)
             {
@@ -80,21 +86,5 @@ namespace PandorasBox.Features.Actions
             Svc.Condition.ConditionChange -= CheckIfRespawned;
             base.Disable();
         }
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-        {
-            ImGui.PushItemWidth(350);
-            ImGui.SliderFloat("Set delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
-
-            //if (ImGui.RadioButton("Summon EoS", Config.SelectedFairy == 0))
-            //{
-            //    Config.SelectedFairy = 0;
-            //}
-            //if (ImGui.RadioButton("Summon Selene", Config.SelectedFairy == 1))
-            //{
-            //    Config.SelectedFairy = 1;
-            //}
-
-        };
     }
 }
