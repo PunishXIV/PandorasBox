@@ -8,6 +8,7 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -354,6 +355,7 @@ namespace PandorasBox.Features
             return slots;
         }
 
+        internal static unsafe bool IsTargetLocked => *(byte*)(((nint)TargetSystem.Instance()) + 309) == 1;
         internal static bool IsInventoryFree()
         {
             return GetInventoryFreeSlotCount() >= 1;

@@ -10,6 +10,8 @@ namespace PandorasBox.Helpers
 {
     internal static class AtkResNodeHelper
     {
+
+        
         public static unsafe Vector2 GetNodePosition(AtkResNode* node)
         {
             var pos = new Vector2(node->X, node->Y);
