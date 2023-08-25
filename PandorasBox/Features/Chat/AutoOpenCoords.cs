@@ -38,6 +38,9 @@ namespace PandorasBox.Features.ChatFeature
             [FeatureConfigOption("Set <flag> without opening the map")]
             public bool DontOpenMap = false;
 
+            [FeatureConfigOption("Ignore <pos> flags")]
+            public bool IgnorePOS = false;
+
             public List<ushort> FilteredChannels = new();
         }
 
@@ -115,6 +118,8 @@ namespace PandorasBox.Features.ChatFeature
                 if (!filteredOut && Config.FilteredChannels.IndexOf((ushort)type) != -1) filteredOut = true;
                 if (!filteredOut)
                 {
+                    if (Config.IgnorePOS && newMapLinkMessage.Text.Contains("Z:")) return;
+
                     MapLinkMessageList.Add(newMapLinkMessage);
                     PlaceMapMarker(newMapLinkMessage);
                 }
@@ -162,6 +167,7 @@ namespace PandorasBox.Features.ChatFeature
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
             ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar);
+            ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS);
             //ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
 
             if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
