@@ -14,7 +14,7 @@ using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
 {
-    public unsafe class DiscardUniqueReplacement : Feature
+    public unsafe class EnableYesButtons : Feature
     {
         public override string Name => "Automatically Enabled Yes Buttons";
 
@@ -38,6 +38,18 @@ namespace PandorasBox.Features.UI
                     {
                         addon->YesButton->AtkComponentBase.SetEnabledState(true);
                         addon->AtkUnitBase.UldManager.NodeList[13]->ToggleVisibility(false);
+                    }
+                }
+            }
+
+            if (args.AddonName == "SalvageDialog")
+            {
+                if (TryGetAddonByName<AddonSalvageDialog>("SalvageDialog", out var addon))
+                {
+                    if (!addon->DesynthesizeButton->IsEnabled)
+                    {
+                        addon->DesynthesizeButton->AtkComponentBase.SetEnabledState(true);
+                        addon->AtkUnitBase.UldManager.NodeList[5]->ToggleVisibility(false);
                     }
                 }
             }
