@@ -27,12 +27,10 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
             public uint SelectedMount = 0;
-
             public bool AbortIfMoving = false;
-
             public bool UseOnIsland = false;
+            public bool JumpAfterMount = false;
         }
 
         public Configs Config { get; private set; }
@@ -57,6 +55,17 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() => EzThrottler.Throttle("GatherMount", (int)(Config.ThrottleF * 1000)));
                 TaskManager.Enqueue(() => EzThrottler.Check("GatherMount"));
                 TaskManager.Enqueue(TryMount, 3000);
+                TaskManager.Enqueue(() =>
+                {
+                    if (Config.JumpAfterMount)
+                    {
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                    }
+                });
             }
         }
 
@@ -121,6 +130,7 @@ namespace PandorasBox.Features.Actions
 
             ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
             ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland);
+            ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount);
 
         };
     }

@@ -1,19 +1,13 @@
-using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Logging;
 using ECommons;
 using ECommons.DalamudServices;
-using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
-using System;
 using System.Linq;
-using System.Text;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace PandorasBox.Features.Actions
@@ -33,6 +27,7 @@ namespace PandorasBox.Features.Actions
             public bool AbortIfMoving = false;
             public bool DisableInFates = true;
             public bool ExcludeHousing = false;
+            public bool JumpAfterMount = false;
         }
 
         public Configs Config { get; private set; }
@@ -52,7 +47,18 @@ namespace PandorasBox.Features.Actions
             {
                     TaskManager.Enqueue(() => NotInCombat);
                     TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
-                    TaskManager.Enqueue(() => TryMount());
+                    TaskManager.Enqueue(TryMount, 3000);
+                    TaskManager.Enqueue(() =>
+                    {
+                        if (Config.JumpAfterMount)
+                        {
+                            TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                            TaskManager.DelayNext(50);
+                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                            TaskManager.DelayNext(50);
+                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                        }
+                    });
             }
         }
 
@@ -132,6 +138,7 @@ namespace PandorasBox.Features.Actions
             ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
             ImGui.Checkbox("Disable in fates", ref Config.DisableInFates);
             ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+            ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount);
 
         };
     }
