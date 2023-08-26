@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Lumina.Excel.GeneratedSheets;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using ECommons;
 
 namespace PandorasBox.Features.Commands
 {
@@ -16,7 +17,7 @@ namespace PandorasBox.Features.Commands
         public override string Command { get; set; } = "/plink";
         public override string[] Alias => new string[] { "" };
 
-        public override List<string> Parameters => new() { "<item name || id>" };
+        public override List<string> Parameters => new() { "[<item name>], [<id>]" };
         public override string Description => "It's like the other item link commands, but allows searching.";
 
         public override FeatureType FeatureType => FeatureType.Commands;
@@ -25,41 +26,14 @@ namespace PandorasBox.Features.Commands
         {
 
             var item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(0);
-            var argName = string.Join(' ', args);
-
-            //var processName = string.Join(' ', args.Select(arg => arg.Replace("\"", "")).ToList());
-            //PrintModuleMessage($"reg name: {argName}, pro name: {processName}");
+            var argName = string.Join(' ', args).Replace("\"", "");
 
             if (uint.TryParse(args[0].Trim(), out var id))
-            {
-                //PrintModuleMessage("entered uint parse");
                 item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(id);
-            }
             else
-            {
-                //PrintModuleMessage("entered name match");
                 item = Svc.Data.GetExcelSheet<Item>().FirstOrDefault(x => x.Name.RawString.Contains(argName, StringComparison.CurrentCultureIgnoreCase));
-            }
 
-            if (id == 0)
-            {
-                PrintModuleMessage($"Item {argName} not found");
-                return;
-            }
-
-            var idStr = new SeStringBuilder()
-                .AddUiForeground(id.ToString(), 1)
-                .Build();
-
-            var sb = new SeStringBuilder()
-                .AddUiForeground("\uE078 ", 32)
-                .Append($"Item #{idStr}: {GetItemLink(id)}");
-
-            Svc.Chat.PrintChat(new XivChatEntry
-            {
-                Message = sb.Build(),
-                Type = XivChatType.Echo
-            });
+            PrintModuleMessage(GetItemLink(item.RowId));
         }
 
         public static SeString GetItemLink(uint id)
