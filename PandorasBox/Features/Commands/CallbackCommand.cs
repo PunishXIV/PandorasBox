@@ -33,16 +33,57 @@ namespace PandorasBox.Features.Commands
                 PluginLog.Log($"Invalid bool. Please follow \"{Command} <addon> <bool> <atkValues>\"");
                 return;
             }
-            var valueArgs = new List<object>();
-            for (var i = 2; i < args.Count; i++)
-            {
-                var current = args[i];
-                if (int.TryParse(current, out var iValue)) valueArgs.Add(iValue);
-                else if (uint.TryParse(current.TrimEnd('U', 'u'), out var uValue)) valueArgs.Add(uValue);
-                else if (bool.TryParse(current, out var bValue)) valueArgs.Add(bValue);
-                else valueArgs.Add(current);
-            }
+
+            var valueArgs = ParseValueArguments(args, 2);
             Callback.Fire(addonArg, boolArg, valueArgs.ToArray());
+        }
+
+        private static List<object> ParseValueArguments(List<string> args, int startIndex)
+        {
+            var valueArgs = new List<object>();
+
+            var current = "";
+            var inQuotes = false;
+
+            for (var i = startIndex; i < args.Count; i++)
+            {
+                if (!inQuotes)
+                {
+                    if (args[i].StartsWith("\""))
+                    {
+                        inQuotes = true;
+                        current = args[i].TrimStart('"');
+                    }
+                    else
+                    {
+                        if (int.TryParse(args[i], out var iValue)) valueArgs.Add(iValue);
+                        else if (uint.TryParse(args[i].TrimEnd('U', 'u'), out var uValue)) valueArgs.Add(uValue);
+                        else if (bool.TryParse(args[i], out var bValue)) valueArgs.Add(bValue);
+                        else valueArgs.Add(args[i]);
+                    }
+                }
+                else
+                {
+                    if (args[i].EndsWith("\""))
+                    {
+                        inQuotes = false;
+                        current += " " + args[i].TrimEnd('"');
+                        valueArgs.Add(current);
+                        current = "";
+                    }
+                    else
+                    {
+                        current += " " + args[i];
+                    }
+                }
+            }
+
+            if (!string.IsNullOrEmpty(current))
+            {
+                PluginLog.Log("Error: Unclosed quotes.");
+            }
+
+            return valueArgs;
         }
     }
 }
