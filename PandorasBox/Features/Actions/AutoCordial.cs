@@ -27,7 +27,7 @@ namespace PandorasBox.Features.Actions
 
         public override bool UseAutoConfig => false;
 
-        internal static readonly List<uint> cordialRowIDs = new() { 6141, 12669, 16911 };
+        internal static readonly List<uint> cordialRowIDs = new() { 12669, 6141, 16911 };
         internal static (string Name, uint Id, ushort NQGP, ushort HQGP)[] cordials;
 
         public class Configs : FeatureConfig
@@ -69,7 +69,7 @@ namespace PandorasBox.Features.Actions
 
         private static bool WillOvercap(int gp_recovery)
         {
-            return Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery < Svc.ClientState.LocalPlayer.MaxGp;
+            return ((int)Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery) > (int)Svc.ClientState.LocalPlayer.MaxGp;
         }
 
         private void RunFeature(Framework framework)
@@ -85,10 +85,12 @@ namespace PandorasBox.Features.Actions
 
             for (var i = Config.InvertPriority ? cordials.Length - 1 : 0; Config.InvertPriority ? i >= 0 : i < cordials.Length; i += Config.InvertPriority ? -1 : 1)
             {
-                if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0 &&
-                    ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap))
+                // && ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap)
+                //PluginLog.Log($"{am->GetActionStatus(ActionType.Item, cordials[i].Id)}");
+                if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
                 {
-                    am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
+                    if (!Config.PreventOvercap || (Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)))
+                        am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
                 }
             }
 
