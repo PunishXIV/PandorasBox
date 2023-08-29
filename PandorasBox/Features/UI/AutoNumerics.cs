@@ -1,4 +1,3 @@
-using System;
 using System.Linq;
 using System.Text;
 using Dalamud.Game;
@@ -58,12 +57,18 @@ namespace PandorasBox.Features.UI
             public int TransmuteMinOrMax = 0;
             public bool TransmuteExcludeSplit = true;
             public bool TransmuteConfirm = true;
+
+            public bool WorkOnVentures = false;
+            public int VentureMinOrMax = 1;
+            public bool VentureExcludeSplit = true;
+            public bool VentureConfirm = false;
         }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += FillRegularNumeric;
+            Svc.Framework.Update += FillVentureNumeric;
             //Svc.Framework.Update += FillBankNumeric;
             base.Enable();
         }
@@ -187,6 +192,52 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        private void FillVentureNumeric(Framework framework)
+        {
+            var ventureNumeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ShopExchangeCurrencyDialog");
+            if (ventureNumeric == null) { hasDisabled = false; return; }
+
+            if (ventureNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(ventureNumeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
+
+            if (Config.WorkOnVentures && ventureNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(ventureNumeric) && !hasDisabled)
+            {
+                try
+                {
+                    var minValue = 1;
+                    var maxAvailable = ventureNumeric->AtkValues[5].UInt - ventureNumeric->AtkValues[4].UInt;
+                    var maxAfford = ventureNumeric->AtkValues[1].UInt / ventureNumeric->AtkValues[2].UInt;
+                    var maxValue = maxAvailable > maxAfford ? maxAfford : maxAvailable;
+
+                    var numericTextNode = ventureNumeric->UldManager.NodeList[8]->GetAsAtkComponentNode()->Component->UldManager.NodeList[4]->GetAsAtkTextNode();
+
+                    if (Config.VentureExcludeSplit && IsSplitAddon()) return;
+                    if (Config.VentureMinOrMax == 0)
+                    {
+                        TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte(minValue)));
+                        if (Config.VentureConfirm)
+                            TaskManager.Enqueue(() => Callback.Fire(ventureNumeric, true, 0, minValue));
+                    }
+                    if (Config.VentureMinOrMax == 1)
+                    {
+                        TaskManager.Enqueue(() => numericTextNode->SetText(ConvertToByte((int)maxValue)));
+                        if (Config.VentureConfirm)
+                            TaskManager.Enqueue(() => Callback.Fire(ventureNumeric, true, 0, maxValue));
+                    }
+
+                    // No way to detect manually entered amounts
+                }
+                catch
+                {
+                    return;
+                }
+            }
+            else
+            {
+                TaskManager.Abort();
+                return;
+            }
+        }
+
         private bool IsSplitAddon()
         {
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
@@ -230,6 +281,7 @@ namespace PandorasBox.Features.UI
         {
             SaveConfig(Config);
             Svc.Framework.Update -= FillRegularNumeric;
+            Svc.Framework.Update -= FillVentureNumeric;
             //Svc.Framework.Update -= FillBankNumeric;
             base.Disable();
         }
@@ -241,6 +293,7 @@ namespace PandorasBox.Features.UI
             DrawConfigsForAddon("Retainers", ref Config.WorkOnRetainers, ref Config.RetainersMinOrMax, ref Config.RetainerExcludeSplit, ref Config.RetainersConfirm);
             DrawConfigsForAddon("Mail", ref Config.WorkOnMail, ref Config.MailMinOrMax, ref Config.MailExcludeSplit, ref Config.MailConfirm);
             DrawConfigsForAddon("Materia Transmutation", ref Config.WorkOnTransmute, ref Config.TransmuteMinOrMax, ref Config.TransmuteExcludeSplit, ref Config.TransmuteConfirm);
+            DrawConfigsForAddon("Venture Purchase", ref Config.WorkOnVentures, ref Config.VentureMinOrMax, ref Config.VentureExcludeSplit, ref Config.VentureConfirm);
         };
 
         private static void DrawConfigsForAddon(string addonName, ref bool workOnAddon, ref int minOrMax, ref bool excludeSplit, ref bool autoConfirm)
@@ -258,9 +311,12 @@ namespace PandorasBox.Features.UI
                 {
                     minOrMax = 0;
                 }
-                if (ImGui.RadioButton($"Auto OK on manually entered amounts", minOrMax == -1))
+                if (addonName != "Venture Purchase")
                 {
-                    minOrMax = -1;
+                    if (ImGui.RadioButton($"Auto OK on manually entered amounts", minOrMax == -1))
+                    {
+                        minOrMax = -1;
+                    }
                 }
                 ImGui.Checkbox("Exclude Split Dialog", ref excludeSplit);
                 if (minOrMax != -1) ImGui.Checkbox("Auto Confirm", ref autoConfirm);
