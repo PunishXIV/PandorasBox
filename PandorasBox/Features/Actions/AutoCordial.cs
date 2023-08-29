@@ -11,6 +11,7 @@ using ImGuiNET;
 using System.Collections.Generic;
 using Lumina.Excel.GeneratedSheets;
 using System.Text.RegularExpressions;
+using Dalamud.Logging;
 
 namespace PandorasBox.Features.Actions
 {
@@ -18,7 +19,7 @@ namespace PandorasBox.Features.Actions
     {
         public override string Name => "Auto-Cordial";
 
-        public override string Description => "Automatically use a cordial when below the threshold.";
+        public override string Description => "Automatically use a cordial when at a given threshold.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
@@ -26,22 +27,8 @@ namespace PandorasBox.Features.Actions
 
         public override bool UseAutoConfig => false;
 
-        // public Dictionary<uint, Item> Cordials { get; set; }
         internal static readonly List<uint> cordialRowIDs = new() { 6141, 12669, 16911 };
         internal static (string Name, uint Id, ushort NQGP, ushort HQGP)[] cordials;
-
-        // private static uint hi_cordial = 12669;
-        // private static uint reg_cordial = 6141;
-        // private static uint reg_cordial_hq = 1006141;
-        // private static uint watered_cordial = 16911;
-        // private static uint watered_cordial_hq = 1016911;
-        // private List<uint> cordials = new List<uint>() { hi_cordial, reg_cordial_hq, reg_cordial, watered_cordial_hq, watered_cordial };
-        // private static int hi_recovery = 400;
-        // private static int reg_recovery_hq = 350;
-        // private static int reg_recovery = 300;
-        // private static int water_recovery_hq = 200;
-        // private static int water_recovery = 150;
-        // private List<int> recoveries = new List<int>() { hi_recovery, reg_recovery_hq, reg_recovery, water_recovery_hq, water_recovery };
 
         public class Configs : FeatureConfig
         {
@@ -88,9 +75,7 @@ namespace PandorasBox.Features.Actions
         private void RunFeature(Framework framework)
         {
             if (Svc.ClientState.LocalPlayer is null) return;
-            if (!(Svc.ClientState.LocalPlayer.ClassJob.Id == 16) || !(Svc.ClientState.LocalPlayer.ClassJob.Id == 17)) return;
-            if (Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !Config.UseOnFisher) return;
-
+            if (!(Svc.ClientState.LocalPlayer.ClassJob.Id == 16 || Svc.ClientState.LocalPlayer.ClassJob.Id == 17) || (Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !Config.UseOnFisher)) return;
             if (!((Svc.ClientState.LocalPlayer.CurrentGp < Config.DefaultThreshold && Config.DirectionBelow) || (Svc.ClientState.LocalPlayer.CurrentGp > Config.DefaultThreshold && Config.DirectionAbove))) return;
 
             var am = ActionManager.Instance();
@@ -141,18 +126,14 @@ namespace PandorasBox.Features.Actions
             Config = LoadConfig<Configs>() ?? new Configs();
             // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => x.Singular.ToString().Contains("cordial")).ToDictionary(x => x.RowId, x => x);
             // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => (x.Name.ToString().Contains("cordial")).Select(x => (x.RowId, x.Name.ToString())).ToArray());
-            cordials = ((string Name, uint Id, ushort NQGP, ushort HQGP)[])Svc.Data.GetExcelSheet<Item>()
+            cordials = Svc.Data.GetExcelSheet<Item>()
                 .Where(row => cordialRowIDs.Any(num => num == row.RowId))
                 .Select(row => (
                     Name: row.Name.RawString,
                     Id: row.RowId,
                     NQGP: row.ItemAction.Value.Data[0],
                     HQGP: row.ItemAction.Value.DataHQ[0]
-                ));
-                    //NQGP: Svc.Data.GetExcelSheet<ItemAction>()
-                    //    .First(actionRow => actionRow.RowId == row.ItemAction).Data[0],
-                    //HQGP: Svc.Data.GetExcelSheet<ItemAction>()
-                    //    .First(actionRow => actionRow.RowId == row.ItemAction).DataHQ[0]
+                )).ToArray();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
