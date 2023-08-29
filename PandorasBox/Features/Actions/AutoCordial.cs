@@ -79,55 +79,20 @@ namespace PandorasBox.Features.Actions
             if (!((Svc.ClientState.LocalPlayer.CurrentGp < Config.DefaultThreshold && Config.DirectionBelow) || (Svc.ClientState.LocalPlayer.CurrentGp > Config.DefaultThreshold && Config.DirectionAbove))) return;
 
             var am = ActionManager.Instance();
-            //var start = Config.InvertPriority ? cordials.Length - 1 : 0;
-            //var end = Config.InvertPriority ? -1 : cordials.Length;
-            //var step = Config.InvertPriority ? -1 : 1;
 
             for (var i = Config.InvertPriority ? cordials.Length - 1 : 0; Config.InvertPriority ? i >= 0 : i < cordials.Length; i += Config.InvertPriority ? -1 : 1)
             {
-                // && ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap)
-                //PluginLog.Log($"{am->GetActionStatus(ActionType.Item, cordials[i].Id)}");
                 if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
                 {
                     if (!Config.PreventOvercap || (Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)))
                         am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
                 }
             }
-
-
-            //if (!Config.InvertPriority)
-            //{
-            //    for (var i = 0; i < cordials.Length; i++)
-            //    {
-            //        if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
-            //        {
-            //            if ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap)
-            //            {
-            //                am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
-            //            }
-            //        }
-            //    }
-            //}
-            //else
-            //{
-            //    for (var i = cordials.Length - 1; i >= 0; i--)
-            //    {
-            //        if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
-            //        {
-            //            if ((Config.PreventOvercap && !WillOvercap((int)cordials[i].NQGP)) || !Config.PreventOvercap)
-            //            {
-            //                am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
-            //            }
-            //        }
-            //    }
-            //}
         }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => x.Singular.ToString().Contains("cordial")).ToDictionary(x => x.RowId, x => x);
-            // cordials = Svc.Data.GetExcelSheet<Item>().Where(x => (x.Name.ToString().Contains("cordial")).Select(x => (x.RowId, x.Name.ToString())).ToArray());
             cordials = Svc.Data.GetExcelSheet<Item>()
                 .Where(row => cordialRowIDs.Any(num => num == row.RowId))
                 .Select(row => (
