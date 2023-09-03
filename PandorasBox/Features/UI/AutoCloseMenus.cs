@@ -67,6 +67,16 @@ namespace PandorasBox.Features.UI
                 }
             }
 
+            if (Config.doDesynthesis && TryGetAddonByName<AtkUnitBase>("SalvageAutoDialog", out var salvageAutoResult))
+            {
+                // Desynthesis successful
+                if (salvageAutoResult->AtkValues[17].Byte == 0)
+                {
+                    PluginLog.Log("Closing Salvage Auto Results menu");
+                    Callback.Fire(salvageAutoResult, true, 1);
+                }
+            }
+
             if (Config.doAetherialReduction && TryGetAddonByName<AtkUnitBase>("PurifyResult", out var purifyResult))
             {
                 // Aetherial Reduction successful
