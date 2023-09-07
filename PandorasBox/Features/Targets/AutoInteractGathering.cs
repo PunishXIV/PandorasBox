@@ -103,8 +103,13 @@ namespace PandorasBox.Features.Targets
             if (!nearestNode.IsTargetable)
                 return;
 
-            if (!Config.ExcludeIsland && nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
-            {   
+            if (Config.ExcludeIsland && MJIManager.Instance()->IsPlayerInSanctuary != 0)
+            {
+                return;
+            }
+
+            if (nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
+            {
                 if (!TaskManager.IsBusy)
                 {
                     TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));

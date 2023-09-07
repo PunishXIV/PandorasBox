@@ -191,7 +191,7 @@ internal class MainWindow : Window
                     {
                         foreach (var feature in P.Features)
                         {
-                            if (feature.FeatureType == FeatureType.Commands) continue;
+                            if (feature.FeatureType == FeatureType.Commands || feature.FeatureType == FeatureType.Disabled) continue;
 
                             if (feature.Description.Contains(searchString, StringComparison.CurrentCultureIgnoreCase) ||
                                 feature.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase))

@@ -25,7 +25,7 @@ namespace PandorasBox.Features.Other
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Inactivity Timer (seconds)", EditorSize = 300, IntMax = 9999, IntMin = 1)]
+            [FeatureConfigOption("Inactivity Timer (seconds)", EditorSize = 300, IntMax = 120, IntMin = 1, EnforcedLimit = true)]
             public int InactivityTimer = 1;
         }
 
