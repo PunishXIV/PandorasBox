@@ -1,17 +1,14 @@
-using ClickLib.Clicks;
 using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.Attributes;
 using FFXIVClientStructs.FFXIV.Client.UI;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
-using System;
 using System.Linq;
-using System.Windows.Forms;
 using static ECommons.GenericHelpers;
+using Addon = Lumina.Excel.GeneratedSheets.Addon;
 
 namespace PandorasBox.Features.UI
 {
@@ -36,6 +33,9 @@ namespace PandorasBox.Features.UI
 
             [FeatureConfigOption("Aetherial Reduction Results", "", 3)]
             public bool doAetherialReduction = false;
+
+            [FeatureConfigOption("Full Mail Notification", "", 4)]
+            public bool doFullMail = false;
         }
 
         public override void Enable()
@@ -47,11 +47,8 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(Dalamud.Game.Framework framework)
         {
-            if (Config.doEntrustDuplicates)
+            if (Config.doEntrustDuplicates && TryGetAddonByName<AtkUnitBase>("RetainerItemTransferProgress", out var retainerProgress))
             {
-                var retainerProgress = (AtkUnitBase*)Svc.GameGui.GetAddonByName("RetainerItemTransferProgress");
-                if (retainerProgress == null) return;
-
                 // Successfully entrusted items.
                 if (MemoryHelper.ReadSeStringNullTerminated(new nint(retainerProgress->AtkValues[0].String)).ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 13528).Text.ExtractText())
                 {
@@ -60,11 +57,8 @@ namespace PandorasBox.Features.UI
                 }
             }
 
-            if (Config.doDesynthesis)
+            if (Config.doDesynthesis && TryGetAddonByName<AtkUnitBase>("SalvageResult", out var salvageResult))
             {
-                var salvageResult = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageResult");
-                if (salvageResult == null) return;
-
                 // Desynthesis successful
                 if (salvageResult->UldManager.NodeList[16]->GetAsAtkTextNode()->NodeText.ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1835).Text.ExtractText())
                 {
@@ -73,16 +67,34 @@ namespace PandorasBox.Features.UI
                 }
             }
 
-            if (Config.doAetherialReduction)
+            if (Config.doDesynthesis && TryGetAddonByName<AtkUnitBase>("SalvageAutoDialog", out var salvageAutoResult))
             {
-                var purifyResult = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyResult");
-                if (purifyResult == null) return;
+                // Desynthesis successful
+                if (salvageAutoResult->AtkValues[17].Byte == 0)
+                {
+                    PluginLog.Log("Closing Salvage Auto Results menu");
+                    Callback.Fire(salvageAutoResult, true, 1);
+                }
+            }
 
+            if (Config.doAetherialReduction && TryGetAddonByName<AtkUnitBase>("PurifyResult", out var purifyResult))
+            {
                 // Aetherial Reduction successful
                 if (purifyResult->UldManager.NodeList[17]->GetAsAtkTextNode()->NodeText.ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 2171).Text.ExtractText())
                 {
                     PluginLog.Log("Closing Purify Results menu");
                     Callback.Fire(purifyResult, true, -1);
+                }
+            }
+
+            if (Config.doFullMail && TryGetAddonByName<AtkUnitBase>("SelectOk", out var okAddon))
+            {
+                var addonText = MemoryHelper.ReadSeStringNullTerminated(new nint(okAddon->AtkValues[0].String)).ToString();
+
+                if (addonText == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1856).Text.ExtractText() || addonText == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1857).Text.ExtractText())
+                {
+                    PluginLog.Log("Closing Full Mail menu");
+                    Callback.Fire(okAddon, true, 0);
                 }
             }
         }
