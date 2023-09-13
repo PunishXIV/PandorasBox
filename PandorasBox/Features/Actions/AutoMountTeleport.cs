@@ -1,16 +1,12 @@
-using Dalamud.Logging;
+using Dalamud.Game.ClientState.Conditions;
 using ECommons;
 using ECommons.DalamudServices;
-using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
-using System;
 using System.Linq;
-using System.Text;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace PandorasBox.Features.Actions
@@ -26,12 +22,10 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
             public uint SelectedMount = 0;
-
             public bool AbortIfMoving = false;
-
             public bool ExcludeHousing = false;
+            public bool JumpAfterMount = false;
         }
 
         public Configs Config { get; private set; }
@@ -56,15 +50,26 @@ namespace PandorasBox.Features.Actions
             }
             TaskManager.Enqueue(() => NotBetweenAreas);
             TaskManager.DelayNext("MountTeleportTryMount", (int)(Config.ThrottleF * 1000));
-            TaskManager.Enqueue(() => TryMount());
+            TaskManager.Enqueue(TryMount, 3000);
+            TaskManager.Enqueue(() =>
+            {
+                if (Config.JumpAfterMount)
+                {
+                    TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                    TaskManager.DelayNext(50);
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                    TaskManager.DelayNext(50);
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                }
+            });
         }
 
-        private static bool NotBetweenAreas => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas];
+        private static bool NotBetweenAreas => !Svc.Condition[ConditionFlag.BetweenAreas];
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas] || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas51]) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted]) return true;
+            if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.BetweenAreas51]) return false;
+            if (Svc.Condition[ConditionFlag.Mounted]) return true;
 
             if (Config.AbortIfMoving && IsMoving()) return true;
 
@@ -126,6 +131,7 @@ namespace PandorasBox.Features.Actions
 
             ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
             ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+            ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount);
 
         };
     }
