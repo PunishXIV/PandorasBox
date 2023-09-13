@@ -1,19 +1,18 @@
 using Dalamud.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Logging;
 using Dalamud.Utility.Signatures;
 using ECommons.DalamudServices;
+using ECommons.Gamepad;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Client.UI;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
-using System;
 using System.Collections.Generic;
-using Dalamud.Hooking;
 
 namespace PandorasBox.Features.UI
 {
@@ -32,20 +31,42 @@ namespace PandorasBox.Features.UI
 
         private readonly DalamudContextMenu contextMenu = new();
 
-        private static readonly SeString DepositString = new SeString(new TextPayload("Deposit into FC Chest"));
+        private static readonly SeString DepositString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Deposit into FC Chest"));
+
+        public override bool UseAutoConfig => true;
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption($"Ctrl + Right Click Shortcut")]
+            public bool UseShortcut = false;
+        }
+
+        public Configs Config { get; private set; }
 
         public override void Enable()
         {
             contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
             SignatureHelper.Initialise(this, true);
+            Config = LoadConfig<Configs>() ?? new Configs();
             base.Enable();
         }
 
         private void AddInventoryItem(InventoryContextMenuOpenArgs args)
         {
+            if (args.ParentAddonName == "ArmouryBoard") return;
             var item = CheckInventoryItem(args.ItemId, args.ItemHq, args.ItemAmount);
             if (item != null)
                 args.AddCustomItem(item);
+
+            if (Config.UseShortcut)
+            {
+                if (Svc.GameGui.GetAddonByName("FreeCompanyChest").GetAtkUnitBase(out var addon))
+                {
+                    if (ImGui.GetIO().KeyCtrl)
+                    {
+                        DepositItem(args.ItemId, addon, args.ItemHq, args.ItemAmount);
+                    }
+                }
+            }
         }
 
         private unsafe InventoryContextMenuItem CheckInventoryItem(uint itemId, bool itemHq, uint itemAmount)
@@ -90,7 +111,7 @@ namespace PandorasBox.Features.UI
 
             var invManager = InventoryManager.Instance();
             InventoryType? sourceInventory = GetInventoryItemPage(itemId, itemHq, itemAmount, out short slot);
-            short destSlot = CheckFCChestSlots(FCPage);
+            short destSlot = CheckFCChestSlots(FCPage, itemId, itemAmount);
             if (sourceInventory != null && destSlot != -1)
             {
                 AgentFreeCompanyChest_MoveFCItem(UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.FreeCompanyChest), (InventoryType)sourceInventory, (uint)slot, (InventoryType)FCPage, (uint)destSlot);
@@ -98,20 +119,33 @@ namespace PandorasBox.Features.UI
 
         }
 
-        private unsafe short CheckFCChestSlots(uint fCPage)
+        private unsafe short CheckFCChestSlots(uint fCPage, uint itemid, uint stack)
         {
             var invManager = InventoryManager.Instance();
             InventoryType fcPage = (InventoryType)fCPage;
 
             var container = invManager->GetInventoryContainer(fcPage);
 
-            for (var i = 0; i < container->Size; i++) 
+            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == itemid, out var sheetItem))
             {
-                var item = container->GetInventorySlot(i);
-
-                if (item->ItemID == 0)
+                for (var i = 0; i < container->Size; i++)
                 {
-                    return item->Slot;
+                    var item = container->GetInventorySlot(i);
+
+                    if (item->ItemID == itemid && (item->Quantity + stack) <= sheetItem.StackSize)
+                    {
+                        return item->Slot;
+                    }
+                }
+
+                for (var i = 0; i < container->Size; i++)
+                {
+                    var item = container->GetInventorySlot(i);
+
+                    if (item->ItemID == 0)
+                    {
+                        return item->Slot;
+                    }
                 }
             }
 
@@ -155,6 +189,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
+            SaveConfig(Config);
             base.Disable();
         }
     }

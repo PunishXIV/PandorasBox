@@ -4,6 +4,7 @@ using System.Text;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -87,24 +88,21 @@ namespace PandorasBox.Features.UI
                     if (Config.WorkOnTrading && Svc.Condition[ConditionFlag.TradeOpen])
                         TryFill(numeric, minValue, maxValue, Config.TradeMinOrMax, Config.TradeExcludeSplit, Config.TradeConfirm);
 
-                    else if (Config.WorkOnFCChest && InFcChest())
+                    if (Config.WorkOnFCChest && InFcChest())
                         TryFill(numeric, minValue, maxValue, Config.FCChestMinOrMax, Config.FCExcludeSplit, Config.FCChestConfirm);
 
-                    else if (Config.WorkOnRetainers && Svc.Condition[ConditionFlag.OccupiedSummoningBell] && !InFcChest())
+                    if (Config.WorkOnRetainers && Svc.Condition[ConditionFlag.OccupiedSummoningBell] && !InFcChest())
                         TryFill(numeric, minValue, maxValue, Config.RetainersMinOrMax, Config.RetainerExcludeSplit, Config.RetainersConfirm);
 
-                    else if (Config.WorkOnMail && InMail())
+                    if (Config.WorkOnMail && InMail())
                         TryFill(numeric, minValue, maxValue, Config.MailMinOrMax, Config.MailExcludeSplit, Config.MailConfirm);
 
-                    else if (Config.WorkOnTransmute && InTransmute())
+                    if (Config.WorkOnTransmute && InTransmute())
                         TryFill(numeric, minValue, maxValue, Config.TransmuteMinOrMax, Config.TransmuteExcludeSplit, Config.TransmuteConfirm);
-
-                    else
-                        return;
                 }
-                catch
+                catch (Exception ex)    
                 {
-                    return;
+                    ex.Log();
                 }
             }
             else
