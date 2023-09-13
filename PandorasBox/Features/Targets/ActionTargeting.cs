@@ -132,25 +132,28 @@ namespace PandorasBox.Features.Targets
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             ImGui.PushItemWidth(300);
-            ImGui.SliderFloat("Max Distance (yalms)", ref Config.MaxDistance, 0.1f, 30f, "%.1f");
+            if (ImGui.SliderFloat("Max Distance (yalms)", ref Config.MaxDistance, 0.1f, 30f, "%.1f")) hasChanged = true;
 
             if (ImGui.RadioButton("Don't Unset Target", !Config.UnsetTargetRange && !Config.UnsetTargetCombat))
             {
                 Config.UnsetTargetRange = false;
                 Config.UnsetTargetCombat = false;
+                hasChanged = true;
             }
             if (ImGui.RadioButton("Unset Target if not in cone range (all times, use with caution)", Config.UnsetTargetRange))
             {
                 Config.UnsetTargetRange = true;
                 Config.UnsetTargetCombat = false;
+                hasChanged = true;
             }
             if (ImGui.RadioButton("Unset Target if not in cone range (only in combat)", Config.UnsetTargetCombat))
             {
                 Config.UnsetTargetRange = false;
                 Config.UnsetTargetCombat = true;
+                hasChanged = true;
             }
         };
     }

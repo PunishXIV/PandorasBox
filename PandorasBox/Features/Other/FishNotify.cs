@@ -172,38 +172,39 @@ namespace PandorasBox.Features.Other
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             ImGui.PushItemWidth(300);
             if (ImGui.SliderInt("Volume", ref Config.Volume, 0, 100))
             {
                 audioHandler.Volume = Config.Volume / 100f;
+                hasChanged = true;
             }
 
-            ImGui.Checkbox("Light Tugs", ref Config.LightTugs);
+            if (ImGui.Checkbox("Light Tugs", ref Config.LightTugs)) hasChanged = true;
             if (Config.LightTugs)
             {
                 ImGui.Indent();
-                ImGui.Checkbox("Chat Alerts##Light", ref Config.LightChat);
-                ImGui.Checkbox("Sound Effect##Light", ref Config.PlayLightSound);
+                if (ImGui.Checkbox("Chat Alerts##Light", ref Config.LightChat)) hasChanged = true;
+                if (ImGui.Checkbox("Sound Effect##Light", ref Config.PlayLightSound)) hasChanged = true;
                 ImGui.Unindent();
             }
 
-            ImGui.Checkbox("Strong Tugs", ref Config.StrongTugs);
+            if (ImGui.Checkbox("Strong Tugs", ref Config.StrongTugs)) hasChanged = true;
             if (Config.StrongTugs)
             {
                 ImGui.Indent();
-                ImGui.Checkbox("Chat Alerts##Strong", ref Config.StrongChat);
-                ImGui.Checkbox("Sound Effect##Strong", ref Config.PlayStrongSound);
+                if (ImGui.Checkbox("Chat Alerts##Strong", ref Config.StrongChat)) hasChanged = true;
+                if (ImGui.Checkbox("Sound Effect##Strong", ref Config.PlayStrongSound)) hasChanged = true;
                 ImGui.Unindent();
             }
 
-            ImGui.Checkbox("Legendary Tugs", ref Config.LegendaryTugs);
+            if (ImGui.Checkbox("Legendary Tugs", ref Config.LegendaryTugs)) hasChanged = true;
             if (Config.LegendaryTugs)
             {
                 ImGui.Indent();
-                ImGui.Checkbox("Chat Alerts##Legendary", ref Config.LegendaryChat);
-                ImGui.Checkbox("Sound Effect##Legendary", ref Config.PlayLegendarySound);
+                if (ImGui.Checkbox("Chat Alerts##Legendary", ref Config.LegendaryChat)) hasChanged = true;
+                if (ImGui.Checkbox("Sound Effect##Legendary", ref Config.PlayLegendarySound)) hasChanged = true;
                 ImGui.Unindent();
             }
         };

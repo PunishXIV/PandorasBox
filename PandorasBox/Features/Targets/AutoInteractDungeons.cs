@@ -157,29 +157,32 @@ namespace PandorasBox.Features.Targets
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             var defaultAttr = new FeatureConfigOptionAttribute("");
             ImGui.PushItemWidth(300);
-            ImGui.SliderFloat($"Set delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, defaultAttr.Format);
-            ImGui.SliderFloat($"Cooldown after interacting (seconds)", ref Config.Cooldown, 0.1f, 10f, defaultAttr.Format);
-            ImGui.SliderFloat($"Max Distance (yalms)", ref Config.MaxDistance, 0.5f, 5f, defaultAttr.Format);
-            ImGui.SliderFloat($"Max Height Difference (yalms)", ref Config.MaxHeight, 0.1f, 10f, defaultAttr.Format);
-            ImGui.Checkbox($"Exclude Combat", ref Config.ExcludeCombat);
-            ImGui.Checkbox($"Exclude Exits", ref Config.ExcludeExit);
-            ImGui.Checkbox($"Only Attempt Whilst Not Moving", ref Config.OnlyStanding);
+            if (ImGui.SliderFloat($"Set delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, defaultAttr.Format)) hasChanged = true;
+            if (ImGui.SliderFloat($"Cooldown after interacting (seconds)", ref Config.Cooldown, 0.1f, 10f, defaultAttr.Format)) hasChanged = true;
+            if (ImGui.SliderFloat($"Max Distance (yalms)", ref Config.MaxDistance, 0.5f, 5f, defaultAttr.Format)) hasChanged = true;
+            if (ImGui.SliderFloat($"Max Height Difference (yalms)", ref Config.MaxHeight, 0.1f, 10f, defaultAttr.Format)) hasChanged = true;
+            if (ImGui.Checkbox($"Exclude Combat", ref Config.ExcludeCombat)) hasChanged = true;
+            if (ImGui.Checkbox($"Exclude Exits", ref Config.ExcludeExit)) hasChanged = true;
+            if (ImGui.Checkbox($"Only Attempt Whilst Not Moving", ref Config.OnlyStanding)) hasChanged = true;
 
             if (ImGui.RadioButton($"Try Interact Method 1 (interacts with most things)", Config.InteractMethod == 1))
             {
                 Config.InteractMethod = 1;
+                hasChanged = true;
             }
             if (ImGui.RadioButton($"Try Interact Method 2 (interacts with things method 1 doesn't)", Config.InteractMethod == 2))
             {
                 Config.InteractMethod = 2;
+                hasChanged = true;
             }
             if (ImGui.RadioButton($"Try Interact with Both Methods (buggy on many things, use with caution)", Config.InteractMethod == 3))
             {
                 Config.InteractMethod = 3;
+                hasChanged = true;
             }
 
         };

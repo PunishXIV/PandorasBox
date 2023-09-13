@@ -164,10 +164,10 @@ namespace PandorasBox.Features.ChatFeature
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
-            ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar);
-            ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS);
+            if (ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar)) hasChanged = true;
+            if (ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS)) hasChanged = true;
             //ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
 
             if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
@@ -182,6 +182,7 @@ namespace PandorasBox.Features.ChatFeature
 
                     if (ImGui.Checkbox(chatTypeName + "##filter", ref checkboxClicked))
                     {
+                        hasChanged = true;
                         Config.FilteredChannels = Config.FilteredChannels.Distinct().ToList();
 
                         if (checkboxClicked)

@@ -265,16 +265,16 @@ namespace PandorasBox.Features
 
                 }
 
+                if (configChanged)
+                {
+                    SaveConfig((FeatureConfig)configObj);
+                }
+
             }
             catch (Exception ex)
             {
                 ImGui.Text($"Error with AutoConfig: {ex.Message}");
                 ImGui.TextWrapped($"{ex.StackTrace}");
-            }
-
-            if (configChanged && Enabled)
-            {
-                ConfigChanged();
             }
         }
 
@@ -317,7 +317,19 @@ namespace PandorasBox.Features
         protected delegate void DrawConfigDelegate(ref bool hasChanged);
         protected virtual DrawConfigDelegate DrawConfigTree => null;
 
-        protected virtual void ConfigChanged() { }
+        protected virtual void ConfigChanged() 
+        {
+            if (this is null) return;
+
+            var config = this.GetType().GetProperties().FirstOrDefault(p => p.PropertyType.IsSubclassOf(typeof(FeatureConfig)));
+
+            if (config != null)
+            {
+                var configObj = config.GetValue(this);
+                if (configObj != null)
+                    SaveConfig((FeatureConfig)configObj);
+            }
+        }
 
         public unsafe bool IsRpWalking()
         {

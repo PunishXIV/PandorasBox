@@ -76,7 +76,7 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             var prevRank = Tabs[Config.DefaultRank];
             if (ImGui.BeginCombo("Select Rank", prevRank))
@@ -86,6 +86,7 @@ namespace PandorasBox.Features.UI
                     if (ImGui.Selectable(Tabs[i], Config.DefaultRank == i))
                     {
                         Config.DefaultRank = i;
+                        hasChanged = true;
                     }
                 }
 
@@ -100,10 +101,14 @@ namespace PandorasBox.Features.UI
                     if (ImGui.Selectable(Categories[i], Config.DefaultTab == i))
                     {
                         Config.DefaultTab = i;
+                        hasChanged = true;
                     }
                 }
                 ImGui.EndCombo();
             }
+
+            if (hasChanged)
+                SaveConfig(Config);
         };
 
         public override void Disable()

@@ -241,9 +241,11 @@ namespace PandorasBox.Features.UI
             DrawConfigsForAddon("Materia Transmutation", ref Config.WorkOnTransmute, ref Config.TransmuteMinOrMax, ref Config.TransmuteExcludeSplit, ref Config.TransmuteConfirm);
         };
 
-        private static void DrawConfigsForAddon(string addonName, ref bool workOnAddon, ref int minOrMax, ref bool excludeSplit, ref bool autoConfirm)
+        private void DrawConfigsForAddon(string addonName, ref bool workOnAddon, ref int minOrMax, ref bool excludeSplit, ref bool autoConfirm)
         {
-            ImGui.Checkbox($"Work on {addonName}", ref workOnAddon);
+            if (ImGui.Checkbox($"Work on {addonName}", ref workOnAddon))
+                SaveConfig(Config);
+
             if (workOnAddon)
             {
                 ImGui.PushID(addonName);
@@ -251,17 +253,22 @@ namespace PandorasBox.Features.UI
                 if (ImGui.RadioButton($"Auto fill highest amount possible", minOrMax == 1))
                 {
                     minOrMax = 1;
+                    SaveConfig(Config);
                 }
                 if (ImGui.RadioButton($"Auto fill lowest amount possible", minOrMax == 0))
                 {
                     minOrMax = 0;
+                    SaveConfig(Config);
                 }
                 if (ImGui.RadioButton($"Auto OK on manually entered amounts", minOrMax == -1))
                 {
                     minOrMax = -1;
+                    SaveConfig(Config);
                 }
-                ImGui.Checkbox("Exclude Split Dialog", ref excludeSplit);
-                if (minOrMax != -1) ImGui.Checkbox("Auto Confirm", ref autoConfirm);
+               if (ImGui.Checkbox("Exclude Split Dialog", ref excludeSplit))
+                    SaveConfig(Config);
+
+                if (minOrMax != -1) { if (ImGui.Checkbox("Auto Confirm", ref autoConfirm)) { SaveConfig(Config); } }
                 ImGui.Unindent();
                 ImGui.PopID();
             }

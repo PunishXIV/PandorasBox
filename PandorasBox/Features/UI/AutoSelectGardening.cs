@@ -41,6 +41,7 @@ namespace PandorasBox.Features.UI
             public uint SelectedFertilizer = 0;
 
             public bool AutoConfirm = false;
+            public bool OnlyShowInventoryItems = false;
         }
 
         public Configs Config { get; private set; }
@@ -334,9 +335,14 @@ namespace PandorasBox.Features.UI
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
-            var invSoil = Soils.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray();
-            var invSeeds = Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray();
-            var invFert = Fertilizers.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray();
+            bool hasChanged = false;
+
+            if (ImGui.Checkbox("Show Only Inventory Items", ref Config.OnlyShowInventoryItems))
+                hasChanged = true;
+
+            var invSoil = Config.OnlyShowInventoryItems ? Soils.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : Soils.ToArray();
+            var invSeeds = Config.OnlyShowInventoryItems ? Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : Seeds.ToArray();
+            var invFert = Config.OnlyShowInventoryItems ? Fertilizers.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : Fertilizers.ToArray();
 
             var soilPrev = Config.SelectedSoil == 0 ? "" : Soils[Config.SelectedSoil].Name.ExtractText();
             if (ImGui.BeginCombo("Soil", soilPrev))
@@ -344,6 +350,7 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Selectable("", Config.SelectedSoil == 0))
                 {
                     Config.SelectedSoil = 0;
+                    hasChanged = true;
                 }
                 foreach (var soil in invSoil)
                 {
@@ -352,6 +359,7 @@ namespace PandorasBox.Features.UI
                     if (selected)
                     {
                         Config.SelectedSoil = soil.Key;
+                        hasChanged = true;
                     }
                 }
 
@@ -364,6 +372,7 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Selectable("", Config.SelectedSeed == 0))
                 {
                     Config.SelectedSeed = 0;
+                    hasChanged = true;
                 }
                 foreach (var seed in invSeeds)
                 {
@@ -372,6 +381,7 @@ namespace PandorasBox.Features.UI
                     if (selected)
                     {
                         Config.SelectedSeed = seed.Key;
+                        hasChanged = true;
                     }
                 }
 
@@ -388,6 +398,7 @@ namespace PandorasBox.Features.UI
                     if (ImGui.Selectable("", Config.SelectedFertilizer == 0))
                     {
                         Config.SelectedFertilizer = 0;
+                        hasChanged = true;
                     }
                     foreach (var fert in invFert)
                     {
@@ -396,6 +407,7 @@ namespace PandorasBox.Features.UI
                         if (selected)
                         {
                             Config.SelectedFertilizer = fert.Key;
+                            hasChanged = true;
                         }
                     }
 
@@ -403,7 +415,11 @@ namespace PandorasBox.Features.UI
                 }
             }
 
-            ImGui.Checkbox("Auto Confirm", ref Config.AutoConfirm);
+            if (ImGui.Checkbox("Auto Confirm", ref Config.AutoConfirm))
+                hasChanged = true;
+
+            if (hasChanged)
+                SaveConfig(Config);
         };
     }
 }

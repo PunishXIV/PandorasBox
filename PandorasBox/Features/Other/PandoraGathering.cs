@@ -418,7 +418,7 @@ namespace PandorasBox.Features.Other
         }
 
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             if (ImGui.Checkbox($"Hold Shift to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
                 SaveConfig(Config);
