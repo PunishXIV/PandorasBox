@@ -1,12 +1,11 @@
 using ClickLib.Clicks;
+using Dalamud.Memory;
 using ECommons.Automation;
 using ECommons.DalamudServices;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Collections.Generic;
+using System.Linq;
 using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
@@ -19,140 +18,151 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
         public override bool UseAutoConfig => true;
+
         public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("None", "", 1)]
             public bool JoinNone = false;
+
+            [FeatureConfigOption("Duty Roulette", "", 2)]
             public bool JoinDutyRoulette = false;
+
+            [FeatureConfigOption("Dungeons", "", 3)]
             public bool JoinDungeons = false;
+
+            [FeatureConfigOption("Guildhests", "", 4)]
             public bool JoinGuildhests = false;
+
+            [FeatureConfigOption("Trials", "", 5)]
             public bool JoinTrials = false;
-            public bool JoinHighEnd = false;
+
+            [FeatureConfigOption("Raids", "", 6)]
+            public bool JoinRaids = false;
+
+            [FeatureConfigOption("High End Duty", "", 7)]
+            public bool JoinHighEndDuty = false;
+
+            [FeatureConfigOption("PvP", "", 8)]
             public bool JoinPvP = false;
+
+            [FeatureConfigOption("Quest Battles", "", 9)]
             public bool JoinQuestBattles = false;
+
+            [FeatureConfigOption("FATEs", "", 10)]
             public bool JoinFATEs = false;
-            public bool JoinTreasureHunts = false;
-            public bool JoinTheHunts = false;
+
+            [FeatureConfigOption("Treasure Hunt", "", 11)]
+            public bool JoinTreasureHunt = false;
+
+            [FeatureConfigOption("The Hunt", "", 12)]
+            public bool JoinTheHunt = false;
+
+            [FeatureConfigOption("Gathering Forays", "", 13)]
             public bool JoinGatheringForays = false;
+
+            [FeatureConfigOption("Deep Dungeons", "", 14)]
             public bool JoinDeepDungeons = false;
+
+            [FeatureConfigOption("Field Operations", "", 15)]
             public bool JoinFieldOperations = false;
-            public bool JoinVC = false;
 
-            // private readonly List<T> configList = new List<T>();
-            // public T this[int index]
-            // {
-            //     get => configList[index];
-            //     set => configList[index] = value;
-            // }
-            // public int Count => configList.Count;
-            // public bool IsReadOnly => false;
+            [FeatureConfigOption("V&C Dungeon Finder", "", 16)]
+            public bool JoinVCDungeonFinder = false;
+        }
 
-            // public void Add(T item)
-            // {
-            //     configList.Add(item);
-            // }
+        public readonly struct Categories
+        {
+            public int IconID { get; }
+            public string Name { get; }
+            public Func<bool> GetConfigValue { get; }
 
-            // private void SetConfig(int index, T value)
-            // {
-            //     if (index >= 0 && index < configList.Count)
-            //     {
-            //         configList[index] = value;
-            //     }
-            // }
+            public Categories(int iconID, string name, Func<bool> configValue)
+            {
+                IconID = iconID;
+                Name = name;
+                GetConfigValue = configValue;
+            }
+        }
+
+        private readonly Categories[] categories;
+
+        public AutoJoinPF()
+        {
+            categories = new Categories[]
+            {
+                new Categories(61699, "None", () => Config.JoinNone),
+                new Categories(61801, "Dungeons", () => Config.JoinDungeons),
+                new Categories(61802, "Raids", () => Config.JoinRaids),
+                new Categories(61803, "Guildhests", () => Config.JoinGuildhests),
+                new Categories(61804, "Trials", () => Config.JoinTrials),
+                new Categories(61805, "Quest Battles", () => Config.JoinQuestBattles),
+                new Categories(61806, "PvP", () => Config.JoinPvP),
+                new Categories(61807, "Duty Roulette", () => Config.JoinDutyRoulette),
+                new Categories(61808, "Treasure Hunt", () => Config.JoinTreasureHunt),
+                new Categories(61809, "FATEs", () => Config.JoinFATEs),
+                new Categories(61815, "Gathering Forays", () => Config.JoinGatheringForays),
+                new Categories(61819, "The Hunt", () => Config.JoinTheHunt),
+                new Categories(61824, "Deep Dungeons", () => Config.JoinDeepDungeons),
+                new Categories(61832, "High End Duty", () => Config.JoinHighEndDuty),
+                new Categories(61837, "Field Operations", () => Config.JoinFieldOperations),
+                new Categories(61846, "VC Dungeon Finder", () => Config.JoinVCDungeonFinder),
+            };
         }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
+            Common.OnAddonSetup += RunFeature;
+            Common.OnAddonSetup += ConfirmYesNo;
             base.Enable();
         }
 
-        private void RunFeature(Dalamud.Game.Framework framework)
+        private void RunFeature(SetupAddonArgs obj)
         {
-            if (TryGetAddonByName<AddonLookingForGroupDetail>("LookingForGroupDetail", out var addon))
-            {
-                if (IsPrivatePF(addon) || IsSelfParty(addon)) { TaskManager.Abort(); return; }
-                TaskManager.Enqueue(() => !(IsPrivatePF(addon) || IsSelfParty(addon)));
-                TaskManager.DelayNext($"ClickingJoin", 300);
-                TaskManager.Enqueue(() => Callback.Fire((AtkUnitBase*)addon, false, 0));
-                TaskManager.Enqueue(() => ConfirmYesNo());
-            }
-            else
-            {
-                TaskManager.Abort();
-            }
+            if (obj.AddonName != "LookingForGroupDetail") return;
+
+            TaskManager.Enqueue(() => new nint(obj.Addon->AtkValues[11].String) != 0);
+            TaskManager.Enqueue(() => AutoJoin(obj.Addon));
         }
 
-        private bool IsPrivatePF(AddonLookingForGroupDetail* addon)
+        private void AutoJoin(AtkUnitBase* addon)
         {
+            if (IsPrivatePF(addon) || IsSelfParty(addon) || !CanJoinPartyType(GetPartyType(addon))) return;
+
+            Callback.Fire(addon, false, 0);
+        }
+
+        private bool IsPrivatePF(AtkUnitBase* addon) =>
             // 111 is the lock icon
-            return addon->AtkUnitBase.UldManager.NodeList[111]->IsVisible;
-        }
+            addon->UldManager.NodeList[111]->IsVisible;
 
-        private bool IsSelfParty(AddonLookingForGroupDetail* addon)
+        private bool IsSelfParty(AtkUnitBase* addon) =>
+            MemoryHelper.ReadSeStringNullTerminated(new nint(addon->AtkValues[11].String)).ToString() == Svc.ClientState.LocalPlayer.Name.TextValue;
+
+        private string GetPartyType(AtkUnitBase* addon) =>
+            categories.FirstOrDefault(x => x.IconID == addon->AtkValues[16].Int).Name;
+
+        public bool CanJoinPartyType(string categoryName) => 
+            categories.FirstOrDefault(c => c.Name == categoryName).GetConfigValue();
+
+        internal void ConfirmYesNo(SetupAddonArgs obj)
         {
-            // 113 is the party host's name
-            return addon->AtkUnitBase.UldManager.NodeList[113]->GetAsAtkTextNode()->NodeText.ToString() == Svc.ClientState.LocalPlayer.Name.TextValue;
-        }
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return;
+            if (obj.AddonName != "SelectYesno") return;
 
-        private int GetPartyType()
-        {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("LookingForGroupDetail");
-            var partyType = addon->AtkValues[16].Int;
-            return partyType;
-        }
-
-        internal static bool ConfirmYesNo()
-        {
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-
-            if (TryGetAddonByName<AddonLookingForGroupDetail>("LookingForGroupDetail", out var r) &&
-                r->AtkUnitBase.IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
-                addon->AtkUnitBase.IsVisible &&
-                addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
-            {
-                new ClickSelectYesNo((IntPtr)addon).Yes();
-                return true;
-            }
-
-            return false;
+            if (TryGetAddonByName<AtkUnitBase>("LookingForGroupDetail", out var lfgAddon) && lfgAddon->IsVisible)
+                if (CanJoinPartyType(GetPartyType(lfgAddon)) && obj.Addon->UldManager.NodeList[15]->IsVisible)
+                    new ClickSelectYesNo((IntPtr)obj.Addon).Yes();
         }
 
         public override void Disable()
         {
             SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
+            Common.OnAddonSetup -= RunFeature;
+            Common.OnAddonSetup -= ConfirmYesNo;
             base.Disable();
         }
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-        {
-            // int numColumns = 4;
-            // int numRows = (Config.Count + numColumns - 1) / numColumns;
-
-            // ImGui.BeginTable("config_table", numColumns, ImGuiTableFlags.Borders);
-
-            // for (int row = 0; row < numRows; row++)
-            // {
-            //     ImGui.TableNextRow();
-
-            //     for (int col = 0; col < numColumns; col++)
-            //     {
-            //         int index = row * numColumns + col;
-
-            //         if (index < Config.Count)
-            //         {
-            //             ImGui.TableSetColumnIndex(col);
-            //             bool value = Config[index];
-            //             ImGui.Checkbox($"##config_checkbox_{index}", ref value);
-            //             Config[index] = value;
-            //         }
-            //     }
-            // }
-            // ImGui.EndTable();
-        };
     }
 }
