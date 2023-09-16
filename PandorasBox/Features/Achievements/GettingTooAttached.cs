@@ -97,7 +97,7 @@ namespace PandorasBox.Features.Achievements
 
                 ImGui.SameLine();
                 ImGui.PushItemWidth(150);
-                if (ImGui.SliderInt("#", ref Config.numberOfLoops, 0, 10000))
+                if (ImGui.SliderInt("Loops", ref Config.numberOfLoops, 0, 10000))
                     SaveConfig(Config);
 
                 ImGui.End();
