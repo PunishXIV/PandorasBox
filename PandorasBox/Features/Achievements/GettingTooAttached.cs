@@ -190,7 +190,7 @@ namespace PandorasBox.Features.Achievements
         public void ConfirmMateriaDialog(SetupAddonArgs obj)
         {
             if (obj.AddonName != "MateriaAttachDialog" || !active) return;
-            if (obj.Addon->AtkValues[50].Type == 0)
+            if (obj.Addon->AtkValues[50].Type != 0)
             {
                 CancelLoop();
                 PrintModuleMessage("Unable to continue. This gear is requires overmelding.");
