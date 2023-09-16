@@ -391,38 +391,22 @@ namespace PandorasBox.Features.UI
             try
             {
                 var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
-                switch (w)
+                
+                var workshopRanks = new Dictionary<int, int>
                 {
-                    case 1:
-                        if (currentRank < 3)
-                        {
-                            maxWorkshops = 0;
-                            return false;
-                        }
-                        break;
-                    case 2:
-                        if (currentRank < 6)
-                        {
-                            maxWorkshops = 1;
-                            return false;
-                        }
-                        break;
-                    case 3:
-                        if (currentRank < 8)
-                        {
-                            maxWorkshops = 2;
-                            return false;
-                        }
-                        break;
-                    case 4:
-                        if (currentRank < 14)
-                        {
-                            maxWorkshops = 3;
-                            return false;
-                        }
-                        break;
+                    { 1, 3 },
+                    { 2, 6 },
+                    { 3, 8 },
+                    { 4, 14 }
+                };
+
+                if (workshopRanks.TryGetValue(w, out var requiredRank))
+                {
+                    maxWorkshops = w - 1;
+                    return currentRank >= requiredRank;
                 }
-                return true;
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -676,13 +660,6 @@ namespace PandorasBox.Features.UI
                     restDays[3] = cycle - 1;
                 else if (cycle <= 0)
                     restDays[1] = MJIManager.Instance()->CurrentCycleDay + 1;
-
-                //if (selectedCycle <= 6 && selectedCycle > 0)
-                //    restDays[1] = selectedCycle - 1;
-                //else if (selectedCycle >= 7)
-                //    restDays[3] = selectedCycle - 1;
-                //else if (selectedCycle <= 0)
-                //    restDays[1] = 1JIManager.Instance()->CurrentCycleDay + 1;
 
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
