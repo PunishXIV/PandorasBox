@@ -6,30 +6,31 @@ using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
+using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.ComponentModel.Design;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features
 {
     public unsafe class AutoSprint : Feature
     {
-        public override string Name => "Auto-sprint in Sanctuaries";
+        public override string Name => "Auto-Sprint in Sanctuaries";
 
         public override string Description => "Automatically uses sprint when in an area you are gaining rested experience, such as cities.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public override bool UseAutoConfig => true;
+        public override bool UseAutoConfig => false;
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
-
-            [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
+            public bool ExcludeHousing = false;
         }
 
         public Configs Config { get; private set; }
@@ -43,15 +44,21 @@ namespace PandorasBox.Features
 
         private void RunFeature(Framework framework)
         {
+            if (Svc.ClientState.LocalPlayer == null) return;
+
             if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
+
+            var r = new Regex("/hou/|/ind/");
+            var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString;
+            if (r.IsMatch(loc) && Config.ExcludeHousing) return;
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;
 
-            ActionManager* am = ActionManager.Instance();
-            bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
-            bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+            var am = ActionManager.Instance();
+            var isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !P.TaskManager.IsBusy)
             {
@@ -63,9 +70,9 @@ namespace PandorasBox.Features
 
         private void UseSprint()
         {
-            ActionManager* am = ActionManager.Instance();
-            bool isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
-            bool? hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+            var am = ActionManager.Instance();
+            var isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1)
             {
@@ -79,5 +86,14 @@ namespace PandorasBox.Features
             SaveConfig(Config);
             base.Disable();
         }
+
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        {
+            ImGui.PushItemWidth(300);
+            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+            ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
+            ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+
+        };
     }
 }

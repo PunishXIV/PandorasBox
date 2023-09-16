@@ -9,7 +9,7 @@ using ECommons.Reflection;
 using PandorasBox.Features;
 using PandorasBox.UI;
 using PunishLib;
-using PunishLib.Sponsor;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,12 +42,11 @@ public class PandorasBox : IDalamudPlugin
     private void Initialize()
     {
         ECommonsMain.Init(pi, P, ECommons.Module.All);
-        PunishLibMain.Init(pi, P);
-        
-        FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
-        FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
+        PunishLibMain.Init(pi, P, new AboutPlugin() { Sponsor = "https://ko-fi.com/taurenkey" });
 
-        SponsorManager.SetSponsorInfo("https://ko-fi.com/taurenkey");
+        //FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
+        //FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
+
         Ws = new();
         MainWindow = new();
         Ws.AddWindow(MainWindow);
@@ -73,6 +72,7 @@ public class PandorasBox : IDalamudPlugin
 
     public void Dispose()
     {
+        GC.SuppressFinalize(this);
         Svc.Commands.RemoveHandler(CommandName);
         foreach (var t in FeatureProviders.Where(t => !t.Disposed))
         {

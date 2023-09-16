@@ -1,6 +1,7 @@
 using ClickLib.Clicks;
 using Dalamud.Interface;
 using ECommons;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -40,16 +41,15 @@ namespace PandorasBox.Features.UI
 
         private HookWrapper<PopulateItemList> populateHook;
 
-        private Dictionary<ulong, Item> ListItems = new Dictionary<ulong, Item>();
+        private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private Overlays Overlay;
+        private Overlays Overlay { get; set; }
 
-        private bool Desynthing = false;
+        private bool Desynthing { get; set; } = false;
         public override void Enable()
         {
             Overlay = new(this);
-            P.Ws.AddWindow(Overlay);
             updateItemHook ??= Common.Hook<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
             updateItemHook?.Enable();
             updateListHook ??= Common.Hook<UpdateListDelegate>("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0", UpdateListDetour);
@@ -132,7 +132,7 @@ namespace PandorasBox.Features.UI
                     ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position + size with { Y = 0 });
 
                     ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                    float oldSize = ImGui.GetFont().Scale;
+                    var oldSize = ImGui.GetFont().Scale;
                     ImGui.GetFont().Scale *= scale.X;
                     ImGui.PushFont(ImGui.GetFont());
                     ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
@@ -212,16 +212,16 @@ namespace PandorasBox.Features.UI
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return false;
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageDialog", 1);
             if (addon == null || !addon->IsVisible) return false;
-            Callback(addon, 0, false);
+            Callback.Fire(addon, false, 0, false);
             return true;
         }
 
-        private bool? DesynthFirst()
+        private static bool? DesynthFirst()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return false;
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1);
             if (addon == null) return null;
-            Callback(addon, 12, 0);
+            Callback.Fire(addon, false, 12, 0);
             return true;
         }
 

@@ -26,12 +26,11 @@ namespace PandorasBox.Features
 
         internal Overlays window;
 
-        private bool Repairing;
+        private bool Repairing { get; set; }
 
         public override void Enable()
         {
             window = new(this);
-            P.Ws.AddWindow(window);
             base.Enable();
         }
 
@@ -61,7 +60,7 @@ namespace PandorasBox.Features
                     ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
 
                     ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                    float oldSize = ImGui.GetFont().Scale;
+                    var oldSize = ImGui.GetFont().Scale;
                     ImGui.GetFont().Scale *= scale.X;
                     ImGui.PushFont(ImGui.GetFont());
                     ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
@@ -108,7 +107,7 @@ namespace PandorasBox.Features
 
         private void TryRepairAll()
         {
-            for (int i = 1; i <= 7; i++)
+            for (var i = 1; i <= 7; i++)
             {
                 var val = i;
                 P.TaskManager.Enqueue(() => SwitchSection(val));

@@ -1,13 +1,8 @@
+using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
-using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features.Actions
 {
@@ -22,8 +17,6 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
-            public uint SelectedFairy = 0;
         }
 
         public Configs Config { get; private set; }
@@ -34,12 +27,13 @@ namespace PandorasBox.Features.Actions
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             OnJobChanged += RunFeature;
+            Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
         }
 
         private void RunFeature(uint? jobId)
         {
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
+            if (Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (jobId is 26 or 27 or 28)
             {
                 TaskManager.Abort();
@@ -48,9 +42,22 @@ namespace PandorasBox.Features.Actions
             }
         }
 
+        private void CheckIfRespawned(ConditionFlag flag, bool value)
+        {
+            if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
+            {
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Spell, 7) == 0);
+                TaskManager.DelayNext("WaitForActionReady", 2500);
+                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
+                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
+            }
+        }
+
         public bool TrySummon(uint? jobId)
         {
-            ActionManager* am = ActionManager.Instance();
+            var am = ActionManager.Instance();
             if (jobId is 26 or 27)
             {
                 if (am->GetActionStatus(ActionType.Spell, 25798) != 0) return false;
@@ -60,16 +67,9 @@ namespace PandorasBox.Features.Actions
             if (jobId is 28)
             {
                 if (am->GetActionStatus(ActionType.Spell, 17215) != 0) return false;
-                switch (Config.SelectedFairy)
-                {
-                    case 0:
-                        am->UseAction(ActionType.Spell, 17215);
-                        return true;
-                    case 1:
-                        am->UseAction(ActionType.Spell, 17216);
-                        return true;
-                }
 
+                am->UseAction(ActionType.Spell, 17215);
+                return true;
             }
             return true;
         }
@@ -77,6 +77,7 @@ namespace PandorasBox.Features.Actions
         {
             SaveConfig(Config);
             OnJobChanged -= RunFeature;
+            Svc.Condition.ConditionChange -= CheckIfRespawned;
             base.Disable();
         }
 
@@ -84,15 +85,15 @@ namespace PandorasBox.Features.Actions
         {
             ImGui.PushItemWidth(350);
             ImGui.SliderFloat("Set delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
-            
-            if (ImGui.RadioButton("Summon EoS", Config.SelectedFairy == 0))
-            {
-                Config.SelectedFairy = 0;
-            }
-            if (ImGui.RadioButton("Summon Selene", Config.SelectedFairy == 1))
-            {
-                Config.SelectedFairy = 1;
-            }
+
+            //if (ImGui.RadioButton("Summon EoS", Config.SelectedFairy == 0))
+            //{
+            //    Config.SelectedFairy = 0;
+            //}
+            //if (ImGui.RadioButton("Summon Selene", Config.SelectedFairy == 1))
+            //{
+            //    Config.SelectedFairy = 1;
+            //}
 
         };
     }

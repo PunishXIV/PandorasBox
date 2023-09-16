@@ -1,5 +1,4 @@
 using Dalamud.ContextMenu;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons.Automation;
@@ -9,9 +8,9 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System.Collections.Generic;
 using System.Linq;
-using static ECommons.GenericHelpers;
 
 
 namespace PandorasBox.Features.UI
@@ -24,14 +23,14 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private readonly DalamudContextMenu _contextMenu = new();
+        private readonly DalamudContextMenu contextMenu = new();
 
-        public SeString OpenString = PandoraPayload.Append(new TextPayload("Open All"));
+        private static readonly SeString OpenString = PandoraPayload.Append(new TextPayload("Open All"));
 
         public override void Enable()
         {
-            _contextMenu.OnOpenGameObjectContextMenu += AddGameObjectItem;
-            _contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
+            contextMenu.OnOpenGameObjectContextMenu += AddGameObjectItem;
+            contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
             base.Enable();
         }
 
@@ -42,13 +41,14 @@ namespace PandorasBox.Features.UI
                 args.AddCustomItem(item);
         }
 
-        private InventoryContextMenuItem? CheckInventoryItem(uint itemId)
+        private InventoryContextMenuItem CheckInventoryItem(uint itemId)
         {
-            var sheetItem = Svc.Data.GetExcelSheet<Item>().Where(x => x.RowId == itemId).First();
-
-            if (sheetItem.StackSize <= 1) return null;
-            if (sheetItem.ItemAction.Row == 388 || sheetItem.ItemAction.Row == 367)
-                return new InventoryContextMenuItem(OpenString, _ => TaskManager.Enqueue(() => OpenItem(itemId), true), false);
+            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == itemId, out var sheetItem))
+            {
+                if (sheetItem.StackSize <= 1) return null;
+                if (sheetItem.ItemAction.Row == 388 || sheetItem.ItemAction.Row == 367)
+                    return new InventoryContextMenuItem(OpenString, _ => TaskManager.Enqueue(() => OpenItem(itemId), true), false);
+            }
 
             return null;
         }
@@ -56,7 +56,7 @@ namespace PandorasBox.Features.UI
         private unsafe bool? OpenItem(uint itemId)
         {
             var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID();
-            
+
             if (!IsInventoryFree())
             {
                 return null;
@@ -82,7 +82,7 @@ namespace PandorasBox.Features.UI
             foreach (var inv in inventories)
             {
                 var container = InventoryManager.Instance()->GetInventoryContainer(inv);
-                for (int i = 0; i < container->Size; i++)
+                for (var i = 0; i < container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i);
 
@@ -107,12 +107,12 @@ namespace PandorasBox.Features.UI
                             values[2] = new AtkValue()
                             {
                                 Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                                Unk = 0
+                                Int = 0
                             };
                             values[3] = new AtkValue()
                             {
                                 Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                                Unk = 0
+                                Int = 0
                             };
                             values[4] = new AtkValue()
                             {
@@ -142,8 +142,8 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            _contextMenu.OnOpenGameObjectContextMenu -= AddGameObjectItem;
-            _contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
+            contextMenu.OnOpenGameObjectContextMenu -= AddGameObjectItem;
+            contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
             base.Disable();
         }
     }

@@ -26,7 +26,6 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Overlay = new(this);
-            P.Ws.AddWindow(Overlay);
             base.Enable();
         }
 
@@ -51,7 +50,7 @@ namespace PandorasBox.Features.UI
                 ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
 
                 ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                float oldSize = ImGui.GetFont().Scale;
+                var oldSize = ImGui.GetFont().Scale;
                 ImGui.GetFont().Scale *= scale.X;
                 ImGui.PushFont(ImGui.GetFont());
                 ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
@@ -101,7 +100,7 @@ namespace PandorasBox.Features.UI
             {
                 var length = addon->UldManager.NodeList[3]->GetAsAtkComponentList()->ListLength;
 
-                for (int i = 1; i <= length; i++)
+                for (var i = 1; i <= length; i++)
                 {
                     P.TaskManager.Enqueue(() => SelectFirstItem(addon));
                     P.TaskManager.Enqueue(() => ConfirmDialog());

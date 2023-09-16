@@ -1,6 +1,7 @@
 using ClickLib.Clicks;
 using Dalamud.Game;
 using Dalamud.Interface;
+using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Throttlers;
@@ -29,7 +30,6 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             OverlayWindow = new(this);
-            P.Ws.AddWindow(OverlayWindow);
             base.Enable();
         }
 
@@ -59,7 +59,7 @@ namespace PandorasBox.Features.UI
                     ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
 
                     ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                    float oldSize = ImGui.GetFont().Scale;
+                    var oldSize = ImGui.GetFont().Scale;
                     ImGui.GetFont().Scale *= scale.X;
                     ImGui.PushFont(ImGui.GetFont());
                     ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5f.Scale());
@@ -85,6 +85,7 @@ namespace PandorasBox.Features.UI
                         {
                             Extracting = false;
                             TaskManager.Abort();
+                            TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
                         }
                     }
 
@@ -98,13 +99,13 @@ namespace PandorasBox.Features.UI
             }
             catch (Exception e)
             {
-
+                PluginLog.Debug(e, "ExtractAllException");
             }
         }
 
         private void TryExtractAll()
         {
-            InventoryManager* im = InventoryManager.Instance();
+            var im = InventoryManager.Instance();
             var inv1 = im->GetInventoryContainer(InventoryType.Inventory1);
             var inv2 = im->GetInventoryContainer(InventoryType.Inventory2);
             var inv3 = im->GetInventoryContainer(InventoryType.Inventory3);
@@ -161,32 +162,32 @@ namespace PandorasBox.Features.UI
             };
 
 
-            InventoryItem[] spiritBondedItems1 = Array.Empty<InventoryItem>();
-            InventoryItem[] spiritBondedItems2 = Array.Empty<InventoryItem>();
-            InventoryItem[] spiritBondedItems3 = Array.Empty<InventoryItem>();
-            InventoryItem[] spiritBondedItems4 = Array.Empty<InventoryItem>();
-            InventoryItem[] spiritBondedItems5 = Array.Empty<InventoryItem>();
-            InventoryItem[] spiritBondedItems6 = Array.Empty<InventoryItem>();
-            InventoryItem[] spiritBondedItems7 = Array.Empty<InventoryItem>();
+            var spiritBondedItems1 = Array.Empty<InventoryItem>();
+            var spiritBondedItems2 = Array.Empty<InventoryItem>();
+            var spiritBondedItems3 = Array.Empty<InventoryItem>();
+            var spiritBondedItems4 = Array.Empty<InventoryItem>();
+            var spiritBondedItems5 = Array.Empty<InventoryItem>();
+            var spiritBondedItems6 = Array.Empty<InventoryItem>();
+            var spiritBondedItems7 = Array.Empty<InventoryItem>();
 
             TaskManager.Enqueue(() => YesAlready.DisableIfNeeded());
             //Container 1
             foreach (var container in container1)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems1, spiritBondedItems1.Length + 1);
-                        spiritBondedItems1[spiritBondedItems1.Length - 1] = *item;
+                        spiritBondedItems1[^1] = *item;
                     }
                 }
             }
 
             if (spiritBondedItems1.Length > 0)
             {
-                for (int i = 1; i <= spiritBondedItems1.Length; i++)
+                for (var i = 1; i <= spiritBondedItems1.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(1));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -198,13 +199,13 @@ namespace PandorasBox.Features.UI
             //Container 2
             foreach (var container in container2)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems2, spiritBondedItems2.Length + 1);
-                        spiritBondedItems2[spiritBondedItems2.Length - 1] = *item;
+                        spiritBondedItems2[^1] = *item;
                     }
                 }
             }
@@ -212,7 +213,7 @@ namespace PandorasBox.Features.UI
             if (spiritBondedItems2.Length > 0)
             {
 
-                for (int i = 1; i <= spiritBondedItems2.Length; i++)
+                for (var i = 1; i <= spiritBondedItems2.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(2));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -224,13 +225,13 @@ namespace PandorasBox.Features.UI
             //Container 3
             foreach (var container in container3)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems3, spiritBondedItems3.Length + 1);
-                        spiritBondedItems3[spiritBondedItems3.Length - 1] = *item;
+                        spiritBondedItems3[^1] = *item;
                     }
                 }
             }
@@ -238,7 +239,7 @@ namespace PandorasBox.Features.UI
             if (spiritBondedItems3.Length > 0)
             {
 
-                for (int i = 1; i <= spiritBondedItems3.Length; i++)
+                for (var i = 1; i <= spiritBondedItems3.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(3));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -250,20 +251,20 @@ namespace PandorasBox.Features.UI
             //Container 4
             foreach (var container in container4)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems4, spiritBondedItems4.Length + 1);
-                        spiritBondedItems4[spiritBondedItems4.Length - 1] = *item;
+                        spiritBondedItems4[^1] = *item;
                     }
                 }
             }
 
             if (spiritBondedItems4.Length > 0)
             {
-                for (int i = 1; i <= spiritBondedItems4.Length; i++)
+                for (var i = 1; i <= spiritBondedItems4.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(4));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -275,20 +276,20 @@ namespace PandorasBox.Features.UI
             //Container 5
             foreach (var container in container5)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems5, spiritBondedItems5.Length + 1);
-                        spiritBondedItems5[spiritBondedItems5.Length - 1] = *item;
+                        spiritBondedItems5[^1] = *item;
                     }
                 }
             }
 
             if (spiritBondedItems5.Length > 0)
             {
-                for (int i = 1; i <= spiritBondedItems5.Length; i++)
+                for (var i = 1; i <= spiritBondedItems5.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(5));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -300,20 +301,20 @@ namespace PandorasBox.Features.UI
             //Container 6
             foreach (var container in container6)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems6, spiritBondedItems6.Length + 1);
-                        spiritBondedItems6[spiritBondedItems6.Length - 1] = *item;
+                        spiritBondedItems6[^1] = *item;
                     }
                 }
             }
 
             if (spiritBondedItems6.Length > 0)
             {
-                for (int i = 1; i <= spiritBondedItems6.Length; i++)
+                for (var i = 1; i <= spiritBondedItems6.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(6));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -325,20 +326,20 @@ namespace PandorasBox.Features.UI
             //Container 7
             foreach (var container in container7)
             {
-                for (int i = 1; i <= container->Size; i++)
+                for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
                     if (item->Spiritbond == 10000)
                     {
                         Array.Resize(ref spiritBondedItems7, spiritBondedItems7.Length + 1);
-                        spiritBondedItems7[spiritBondedItems7.Length - 1] = *item;
+                        spiritBondedItems7[^1] = *item;
                     }
                 }
             }
 
             if (spiritBondedItems7.Length > 0)
             {
-                for (int i = 1; i <= spiritBondedItems7.Length; i++)
+                for (var i = 1; i <= spiritBondedItems7.Length; i++)
                 {
                     TaskManager.Enqueue(() => SwitchTabs(7));
                     TaskManager.Enqueue(() => GenerateAndFireCallback());
@@ -350,7 +351,7 @@ namespace PandorasBox.Features.UI
             TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
         }
 
-        public unsafe static void CloseMateriaMenu()
+        public static unsafe void CloseMateriaMenu()
         {
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
@@ -419,7 +420,7 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        public bool IsMateriaMenuDialogOpen() => Svc.GameGui.GetAddonByName("MaterializeDialog", 1) != IntPtr.Zero;
+        public static bool IsMateriaMenuDialogOpen() => Svc.GameGui.GetAddonByName("MaterializeDialog", 1) != IntPtr.Zero;
 
         public bool? GenerateAndFireCallback()
         {
@@ -448,8 +449,8 @@ namespace PandorasBox.Features.UI
         }
         public override void Disable()
         {
-            //P.Ws.RemoveWindow(OverlayWindow);
-            //OverlayWindow = null;
+            P.Ws.RemoveWindow(OverlayWindow);
+            OverlayWindow = null;
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
                 var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);

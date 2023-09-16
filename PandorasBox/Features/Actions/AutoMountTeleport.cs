@@ -17,9 +17,9 @@ namespace PandorasBox.Features.Actions
 {
     public unsafe class AutoMountZoneChange : Feature
     {
-        public override string Name => "Auto-mount on Zone Change";
+        public override string Name => "Auto-Mount on Zone Change";
 
-        public override string Description => "Uses Mount Roulette on zone change if not already mounted.";
+        public override string Description => "Mounts on zone change if not already mounted.";
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
@@ -59,7 +59,7 @@ namespace PandorasBox.Features.Actions
             TaskManager.Enqueue(() => TryMount());
         }
 
-        private bool NotBetweenAreas => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas];
+        private static bool NotBetweenAreas => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas];
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
@@ -69,7 +69,7 @@ namespace PandorasBox.Features.Actions
             if (Config.AbortIfMoving && IsMoving()) return true;
 
             if (IsMoving()) return false;
-            ActionManager* am = ActionManager.Instance();
+            var am = ActionManager.Instance();
 
             if (Config.SelectedMount > 0)
             {
@@ -100,7 +100,7 @@ namespace PandorasBox.Features.Actions
             ImGui.PushItemWidth(300);
             ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
             var ps = PlayerState.Instance();
-            string preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
+            var preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
             if (ImGui.BeginCombo("Select Mount", preview))
             {
                 if (ImGui.Selectable("", Config.SelectedMount == 0))
@@ -112,7 +112,7 @@ namespace PandorasBox.Features.Actions
                 {
                     if (ps->IsMountUnlocked(mount.RowId))
                     {
-                        bool selected = ImGui.Selectable(mount.Singular.ExtractText().ToTitleCase(), Config.SelectedMount == mount.RowId);
+                        var selected = ImGui.Selectable(mount.Singular.ExtractText().ToTitleCase(), Config.SelectedMount == mount.RowId);
 
                         if (selected)
                         {

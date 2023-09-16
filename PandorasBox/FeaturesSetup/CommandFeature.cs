@@ -9,13 +9,13 @@ using System.Text.RegularExpressions;
 
 namespace PandorasBox.Features;
 
-public abstract class CommandFeature : Feature
+public abstract partial class CommandFeature : Feature
 {
     public abstract string Command { get; set; }
     public virtual string[] Alias => Array.Empty<string>();
     public virtual string HelpMessage => $"[{P.Name} {Name}]";
     public virtual bool ShowInHelp => false;
-    public virtual List<string> Parameters => new List<string>();
+    public virtual List<string> Parameters => new();
     public override FeatureType FeatureType => FeatureType.Commands;
 
     protected abstract void OnCommand(List<string> args);
@@ -26,37 +26,35 @@ public abstract class CommandFeature : Feature
         OnCommand(args.Split(' ').ToList());
     }
 
-    private List<string> registeredCommands = new();
+    private readonly List<string> registeredCommands = new();
 
     public override void Enable()
     {
-        var c = Command.StartsWith("/pan") ? Command : $"/pan {Command}";
-        if (Svc.Commands.Commands.ContainsKey(c))
+        if (Svc.Commands.Commands.ContainsKey(Command))
         {
-            PluginLog.Error($"Command '{c}' is already registered.");
+            PluginLog.Error($"Command '{Command}' is already registered.");
         }
         else
         {
-            Svc.Commands.AddHandler(c, new CommandInfo(OnCommandInternal)
+            Svc.Commands.AddHandler(Command, new CommandInfo(OnCommandInternal)
             {
                 HelpMessage = HelpMessage,
                 ShowInHelp = ShowInHelp
             });
 
-            registeredCommands.Add(c);
+            registeredCommands.Add(Command);
         }
 
         foreach (var a in Alias)
         {
-            var alias = a.StartsWith("/pan") ? a : $"/pan {a}";
-            if (!Svc.Commands.Commands.ContainsKey(alias))
+            if (!Svc.Commands.Commands.ContainsKey(a))
             {
-                Svc.Commands.AddHandler(alias, new CommandInfo(OnCommandInternal)
+                Svc.Commands.AddHandler(a, new CommandInfo(OnCommandInternal)
                 {
                     HelpMessage = HelpMessage,
                     ShowInHelp = false
                 });
-                registeredCommands.Add(alias);
+                registeredCommands.Add(a);
             }
         }
     }
@@ -71,11 +69,15 @@ public abstract class CommandFeature : Feature
         base.Disable();
     }
 
-    public List<string> GetArgumentList(string args) => Regex.Matches(args, @"[\""].+?[\""]|[^ ]+")
+    public static List<string> GetArgumentList(string args) => ArgumentRegex().Matches(args)
     .Select(m =>
     {
-        if (m.Value.StartsWith('"') && m.Value.EndsWith('"')) { return m.Value.Substring(1, m.Value.Length - 2); }
+        if (m.Value.StartsWith('"') && m.Value.EndsWith('"')) { return m.Value[1..^1]; }
         return m.Value;
     })
     .ToList();
+
+
+    [GeneratedRegex("[\\\"].+?[\\\"]|[^ ]+")]
+    private static partial Regex ArgumentRegex();
 }

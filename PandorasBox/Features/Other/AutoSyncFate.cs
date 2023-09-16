@@ -18,9 +18,9 @@ namespace PandorasBox.Features.Other
     {
         private ushort fateID;
 
-        public override string Name => "Auto-Sync Fates";
+        public override string Name => "Auto-Sync FATEs";
 
-        public override string Description => "Syncs when entering a Fate if you're overlevelled.";
+        public override string Description => "Syncs when entering a FATE if you're overlevelled.";
 
         public override FeatureType FeatureType => FeatureType.Other;
 

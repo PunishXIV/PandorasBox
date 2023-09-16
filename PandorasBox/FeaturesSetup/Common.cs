@@ -16,6 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.System.String;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.Utility;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
@@ -30,43 +31,40 @@ public static unsafe class Common
     public delegate void NoReturnAddonOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** numberArrayData, StringArrayData** stringArrayData);
 
     private delegate void* AddonSetupDelegate(AtkUnitBase* addon);
-    private static HookWrapper<AddonSetupDelegate> addonSetupHook;
+    private static HookWrapper<AddonSetupDelegate> AddonSetupHook;
 
     private delegate void FinalizeAddonDelegate(AtkUnitManager* unitManager, AtkUnitBase** atkUnitBase);
-    private static HookWrapper<FinalizeAddonDelegate> finalizeAddonHook;
+    private static HookWrapper<FinalizeAddonDelegate> FinalizeAddonHook;
 
     private static IntPtr LastCommandAddress;
 
     public static Utf8String* LastCommand { get; private set; }
-
-    public static event Action FrameworkUpdate;
-
     public static void* ThrowawayOut { get; private set; } = (void*)Marshal.AllocHGlobal(1024);
 
-    public static event Action<SetupAddonArgs> AddonSetup;
-    public static event Action<SetupAddonArgs> AddonPreSetup;
-    public static event Action<SetupAddonArgs> AddonFinalize;
+    public static event Action<SetupAddonArgs> OnAddonSetup;
+    public static event Action<SetupAddonArgs> OnAddonPreSetup;
+    public static event Action<SetupAddonArgs> OnAddonFinalize;
 
     public static void Setup()
     {
         LastCommandAddress = Svc.SigScanner.GetStaticAddressFromSig("4C 8D 05 ?? ?? ?? ?? 41 B1 01 49 8B D4 E8 ?? ?? ?? ?? 83 EB 06");
         LastCommand = (Utf8String*)(LastCommandAddress);
 
-        addonSetupHook = Hook<AddonSetupDelegate>("E8 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? C1 E8 14", AddonSetupDetour);
-        addonSetupHook?.Enable();
+        AddonSetupHook = Hook<AddonSetupDelegate>("E8 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? C1 E8 14", AddonSetupDetour);
+        AddonSetupHook?.Enable();
 
-        finalizeAddonHook = Hook<FinalizeAddonDelegate>("E8 ?? ?? ?? ?? 48 8B 7C 24 ?? 41 8B C6", FinalizeAddonDetour);
-        finalizeAddonHook?.Enable();
+        FinalizeAddonHook = Hook<FinalizeAddonDelegate>("E8 ?? ?? ?? ?? 48 8B 7C 24 ?? 41 8B C6", FinalizeAddonDetour);
+        FinalizeAddonHook?.Enable();
 
-        updateCursorHook = Hook<AtkModuleUpdateCursor>("48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC 20 4C 8B F1 E8 ?? ?? ?? ?? 49 8B CE", UpdateCursorDetour);
-        updateCursorHook?.Enable();
+        UpdateCursorHook = Hook<AtkModuleUpdateCursor>("48 89 74 24 ?? 48 89 7C 24 ?? 41 56 48 83 EC 20 4C 8B F1 E8 ?? ?? ?? ?? 49 8B CE", UpdateCursorDetour);
+        UpdateCursorHook?.Enable();
     }
 
     private static void* AddonSetupDetour(AtkUnitBase* addon)
     {
         try
         {
-            AddonPreSetup?.Invoke(new SetupAddonArgs()
+            OnAddonPreSetup?.Invoke(new SetupAddonArgs()
             {
                 Addon = addon
             });
@@ -75,10 +73,10 @@ public static unsafe class Common
         {
             PluginLog.Error(ex, "AddonSetupError");
         }
-        var retVal = addonSetupHook.Original(addon);
+        var retVal = AddonSetupHook.Original(addon);
         try
         {
-            AddonSetup?.Invoke(new SetupAddonArgs()
+            OnAddonSetup?.Invoke(new SetupAddonArgs()
             {
                 Addon = addon
             });
@@ -95,7 +93,7 @@ public static unsafe class Common
     {
         try
         {
-            AddonFinalize?.Invoke(new SetupAddonArgs()
+            OnAddonFinalize?.Invoke(new SetupAddonArgs()
             {
                 Addon = atkUnitBase[0]
             });
@@ -104,7 +102,7 @@ public static unsafe class Common
         {
             PluginLog.Error(ex, "FinalizeAddonError");
         }
-        finalizeAddonHook?.Original(unitManager, atkUnitBase);
+        FinalizeAddonHook?.Original(unitManager, atkUnitBase);
     }
 
     public static UIModule* UIModule => Framework.Instance()->GetUiModule();
@@ -278,7 +276,7 @@ public static unsafe class Common
     public static HookWrapper<AddonOnUpdate> HookAfterAddonUpdate(string signature, NoReturnAddonOnUpdate after, int addressOffset = 0) => HookAfterAddonUpdate(Svc.SigScanner.ScanText(signature) + addressOffset, after);
     public static HookWrapper<AddonOnUpdate> HookAfterAddonUpdate(AtkUnitBase* atkUnitBase, NoReturnAddonOnUpdate after) => HookAfterAddonUpdate(atkUnitBase->AtkEventListener.vfunc[46], after);
 
-    public static List<IHookWrapper> HookList = new();
+    private static readonly List<IHookWrapper> HookList = new();
 
     public static void OpenBrowser(string url)
     {
@@ -414,7 +412,7 @@ public static unsafe class Common
         for (var i = 0; i < uldManager->NodeListCount; i++)
         {
             var n = uldManager->NodeList[i];
-            if (n->NodeID != nodeId || type != null && n->Type != type.Value) continue;
+            if (n->NodeID != nodeId || (type != null && n->Type != type.Value)) continue;
             return (T*)n;
         }
         return null;
@@ -428,32 +426,39 @@ public static unsafe class Common
             ThrowawayOut = null;
         }
 
-        addonSetupHook?.Disable();
-        addonSetupHook?.Dispose();
+        AddonSetupHook?.Disable();
+        AddonSetupHook?.Dispose();
 
-        updateCursorHook?.Disable();
-        updateCursorHook?.Dispose();
+        UpdateCursorHook?.Disable();
+        UpdateCursorHook?.Dispose();
 
-        finalizeAddonHook?.Disable();
-        finalizeAddonHook?.Dispose();
+        FinalizeAddonHook?.Disable();
+        FinalizeAddonHook?.Dispose();
     }
 
     public const int UnitListCount = 18;
     public static AtkUnitBase* GetAddonByID(uint id)
     {
-        var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
-        for (var i = 0; i < UnitListCount; i++)
+        try
         {
-            var unitManager = &unitManagers[i];
-            var unitBaseArray = &(unitManager->AtkUnitEntries);
-            for (var j = 0; j < unitManager->Count; j++)
+            var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
+            for (var i = 0; i < UnitListCount; i++)
             {
-                var unitBase = unitBaseArray[j];
-                if (unitBase->ID == id)
+                var unitManager = &unitManagers[i];
+                var unitBaseArray = &(unitManager->AtkUnitEntries);
+                for (var j = 0; j < unitManager->Count; j++)
                 {
-                    return unitBase;
+                    var unitBase = unitBaseArray[j];
+                    if (unitBase != null && unitBase->ID == id)
+                    {
+                        return unitBase;
+                    }
                 }
             }
+        }
+        catch
+        {
+            return null;
         }
 
         return null;
@@ -495,23 +500,23 @@ public static unsafe class Common
 
 
     private delegate void* AtkModuleUpdateCursor(RaptureAtkModule* module);
-    private static HookWrapper<AtkModuleUpdateCursor> updateCursorHook;
+    private static HookWrapper<AtkModuleUpdateCursor> UpdateCursorHook;
 
-    private static AtkCursor.CursorType _lockedCursorType = AtkCursor.CursorType.Arrow;
+    private static AtkCursor.CursorType LockedCursorType = AtkCursor.CursorType.Arrow;
 
     private static void* UpdateCursorDetour(RaptureAtkModule* module)
     {
-        if (_lockedCursorType != AtkCursor.CursorType.Arrow)
+        if (LockedCursorType != AtkCursor.CursorType.Arrow)
         {
             var cursor = AtkStage.GetSingleton()->AtkCursor;
-            if (cursor.Type != _lockedCursorType)
+            if (cursor.Type != LockedCursorType)
             {
-                AtkStage.GetSingleton()->AtkCursor.SetCursorType(_lockedCursorType, 1);
+                AtkStage.GetSingleton()->AtkCursor.SetCursorType(LockedCursorType, 1);
             }
             return null;
         }
 
-        return updateCursorHook.Original(module);
+        return UpdateCursorHook.Original(module);
     }
 
     public static void ForceMouseCursor(AtkCursor.CursorType cursorType)
@@ -521,15 +526,15 @@ public static unsafe class Common
             UnforceMouseCursor();
             return;
         }
-        _lockedCursorType = cursorType;
+        LockedCursorType = cursorType;
         AtkStage.GetSingleton()->AtkCursor.SetCursorType(cursorType);
-        updateCursorHook?.Enable();
+        UpdateCursorHook?.Enable();
     }
 
     public static void UnforceMouseCursor()
     {
-        _lockedCursorType = AtkCursor.CursorType.Arrow;
-        updateCursorHook?.Disable();
+        LockedCursorType = AtkCursor.CursorType.Arrow;
+        UpdateCursorHook?.Disable();
     }
 
     public static string GetTexturePath(AtkImageNode* imageNode)

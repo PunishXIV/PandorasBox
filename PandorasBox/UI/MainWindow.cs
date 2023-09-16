@@ -1,5 +1,8 @@
+using Dalamud.Interface;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using Dalamud.Logging;
+using Dalamud.Utility;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
@@ -30,7 +33,7 @@ internal class MainWindow : Window
         };
     }
 
-    public void Dispose()
+    public static void Dispose()
     {
 
     }
@@ -109,6 +112,11 @@ internal class MainWindow : Window
         }
         base.PostDraw();
     }
+
+    private string searchString = string.Empty;
+    private List<BaseFeature> FilteredFeatures = new();
+    private bool hornybonk;
+
     public override void Draw()
     {
         var region = ImGui.GetContentRegionAvail();
@@ -130,7 +138,7 @@ internal class MainWindow : Window
                 if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
                 {
                     ImGuiEx.ImGuiLineCentered("###Logo", () => { ImGui.Image(logo.ImGuiHandle, new(125f.Scale(), 125f.Scale())); });
-                    
+
                 }
 
                 ImGui.Spacing();
@@ -140,7 +148,7 @@ internal class MainWindow : Window
                 {
                     if ((OpenWindow)window == OpenWindow.None) continue;
 
-                    if (ImGui.Selectable($"{window.ToString()}", OpenWindow == (OpenWindow)window))
+                    if (ImGui.Selectable($"{window}", OpenWindow == (OpenWindow)window))
                     {
                         OpenWindow = (OpenWindow)window;
                     }
@@ -163,32 +171,71 @@ internal class MainWindow : Window
                         Config.Save();
                     }
                 }
+
+                ImGui.SetCursorPosY(ImGui.GetContentRegionMax().Y - 45f);
+                ImGuiEx.ImGuiLineCentered("###Search", () => { ImGui.Text($"Search"); ImGuiComponents.HelpMarker("Searches feature names and descriptions for a given word or phrase."); });
+                ImGuiEx.SetNextItemFullWidth();
+                if (ImGui.InputText("###FeatureSearch", ref searchString, 500))
+                {
+                    if (searchString.Equals("ERP", StringComparison.CurrentCultureIgnoreCase) && !hornybonk)
+                    {
+                        hornybonk = true;
+                        Util.OpenLink("https://www.youtube.com/watch?v=oO-gc3Lh-oI");
+                    }
+                    else
+                    {
+                        hornybonk = false;
+                    }
+                    FilteredFeatures.Clear();
+                    if (searchString.Length > 0)
+                    {
+                        foreach (var feature in P.Features)
+                        {
+                            if (feature.FeatureType == FeatureType.Commands) continue;
+
+                            if (feature.Description.Contains(searchString, StringComparison.CurrentCultureIgnoreCase) ||
+                                feature.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase))
+                                FilteredFeatures.Add(feature);
+                        }
+                    }
+                }
+
             }
             ImGui.EndChild();
             ImGui.PopStyleVar();
             ImGui.TableNextColumn();
             if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (false ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
             {
-                switch (OpenWindow)
+                if (FilteredFeatures.Count() > 0)
                 {
-                    case OpenWindow.Actions:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Actions).ToArray());
-                        break;
-                    case OpenWindow.UI:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.UI).ToArray());
-                        break;
-                    case OpenWindow.Other:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Other).ToArray());
-                        break;
-                    case OpenWindow.Targets:
-                        DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
-                        break;
-                    case OpenWindow.Commands:
-                        DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
-                        break;
-                    case OpenWindow.About:
-                        AboutTab.Draw(P);
-                        break;
+                    DrawFeatures(FilteredFeatures.ToArray());
+                }
+                else
+                {
+                    switch (OpenWindow)
+                    {
+                        case OpenWindow.Actions:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Actions).ToArray());
+                            break;
+                        case OpenWindow.UI:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.UI).ToArray());
+                            break;
+                        case OpenWindow.Other:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Other).ToArray());
+                            break;
+                        case OpenWindow.Targets:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Targeting).ToArray());
+                            break;
+                        case OpenWindow.Chat:
+                            DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
+                            break;
+                        case OpenWindow.Commands:
+                            DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
+                            break;
+                        case OpenWindow.About:
+                            AboutTab.Draw(P);
+                            break;
+                    }
                 }
             }
             ImGui.EndChild();
@@ -197,34 +244,34 @@ internal class MainWindow : Window
         }
     }
 
-    private void DrawCommands(BaseFeature[] features)
+    private static void DrawCommands(BaseFeature[] features)
     {
-        if (features == null || !features.Any() || features.Count() == 0) return;
+        if (features == null || !features.Any() || features.Length == 0) return;
         ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
         ImGui.Separator();
 
         if (ImGui.BeginTable("###CommandsTable", 5, ImGuiTableFlags.Borders))
         {
-            ImGui.TableSetupColumn("Name", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Command", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Parameters", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Description", ImGuiTableColumnFlags.WidthFixed);
-            ImGui.TableSetupColumn("Aliases", ImGuiTableColumnFlags.WidthFixed);
+            ImGui.TableSetupColumn("Name");
+            ImGui.TableSetupColumn("Command");
+            ImGui.TableSetupColumn("Parameters");
+            ImGui.TableSetupColumn("Description");
+            ImGui.TableSetupColumn("Aliases");
 
             ImGui.TableHeadersRow();
             foreach (var feature in features.Cast<CommandFeature>())
             {
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                ImGui.Text(feature.Name);
+                ImGui.TextWrapped(feature.Name);
                 ImGui.TableNextColumn();
-                ImGui.Text(feature.Command);
+                ImGui.TextWrapped(feature.Command);
                 ImGui.TableNextColumn();
-                ImGui.Text(string.Join(", ", feature.Parameters));
+                ImGui.TextWrapped(string.Join(", ", feature.Parameters));
                 ImGui.TableNextColumn();
-                ImGui.Text($"{feature.Description}");
+                ImGui.TextWrapped($"{feature.Description}");
                 ImGui.TableNextColumn();
-                ImGui.Text($"{string.Join(", ", feature.Alias)}");
+                ImGui.TextWrapped($"{string.Join(", ", feature.Alias)}");
 
             }
 
@@ -234,14 +281,22 @@ internal class MainWindow : Window
 
     private void DrawFeatures(IEnumerable<BaseFeature> features)
     {
-        if (features == null || !features.Any() || features.Count() == 0) return;
+        if (features == null || !features.Any() || !features.Any()) return;
 
-        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
+        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () =>
+        {
+            if (FilteredFeatures.Count > 0)
+            {
+                ImGui.Text($"Search Results");
+            }
+            else
+                ImGui.Text($"{features.First().FeatureType}");
+        });
         ImGui.Separator();
 
         foreach (var feature in features)
         {
-            bool enabled = feature.Enabled;
+            var enabled = feature.Enabled;
             if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
             {
                 if (enabled)
@@ -290,6 +345,7 @@ public enum OpenWindow
     Actions,
     UI,
     Targets,
+    Chat,
     Other,
     Commands,
     About

@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>1.1.0.0</Version>
+        <Version>1.4.0.0</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -29,16 +29,6 @@
         <OutputPath>bin/Release</OutputPath>
     </PropertyGroup>
 
-    <ItemGroup Condition="'$(Configuration)' == 'Release'">
-        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
-        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
-    </ItemGroup>
-
-    <ItemGroup Condition="'$(Configuration)' == 'Debug'">
-        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
-        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
-    </ItemGroup>
-
     <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
         <OutputPath>$(DalamudDevPlugins)</OutputPath>
     </PropertyGroup>
@@ -50,8 +40,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Dalamud.ContextMenu" Version="1.2.2" />
-        <PackageReference Include="DalamudPackager" Version="2.1.10" />
+        <PackageReference Include="Dalamud.ContextMenu" Version="1.2.3" />
+        <PackageReference Include="DalamudPackager" Version="2.1.11" />
         <Reference Include="Newtonsoft.Json">
             <HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
             <Private>False</Private>
@@ -72,10 +62,10 @@
             <HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
             <Private>False</Private>
         </Reference>
-        <!--<Reference Include="FFXIVClientStructs">
+        <Reference Include="FFXIVClientStructs">
             <HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
             <Private>False</Private>
-        </Reference>-->
+        </Reference>
         <Reference Include="ImGuiScene">
             <HintPath>$(DalamudLibPath)ImGuiScene.dll</HintPath>
             <Private>False</Private>
@@ -99,12 +89,17 @@
 
     <ItemGroup>
       <ProjectReference Include="..\ClickLib\ClickLib\ClickLib.csproj" />
-      <ProjectReference Include="..\FFXIVClientStructs\FFXIVClientStructs\FFXIVClientStructs.csproj" />
+        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
+        <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
     </ItemGroup>
 
     <ItemGroup>
       <Compile Update="UI\MainWindow.cs">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>
       </Compile>
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Features\Chat\" />
     </ItemGroup>
 </Project>

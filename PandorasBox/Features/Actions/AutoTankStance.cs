@@ -1,14 +1,12 @@
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Statuses;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Lumina.Excel.GeneratedSheets;
+using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using PandorasBox.FeaturesSetup;
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace PandorasBox.Features.Actions
 {
@@ -31,12 +29,15 @@ namespace PandorasBox.Features.Actions
 
             [FeatureConfigOption("Activate when party size is less than or equal to", IntMin = 1, IntMax = 8, EditorSize = 300)]
             public int MaxParty = 1;
-            
+
             [FeatureConfigOption("Activate if main tank dies (respects party size option)", "", 1)]
             public bool ActivateOnDeath = false;
 
             [FeatureConfigOption("Only activate on entrance if no other tank has stance", "", 2)]
             public bool NoOtherTanks = false;
+
+            [FeatureConfigOption("Activate when synced to a fate", "", 3)]
+            public bool ActivateInFate = false;
         }
 
         public Configs Config { get; private set; }
@@ -50,12 +51,13 @@ namespace PandorasBox.Features.Actions
             OnJobChanged += RunFeature;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
             Svc.Framework.Update += CheckParty;
+            Svc.Framework.Update += CheckForFateSync;
             base.Enable();
         }
 
         private void CheckParty(Framework framework)
         {
-            if (Svc.Party.Count() == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
+            if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
             {
                 MainTank = Svc.Party.First(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).ObjectId;
@@ -77,88 +79,85 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfDungeon(object sender, ushort e)
         {
-            if (Svc.ClientState.LocalPlayer?.ClassJob.Id is 1 or 19 or 3 or 21 or 32 or 37)
+            if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
+            TaskManager.Enqueue(() => Svc.ClientState.LocalPlayer != null);
+            TaskManager.DelayNext("TankWaitForConditions", 2000);
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "TankCheckConditionBetweenAreas");
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent], "TankCheckConditionCutscene");
+            TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer?.ClassJob.Id), "TankStanceDungeonEnabled");
+
+        }
+
+        private void CheckForFateSync(Framework framework)
+        {
+            var ps = PlayerState.Instance();
+            if (Config.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
             {
-                if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 10 && Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).TerritoryIntendedUse != 3) return;
-                TaskManager.DelayNext("WaitForDungeon", 3000);
-                TaskManager.Enqueue(() =>
-                {
-                    if (!Svc.Condition[ConditionFlag.BetweenAreas])
-                    {
-                        if (Svc.Condition[ConditionFlag.BoundByDuty])
-                        {
-                            TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer?.ClassJob.Id), "Enabling Stance on Dungeon");
-                            //TaskManager.Enqueue(() => TaskManager.Abort());
-                            return true;
-                        }
-                    }
-                    return false;
-                });
+                TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer.ClassJob.Id));
             }
         }
 
         private void RunFeature(uint? jobId)
         {
-            if (jobId.HasValue && (jobId.Value is 1 or 19 or 3 or 21 or 32 or 37))
+            if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role == 1)
             {
                 EnableStance(jobId);
-                //TaskManager.Enqueue(() => TaskManager.Abort());
             }
         }
 
         private bool EnableStance(uint? jobId)
         {
-            if (jobId.Value is 1 or 19 or 3 or 21 or 32 or 37)
+            if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role != 1) return true;
+
+            var am = ActionManager.Instance();
+            if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
+            TaskManager.DelayNext("TankStance", (int)(Config.Throttle * 1000));
+            TaskManager.Enqueue(() =>
             {
-                var am = ActionManager.Instance();
-                if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
-                TaskManager.DelayNext("TankStance", (int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() =>
+                if (Svc.Party.Length > Config.MaxParty) return true;
+                if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
+                switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
                 {
-                    if (Svc.Party.Count() > Config.MaxParty) return true;
-                    if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
-                    switch (jobId.Value)
-                    {
-                        case 1:
-                        case 19:
-                            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 79)) return true;
-                            if (am->GetActionStatus(ActionType.Spell, 28) == 0)
-                            {
-                                am->UseAction(ActionType.Spell, 28);
-                                return true;
-                            }
-                            return false;
-                        case 3:
-                        case 21:
-                            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 91)) return true;
-                            if (am->GetActionStatus(ActionType.Spell, 48) == 0)
-                            {
-                                am->UseAction(ActionType.Spell, 48);
-                                return true;
-                            }
-                            return false;
-                        case 32:
-                            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 743)) return true;
-                            if (am->GetActionStatus(ActionType.Spell, 3629) == 0)
-                            {
-                                am->UseAction(ActionType.Spell, 3629);
-                                return true;
-                            }
-                            return false;
-                        case 37:
-                            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1833)) return true;
-                            if (am->GetActionStatus(ActionType.Spell, 16142) == 0)
-                            {
-                                am->UseAction(ActionType.Spell, 16142);
-                                return true;
-                            }
-                            return false;
+                    case 1:
+                    case 19:
+                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 79)) return true;
+                        if (am->GetActionStatus(ActionType.Spell, 28) == 0)
+                        {
+                            am->UseAction(ActionType.Spell, 28);
+                            return true;
+                        }
+                        return false;
+                    case 3:
+                    case 21:
+                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 91)) return true;
+                        if (am->GetActionStatus(ActionType.Spell, 48) == 0)
+                        {
+                            am->UseAction(ActionType.Spell, 48);
+                            return true;
+                        }
+                        return false;
+                    case 32:
+                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 743)) return true;
+                        if (am->GetActionStatus(ActionType.Spell, 3629) == 0)
+                        {
+                            am->UseAction(ActionType.Spell, 3629);
+                            return true;
+                        }
+                        return false;
+                    case 37:
+                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1833)) return true;
+                        if (am->GetActionStatus(ActionType.Spell, 16142) == 0)
+                        {
+                            am->UseAction(ActionType.Spell, 16142);
+                            return true;
+                        }
+                        return false;
 
-                    }
+                }
 
-                    return true;
-                });
-            }
+                return true;
+            });
+
 
             return true;
         }
@@ -169,6 +168,7 @@ namespace PandorasBox.Features.Actions
             OnJobChanged -= RunFeature;
             Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
             Svc.Framework.Update -= CheckParty;
+            Svc.Framework.Update -= CheckForFateSync;
             base.Disable();
         }
     }
