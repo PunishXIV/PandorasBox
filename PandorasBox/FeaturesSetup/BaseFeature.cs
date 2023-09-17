@@ -33,11 +33,11 @@ namespace PandorasBox.Features
 
         public virtual bool Enabled { get; protected set; }
 
-        public virtual string Name { get; }
+        public abstract string Name { get; }
 
         public virtual string Key => GetType().Name;
 
-        public virtual string Description => null!;
+        public abstract string Description { get; }
 
         private uint? jobID = Svc.ClientState.LocalPlayer?.ClassJob.Id;
         public uint? JobID
