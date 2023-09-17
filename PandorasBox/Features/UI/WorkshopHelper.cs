@@ -65,8 +65,8 @@ namespace PandorasBox.Features.UI
             [FeatureConfigOption("Automatically collect crops from farm", "", 8)]
             public bool AutoCollectFarm = false;
 
-            //[FeatureConfigOption("Auto Collect Granary", "", 9)]
-            //public bool AutoCollectGranary = false;
+            [FeatureConfigOption("Auto Collect Granary", "", 9)]
+            public bool AutoCollectGranary = false;
             //[FeatureConfigOption("Auto Set Granary", "", 10)]
             //public bool AutoSetGranary = false;
             //public bool ShouldShowAutoConfirmGranary() => AutoSetGranary;
@@ -868,6 +868,7 @@ namespace PandorasBox.Features.UI
         {
             if (obj.AddonName != "MJIAnimalManagement") return;
             if (!Config.AutoCollectPasture) return;
+            if (obj.Addon->AtkValues[219].Byte == 0) return;
 
             Callback.Fire(obj.Addon, false, 5);
             AutoYesNo();
@@ -875,24 +876,24 @@ namespace PandorasBox.Features.UI
 
         private void AutoCollectFarm(SetupAddonArgs obj)
         {
-            if (obj.AddonName != "MJIAnimalManagement") return;
+            if (obj.AddonName != "MJIFarmManagement") return;
             if (!Config.AutoCollectFarm) return;
+            if (obj.Addon->AtkValues[195].Byte == 0) return;
 
             Callback.Fire(obj.Addon, false, 3);
             AutoYesNo();
         }
 
-        //private void AutoCollectGranary(SetupAddonArgs obj)
-        //{
-        //    if (obj.AddonName != "MJIGatheringHouse") return;
+        private void AutoCollectGranary(SetupAddonArgs obj)
+        {
+            if (obj.AddonName != "MJIGatheringHouse") return;
+            if (!Config.AutoCollectGranary) return;
 
-        //    if (Config.AutoCollectGranary)
-        //        if (!obj.Addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ToString().Equals("7/7"))
-        //        {
-        //            Callback.Fire(obj.Addon, false, 13, 0);
-        //            Callback.Fire(obj.Addon, false, 13, 1);
-        //        }
-        //}
+            if (obj.Addon->AtkValues[73].Int != 0)
+                Callback.Fire(obj.Addon, false, 13, 0);
+            if (obj.Addon->AtkValues[147].Int != 0)
+                Callback.Fire(obj.Addon, false, 13, 1);
+        }
 
         //private void AutoSetGranary(SetupAddonArgs obj)
         //{
