@@ -15,5 +15,6 @@ namespace PandorasBox.FeaturesSetup
         Commands,
         Other,
         ChatFeature,
+        Achievements,
     }
 }
