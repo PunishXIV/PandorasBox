@@ -890,9 +890,9 @@ namespace PandorasBox.Features.UI
             if (!Config.AutoCollectGranary) return;
 
             if (obj.Addon->AtkValues[73].Int != 0)
-                Callback.Fire(obj.Addon, false, 13, 0);
+                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, false, 13, 0));
             if (obj.Addon->AtkValues[147].Int != 0)
-                Callback.Fire(obj.Addon, false, 13, 1);
+                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, false, 13, 1));
         }
 
         //private void AutoSetGranary(SetupAddonArgs obj)
@@ -961,6 +961,7 @@ namespace PandorasBox.Features.UI
             Common.OnAddonSetup += AutoSell;
             Common.OnAddonSetup += AutoCollectPasture;
             Common.OnAddonSetup += AutoCollectFarm;
+            Common.OnAddonSetup += AutoCollectGranary;
             //Common.OnAddonSetup += AutoSetGranary;
             Common.OnAddonSetup += AutoMaxGranary;
             base.Enable();
@@ -975,6 +976,7 @@ namespace PandorasBox.Features.UI
             Common.OnAddonSetup -= AutoSell;
             Common.OnAddonSetup -= AutoCollectPasture;
             Common.OnAddonSetup -= AutoCollectFarm;
+            Common.OnAddonSetup -= AutoCollectGranary;
             //Common.OnAddonSetup -= AutoSetGranary;
             Common.OnAddonSetup -= AutoMaxGranary;
             base.Disable();
