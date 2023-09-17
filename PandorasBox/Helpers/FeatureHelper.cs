@@ -1,5 +1,6 @@
 using Dalamud.Logging;
 using PandorasBox.Features;
+using PandorasBox.Features.UI;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,5 +26,7 @@ namespace PandorasBox.Helpers
             return IsEnabled(f);
 
         }
+
+        internal static bool IsBusy => P.TaskManager.IsBusy;
     }
 }
