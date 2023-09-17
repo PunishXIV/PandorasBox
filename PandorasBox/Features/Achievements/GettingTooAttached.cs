@@ -100,10 +100,10 @@ namespace PandorasBox.Features.Achievements
                 if (ImGui.SliderInt("Loops", ref Config.numberOfLoops, 0, 10000))
                     SaveConfig(Config);
 
+                height = ImGui.GetWindowSize().Y;
+
                 ImGui.End();
                 ImGui.PopStyleVar(2);
-
-                height = ImGui.GetWindowSize().Y;
             }
         }
 
