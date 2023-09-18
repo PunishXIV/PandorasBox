@@ -360,30 +360,14 @@ namespace PandorasBox.Features.UI
                 else
                 {
                     //pi.Framework.Gui.Chat.Print(Environment.TickCount + " Now loading not visible");
-                    //if (SendKeypress(Keys.Escape))
-                    //{
-                    //    return true;
-                    //}
+                    if (WindowsKeypress.SendKeypress(Keys.Escape))
+                    {
+                        return true;
+                    }
                 }
             }
             return false;
         }
-
-        //private static bool SendKeypress(Keys key)
-        //{
-        //    if (WindowFunctions.TryFindGameWindow(out var h))
-        //    {
-        //        InternalLog.Verbose($"Sending key {key}");
-        //        User32.SendMessage(h, User32.WindowMessage.WM_KEYDOWN, (int)key, 0);
-        //        User32.SendMessage(h, User32.WindowMessage.WM_KEYUP, (int)key, 0);
-        //        return true;
-        //    }
-        //    else
-        //    {
-        //        PluginLog.Error("Couldn't find game window!");
-        //    }
-        //    return false;
-        //}
 
         private static bool? ConfirmSkip()
         {
