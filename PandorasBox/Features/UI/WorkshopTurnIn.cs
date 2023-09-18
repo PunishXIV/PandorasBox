@@ -3,6 +3,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
 using Dalamud.Memory;
+using Dalamud.Utility;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -186,15 +187,16 @@ namespace PandorasBox.Features.UI
         public readonly struct PartIngredient
         {
             public Item Ingredient { get; }
-
+            public uint AmountInInventory { get; }
             public uint AmountPerTurnIn { get; }
             public uint TotalRequiredAmount { get; }
             public uint TurnedInSoFar { get; }
             public uint TotalTimesToTurnIn { get; }
 
-            public PartIngredient(Item ingredient, uint perturn, uint total, uint timesSoFar, uint timesTotal)
+            public PartIngredient(Item ingredient, uint inventory, uint perturn, uint total, uint timesSoFar, uint timesTotal)
             {
                 Ingredient = ingredient;
+                AmountInInventory = inventory;
                 AmountPerTurnIn = perturn;
                 TotalRequiredAmount = total;
                 TurnedInSoFar = timesSoFar;
@@ -227,6 +229,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"SelectingItem{ingredient.Ingredient.Name}");
                     //TaskManager.EnqueueImmediate(() => HandInItem());
                     TaskManager.EnqueueImmediate(() => ConfirmContribution(), "ConfirmingContribution");
+                    TaskManager.EnqueueImmediate(() => ConfirmHQTrade(), "ConfirmingHQTrade");
                 }
             }
 
@@ -279,6 +282,7 @@ namespace PandorasBox.Features.UI
 
                     ingredients.Add(new PartIngredient(
                         Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).FirstOrDefault(x => x.Name.RawString.Equals(itemName, StringComparison.CurrentCultureIgnoreCase)),
+                        addon->AtkValues[72 + i].UInt,
                         addon->AtkValues[60 + i].UInt,
                         addon->AtkValues[60 + i].UInt * addon->AtkValues[120 + i].UInt,
                         addon->AtkValues[108 + i].UInt,
@@ -294,12 +298,16 @@ namespace PandorasBox.Features.UI
             return ingredients;
         }
 
-        private bool HasEnoughItems(List<PartIngredient> requiredIngredients)
+        private static bool HasEnoughItems(List<PartIngredient> requiredIngredients)
         {
             // 36-47 names
             // 60-71 amount per turn in (uint)
+            // 72-83 amount in inventory (uint)
             // 108-109 times turned in so far for phase (uint)
             // 120-131 times to turn in for the phase (uint)
+            foreach (var i in requiredIngredients)
+                if (i.AmountInInventory < (i.TotalTimesToTurnIn - i.TurnedInSoFar) * i.AmountPerTurnIn)
+                    return false;
 
             return true;
         }
@@ -326,6 +334,18 @@ namespace PandorasBox.Features.UI
                 return true;
             }
             return false;
+        }
+
+        private static bool ConfirmHQTrade()
+        {
+            var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, Svc.Data.GetExcelSheet<Addon>(Svc.ClientState.ClientLanguage).GetRow(102434).Text.ToDalamudString().ExtractText()));
+            if (x != null)
+            {
+                PluginLog.Log("Confirming HQ Trade");
+                ClickSelectYesNo.Using((nint)x).Yes();
+                return true;
+            }
+            return true;
         }
 
         private static bool? ContributeMaterials() =>
