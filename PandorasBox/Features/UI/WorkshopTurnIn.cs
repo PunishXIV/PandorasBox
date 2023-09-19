@@ -303,6 +303,7 @@ namespace PandorasBox.Features.UI
             // 36-47 names
             // 60-71 amount per turn in (uint)
             // 72-83 amount in inventory (uint)
+            // 84-95 amount in inventory, nq/hq split (string)
             // 108-109 times turned in so far for phase (uint)
             // 120-131 times to turn in for the phase (uint)
             foreach (var i in requiredIngredients)
@@ -314,6 +315,7 @@ namespace PandorasBox.Features.UI
 
         private bool ClickItem(int positionInList, uint turnInAmount)
         {
+            // I cannot detect if you have the right amount of items but not within a sufficiently large single stack
             if (TryGetAddonByName<AtkUnitBase>("Request", out var requestAddon) && requestAddon->IsVisible) return false;
 
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
