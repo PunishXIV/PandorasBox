@@ -11,6 +11,7 @@ using ECommons.Interop;
 using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Common.Math;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -184,24 +185,16 @@ namespace PandorasBox.Features.UI
             return true;
         }
 
-        public readonly struct PartIngredient
+        public readonly struct PartIngredient(Item ingredient, uint reqLevel, ClassJob reqJob, uint inventory, uint perturn, uint total, uint timesSoFar, uint timesTotal)
         {
-            public Item Ingredient { get; }
-            public uint AmountInInventory { get; }
-            public uint AmountPerTurnIn { get; }
-            public uint TotalRequiredAmount { get; }
-            public uint TurnedInSoFar { get; }
-            public uint TotalTimesToTurnIn { get; }
-
-            public PartIngredient(Item ingredient, uint inventory, uint perturn, uint total, uint timesSoFar, uint timesTotal)
-            {
-                Ingredient = ingredient;
-                AmountInInventory = inventory;
-                AmountPerTurnIn = perturn;
-                TotalRequiredAmount = total;
-                TurnedInSoFar = timesSoFar;
-                TotalTimesToTurnIn = timesTotal;
-            }
+            public Item Ingredient { get; } = ingredient;
+            public uint RequiredLevelToTurnIn { get; } = reqLevel;
+            public ClassJob RequiredJobToTurnIn { get; } = reqJob;
+            public uint AmountInInventory { get; } = inventory;
+            public uint AmountPerTurnIn { get; } = perturn;
+            public uint TotalRequiredAmount { get; } = total;
+            public uint TurnedInSoFar { get; } = timesSoFar;
+            public uint TotalTimesToTurnIn { get; } = timesTotal;
         }
 
         private bool TurnInPhase()
@@ -215,10 +208,10 @@ namespace PandorasBox.Features.UI
 
             var requiredIngredients = GetRequiredItems();
 
-            if(!HasEnoughItems(requiredIngredients))
+            if (MustEndLoop(!HasEnoughItems(requiredIngredients), "Not enough items to complete phase") ||
+                MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
+                MustEndLoop(new List<int> { 8, 9, 10, 11, 12, 13, 14, 15 }.Any(x => x != Svc.ClientState.LocalPlayer.ClassJob.Id), "Must be a DoH to turn in items."))
             {
-                PrintModuleMessage("Not enough items to complete phase");
-                EndLoop("Insufficent items");
                 return false;
             }
 
@@ -268,6 +261,16 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        private bool MustEndLoop(bool condition, string message)
+        {
+            if (condition)
+            {
+                PrintModuleMessage(message);
+                EndLoop(message);
+            }
+            return condition;
+        }
+
         private List<PartIngredient> GetRequiredItems()
         {
             var ingredients = new List<PartIngredient>();
@@ -281,7 +284,9 @@ namespace PandorasBox.Features.UI
                     var itemName = MemoryHelper.ReadSeStringNullTerminated(new nint(addon->AtkValues[36 + i].String)).ToString();
 
                     ingredients.Add(new PartIngredient(
-                        Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).FirstOrDefault(x => x.Name.RawString.Equals(itemName, StringComparison.CurrentCultureIgnoreCase)),
+                        Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(addon->AtkValues[12 + i].UInt),
+                        addon->AtkValues[144 + i].UInt,
+                        Svc.Data.GetExcelSheet<ClassJob>(Svc.ClientState.ClientLanguage).FirstOrDefault(x => x.RowId == addon->AtkValues[48 + i].Int - 62000),
                         addon->AtkValues[72 + i].UInt,
                         addon->AtkValues[60 + i].UInt,
                         addon->AtkValues[60 + i].UInt * addon->AtkValues[120 + i].UInt,
@@ -300,14 +305,25 @@ namespace PandorasBox.Features.UI
 
         private static bool HasEnoughItems(List<PartIngredient> requiredIngredients)
         {
+            // 12-23 item ids
             // 36-47 names
             // 60-71 amount per turn in (uint)
             // 72-83 amount in inventory (uint)
             // 84-95 amount in inventory, nq/hq split (string)
             // 108-109 times turned in so far for phase (uint)
             // 120-131 times to turn in for the phase (uint)
+            // 144-156 level requirement to turn in part (uint)
             foreach (var i in requiredIngredients)
                 if (i.AmountInInventory < (i.TotalTimesToTurnIn - i.TurnedInSoFar) * i.AmountPerTurnIn)
+                    return false;
+
+            return true;
+        }
+
+        private static bool IsSufficientlyLeveled(List<PartIngredient> requiredIngredients)
+        {
+            foreach (var i in requiredIngredients)
+                if (PlayerState.Instance()->ClassJobLevelArray[i.RequiredJobToTurnIn.ExpArrayIndex] < i.RequiredLevelToTurnIn)
                     return false;
 
             return true;
