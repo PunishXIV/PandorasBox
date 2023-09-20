@@ -54,25 +54,28 @@ namespace PandorasBox.Features.UI
             [FeatureConfigOption("Automatically import from clipboard when loading the workshop.", "", 4)]
             public bool AutoImport = false;
 
-            [FeatureConfigOption("Automatically export materials when speaking with the export mammet.", "", 5)]
+            [FeatureConfigOption("Hide the Taskmaster. Useful for EXPlosion.", "", 5)]
+            public bool HideTaskmaster = false;
+
+            [FeatureConfigOption("Automatically export materials when speaking with the export mammet.", "", 6)]
             public bool AutoSell = false;
             public bool ShouldShowAutoSellAmount() => AutoSell;
-            [FeatureConfigOption("Auto Sell Above", "", 6, IntMin = 0, IntMax = 999, EditorSize = 300, ConditionalDisplay = true)]
+            [FeatureConfigOption("Auto Sell Above", "", 7, IntMin = 0, IntMax = 999, EditorSize = 300, ConditionalDisplay = true)]
             public int AutoSellAmount = 900;
 
-            [FeatureConfigOption("Automatically collect drops from pasture", "", 7)]
+            [FeatureConfigOption("Automatically collect drops from pasture", "", 8)]
             public bool AutoCollectPasture = false;
-            [FeatureConfigOption("Automatically collect crops from farm", "", 8)]
+            [FeatureConfigOption("Automatically collect crops from farm", "", 9)]
             public bool AutoCollectFarm = false;
 
-            [FeatureConfigOption("Auto Collect Granary", "", 9)]
+            [FeatureConfigOption("Auto Collect Granary", "", 10)]
             public bool AutoCollectGranary = false;
-            //[FeatureConfigOption("Auto Set Granary", "", 10)]
+            //[FeatureConfigOption("Auto Set Granary", "", 11)]
             //public bool AutoSetGranary = false;
             //public bool ShouldShowAutoConfirmGranary() => AutoSetGranary;
-            //[FeatureConfigOption("Auto Confirm Granary", "", 11, ConditionalDisplay = true)]
+            //[FeatureConfigOption("Auto Confirm Granary", "", 12, ConditionalDisplay = true)]
             //public bool AutoConfirmGranary = false;
-            [FeatureConfigOption("Auto Max Granary", "", 12)]
+            [FeatureConfigOption("Auto Max Granary", "", 13)]
             public bool AutoMaxGranary = false;
         }
 
@@ -571,6 +574,19 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        private bool WaitForAddButton(int workshopIndex)
+        {
+            uint id = workshopIndex switch
+            {
+                0 => 8,
+                1 => 80001,
+                2 => 80002,
+                3 => 80003,
+                _ => 0
+            };
+            return TryGetAddonByName<AtkUnitBase>("MJICraftSchedule", out var addon) && id != 0 && addon->GetNodeById(id)->IsVisible;
+        }
+
         private static unsafe bool OpenAgenda(int workshop, int prevHours)
         {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
@@ -716,6 +732,7 @@ namespace PandorasBox.Features.UI
                         {
                             ws = i;
                             TaskManager.DelayNextImmediate("PSOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws));
                             TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"PSOpenAgendaW{ws + 1}");
                             TaskManager.DelayNextImmediate("PSScheduleItemDelay", Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSScheduleItem:{item.Name}:W{ws + 1}");
@@ -726,6 +743,7 @@ namespace PandorasBox.Features.UI
                     foreach (var item in SecondarySchedule)
                     {
                         TaskManager.DelayNextImmediate("SSOpenAgendaDelay", SecondarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
+                        TaskManager.EnqueueImmediate(() => WaitForAddButton(3));
                         TaskManager.EnqueueImmediate(() => OpenAgenda(3, hours), $"SSOpenAgendaW{maxWorkshops}");
                         TaskManager.DelayNextImmediate("SSScheduleItemDelay", Config.taskDelay);
                         TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"SSSchedule:{item.Name}:W{maxWorkshops}");
@@ -742,6 +760,7 @@ namespace PandorasBox.Features.UI
                         {
                             ws = i;
                             TaskManager.DelayNextImmediate("PSOOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws));
                             TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"PSOOpenAgendaW{ws + 1}");
                             TaskManager.DelayNextImmediate("PSOScheduleItemDelay", Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSOSchedule:{item.Name}:W{ws + 1}");
@@ -763,6 +782,7 @@ namespace PandorasBox.Features.UI
                             ws = i;
                             TaskManager.EnqueueImmediate(() => PluginLog.Log($"{item.Name} : {item.UIIndex} : {hours}"));
                             TaskManager.DelayNextImmediate("MOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
+                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws));
                             TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"MOpenAgendaW{ws + 1}");
                             TaskManager.DelayNextImmediate("MScheduleItemDelay", Config.taskDelay);
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"MSchedule:{item.Name}:W{ws + 1}");
