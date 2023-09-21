@@ -1,4 +1,6 @@
+using AutoRetainer.Modules;
 using ClickLib.Clicks;
+using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
@@ -39,7 +41,7 @@ namespace PandorasBox.Features.UI
         private Overlays overlay;
         private float height;
 
-        internal bool active = false;
+        internal static bool active = false;
         internal bool phaseActive = false;
         internal bool projectActive = false;
         internal bool partLoopActive = false;
@@ -58,6 +60,7 @@ namespace PandorasBox.Features.UI
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             overlay = new Overlays(this);
+            Svc.Framework.Update += Tick;
             Common.OnAddonSetup += AutoPhase;
             base.Enable();
         }
@@ -66,8 +69,15 @@ namespace PandorasBox.Features.UI
         {
             SaveConfig(Config);
             P.Ws.RemoveWindow(overlay);
+            Svc.Framework.Update -= Tick;
             Common.OnAddonSetup -= AutoPhase;
             base.Disable();
+        }
+
+        private void Tick(Framework framework)
+        {
+            TextAdvanceManager.Tick();
+            YesAlready.Tick();
         }
 
         public override void Draw()
@@ -100,7 +110,6 @@ namespace PandorasBox.Features.UI
                     if (!phaseActive)
                     {
                         phaseActive = true;
-                        TaskManager.Enqueue(YesAlready.DisableIfNeeded);
                         TaskManager.Enqueue(() => TurnInPhase());
                         TaskManager.Enqueue(() => EndLoop("Finished Task"));
                     }
@@ -181,7 +190,6 @@ namespace PandorasBox.Features.UI
             projectActive = false;
             partLoopActive = false;
             TaskManager.Abort();
-            TaskManager.Enqueue(YesAlready.EnableIfNeeded);
             return true;
         }
 
@@ -208,8 +216,7 @@ namespace PandorasBox.Features.UI
 
             var requiredIngredients = GetRequiredItems();
 
-            if (MustEndLoop(!HasEnoughItems(requiredIngredients), "Not enough items to complete phase") ||
-                MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
+            if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
                 MustEndLoop(new List<int> { 8, 9, 10, 11, 12, 13, 14, 15 }.Any(x => x != Svc.ClientState.LocalPlayer.ClassJob.Id), "Must be a DoH to turn in items."))
             {
                 return false;
@@ -217,6 +224,8 @@ namespace PandorasBox.Features.UI
 
             foreach (var ingredient in requiredIngredients)
             {
+                if (ingredient.AmountPerTurnIn > ingredient.AmountInInventory) continue;
+
                 for (var i = ingredient.TurnedInSoFar; i < ingredient.TotalTimesToTurnIn; i++)
                 {
                     TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"SelectingItem{ingredient.Ingredient.Name}");

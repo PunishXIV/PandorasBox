@@ -7,7 +7,7 @@ namespace PandorasBox.Helpers;
 
 internal static class YesAlready
 {
-    static bool IsBusy => FeatureHelper.IsBusy;
+    private static bool IsBusy => FeatureHelper.IsBusy;
     internal static bool Reenable = false;
     internal static void DisableIfNeeded()
     {
