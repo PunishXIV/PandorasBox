@@ -2,17 +2,17 @@ using AutoRetainer.Modules;
 using ClickLib.Clicks;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Interface;
 using Dalamud.Memory;
 using Dalamud.Utility;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
-using ECommons.Interop;
+using ECommons.GameFunctions;
 using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Common.Math;
@@ -80,6 +80,11 @@ namespace PandorasBox.Features.UI
             YesAlready.Tick();
         }
 
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
+        {
+            if (ImGui.Button("InteractWithPanel")) InteractWithFabricationPanel();
+        };
+
         public override void Draw()
         {
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
@@ -130,8 +135,7 @@ namespace PandorasBox.Features.UI
                     if (!projectActive)
                     {
                         projectActive = true;
-                        TaskManager.Enqueue(YesAlready.DisableIfNeeded);
-                        TaskManager.Enqueue(TurnInProject);
+                        TaskManager.Enqueue(() => TurnInProject());
                         TaskManager.Enqueue(() => EndLoop("Finished Task"));
                     }
                     else
@@ -140,7 +144,7 @@ namespace PandorasBox.Features.UI
                     }
                 }
 
-                //if (active && !projectActive) ImGui.EndDisabled();
+                if (active && !projectActive) ImGui.EndDisabled();
 
                 //ImGui.SameLine();
 
@@ -151,7 +155,6 @@ namespace PandorasBox.Features.UI
                 //    if (!partLoopActive)
                 //    {
                 //        partLoopActive = true;
-                //        TaskManager.Enqueue(YesAlready.DisableIfNeeded);
                 //        TaskManager.Enqueue(TurnInProject);
                 //        TaskManager.Enqueue(() => EndLoop("Finished Task"));
                 //    }
@@ -229,7 +232,6 @@ namespace PandorasBox.Features.UI
                 for (var i = ingredient.TurnedInSoFar; i < ingredient.TotalTimesToTurnIn; i++)
                 {
                     TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"SelectingItem{ingredient.Ingredient.Name}");
-                    //TaskManager.EnqueueImmediate(() => HandInItem());
                     TaskManager.EnqueueImmediate(() => ConfirmContribution(), "ConfirmingContribution");
                     TaskManager.EnqueueImmediate(() => ConfirmHQTrade(), "ConfirmingHQTrade");
                 }
@@ -238,36 +240,38 @@ namespace PandorasBox.Features.UI
             return true;
         }
 
-        private void TurnInProject()
+        private bool TurnInProject()
         {
             if (!FeatureHelper.IsEnabled<AutoSelectTurnin>())
             {
                 PrintModuleMessage("Please enable the Auto-Select Turn In feature.");
                 EndLoop("Auto-Select Turn In not enabled");
-                return;
+                return false;
             }
 
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
             {
                 for (var i = addon->AtkValues[6].UInt; i < addon->AtkValues[7].UInt; i++)
                 {
-                    TaskManager.Enqueue(() => TurnInPhase(), $"TurnInPhase{i}");
+                    TaskManager.EnqueueImmediate(() => TurnInPhase(), $"TurnInPhase{i}");
                     //TaskManager.Enqueue(i == addon->AtkValues[7].UInt - 1 ? CompleteConstruction : AdvancePhase);
-                    TaskManager.Enqueue(WaitForCutscene, "WaitForCutscene");
-                    TaskManager.Enqueue(PressEsc, "PressingEsc");
-                    TaskManager.Enqueue(ConfirmSkip, "ConfirmCSSkip");
+                    TaskManager.EnqueueImmediate(WaitForCutscene, "WaitForCutscene");
+                    TaskManager.EnqueueImmediate(PressEsc, "PressingEsc");
+                    TaskManager.EnqueueImmediate(ConfirmSkip, "ConfirmCSSkip");
                     if (i != addon->AtkValues[7].UInt - 1)
                     {
-                        TaskManager.Enqueue(() => TryGetNearestFabricationPanel(), "TargetingWithFabricationPanel");
-                        TaskManager.Enqueue(() => InteractWithFabricationPanel(), "InteractingWithFabricationPanel");
-                        TaskManager.Enqueue(ContributeMaterials, "SelectingContributeMaterials");
+                        TaskManager.EnqueueImmediate(InteractWithFabricationPanel, "InteractingWithFabricationPanel");
+                        TaskManager.EnqueueImmediate(ContributeMaterials, "SelectingContributeMaterials");
                     }
                 }
             }
             else
             {
                 EndLoop("Failed to find SubmarinePartsMenu");
+                return false;
             }
+
+            return true;
         }
 
         private bool MustEndLoop(bool condition, string message)
@@ -435,7 +439,7 @@ namespace PandorasBox.Features.UI
             return false;
         }
 
-        private static bool IsFabricationPanel(GameObject obj) =>
+        private static bool IsFabricationPanel(Dalamud.Game.ClientState.Objects.Types.GameObject obj) =>
             obj?.Name.ToString().EqualsAny(PanelName) == true;
 
         private static bool IsFabricationCondition() =>
@@ -444,13 +448,22 @@ namespace PandorasBox.Features.UI
         private static bool IsInFabricationPanel() =>
             IsFabricationCondition() && IsFabricationPanel(Svc.Targets.Target);
 
-        private static bool TryGetNearestFabricationPanel() =>
-            Svc.Objects.TryGetFirst(x => x.Name.ToString().EqualsAny(PanelName) && x.IsTargetable, out var o);
+        internal static bool TryGetNearestFabricationPanel(out Dalamud.Game.ClientState.Objects.Types.GameObject obj) =>
+            Svc.Objects.TryGetFirst(x => x.Name.ToString().EqualsAny(PanelName) && x.IsTargetable, out obj);
 
-        private static bool InteractWithFabricationPanel()
+        internal static bool? InteractWithFabricationPanel()
         {
-            TargetSystem.Instance()->InteractWithObject(TargetSystem.Instance()->Target);
-            return TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon) && addon->IsVisible;
+            if (TryGetNearestFabricationPanel(out var obj) && Svc.Targets.Target?.Address == obj.Address)
+            {
+                if (GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000))
+                {
+                    TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
+                    return true;
+                }
+                else if (obj.IsTargetable && GenericThrottle)
+                        Svc.Targets.Target = obj;
+            }
+            return false;
         }
     }
 }
