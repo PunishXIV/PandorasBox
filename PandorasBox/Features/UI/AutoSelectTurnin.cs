@@ -20,6 +20,7 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
+        internal static bool active = false;
         private List<int> SlotsFilled { get; set; } = new();
 
         public override void Enable()
@@ -36,6 +37,7 @@ namespace PandorasBox.Features.UI
             {
                 for (var i = 1; i <= addon->EntryCount; i++)
                 {
+                    active = true;
                     if (SlotsFilled.Contains(addon->EntryCount)) TaskManager.Enqueue(() => Confirm(addon));
                     if (SlotsFilled.Contains(i)) return;
                     var val = i;
@@ -45,10 +47,10 @@ namespace PandorasBox.Features.UI
             }
             else
             {
+                active = false;
                 SlotsFilled.Clear();
                 TaskManager.Abort();
             }
-
         }
 
         private bool? TryClickItem(AddonRequest* addon, int i)

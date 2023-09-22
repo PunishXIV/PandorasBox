@@ -7,8 +7,9 @@ namespace AutoRetainer.Modules
 {
     internal static class TextAdvanceManager
     {
-        static bool WasChanged = false;
-        static bool IsBusy => FeatureHelper.IsBusy;
+        private static bool WasChanged = false;
+
+        private static bool IsBusy => FeatureHelper.IsBusy;
         internal static void Tick()
         {
             if (WasChanged)

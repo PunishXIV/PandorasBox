@@ -27,6 +27,6 @@ namespace PandorasBox.Helpers
 
         }
 
-        internal static bool IsBusy => P.TaskManager.IsBusy || WorkshopTurnin.active;
+        internal static bool IsBusy => P.TaskManager.IsBusy || WorkshopTurnin.active || AutoSelectTurnin.active;
     }
 }

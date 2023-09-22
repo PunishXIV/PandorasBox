@@ -121,24 +121,24 @@ namespace PandorasBox.Features.UI
 
                 if (active && !phaseActive) ImGui.EndDisabled();
 
-                //ImGui.SameLine();
+                ImGui.SameLine();
 
-                //if (active && !projectActive) ImGui.BeginDisabled();
+                if (active && !projectActive) ImGui.BeginDisabled();
 
-                //if (ImGui.Button(!projectActive ? $"Project Turn In###StartProjectLooping" : $"Turning in... Click to Abort###AbortProjectLoop"))
-                //{
-                //    if (!projectActive)
-                //    {
-                //        projectActive = true;
-                //        TaskManager.Enqueue(YesAlready.DisableIfNeeded);
-                //        TaskManager.Enqueue(TurnInProject);
-                //        TaskManager.Enqueue(() => EndLoop("Finished Task"));
-                //    }
-                //    else
-                //    {
-                //        EndLoop("User cancelled");
-                //    }
-                //}
+                if (ImGui.Button(!projectActive ? $"Project Turn In###StartProjectLooping" : $"Turning in... Click to Abort###AbortProjectLoop"))
+                {
+                    if (!projectActive)
+                    {
+                        projectActive = true;
+                        TaskManager.Enqueue(YesAlready.DisableIfNeeded);
+                        TaskManager.Enqueue(TurnInProject);
+                        TaskManager.Enqueue(() => EndLoop("Finished Task"));
+                    }
+                    else
+                    {
+                        EndLoop("User cancelled");
+                    }
+                }
 
                 //if (active && !projectActive) ImGui.EndDisabled();
 
