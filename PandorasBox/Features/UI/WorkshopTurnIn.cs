@@ -217,7 +217,7 @@ namespace PandorasBox.Features.UI
             var requiredIngredients = GetRequiredItems();
 
             if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
-                MustEndLoop(new List<int> { 8, 9, 10, 11, 12, 13, 14, 15 }.Any(x => x != Svc.ClientState.LocalPlayer.ClassJob.Id), "Must be a DoH to turn in items."))
+                MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id < 8 || Svc.ClientState.LocalPlayer.ClassJob.Id > 15, "Must be a DoH to turn in items."))
             {
                 return false;
             }
