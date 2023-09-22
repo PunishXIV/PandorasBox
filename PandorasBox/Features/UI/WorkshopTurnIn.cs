@@ -49,7 +49,6 @@ namespace PandorasBox.Features.UI
         internal static string[] PanelName = new string[] { "Fabrication Station" };
 
         public Configs Config { get; private set; }
-        public override bool UseAutoConfig => false;
         public class Configs : FeatureConfig
         {
             [FeatureConfigOption("Times to loop", "", 1, IntMin = 0, IntMax = 100, EditorSize = 300)]
@@ -72,10 +71,16 @@ namespace PandorasBox.Features.UI
             base.Disable();
         }
 
-        private void Tick(Framework framework)
+        public readonly struct PartIngredient(Item ingredient, uint reqLevel, ClassJob reqJob, uint inventory, uint perturn, uint total, uint timesSoFar, uint timesTotal)
         {
-            TextAdvanceManager.Tick();
-            YesAlready.Tick();
+            public Item Ingredient { get; } = ingredient;
+            public uint RequiredLevelToTurnIn { get; } = reqLevel;
+            public ClassJob RequiredJobToTurnIn { get; } = reqJob;
+            public uint AmountInInventory { get; } = inventory;
+            public uint AmountPerTurnIn { get; } = perturn;
+            public uint TotalRequiredAmount { get; } = total;
+            public uint TurnedInSoFar { get; } = timesSoFar;
+            public uint TotalTimesToTurnIn { get; } = timesTotal;
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
@@ -113,8 +118,7 @@ namespace PandorasBox.Features.UI
                     if (!phaseActive)
                     {
                         phaseActive = true;
-                        TaskManager.Enqueue(() => TurnInPhase());
-                        TaskManager.Enqueue(() => EndLoop("Finished Task"));
+                        TurnInPhase();
                     }
                     else
                     {
@@ -133,8 +137,7 @@ namespace PandorasBox.Features.UI
                     if (!projectActive)
                     {
                         projectActive = true;
-                        TaskManager.Enqueue(() => TurnInProject());
-                        TaskManager.Enqueue(() => EndLoop("Finished Task"));
+                        TurnInProject();
                     }
                     else
                     {
@@ -183,6 +186,22 @@ namespace PandorasBox.Features.UI
             }
         }
 
+        private void Tick(Framework framework)
+        {
+            TextAdvanceManager.Tick();
+            YesAlready.Tick();
+        }
+
+        private bool MustEndLoop(bool condition, string message)
+        {
+            if (condition)
+            {
+                PrintModuleMessage(message);
+                EndLoop(message);
+            }
+            return condition;
+        }
+
         private bool EndLoop(string msg)
         {
             PluginLog.Log($"Cancelling... Reason: {msg}");
@@ -192,18 +211,6 @@ namespace PandorasBox.Features.UI
             partLoopActive = false;
             TaskManager.Abort();
             return true;
-        }
-
-        public readonly struct PartIngredient(Item ingredient, uint reqLevel, ClassJob reqJob, uint inventory, uint perturn, uint total, uint timesSoFar, uint timesTotal)
-        {
-            public Item Ingredient { get; } = ingredient;
-            public uint RequiredLevelToTurnIn { get; } = reqLevel;
-            public ClassJob RequiredJobToTurnIn { get; } = reqJob;
-            public uint AmountInInventory { get; } = inventory;
-            public uint AmountPerTurnIn { get; } = perturn;
-            public uint TotalRequiredAmount { get; } = total;
-            public uint TurnedInSoFar { get; } = timesSoFar;
-            public uint TotalTimesToTurnIn { get; } = timesTotal;
         }
 
         private bool TurnInPhase()
@@ -219,7 +226,7 @@ namespace PandorasBox.Features.UI
             if (requiredIngredients?.Count == 0) return true;
 
             if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
-                MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id < 8 || Svc.ClientState.LocalPlayer.ClassJob.Id > 15, "Must be a DoH to turn in items."))
+                MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id is < 8 or > 15, "Must be a DoH to turn in items."))
             {
                 return true;
             }
@@ -236,6 +243,7 @@ namespace PandorasBox.Features.UI
                 }
             }
 
+            if (phaseActive) EndLoop("Finished Task");
             return true;
         }
 
@@ -252,15 +260,15 @@ namespace PandorasBox.Features.UI
             {
                 for (var i = addon->AtkValues[6].UInt; i < addon->AtkValues[7].UInt; i++)
                 {
-                    TaskManager.EnqueueImmediate(() => TurnInPhase(), $"TurnInPhase{i}");
-                    TaskManager.EnqueueImmediate(i == addon->AtkValues[7].UInt - 1 ? CompleteConstruction : AdvancePhase);
-                    TaskManager.EnqueueImmediate(WaitForCutscene, "WaitForCutscene");
-                    TaskManager.EnqueueImmediate(PressEsc, "PressingEsc");
-                    TaskManager.EnqueueImmediate(ConfirmSkip, "ConfirmCSSkip");
+                    TaskManager.Enqueue(() => TurnInPhase(), $"TurnInPhase{i}");
+                    TaskManager.Enqueue(i == addon->AtkValues[7].UInt - 1 ? CompleteConstruction : AdvancePhase);
+                    TaskManager.Enqueue(WaitForCutscene, "WaitForCutscene");
+                    TaskManager.Enqueue(PressEsc, "PressingEsc");
+                    TaskManager.Enqueue(ConfirmSkip, "ConfirmCSSkip");
                     if (i != addon->AtkValues[7].UInt - 1)
                     {
-                        TaskManager.EnqueueImmediate(InteractWithFabricationPanel, "InteractingWithFabricationPanel");
-                        TaskManager.EnqueueImmediate(ContributeMaterials, "SelectingContributeMaterials");
+                        TaskManager.Enqueue(InteractWithFabricationPanel, "InteractingWithFabricationPanel");
+                        TaskManager.Enqueue(ContributeMaterials, "SelectingContributeMaterials");
                     }
                 }
             }
@@ -270,53 +278,11 @@ namespace PandorasBox.Features.UI
                 return true;
             }
 
+            if (projectActive) EndLoop("Finished Task");
             return true;
         }
 
-        private bool MustEndLoop(bool condition, string message)
-        {
-            if (condition)
-            {
-                PrintModuleMessage(message);
-                EndLoop(message);
-            }
-            return condition;
-        }
-
         private List<PartIngredient> GetRequiredItems()
-        {
-            var ingredients = new List<PartIngredient>();
-
-            if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
-            {
-                for (var i = 0; i <= 11; i++)
-                {
-                    if (addon->AtkValues[36 + i].Type == 0) continue;
-
-                    var itemName = MemoryHelper.ReadSeStringNullTerminated(new nint(addon->AtkValues[36 + i].String)).ToString();
-
-                    ingredients.Add(new PartIngredient(
-                        Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(addon->AtkValues[12 + i].UInt),
-                        addon->AtkValues[144 + i].UInt,
-                        Svc.Data.GetExcelSheet<ClassJob>(Svc.ClientState.ClientLanguage).FirstOrDefault(x => x.RowId == addon->AtkValues[48 + i].Int - 62000),
-                        addon->AtkValues[72 + i].UInt,
-                        addon->AtkValues[60 + i].UInt,
-                        addon->AtkValues[60 + i].UInt * addon->AtkValues[120 + i].UInt,
-                        addon->AtkValues[108 + i].UInt,
-                        addon->AtkValues[120 + i].UInt
-                    ));
-                }
-            }
-            else
-            {
-                EndLoop("Failed to find SubmarinePartsMenu");
-                return null;
-            }
-            
-            return ingredients;
-        }
-
-        private static bool HasEnoughItems(List<PartIngredient> requiredIngredients)
         {
             // 12-23 item ids
             // 36-47 names
@@ -326,12 +292,27 @@ namespace PandorasBox.Features.UI
             // 108-109 times turned in so far for phase (uint)
             // 120-131 times to turn in for the phase (uint)
             // 144-156 level requirement to turn in part (uint)
-            foreach (var i in requiredIngredients)
-                if (i.AmountInInventory < (i.TotalTimesToTurnIn - i.TurnedInSoFar) * i.AmountPerTurnIn)
-                    return false;
+            if (!TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
+            {
+                EndLoop("Failed to find SubmarinePartsMenu");
+                return null;
+            }
 
-            return true;
+            return Enumerable.Range(0, 12)
+                .Where(i => addon->AtkValues[36 + i].Type != 0)
+                .Select(i => new PartIngredient(
+                    Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(addon->AtkValues[12 + i].UInt),
+                    addon->AtkValues[144 + i].UInt,
+                    Svc.Data.GetExcelSheet<ClassJob>(Svc.ClientState.ClientLanguage).FirstOrDefault(x => x.RowId == addon->AtkValues[48 + i].Int - 62000),
+                    addon->AtkValues[72 + i].UInt,
+                    addon->AtkValues[60 + i].UInt,
+                    addon->AtkValues[60 + i].UInt * addon->AtkValues[120 + i].UInt,
+                    addon->AtkValues[108 + i].UInt,
+                    addon->AtkValues[120 + i].UInt
+                ))
+                .ToList();
         }
+
 
         private static bool IsSufficientlyLeveled(List<PartIngredient> requiredIngredients)
         {
