@@ -61,7 +61,6 @@ namespace PandorasBox.Features.UI
             Config = LoadConfig<Configs>() ?? new Configs();
             overlay = new Overlays(this);
             Svc.Framework.Update += Tick;
-            Common.OnAddonSetup += AutoPhase;
             base.Enable();
         }
 
@@ -70,7 +69,6 @@ namespace PandorasBox.Features.UI
             SaveConfig(Config);
             P.Ws.RemoveWindow(overlay);
             Svc.Framework.Update -= Tick;
-            Common.OnAddonSetup -= AutoPhase;
             base.Disable();
         }
 
@@ -214,15 +212,16 @@ namespace PandorasBox.Features.UI
             {
                 PrintModuleMessage("Please enable the Auto-Select Turn In feature.");
                 EndLoop("Auto-Select Turn In not enabled");
-                return false;
+                return true;
             }
 
             var requiredIngredients = GetRequiredItems();
+            if (requiredIngredients?.Count == 0) return true;
 
             if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
                 MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id < 8 || Svc.ClientState.LocalPlayer.ClassJob.Id > 15, "Must be a DoH to turn in items."))
             {
-                return false;
+                return true;
             }
 
             foreach (var ingredient in requiredIngredients)
@@ -246,7 +245,7 @@ namespace PandorasBox.Features.UI
             {
                 PrintModuleMessage("Please enable the Auto-Select Turn In feature.");
                 EndLoop("Auto-Select Turn In not enabled");
-                return false;
+                return true;
             }
 
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
@@ -254,7 +253,7 @@ namespace PandorasBox.Features.UI
                 for (var i = addon->AtkValues[6].UInt; i < addon->AtkValues[7].UInt; i++)
                 {
                     TaskManager.EnqueueImmediate(() => TurnInPhase(), $"TurnInPhase{i}");
-                    //TaskManager.Enqueue(i == addon->AtkValues[7].UInt - 1 ? CompleteConstruction : AdvancePhase);
+                    TaskManager.EnqueueImmediate(i == addon->AtkValues[7].UInt - 1 ? CompleteConstruction : AdvancePhase);
                     TaskManager.EnqueueImmediate(WaitForCutscene, "WaitForCutscene");
                     TaskManager.EnqueueImmediate(PressEsc, "PressingEsc");
                     TaskManager.EnqueueImmediate(ConfirmSkip, "ConfirmCSSkip");
@@ -268,7 +267,7 @@ namespace PandorasBox.Features.UI
             else
             {
                 EndLoop("Failed to find SubmarinePartsMenu");
-                return false;
+                return true;
             }
 
             return true;
@@ -311,6 +310,7 @@ namespace PandorasBox.Features.UI
             else
             {
                 EndLoop("Failed to find SubmarinePartsMenu");
+                return null;
             }
             
             return ingredients;
@@ -382,13 +382,6 @@ namespace PandorasBox.Features.UI
         private static bool? ContributeMaterials() =>
             TrySelectSpecificEntry("Contribute materials.", () => GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.SelectContributeMaterials", 1000));
 
-        private void AutoPhase(SetupAddonArgs obj)
-        {
-            if (obj.AddonName != "SelectString" || !active) return;
-
-            TaskManager.EnqueueImmediate(() => AdvancePhase() == true || CompleteConstruction() == true, "SelectingNextPhase");
-        }
-
         private static bool? AdvancePhase() =>
             TrySelectSpecificEntry("Advance to the next phase of production.", () => GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.SelectAdvanceNextPhase", 1000));
 
@@ -439,15 +432,6 @@ namespace PandorasBox.Features.UI
             return false;
         }
 
-        private static bool IsFabricationPanel(Dalamud.Game.ClientState.Objects.Types.GameObject obj) =>
-            obj?.Name.ToString().EqualsAny(PanelName) == true;
-
-        private static bool IsFabricationCondition() =>
-            Svc.Condition[ConditionFlag.OccupiedInEvent] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent];
-
-        private static bool IsInFabricationPanel() =>
-            IsFabricationCondition() && IsFabricationPanel(Svc.Targets.Target);
-
         internal static bool TryGetNearestFabricationPanel(out Dalamud.Game.ClientState.Objects.Types.GameObject obj) =>
             Svc.Objects.TryGetFirst(x => x.Name.ToString().EqualsAny(PanelName) && x.IsTargetable, out obj);
 
@@ -461,7 +445,7 @@ namespace PandorasBox.Features.UI
                     return true;
                 }
                 else if (obj.IsTargetable && GenericThrottle)
-                        Svc.Targets.Target = obj;
+                    Svc.Targets.Target = obj;
             }
             return false;
         }
