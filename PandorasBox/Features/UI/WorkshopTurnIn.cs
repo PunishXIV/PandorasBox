@@ -243,7 +243,7 @@ namespace PandorasBox.Features.UI
                 }
             }
 
-            if (phaseActive) EndLoop("Finished Task");
+            if (phaseActive) TaskManager.Enqueue(() => EndLoop("Finished Task"));
             return true;
         }
 
@@ -278,7 +278,7 @@ namespace PandorasBox.Features.UI
                 return true;
             }
 
-            if (projectActive) EndLoop("Finished Task");
+            if (projectActive) TaskManager.Enqueue(() => EndLoop("Finished Task"));
             return true;
         }
 
@@ -289,7 +289,7 @@ namespace PandorasBox.Features.UI
             // 60-71 amount per turn in (uint)
             // 72-83 amount in inventory (uint)
             // 84-95 amount in inventory, nq/hq split (string)
-            // 108-109 times turned in so far for phase (uint)
+            // 108-119 times turned in so far for phase (uint)
             // 120-131 times to turn in for the phase (uint)
             // 144-156 level requirement to turn in part (uint)
             if (!TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
@@ -309,8 +309,7 @@ namespace PandorasBox.Features.UI
                     addon->AtkValues[60 + i].UInt * addon->AtkValues[120 + i].UInt,
                     addon->AtkValues[108 + i].UInt,
                     addon->AtkValues[120 + i].UInt
-                ))
-                .ToList();
+                )).ToList();
         }
 
 
@@ -418,6 +417,8 @@ namespace PandorasBox.Features.UI
 
         internal static bool? InteractWithFabricationPanel()
         {
+            if (!Svc.Condition[ConditionFlag.NormalConditions]) return false;
+
             if (TryGetNearestFabricationPanel(out var obj) && Svc.Targets.Target?.Address == obj.Address)
             {
                 if (GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000))
