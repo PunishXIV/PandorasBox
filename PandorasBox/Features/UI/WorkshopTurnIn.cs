@@ -83,11 +83,6 @@ namespace PandorasBox.Features.UI
             public uint TotalTimesToTurnIn { get; } = timesTotal;
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
-        {
-            if (ImGui.Button("InteractWithPanel")) InteractWithFabricationPanel();
-        };
-
         public override void Draw()
         {
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
@@ -128,24 +123,24 @@ namespace PandorasBox.Features.UI
 
                 if (active && !phaseActive) ImGui.EndDisabled();
 
-                ImGui.SameLine();
+                //ImGui.SameLine();
 
-                if (active && !projectActive) ImGui.BeginDisabled();
+                //if (active && !projectActive) ImGui.BeginDisabled();
 
-                if (ImGui.Button(!projectActive ? $"Project Turn In###StartProjectLooping" : $"Turning in... Click to Abort###AbortProjectLoop"))
-                {
-                    if (!projectActive)
-                    {
-                        projectActive = true;
-                        TurnInProject();
-                    }
-                    else
-                    {
-                        EndLoop("User cancelled");
-                    }
-                }
+                //if (ImGui.Button(!projectActive ? $"Project Turn In###StartProjectLooping" : $"Turning in... Click to Abort###AbortProjectLoop"))
+                //{
+                //    if (!projectActive)
+                //    {
+                //        projectActive = true;
+                //        TurnInProject();
+                //    }
+                //    else
+                //    {
+                //        EndLoop("User cancelled");
+                //    }
+                //}
 
-                if (active && !projectActive) ImGui.EndDisabled();
+                //if (active && !projectActive) ImGui.EndDisabled();
 
                 //ImGui.SameLine();
 
@@ -260,12 +255,13 @@ namespace PandorasBox.Features.UI
             {
                 for (var i = addon->AtkValues[6].UInt; i < addon->AtkValues[7].UInt; i++)
                 {
+                    var hasMorePhases = i != addon->AtkValues[7].UInt - 1;
                     TaskManager.Enqueue(() => TurnInPhase(), $"TurnInPhase{i}");
-                    TaskManager.Enqueue(i == addon->AtkValues[7].UInt - 1 ? CompleteConstruction : AdvancePhase);
+                    TaskManager.Enqueue(!hasMorePhases ? CompleteConstruction : AdvancePhase);
                     TaskManager.Enqueue(WaitForCutscene, "WaitForCutscene");
                     TaskManager.Enqueue(PressEsc, "PressingEsc");
                     TaskManager.Enqueue(ConfirmSkip, "ConfirmCSSkip");
-                    if (i != addon->AtkValues[7].UInt - 1)
+                    if (hasMorePhases)
                     {
                         TaskManager.Enqueue(InteractWithFabricationPanel, "InteractingWithFabricationPanel");
                         TaskManager.Enqueue(ContributeMaterials, "SelectingContributeMaterials");
@@ -434,19 +430,5 @@ namespace PandorasBox.Features.UI
             }
             return false;
         }
-
-        //internal static bool? InteractWithFabricationPanel()
-        //{
-        //    if (!Svc.Condition[ConditionFlag.NormalConditions]) return false;
-
-        //    if (TryGetNearestFabricationPanel(out var obj) &&
-        //        ((GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000)) || (obj.IsTargetable && GenericThrottle)))
-        //    {
-        //        TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
-        //        return true;
-        //    }
-        //    return false;
-        //}
-
     }
 }
