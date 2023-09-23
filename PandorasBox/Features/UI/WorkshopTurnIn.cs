@@ -426,10 +426,27 @@ namespace PandorasBox.Features.UI
                     TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
                     return true;
                 }
-                else if (obj.IsTargetable && GenericThrottle)
+                if (obj.IsTargetable && GenericThrottle)
+                {
                     Svc.Targets.Target = obj;
+                    return false;
+                }
             }
             return false;
         }
+
+        //internal static bool? InteractWithFabricationPanel()
+        //{
+        //    if (!Svc.Condition[ConditionFlag.NormalConditions]) return false;
+
+        //    if (TryGetNearestFabricationPanel(out var obj) &&
+        //        ((GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000)) || (obj.IsTargetable && GenericThrottle)))
+        //    {
+        //        TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
+        //        return true;
+        //    }
+        //    return false;
+        //}
+
     }
 }
