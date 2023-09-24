@@ -511,7 +511,5 @@ namespace PandorasBox.Features
         }
 
         internal static bool GenericThrottle => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200);
-        internal static void RethrottleGeneric(int num) => EzThrottler.Throttle("AutoRetainerGenericThrottle", num, true);
-        internal static void RethrottleGeneric() => EzThrottler.Throttle("AutoRetainerGenericThrottle", 200, true);
     }
 }
