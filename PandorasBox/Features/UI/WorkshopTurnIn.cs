@@ -3,7 +3,6 @@ using ClickLib.Clicks;
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Interface;
-using Dalamud.Memory;
 using Dalamud.Utility;
 using ECommons;
 using ECommons.Automation;
@@ -12,7 +11,6 @@ using ECommons.GameFunctions;
 using ECommons.Logging;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Common.Math;
@@ -123,24 +121,24 @@ namespace PandorasBox.Features.UI
 
                 if (active && !phaseActive) ImGui.EndDisabled();
 
-                //ImGui.SameLine();
+                ImGui.SameLine();
 
-                //if (active && !projectActive) ImGui.BeginDisabled();
+                if (active && !projectActive) ImGui.BeginDisabled();
 
-                //if (ImGui.Button(!projectActive ? $"Project Turn In###StartProjectLooping" : $"Turning in... Click to Abort###AbortProjectLoop"))
-                //{
-                //    if (!projectActive)
-                //    {
-                //        projectActive = true;
-                //        TurnInProject();
-                //    }
-                //    else
-                //    {
-                //        EndLoop("User cancelled");
-                //    }
-                //}
+                if (ImGui.Button(!projectActive ? $"Project Turn In###StartProjectLooping" : $"Turning in... Click to Abort###AbortProjectLoop"))
+                {
+                    if (!projectActive)
+                    {
+                        projectActive = true;
+                        TurnInProject();
+                    }
+                    else
+                    {
+                        EndLoop("User cancelled");
+                    }
+                }
 
-                //if (active && !projectActive) ImGui.EndDisabled();
+                if (active && !projectActive) ImGui.EndDisabled();
 
                 //ImGui.SameLine();
 
@@ -217,29 +215,42 @@ namespace PandorasBox.Features.UI
                 return true;
             }
 
-            var requiredIngredients = GetRequiredItems();
-            if (requiredIngredients?.Count == 0) return true;
-
-            if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
-                MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id is < 8 or > 15, "Must be a DoH to turn in items."))
+            if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon) && addon->AtkValues[12].Type != 0)
             {
+                var requiredIngredients = GetRequiredItems();
+                if (requiredIngredients?.Count == 0) { PluginLog.Log("req is 0"); return true; }
+
+                if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
+                    MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id is < 8 or > 15, "Must be a DoH to turn in items."))
+                {
+                    return true;
+                }
+
+                foreach (var ingredient in requiredIngredients)
+                {
+                    if (ingredient.AmountPerTurnIn > ingredient.AmountInInventory) continue;
+
+                    for (var i = ingredient.TurnedInSoFar; i < ingredient.TotalTimesToTurnIn; i++)
+                    {
+                        TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"{nameof(ClickItem)} {ingredient.Ingredient.Name}");
+                        TaskManager.EnqueueImmediate(() => ConfirmContribution(), $"{nameof(ConfirmContribution)}");
+                        TaskManager.EnqueueImmediate(() => ConfirmHQTrade(), $"{nameof(ConfirmHQTrade)}");
+                    }
+                }
+
+                var hasMorePhases = addon->AtkValues[6].UInt != addon->AtkValues[7].UInt - 1;
+                TaskManager.EnqueueImmediate(!hasMorePhases ? CompleteConstruction : AdvancePhase);
+                TaskManager.EnqueueImmediate(WaitForCutscene, $"{nameof(WaitForCutscene)}");
+                TaskManager.EnqueueImmediate(PressEsc, $"{nameof(PressEsc)}");
+                TaskManager.EnqueueImmediate(ConfirmSkip, $"{nameof(ConfirmSkip)}");
+
+                if (phaseActive) TaskManager.Enqueue(() => EndLoop($"Finished {nameof(TurnInPhase)}"));
                 return true;
             }
-
-            foreach (var ingredient in requiredIngredients)
+            else
             {
-                if (ingredient.AmountPerTurnIn > ingredient.AmountInInventory) continue;
-
-                for (var i = ingredient.TurnedInSoFar; i < ingredient.TotalTimesToTurnIn; i++)
-                {
-                    TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"SelectingItem{ingredient.Ingredient.Name}");
-                    TaskManager.EnqueueImmediate(() => ConfirmContribution(), "ConfirmingContribution");
-                    TaskManager.EnqueueImmediate(() => ConfirmHQTrade(), "ConfirmingHQTrade");
-                }
+                return false;
             }
-
-            if (phaseActive) TaskManager.Enqueue(() => EndLoop("Finished Task"));
-            return true;
         }
 
         private bool TurnInProject()
@@ -256,15 +267,11 @@ namespace PandorasBox.Features.UI
                 for (var i = addon->AtkValues[6].UInt; i < addon->AtkValues[7].UInt; i++)
                 {
                     var hasMorePhases = i != addon->AtkValues[7].UInt - 1;
-                    TaskManager.Enqueue(() => TurnInPhase(), $"TurnInPhase{i}");
-                    TaskManager.Enqueue(!hasMorePhases ? CompleteConstruction : AdvancePhase);
-                    TaskManager.Enqueue(WaitForCutscene, "WaitForCutscene");
-                    TaskManager.Enqueue(PressEsc, "PressingEsc");
-                    TaskManager.Enqueue(ConfirmSkip, "ConfirmCSSkip");
+                    TaskManager.Enqueue(() => TurnInPhase(), $"{nameof(TurnInPhase)} {i}");
                     if (hasMorePhases)
                     {
-                        TaskManager.Enqueue(InteractWithFabricationPanel, "InteractingWithFabricationPanel");
-                        TaskManager.Enqueue(ContributeMaterials, "SelectingContributeMaterials");
+                        TaskManager.Enqueue(InteractWithFabricationPanel, $"{nameof(InteractWithFabricationPanel)}");
+                        TaskManager.Enqueue(ContributeMaterials, $"{nameof(ContributeMaterials)}");
                     }
                 }
             }
@@ -274,7 +281,7 @@ namespace PandorasBox.Features.UI
                 return true;
             }
 
-            if (projectActive) TaskManager.Enqueue(() => EndLoop("Finished Task"));
+            if (projectActive) TaskManager.Enqueue(() => EndLoop($"Finished {nameof(TurnInProject)}"));
             return true;
         }
 
@@ -336,7 +343,6 @@ namespace PandorasBox.Features.UI
             var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, "contribute"));
             if (x != null)
             {
-                PluginLog.Log("Confirming contribution");
                 ClickSelectYesNo.Using((nint)x).Yes();
                 return true;
             }
@@ -348,7 +354,6 @@ namespace PandorasBox.Features.UI
             var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, Svc.Data.GetExcelSheet<Addon>(Svc.ClientState.ClientLanguage).GetRow(102434).Text.ToDalamudString().ExtractText()));
             if (x != null)
             {
-                PluginLog.Log("Confirming HQ Trade");
                 ClickSelectYesNo.Using((nint)x).Yes();
                 return true;
             }
@@ -413,19 +418,24 @@ namespace PandorasBox.Features.UI
 
         internal static bool? InteractWithFabricationPanel()
         {
-            if (!Svc.Condition[ConditionFlag.NormalConditions]) return false;
+            if (IsLoading()) return false;
 
-            if (TryGetNearestFabricationPanel(out var obj) && Svc.Targets.Target?.Address == obj.Address)
+            if (TryGetNearestFabricationPanel(out var obj))
             {
-                if (GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000))
+                if (Svc.Targets.Target?.Address == obj.Address)
                 {
-                    TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
-                    return true;
+                    if (GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000))
+                    {
+                        TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
+                        return true;
+                    }
                 }
-                if (obj.IsTargetable && GenericThrottle)
+                else
                 {
-                    Svc.Targets.Target = obj;
-                    return false;
+                    if (obj.IsTargetable && GenericThrottle)
+                    {
+                        Svc.Targets.Target = obj;
+                    }
                 }
             }
             return false;

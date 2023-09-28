@@ -513,5 +513,7 @@ namespace PandorasBox.Features
         internal static bool GenericThrottle => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200);
         internal static void RethrottleGeneric(int num) => EzThrottler.Throttle("PandorasBoxGenericThrottle", num, true);
         internal static void RethrottleGeneric() => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200, true);
+
+        internal static unsafe bool IsLoading() => (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeBack", out var fb) && fb->IsVisible) || (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var fm) && fm->IsVisible);
     }
 }

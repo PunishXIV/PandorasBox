@@ -1,5 +1,4 @@
 using ECommons.DalamudServices;
-using ECommons.Logging;
 using PandorasBox.Helpers;
 using System.Collections.Generic;
 
@@ -18,14 +17,12 @@ namespace AutoRetainer.Modules
                 {
                     WasChanged = false;
                     UnlockTA();
-                    PluginLog.Debug($"TextAdvance unlocked");
                 }
             }
             if (IsBusy)
             {
                 WasChanged = true;
                 LockTA();
-                PluginLog.Debug($"TextAdvance locked");
             }
         }
         internal static void LockTA()
