@@ -268,10 +268,14 @@ namespace PandorasBox.Features.UI
                 {
                     var hasMorePhases = i != addon->AtkValues[7].UInt - 1;
                     TaskManager.Enqueue(() => TurnInPhase(), $"{nameof(TurnInPhase)} {i}");
+                    TaskManager.Enqueue(InteractWithFabricationPanel, $"{nameof(InteractWithFabricationPanel)}");
                     if (hasMorePhases)
-                    {
-                        TaskManager.Enqueue(InteractWithFabricationPanel, $"{nameof(InteractWithFabricationPanel)}");
                         TaskManager.Enqueue(ContributeMaterials, $"{nameof(ContributeMaterials)}");
+                    else
+                    {
+                        TaskManager.Enqueue(CollectProduct, $"{nameof(CollectProduct)}");
+                        TaskManager.Enqueue(() => ConfirmProductRetrieval(), $"{nameof(ConfirmProductRetrieval)}");
+                        TaskManager.Enqueue(LeaveWorkshop, $"{nameof(LeaveWorkshop)}");
                     }
                 }
             }
@@ -360,14 +364,31 @@ namespace PandorasBox.Features.UI
             return true;
         }
 
+        private static bool ConfirmProductRetrieval()
+        {
+            var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, "retrieve"));
+            if (x != null)
+            {
+                ClickSelectYesNo.Using((nint)x).Yes();
+                return true;
+            }
+            return false;
+        }
+
         private static bool? ContributeMaterials() =>
-            TrySelectSpecificEntry("Contribute materials.", () => GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.SelectContributeMaterials", 1000));
+            TrySelectSpecificEntry("Contribute materials.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(ContributeMaterials)}", 1000));
 
         private static bool? AdvancePhase() =>
-            TrySelectSpecificEntry("Advance to the next phase of production.", () => GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.SelectAdvanceNextPhase", 1000));
+            TrySelectSpecificEntry("Advance to the next phase of production.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(AdvancePhase)}", 1000));
 
         private static bool? CompleteConstruction() =>
-            TrySelectSpecificEntry("Complete the construction", () => GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.SelectCompleteConstruction", 1000));
+            TrySelectSpecificEntry("Complete the construction", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CompleteConstruction)}", 1000));
+
+        private static bool? CollectProduct() =>
+            TrySelectSpecificEntry("Collect finished product.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CollectProduct)}", 1000));
+
+        private static bool? LeaveWorkshop() =>
+            TrySelectSpecificEntry("Nothing.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CollectProduct)}", 1000));
 
         private static bool? WaitForCutscene() =>
             Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent] || Svc.Condition[ConditionFlag.WatchingCutscene78];
@@ -404,7 +425,7 @@ namespace PandorasBox.Features.UI
                 return false;
             }
             if (!SkipCutsceneStr.Contains(selectStrAddon->AtkUnitBase.UldManager.NodeList[3]->GetAsAtkTextNode()->NodeText.ToString())) return false;
-            if (EzThrottler.Throttle("Voyage.CutsceneSkip"))
+            if (EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(ConfirmSkip)}"))
             {
                 PluginLog.Log("Selecting cutscene skipping");
                 ClickSelectString.Using(addon).SelectItem(0);
@@ -424,7 +445,7 @@ namespace PandorasBox.Features.UI
             {
                 if (Svc.Targets.Target?.Address == obj.Address)
                 {
-                    if (GenericThrottle && EzThrottler.Throttle("WorkshopTurnIn.InteractWithFabricationPanel", 2000))
+                    if (GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(InteractWithFabricationPanel)}", 2000))
                     {
                         TargetSystem.Instance()->InteractWithObject(obj.Struct(), false);
                         return true;
