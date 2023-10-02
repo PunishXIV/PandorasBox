@@ -36,6 +36,9 @@ namespace PandorasBox.Features.Other
 
             [FeatureConfigOption("Try to Close Error Automatically")]
             public bool CloseAutomatically = false;
+
+            [FeatureConfigOption("Try to Login After")]
+            public bool AttemptLogin = true;
         }
 
         public Configs Config { get; private set; }
@@ -116,13 +119,17 @@ namespace PandorasBox.Features.Other
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
             }
-            this.startHandlerHook = Hook<StartHandlerDelegate>.FromAddress(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
             this.LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
-            this.loginHandlerHook = Hook<LoginHandlerDelegate>.FromAddress(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
 
             this.lobbyErrorHandlerHook.Enable();
-            this.startHandlerHook.Enable();
-            this.loginHandlerHook.Enable();
+
+            if (Config.AttemptLogin)
+            {
+                this.startHandlerHook = Hook<StartHandlerDelegate>.FromAddress(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
+                this.loginHandlerHook = Hook<LoginHandlerDelegate>.FromAddress(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
+                this.startHandlerHook.Enable();
+                this.loginHandlerHook.Enable();
+            }
 
             Svc.Framework.Update += CheckDialogue;
 
@@ -145,8 +152,12 @@ namespace PandorasBox.Features.Other
         {
             SaveConfig(Config);
             this.lobbyErrorHandlerHook?.Disable();
-            this.startHandlerHook?.Disable();
-            this.loginHandlerHook?.Disable();
+            if (Config.AttemptLogin)
+            {
+                this.startHandlerHook?.Disable();
+                this.loginHandlerHook?.Disable();
+            }
+
             Svc.Framework.Update -= CheckDialogue;
 
             base.Disable();
