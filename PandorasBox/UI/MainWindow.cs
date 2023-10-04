@@ -236,7 +236,7 @@ internal class MainWindow : Window
                                 DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
                                 break;
                             case OpenWindow.About:
-                                AboutTab.Draw(P);
+                                AboutTab.Draw("Pandora's Box");
                                 break;
                         }
                     }

@@ -39,7 +39,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void RunFeature(object sender, ushort e)
+        private void RunFeature(ushort e)
         {
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Mount) return;
 
@@ -57,9 +57,9 @@ namespace PandorasBox.Features.Actions
                 {
                     TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
                     TaskManager.DelayNext(50);
-                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
                     TaskManager.DelayNext(50);
-                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
                 }
             });
         }
@@ -85,8 +85,8 @@ namespace PandorasBox.Features.Actions
             }
             else
             {
-                if (am->GetActionStatus(ActionType.General, 9) != 0) return false;
-                am->UseAction(ActionType.General, 9);
+                if (am->GetActionStatus(ActionType.GeneralAction, 9) != 0) return false;
+                am->UseAction(ActionType.GeneralAction, 9);
 
                 return true;
             }

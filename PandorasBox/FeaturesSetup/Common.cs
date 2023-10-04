@@ -222,7 +222,7 @@ public static unsafe class Common
     public static HookWrapper<T> Hook<T>(string signature, T detour, int addressOffset = 0) where T : Delegate
     {
         var addr = Svc.SigScanner.ScanText(signature);
-        var h = Dalamud.Hooking.Hook<T>.FromAddress(addr + addressOffset, detour);
+        var h = Svc.Hook.HookFromAddress<T>(addr + addressOffset, detour);
         var wh = new HookWrapper<T>(h);
         HookList.Add(wh);
         return wh;
@@ -230,7 +230,7 @@ public static unsafe class Common
 
     public static HookWrapper<T> Hook<T>(void* address, T detour) where T : Delegate
     {
-        var h = Dalamud.Hooking.Hook<T>.FromAddress(new nint(address), detour);
+        var h = Svc.Hook.HookFromAddress<T>(new nint(address), detour);
         var wh = new HookWrapper<T>(h);
         HookList.Add(wh);
         return wh;
@@ -238,7 +238,7 @@ public static unsafe class Common
 
     public static HookWrapper<T> Hook<T>(nuint address, T detour) where T : Delegate
     {
-        var h = Dalamud.Hooking.Hook<T>.FromAddress((nint)address, detour);
+        var h = Svc.Hook.HookFromAddress<T>((nint)address, detour);
         var wh = new HookWrapper<T>(h);
         HookList.Add(wh);
         return wh;
@@ -246,7 +246,7 @@ public static unsafe class Common
 
     public static HookWrapper<T> Hook<T>(nint address, T detour) where T : Delegate
     {
-        var h = Dalamud.Hooking.Hook<T>.FromAddress(address, detour);
+        var h = Svc.Hook.HookFromAddress<T>(address, detour);
         var wh = new HookWrapper<T>(h);
         HookList.Add(wh);
         return wh;
@@ -255,7 +255,7 @@ public static unsafe class Common
     public static HookWrapper<AddonOnUpdate> HookAfterAddonUpdate(IntPtr address, NoReturnAddonOnUpdate after)
     {
         Hook<AddonOnUpdate> hook = null;
-        hook = Dalamud.Hooking.Hook<AddonOnUpdate>.FromAddress(address, (atkUnitBase, nums, strings) => {
+        hook = Svc.Hook.HookFromAddress<AddonOnUpdate>(address, (atkUnitBase, nums, strings) => {
             var retVal = hook.Original(atkUnitBase, nums, strings);
             try
             {
@@ -439,26 +439,18 @@ public static unsafe class Common
     public const int UnitListCount = 18;
     public static AtkUnitBase* GetAddonByID(uint id)
     {
-        try
+        var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
+        for (var i = 0; i < UnitListCount; i++)
         {
-            var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
-            for (var i = 0; i < UnitListCount; i++)
+            var unitManager = &unitManagers[i];
+            foreach (var j in Enumerable.Range(0, Math.Min(unitManager->Count, unitManager->EntriesSpan.Length)))
             {
-                var unitManager = &unitManagers[i];
-                var unitBaseArray = &(unitManager->AtkUnitEntries);
-                for (var j = 0; j < unitManager->Count; j++)
+                var unitBase = unitManager->EntriesSpan[j].Value;
+                if (unitBase != null && unitBase->ID == id)
                 {
-                    var unitBase = unitBaseArray[j];
-                    if (unitBase != null && unitBase->ID == id)
-                    {
-                        return unitBase;
-                    }
+                    return unitBase;
                 }
             }
-        }
-        catch
-        {
-            return null;
         }
 
         return null;
@@ -483,7 +475,7 @@ public static unsafe class Common
     public static void CloseAddon(string name, bool unk = true)
     {
         var addon = GetUnitBase(name);
-        if (addon != null) addon->Hide(unk);
+        if (addon != null) addon->Hide(unk, true, 1);
     }
 
     public static AgentInterface* GetAgent(AgentId agentId)

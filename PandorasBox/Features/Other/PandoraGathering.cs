@@ -680,15 +680,15 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17: //BTN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4095) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 4095);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 4095);
                     }
                     break;
                 case 16: //MIN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4081) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4081) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 4081);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 4081);
                     }
                     break;
             }
@@ -714,17 +714,17 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 215) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0)
                     {
                         SwingCount--;
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 215);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 215);
                     }
                     break;
                 case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 232) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0)
                     {
                         SwingCount--;
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 232);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 232);
                     }
                     break;
             }
@@ -737,16 +737,16 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4590) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4590) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 4590);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 4590);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
                     }
                     break;
                 case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4589) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4589) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 4589);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 4589);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
                     }
                     break;
@@ -760,16 +760,16 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 282) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 282) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 282);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 282);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
                     }
                     break;
                 case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 280) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 280) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 280);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 280);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
                     }
                     break;
@@ -786,26 +786,26 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 273) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 273);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 273);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
                     }
-                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4087) == 0)
+                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4087) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 4087);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 4087);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
                     }
                     break;
                 case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 272) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 272);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 272);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
                     }
-                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 4073) == 0)
+                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4073) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 4073);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 4073);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
                     }
                     break;
@@ -820,16 +820,16 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 224) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 224) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 224);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 224);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
                     }
                     break;
                 case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 241) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 241) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 241);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 241);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
                     }
                     break;
@@ -845,16 +845,16 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17: //BTN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 21204) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 21204);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 21204);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
                 case 16: //MIN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 21203) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0)
                     {
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 21203);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 21203);
                         TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
@@ -974,17 +974,17 @@ namespace PandorasBox.Features.Other
             switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
             {
                 case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 26522) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0)
                     {
                         SwingCount--;
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 26522);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 26522);
                     }
                     break;
                 case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Spell, 26521) == 0)
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26521) == 0)
                     {
                         SwingCount--;
-                        ActionManager.Instance()->UseAction(ActionType.Spell, 26521);
+                        ActionManager.Instance()->UseAction(ActionType.Action, 26521);
                     }
                     break;
             }

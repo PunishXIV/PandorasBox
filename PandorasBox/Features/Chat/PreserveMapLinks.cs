@@ -60,7 +60,7 @@ namespace PandorasBox.Features
         {
             var parseMessageAddress = Svc.SigScanner.ScanText(
                 "E8 ???????? 48 8B D0 48 8D 4C 24 30 E8 ???????? 48 8B 44 24 30 80 38 00 0F 84");
-            parseMessageHook = Hook<ParseMessageDelegate>.FromAddress(parseMessageAddress, new(HandleParseMessageDetour));
+            parseMessageHook = Svc.Hook.HookFromAddress<ParseMessageDelegate>(parseMessageAddress, new(HandleParseMessageDetour));
             parseMessageHook.Enable();
 
             foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())

@@ -37,7 +37,7 @@ namespace PandorasBox.Features.UI
 
         public override string Description => "Adds a menu to the Island Sanctuary workshop to allow quick setting your daily schedules. Supports importing from Overseas Casuals.";
 
-        public override FeatureType FeatureType => FeatureType.UI;
+        public override FeatureType FeatureType => FeatureType.Disabled;
         private Overlays overlay;
         public static bool ResetPosition = false;
 
@@ -841,7 +841,7 @@ namespace PandorasBox.Features.UI
                 .Build()
             };
 
-            Svc.Chat.PrintChat(message);
+            Svc.Chat.Print(message);
         }
 
         public override void Enable()

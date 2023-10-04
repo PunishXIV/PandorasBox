@@ -162,7 +162,7 @@ namespace PandorasBox.Features.Commands
             {
                 for (var i = 0; i < 100; i++)
                 {
-                    var gs = gearsetModule->Gearset[i];
+                    var gs = gearsetModule->GetGearset(i);
                     if (gs == null || !gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists) || gs->ID != i)
                         continue;
 

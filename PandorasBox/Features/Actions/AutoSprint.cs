@@ -44,7 +44,7 @@ namespace PandorasBox.Features
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
@@ -59,7 +59,7 @@ namespace PandorasBox.Features
                 return;
 
             var am = ActionManager.Instance();
-            var isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
             var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !P.TaskManager.IsBusy)
@@ -75,12 +75,12 @@ namespace PandorasBox.Features
             if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return;
 
             var am = ActionManager.Instance();
-            var isSprintReady = am->GetActionStatus(ActionType.General, 4) == 0;
+            var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
             var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1)
             {
-                am->UseAction(ActionType.General, 4);
+                am->UseAction(ActionType.GeneralAction, 4);
             }
         }
 

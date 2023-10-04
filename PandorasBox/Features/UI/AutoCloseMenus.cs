@@ -45,7 +45,7 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
-        private void RunFeature(Dalamud.Game.Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Config.doEntrustDuplicates && TryGetAddonByName<AtkUnitBase>("RetainerItemTransferProgress", out var retainerProgress))
             {

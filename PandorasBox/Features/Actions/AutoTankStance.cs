@@ -58,7 +58,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void CheckParty(Framework framework)
+        private void CheckParty(IFramework framework)
         {
             if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
@@ -80,7 +80,7 @@ namespace PandorasBox.Features.Actions
             }
         }
 
-        private void CheckIfDungeon(object sender, ushort e)
+        private void CheckIfDungeon(ushort e)
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
             TaskManager.Enqueue(() => Svc.ClientState.LocalPlayer != null);
@@ -91,7 +91,7 @@ namespace PandorasBox.Features.Actions
 
         }
 
-        private void CheckForFateSync(Framework framework)
+        private void CheckForFateSync(IFramework framework)
         {
             var ps = PlayerState.Instance();
             if (Config.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
@@ -125,34 +125,34 @@ namespace PandorasBox.Features.Actions
                     case 1:
                     case 19:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 79)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 28) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 28) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 28);
+                            am->UseAction(ActionType.Action, 28);
                             return true;
                         }
                         return false;
                     case 3:
                     case 21:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 91)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 48) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 48) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 48);
+                            am->UseAction(ActionType.Action, 48);
                             return true;
                         }
                         return false;
                     case 32:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 743)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 3629) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 3629) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 3629);
+                            am->UseAction(ActionType.Action, 3629);
                             return true;
                         }
                         return false;
                     case 37:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1833)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 16142) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 16142) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 16142);
+                            am->UseAction(ActionType.Action, 16142);
                             return true;
                         }
                         return false;

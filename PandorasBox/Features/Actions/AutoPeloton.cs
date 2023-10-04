@@ -48,7 +48,7 @@ namespace PandorasBox.Features
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
@@ -59,7 +59,7 @@ namespace PandorasBox.Features
             if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
 
             var am = ActionManager.Instance();
-            var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
             var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
@@ -78,12 +78,12 @@ namespace PandorasBox.Features
             if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return;
 
             var am = ActionManager.Instance();
-            var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
             var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
             {
-                am->UseAction(ActionType.Spell, 7557);
+                am->UseAction(ActionType.Action, 7557);
             }
         }
 
