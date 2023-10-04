@@ -93,41 +93,4 @@ internal static class IslandSanctuaryHelper
     public static unsafe int? GetOpenCycle() =>
         TryGetAddonByName<AtkUnitBase>("MJICraftSchedule", out var addon) && addon->IsVisible && addon->AtkValues[0].Type != 0
         ? (int)addon->AtkValues[0].UInt : null;
-
-    public static unsafe bool OpenAddWorkshopSchedule(int workshopIndex)
-    {
-        Svc.Log.Info($"{nameof(OpenAddWorkshopSchedule)} @ {workshopIndex}");
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
-        var eventData = stackalloc int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        var inputData = stackalloc int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        var receiveEvent = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>((nint)addon->AtkEventListener.vfunc[2])!;
-        receiveEvent(&addon->AtkEventListener, AtkEventType.ButtonClick, 7 + (uint)workshopIndex, eventData, inputData);
-        return isCraftSelectOpen();
-    }
-
-    public static unsafe bool SelectCraft(Features.UI.WorkshopHelper.Item item)
-    {
-        var row = Svc.Data.GetExcelSheet<MJICraftworksObject>().GetRow(item.Key);
-        var addon = (AddonMJICraftScheduleSetting*)Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
-        var index = addon->Data->FindEntryIndex(row.RowId);
-        Svc.Log.Info($"{nameof(SelectCraft)} #{row.RowId} '{row.Item.Value?.Name}' == {index}");
-        if (index < 0)
-            return true;
-        var eventData = stackalloc int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        var inputData = stackalloc int[] { 0, 0, 0, 0, index, 0, 0, 0, 0, 0 };
-        var receiveEvent = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>((nint)addon->AtkUnitBase.AtkEventListener.vfunc[2])!;
-        receiveEvent(&addon->AtkUnitBase.AtkEventListener, AtkEventType.ListItemToggle, 1, eventData, inputData);
-        return true;
-    }
-
-    public static unsafe bool ConfirmCraft()
-    {
-        Svc.Log.Info($"{nameof(ConfirmCraft)}");
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
-        var eventData = stackalloc int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        var inputData = stackalloc int[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        var receiveEvent = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>((nint)addon->AtkEventListener.vfunc[2])!;
-        receiveEvent(&addon->AtkEventListener, AtkEventType.ButtonClick, 6, eventData, inputData);
-        return !isCraftSelectOpen();
-    }
 }
