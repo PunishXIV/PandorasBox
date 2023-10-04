@@ -43,7 +43,7 @@ namespace PandorasBox.Features
             base.Disable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (MJIManager.Instance()->IsPlayerInSanctuary == 0)
                 return;
@@ -52,11 +52,11 @@ namespace PandorasBox.Features
                 return;
 
             var am = ActionManager.Instance();
-            var isSprintReady = am->GetActionStatus(ActionType.Spell, 31314) == 0;
+            var isSprintReady = am->GetActionStatus(ActionType.Action, 31314) == 0;
             var hasBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
 
             if (isSprintReady && !hasBuff && AgentMap.Instance()->IsPlayerMoving == 1)
-                am->UseAction(ActionType.Spell, 31314);
+                am->UseAction(ActionType.Action, 31314);
 
         }
     }

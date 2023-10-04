@@ -239,7 +239,7 @@ namespace PandorasBox.Features.ChatFeature
 
         public GameIntegration()
         {
-            setFlagMarkerHook ??= Hook<SetFlagMarkerDelegate>.FromAddress((nint)AgentMap.Addresses.SetFlagMapMarker.Value, SetFlagMarker);
+            setFlagMarkerHook ??= Svc.Hook.HookFromAddress<SetFlagMarkerDelegate>((nint)AgentMap.Addresses.SetFlagMapMarker.Value, SetFlagMarker);
         }
         //internal void SetFlagMarker(AgentMap* agent, uint territoryId, uint mapId, float mapX, float mapY, uint iconId)
         internal void SetFlagMarker(AgentMap* agent, uint territoryId, uint mapId, float mapX, float mapY, uint iconId) => Safety.ExecuteSafe(() =>

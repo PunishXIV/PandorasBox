@@ -38,14 +38,14 @@ namespace PandorasBox.Features.Other
         public unsafe override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            UseActionHook ??= Hook<UseActionDelegate>.FromAddress((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
+            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
             UseActionHook?.Enable();
             base.Enable();
         }
 
         private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8)
         {
-            if (type is ActionType.Spell or ActionType.Ability)
+            if (type is ActionType.Action or ActionType.Ability)
             {
                 try
                 {

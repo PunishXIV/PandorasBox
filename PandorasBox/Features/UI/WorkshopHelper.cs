@@ -841,7 +841,7 @@ namespace PandorasBox.Features.UI
                 .Build()
             };
 
-            Svc.Chat.PrintChat(message);
+            Svc.Chat.Print(message);
         }
 
         public override void Enable()

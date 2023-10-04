@@ -97,7 +97,7 @@ public class AutoVoteMvp : Feature
         base.Disable();
     }
 
-    private unsafe void FrameworkUpdate(Framework framework)
+    private unsafe void FrameworkUpdate(IFramework framework)
     {
         if (Player.Object == null) return;
         CheckForDeadPartyMembers();
@@ -244,7 +244,7 @@ public class AutoVoteMvp : Feature
     }
 
     private static T RandomPick<T>(IEnumerable<T> list)
-        => list.ElementAt(new Random().Next(list.Count()));
+        => list.ElementAt(new Random().Next(list.Count() - 1));
 
     private static unsafe void VoteBanner(AtkUnitBase* bannerWindow, int index)
     {

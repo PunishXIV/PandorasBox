@@ -116,9 +116,9 @@ namespace PandorasBox.Features.Other
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
             }
-            this.startHandlerHook = Hook<StartHandlerDelegate>.FromAddress(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
+            this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
             this.LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
-            this.loginHandlerHook = Hook<LoginHandlerDelegate>.FromAddress(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
+            this.loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
 
             this.lobbyErrorHandlerHook.Enable();
             this.startHandlerHook.Enable();
@@ -129,7 +129,7 @@ namespace PandorasBox.Features.Other
             base.Enable();
         }
 
-        private void CheckDialogue(Framework framework)
+        private void CheckDialogue(IFramework framework)
         {
             if (!Config.CloseAutomatically) return;
             if (Svc.GameGui.GetAddonByName("Dialogue") != IntPtr.Zero && !Svc.Condition.Any())

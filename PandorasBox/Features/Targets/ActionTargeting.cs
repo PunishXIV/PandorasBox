@@ -45,7 +45,7 @@ namespace PandorasBox.Features.Targets
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             TargetEnemy();
         }

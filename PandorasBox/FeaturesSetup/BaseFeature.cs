@@ -85,7 +85,7 @@ namespace PandorasBox.Features
             Enabled = true;
         }
 
-        private void CheckJob(Framework framework)
+        private void CheckJob(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer is null) return;
             JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
@@ -386,7 +386,7 @@ namespace PandorasBox.Features
                 .Build()
             };
 
-            Svc.Chat.PrintChat(message);
+            Svc.Chat.Print(message);
         }
 
         public void PrintModuleMessage(SeString msg)
@@ -400,7 +400,7 @@ namespace PandorasBox.Features
                 .Build()
             };
 
-            Svc.Chat.PrintChat(message);
+            Svc.Chat.Print(message);
         }
     }
 }

@@ -85,7 +85,7 @@ namespace PandorasBox.Features.Other
                 Chat.Instance.SendMessage("/lsync");
             }
         }
-        private void CheckFates(Framework framework)
+        private void CheckFates(IFramework framework)
         {
             if (FateManager.Instance()->CurrentFate != null)
             {

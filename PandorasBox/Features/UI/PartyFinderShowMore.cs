@@ -26,7 +26,7 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             PartyFinder = Svc.SigScanner.ScanText("48 89 5c 24 ?? 55 56 57 48 ?? ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? 48 89 85 ?? ?? ?? ?? 48 ?? ?? 0f");
-            partyFinderHook = Hook<PartyFinderDelegate>.FromAddress(PartyFinder, new PartyFinderDelegate(PartyFinderDetour));
+            partyFinderHook = Svc.Hook.HookFromAddress<PartyFinderDelegate>(PartyFinder, new PartyFinderDelegate(PartyFinderDetour));
             partyFinderHook.Enable();
             base.Enable();
         }

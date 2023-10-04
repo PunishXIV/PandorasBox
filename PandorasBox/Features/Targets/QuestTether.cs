@@ -32,7 +32,7 @@ namespace PandorasBox.Features.Targets
             }
         }
 
-        private unsafe void UpdateTethers(Framework framework)
+        private unsafe void UpdateTethers(IFramework framework)
         {
             foreach (var quest in QuestManager.Instance()->NormalQuestsSpan)
             {

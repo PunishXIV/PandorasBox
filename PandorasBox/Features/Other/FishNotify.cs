@@ -3,6 +3,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
@@ -64,7 +65,7 @@ namespace PandorasBox.Features.Other
         private Helpers.AudioHandler audioHandler { get; set; }
         private bool hasHooked = false;
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (!Svc.Condition[ConditionFlag.Fishing]) { hasHooked = false; return; }
 
@@ -103,7 +104,7 @@ namespace PandorasBox.Features.Other
         {
             try
             {
-                var framework = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance();
+                var framework = Framework.Instance();
                 var configBase = framework->SystemConfig.CommonSystemConfig.ConfigBase;
 
                 var seEnabled = false;
@@ -214,7 +215,7 @@ namespace PandorasBox.Features.Other
     {
         public readonly IntPtr Address;
 
-        public SeAddressBase(Dalamud.Game.SigScanner sigScanner, string signature, int offset = 0)
+        public SeAddressBase(ISigScanner sigScanner, string signature, int offset = 0)
         {
             Address = sigScanner.GetStaticAddressFromSig(signature);
             if (Address != IntPtr.Zero)
@@ -225,7 +226,7 @@ namespace PandorasBox.Features.Other
 
     public sealed class SeTugType : SeAddressBase
     {
-        public SeTugType(SigScanner sigScanner)
+        public SeTugType(ISigScanner sigScanner)
             : base(sigScanner,
                 "4C 8D 0D ?? ?? ?? ?? 4D 8B 13 49 8B CB 45 0F B7 43 ?? 49 8B 93 ?? ?? ?? ?? 88 44 24 20 41 FF 92 ?? ?? ?? ?? 48 83 C4 38 C3")
         { }
@@ -275,7 +276,7 @@ namespace PandorasBox.Features.Other
             }
         }
 
-        public EventFramework(Dalamud.Game.SigScanner sigScanner)
+        public EventFramework(ISigScanner sigScanner)
             : base(sigScanner,
                 "48 8B 2D ?? ?? ?? ?? 48 8B F1 48 8B 85 ?? ?? ?? ?? 48 8B 18 48 3B D8 74 35 0F 1F 00 F6 83 ?? ?? ?? ?? ?? 75 1D 48 8B 46 28 48 8D 4E 28 48 8B 93 ?? ?? ?? ??")
         { }

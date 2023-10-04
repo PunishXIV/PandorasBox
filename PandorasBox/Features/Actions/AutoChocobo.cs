@@ -33,7 +33,7 @@ namespace PandorasBox.Features.Actions
             public bool UseInCombat = false;
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (!Svc.Condition[ConditionFlag.NormalConditions] || Svc.Condition[ConditionFlag.Casting] || IsMoving()) return;
             if (Svc.Condition[ConditionFlag.InCombat] && !Config.UseInCombat) return;

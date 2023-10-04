@@ -45,7 +45,7 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
-            SignatureHelper.Initialise(this, true);
+            Svc.Hook.InitializeFromAttributes(this);
             Config = LoadConfig<Configs>() ?? new Configs();
             base.Enable();
         }

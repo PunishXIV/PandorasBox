@@ -355,7 +355,7 @@ namespace PandorasBox.Features.UI
         {
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
-                ActionManager.Instance()->UseAction(ActionType.General, 14);
+                ActionManager.Instance()->UseAction(ActionType.GeneralAction, 14);
             }
         }
 

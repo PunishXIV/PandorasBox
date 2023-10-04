@@ -32,17 +32,17 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private unsafe void CheckToJump(Framework framework)
+        private unsafe void CheckToJump(IFramework framework)
         {
             if (Svc.Targets.Target == null || Svc.Targets.Target.ObjectKind != Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand)
                 return;
 
-            if (IsMoving() && IsTargetLocked && MJIManager.Instance()->IsPlayerInSanctuary != 0 && ActionManager.Instance()->GetActionStatus(ActionType.General, 2) == 0 && Vector3.Distance(Svc.Targets.Target.Position, Player.Object.Position) > 8)
+            if (IsMoving() && IsTargetLocked && MJIManager.Instance()->IsPlayerInSanctuary != 0 && ActionManager.Instance()->GetActionStatus(ActionType.GeneralAction, 2) == 0 && Vector3.Distance(Svc.Targets.Target.Position, Player.Object.Position) > 8)
             {
                 if (!TaskManager.IsBusy)
                 {
                     TaskManager.DelayNext(new Random().Next(300, 550));
-                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.General, 2));
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
                 }
             }
         }

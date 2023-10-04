@@ -69,7 +69,7 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
-        private void FillRegularNumeric(Framework framework)
+        private void FillRegularNumeric(IFramework framework)
         {
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
             if (numeric == null) { hasDisabled = false; return; }
@@ -138,7 +138,7 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private void FillBankNumeric(Framework framework)
+        private void FillBankNumeric(IFramework framework)
         {
             var bankNumeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Bank");
             if (bankNumeric == null) { hasDisabled = false; return; }
