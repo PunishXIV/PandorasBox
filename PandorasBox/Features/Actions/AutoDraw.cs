@@ -17,6 +17,9 @@ namespace PandorasBox.Features.Actions
         {
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
+
+            [FeatureConfigOption("Function only in a duty")]
+            public bool OnlyInDuty = false;
         }
 
         public Configs Config { get; private set; }
@@ -34,7 +37,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void CheckIfDungeon(object sender, ushort e)
+        private void CheckIfDungeon(ushort e)
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
 
@@ -50,7 +53,7 @@ namespace PandorasBox.Features.Actions
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
-                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Spell, 7) == 0);
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
                 TaskManager.DelayNext("WaitForActionReady", 2500);
                 TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
@@ -70,11 +73,13 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryDrawCard()
         {
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
+
             if (Svc.Gauges.Get<ASTGauge>().DrawnCard == Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE)
             {
                 var am = ActionManager.Instance();
-                if (am->GetActionStatus(ActionType.Spell, 3590) != 0) return false;
-                am->UseAction(ActionType.Spell, 3590, Svc.ClientState.LocalPlayer.ObjectId);
+                if (am->GetActionStatus(ActionType.Action, 3590) != 0) return false;
+                am->UseAction(ActionType.Action, 3590, Svc.ClientState.LocalPlayer.ObjectId);
                 return true;
             }
             return false;

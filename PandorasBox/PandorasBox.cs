@@ -42,7 +42,7 @@ public class PandorasBox : IDalamudPlugin
     private void Initialize()
     {
         ECommonsMain.Init(pi, P, ECommons.Module.All);
-        PunishLibMain.Init(pi, P, new AboutPlugin() { Sponsor = "https://ko-fi.com/taurenkey" });
+        PunishLibMain.Init(pi, "Pandora's Box", new AboutPlugin() { Sponsor = "https://ko-fi.com/taurenkey" });
 
         //FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
         //FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();

@@ -1,6 +1,7 @@
 using Dalamud.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -25,7 +26,7 @@ namespace PandorasBox.Features.UI
 
         private readonly DalamudContextMenu contextMenu = new();
 
-        private static readonly SeString OpenString = PandoraPayload.Append(new TextPayload("Open All"));
+        private static readonly SeString OpenString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Open All"));
 
         public override void Enable()
         {
@@ -56,6 +57,11 @@ namespace PandorasBox.Features.UI
         private unsafe bool? OpenItem(uint itemId)
         {
             var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID();
+
+            if (IsMoving())
+            {
+                return null;
+            }
 
             if (!IsInventoryFree())
             {

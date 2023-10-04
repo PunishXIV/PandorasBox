@@ -1,5 +1,6 @@
 using Dalamud.Configuration;
 using Dalamud.Game;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
@@ -28,6 +29,9 @@ namespace PandorasBox.Features
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
 
+            [FeatureConfigOption("Function only in a duty")]
+            public bool OnlyInDuty = false;
+
             [FeatureConfigOption("Use whilst walk status is toggled")]
             public bool RPWalk = false;
 
@@ -44,18 +48,18 @@ namespace PandorasBox.Features
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
             if (IsRpWalking() && !Config.RPWalk) return;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (Svc.Condition[ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
             var r = new Regex("/hou/|/ind/");
             if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
 
             var am = ActionManager.Instance();
-            var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
             var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
@@ -69,16 +73,17 @@ namespace PandorasBox.Features
         private void UsePeloton()
         {
             if (IsRpWalking() && !Config.RPWalk) return;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (Svc.Condition[ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return;
 
             var am = ActionManager.Instance();
-            var isPeletonReady = am->GetActionStatus(ActionType.Spell, 7557) == 0;
+            var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
             var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && AgentMap.Instance()->IsPlayerMoving == 1)
             {
-                am->UseAction(ActionType.Spell, 7557);
+                am->UseAction(ActionType.Action, 7557);
             }
         }
 
@@ -90,12 +95,13 @@ namespace PandorasBox.Features
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             ImGui.PushItemWidth(300);
-            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
-            ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk);
-            ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+            if (ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f")) hasChanged = true;
+            if (ImGui.Checkbox("Function only in a duty", ref Config.OnlyInDuty)) hasChanged = true;
+            if (ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk)) hasChanged = true;
+            if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
         };
     }
 }

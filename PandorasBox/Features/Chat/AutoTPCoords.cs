@@ -29,6 +29,9 @@ namespace PandorasBox.Features.ChatFeature
             [FeatureConfigOption("Include Sonar links")]
             public bool IncludeSonar = false;
 
+            [FeatureConfigOption("Ignore <pos> flags")]
+            public bool IgnorePOS = false;
+
             public List<ushort> FilteredChannels = new();
         }
 
@@ -109,6 +112,8 @@ namespace PandorasBox.Features.ChatFeature
                 if (!filteredOut && Config.FilteredChannels.IndexOf((ushort)type) != -1) filteredOut = true;
                 if (!filteredOut)
                 {
+                    if (Config.IgnorePOS && newMapLinkMessage.Text.Contains("Z:")) return;
+
                     MapLinkMessageList.Add(newMapLinkMessage);
                     TeleportToAetheryte(newMapLinkMessage);
                 }
@@ -198,9 +203,10 @@ namespace PandorasBox.Features.ChatFeature
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
-            ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar);
+            if (ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar)) hasChanged = true;
+            if (ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS)) hasChanged = true;
 
             if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
             {
@@ -214,6 +220,7 @@ namespace PandorasBox.Features.ChatFeature
 
                     if (ImGui.Checkbox(chatTypeName + "##filter", ref checkboxClicked))
                     {
+                        hasChanged = true;
                         Config.FilteredChannels = Config.FilteredChannels.Distinct().ToList();
 
                         if (checkboxClicked)

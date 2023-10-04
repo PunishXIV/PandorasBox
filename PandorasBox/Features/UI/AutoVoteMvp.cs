@@ -97,7 +97,7 @@ public class AutoVoteMvp : Feature
         base.Disable();
     }
 
-    private unsafe void FrameworkUpdate(Framework framework)
+    private unsafe void FrameworkUpdate(IFramework framework)
     {
         if (Player.Object == null) return;
         CheckForDeadPartyMembers();
@@ -244,7 +244,7 @@ public class AutoVoteMvp : Feature
     }
 
     private static T RandomPick<T>(IEnumerable<T> list)
-        => list.ElementAt(new Random().Next(list.Count()));
+        => list.ElementAt(new Random().Next(list.Count() - 1));
 
     private static unsafe void VoteBanner(AtkUnitBase* bannerWindow, int index)
     {
@@ -264,35 +264,44 @@ public class AutoVoteMvp : Feature
 
     protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
     {
+        bool hasChanged = false;
         if (ImGui.RadioButton("Prioritize Tank Vote", Config.Priority == 0))
         {
             Config.Priority = 0;
+            hasChanged = true;
         }
 
         if (ImGui.RadioButton("Prioritize Healer Vote", Config.Priority == 1))
         {
             Config.Priority = 1;
+            hasChanged = true;
         }
 
         if (ImGui.RadioButton("Prioritize DPS Vote", Config.Priority == 2))
         {
             Config.Priority = 2;
+            hasChanged = true;
         }
 
         if (ImGui.RadioButton("No Priority", Config.Priority == 3))
         {
             Config.Priority = 3;
+            hasChanged = true;
         }
 
-        ImGui.Checkbox("Hide Chat Message", ref Config.HideChat);
+        if (ImGui.Checkbox("Hide Chat Message", ref Config.HideChat))
+            hasChanged = true;
 
-        var noDeaths = Config.ExcludeDeaths;
-        ImGui.Checkbox("Exclude Party Members That Die", ref Config.ExcludeDeaths);
+        if (ImGui.Checkbox("Exclude Party Members That Die", ref Config.ExcludeDeaths))
+            hasChanged = true;
 
-        if (noDeaths)
+        if (Config.ExcludeDeaths)
         {
-            ImGuiEx.InputIntBounded("How Many Times?", ref Config.HowManyDeaths, 1, 100);
-            ImGui.Checkbox("Reset Death Tracker on Wipe", ref Config.ResetOnWipe);
+            if (ImGuiEx.InputIntBounded("How Many Times?", ref Config.HowManyDeaths, 1, 100)) hasChanged = true;
+            if (ImGui.Checkbox("Reset Death Tracker on Wipe", ref Config.ResetOnWipe)) hasChanged = true;
         }
+
+        if (hasChanged)
+            SaveConfig(Config);
     };
 }

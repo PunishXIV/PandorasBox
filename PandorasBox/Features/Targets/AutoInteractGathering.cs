@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons;
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using Lumina.Excel.GeneratedSheets;
@@ -9,6 +10,7 @@ using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace PandorasBox.Features.Targets
 {
@@ -82,25 +84,31 @@ namespace PandorasBox.Features.Targets
                 TaskManager.DelayNext("GatheringDelay", (int)(Config.Cooldown * 1000));
         }
 
-        private void RunFeature(Dalamud.Game.Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.Condition[ConditionFlag.Gathering] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent])
                 return;
 
             if (Svc.ClientState.LocalPlayer is null) return;
             if (Svc.ClientState.LocalPlayer.IsCasting) return;
+            if (Svc.Condition[ConditionFlag.Jumping]) return;
 
-            var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && GameObjectHelper.GetTargetDistance(x) < 2 && GameObjectHelper.GetHeightDifference(x) <= 3).ToList();
+            var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && Vector3.Distance(x.Position, Player.Object.Position) < 3 && GameObjectHelper.GetHeightDifference(x) <= 3 && x.IsTargetable).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 
             var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
             var baseObj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)nearestNode.Address;
 
-            if (!baseObj->GetIsTargetable())
+            if (!nearestNode.IsTargetable)
                 return;
 
-            if (!Config.ExcludeIsland && nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
+            if (Config.ExcludeIsland && MJIManager.Instance()->IsPlayerInSanctuary != 0)
+            {
+                return;
+            }
+
+            if (nearestNode.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand && MJIManager.Instance()->IsPlayerInSanctuary != 0 && MJIManager.Instance()->CurrentMode == 1)
             {
                 if (!TaskManager.IsBusy)
                 {

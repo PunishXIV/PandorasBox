@@ -1,16 +1,12 @@
-using Dalamud.Logging;
+using Dalamud.Game.ClientState.Conditions;
 using ECommons;
 using ECommons.DalamudServices;
-using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
-using System;
 using System.Linq;
-using System.Text;
 using PlayerState = FFXIVClientStructs.FFXIV.Client.Game.UI.PlayerState;
 
 namespace PandorasBox.Features.Actions
@@ -26,12 +22,10 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
             public uint SelectedMount = 0;
-
             public bool AbortIfMoving = false;
-
             public bool ExcludeHousing = false;
+            public bool JumpAfterMount = false;
         }
 
         public Configs Config { get; private set; }
@@ -45,7 +39,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void RunFeature(object sender, ushort e)
+        private void RunFeature(ushort e)
         {
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Mount) return;
 
@@ -56,15 +50,26 @@ namespace PandorasBox.Features.Actions
             }
             TaskManager.Enqueue(() => NotBetweenAreas);
             TaskManager.DelayNext("MountTeleportTryMount", (int)(Config.ThrottleF * 1000));
-            TaskManager.Enqueue(() => TryMount());
+            TaskManager.Enqueue(TryMount, 3000);
+            TaskManager.Enqueue(() =>
+            {
+                if (Config.JumpAfterMount)
+                {
+                    TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                    TaskManager.DelayNext(50);
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                    TaskManager.DelayNext(50);
+                    TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                }
+            });
         }
 
-        private static bool NotBetweenAreas => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas];
+        private static bool NotBetweenAreas => !Svc.Condition[ConditionFlag.BetweenAreas];
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas] || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas51]) return false;
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted]) return true;
+            if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.BetweenAreas51]) return false;
+            if (Svc.Condition[ConditionFlag.Mounted]) return true;
 
             if (Config.AbortIfMoving && IsMoving()) return true;
 
@@ -80,8 +85,8 @@ namespace PandorasBox.Features.Actions
             }
             else
             {
-                if (am->GetActionStatus(ActionType.General, 9) != 0) return false;
-                am->UseAction(ActionType.General, 9);
+                if (am->GetActionStatus(ActionType.GeneralAction, 9) != 0) return false;
+                am->UseAction(ActionType.GeneralAction, 9);
 
                 return true;
             }
@@ -95,10 +100,10 @@ namespace PandorasBox.Features.Actions
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             ImGui.PushItemWidth(300);
-            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+            if (ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f")) hasChanged = true;
             var ps = PlayerState.Instance();
             var preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
             if (ImGui.BeginCombo("Select Mount", preview))
@@ -106,6 +111,7 @@ namespace PandorasBox.Features.Actions
                 if (ImGui.Selectable("", Config.SelectedMount == 0))
                 {
                     Config.SelectedMount = 0;
+                    hasChanged = true;
                 }
 
                 foreach (var mount in Svc.Data.GetExcelSheet<Mount>().OrderBy(x => x.Singular.ExtractText()))
@@ -117,6 +123,7 @@ namespace PandorasBox.Features.Actions
                         if (selected)
                         {
                             Config.SelectedMount = mount.RowId;
+                            hasChanged = true;
                         }
                     }
                 }
@@ -124,8 +131,9 @@ namespace PandorasBox.Features.Actions
                 ImGui.EndCombo();
             }
 
-            ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
-            ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing);
+            if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
+            if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
+            if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
 
         };
     }

@@ -38,6 +38,9 @@ namespace PandorasBox.Features.ChatFeature
             [FeatureConfigOption("Set <flag> without opening the map")]
             public bool DontOpenMap = false;
 
+            [FeatureConfigOption("Ignore <pos> flags")]
+            public bool IgnorePOS = false;
+
             public List<ushort> FilteredChannels = new();
         }
 
@@ -115,6 +118,8 @@ namespace PandorasBox.Features.ChatFeature
                 if (!filteredOut && Config.FilteredChannels.IndexOf((ushort)type) != -1) filteredOut = true;
                 if (!filteredOut)
                 {
+                    if (Config.IgnorePOS && newMapLinkMessage.Text.Contains("Z:")) return;
+
                     MapLinkMessageList.Add(newMapLinkMessage);
                     PlaceMapMarker(newMapLinkMessage);
                 }
@@ -159,9 +164,10 @@ namespace PandorasBox.Features.ChatFeature
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
-            ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar);
+            if (ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar)) hasChanged = true;
+            if (ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS)) hasChanged = true;
             //ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
 
             if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
@@ -176,6 +182,7 @@ namespace PandorasBox.Features.ChatFeature
 
                     if (ImGui.Checkbox(chatTypeName + "##filter", ref checkboxClicked))
                     {
+                        hasChanged = true;
                         Config.FilteredChannels = Config.FilteredChannels.Distinct().ToList();
 
                         if (checkboxClicked)
@@ -232,7 +239,7 @@ namespace PandorasBox.Features.ChatFeature
 
         public GameIntegration()
         {
-            setFlagMarkerHook ??= Hook<SetFlagMarkerDelegate>.FromAddress((nint)AgentMap.Addresses.SetFlagMapMarker.Value, SetFlagMarker);
+            setFlagMarkerHook ??= Svc.Hook.HookFromAddress<SetFlagMarkerDelegate>((nint)AgentMap.Addresses.SetFlagMapMarker.Value, SetFlagMarker);
         }
         //internal void SetFlagMarker(AgentMap* agent, uint territoryId, uint mapId, float mapX, float mapY, uint iconId)
         internal void SetFlagMarker(AgentMap* agent, uint territoryId, uint mapId, float mapX, float mapY, uint iconId) => Safety.ExecuteSafe(() =>

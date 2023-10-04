@@ -30,13 +30,16 @@ namespace PandorasBox.Features.Actions
             [FeatureConfigOption("Activate when party size is less than or equal to", IntMin = 1, IntMax = 8, EditorSize = 300)]
             public int MaxParty = 1;
 
-            [FeatureConfigOption("Activate if main tank dies (respects party size option)", "", 1)]
+            [FeatureConfigOption("Function only in a duty", "", 1)]
+            public bool OnlyInDuty = false;
+
+            [FeatureConfigOption("Activate if main tank dies (respects party size option)", "", 2)]
             public bool ActivateOnDeath = false;
 
-            [FeatureConfigOption("Only activate on entrance if no other tank has stance", "", 2)]
+            [FeatureConfigOption("Only activate on entrance if no other tank has stance", "", 3)]
             public bool NoOtherTanks = false;
 
-            [FeatureConfigOption("Activate when synced to a fate", "", 3)]
+            [FeatureConfigOption("Activate when synced to a fate", "", 4)]
             public bool ActivateInFate = false;
         }
 
@@ -55,7 +58,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void CheckParty(Framework framework)
+        private void CheckParty(IFramework framework)
         {
             if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
@@ -77,7 +80,7 @@ namespace PandorasBox.Features.Actions
             }
         }
 
-        private void CheckIfDungeon(object sender, ushort e)
+        private void CheckIfDungeon(ushort e)
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
             TaskManager.Enqueue(() => Svc.ClientState.LocalPlayer != null);
@@ -88,7 +91,7 @@ namespace PandorasBox.Features.Actions
 
         }
 
-        private void CheckForFateSync(Framework framework)
+        private void CheckForFateSync(IFramework framework)
         {
             var ps = PlayerState.Instance();
             if (Config.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
@@ -108,6 +111,7 @@ namespace PandorasBox.Features.Actions
         private bool EnableStance(uint? jobId)
         {
             if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role != 1) return true;
+            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
 
             var am = ActionManager.Instance();
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
@@ -121,34 +125,34 @@ namespace PandorasBox.Features.Actions
                     case 1:
                     case 19:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 79)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 28) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 28) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 28);
+                            am->UseAction(ActionType.Action, 28);
                             return true;
                         }
                         return false;
                     case 3:
                     case 21:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 91)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 48) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 48) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 48);
+                            am->UseAction(ActionType.Action, 48);
                             return true;
                         }
                         return false;
                     case 32:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 743)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 3629) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 3629) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 3629);
+                            am->UseAction(ActionType.Action, 3629);
                             return true;
                         }
                         return false;
                     case 37:
                         if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1833)) return true;
-                        if (am->GetActionStatus(ActionType.Spell, 16142) == 0)
+                        if (am->GetActionStatus(ActionType.Action, 16142) == 0)
                         {
-                            am->UseAction(ActionType.Spell, 16142);
+                            am->UseAction(ActionType.Action, 16142);
                             return true;
                         }
                         return false;

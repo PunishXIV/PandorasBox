@@ -1,8 +1,6 @@
 using ClickLib.Clicks;
 using Dalamud;
-using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Interface;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using ECommons;
@@ -11,6 +9,7 @@ using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -45,12 +44,34 @@ namespace PandorasBox.Features.UI
         public override bool UseAutoConfig => true;
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Execution Delay (ms)", "", 1, IntMin = 0, IntMax = 1000, EditorSize = 300)]
-            public int taskDelay = 200;
-            [FeatureConfigOption("Delay After Switching Cycles (ms)", "", 2, IntMin = 0, IntMax = 1000, EditorSize = 300)]
-            public int taskAfterCycleSwitchDelay = 500;
-            [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.", "", 3)]
+            [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.", "", 1)]
             public bool OpenNextDay = false;
+            [FeatureConfigOption("Automatically import from clipboard when loading the workshop.", "", 2)]
+            public bool AutoImport = false;
+
+            //[FeatureConfigOption("Hide the Taskmaster. Useful for EXPlosion.", "", 3)]
+            //public bool HideTaskmaster = false;
+
+            [FeatureConfigOption("Automatically export materials when speaking with the export mammet.", "", 4)]
+            public bool AutoSell = false;
+            public bool ShouldShowAutoSellAmount() => AutoSell;
+            [FeatureConfigOption("Auto Sell Above", "", 5, IntMin = 0, IntMax = 999, EditorSize = 300, ConditionalDisplay = true)]
+            public int AutoSellAmount = 900;
+
+            [FeatureConfigOption("Automatically collect drops from pasture", "", 6)]
+            public bool AutoCollectPasture = false;
+            [FeatureConfigOption("Automatically collect crops from farm", "", 7)]
+            public bool AutoCollectFarm = false;
+
+            [FeatureConfigOption("Auto Collect Granary", "", 8)]
+            public bool AutoCollectGranary = false;
+            //[FeatureConfigOption("Auto Set Granary", "", 9)]
+            //public bool AutoSetGranary = false;
+            //public bool ShouldShowAutoConfirmGranary() => AutoSetGranary;
+            //[FeatureConfigOption("Auto Confirm Granary", "", 10, ConditionalDisplay = true)]
+            //public bool AutoConfirmGranary = false;
+            [FeatureConfigOption("Auto Max Granary", "", 11)]
+            public bool AutoMaxGranary = false;
         }
 
         internal static (uint Key, string Name, ushort CraftingTime, ushort LevelReq)[] Craftables;
@@ -67,12 +88,9 @@ namespace PandorasBox.Features.UI
         private bool overrideRest;
         private bool autoWorkshopSelect = true;
         private bool overrideExecutionDisable;
-        private bool hasOpened;
         private int currentDay;
 
-        internal const int weekendOffset = 5;
-        internal const int fortuneOffset = 3;
-        internal const int nextDayOffset = 2;
+        private readonly List<string> prefixes = new() { "Isleworks", "Islefish", "Isleberry", "Island" };
 
         public class CyclePreset
         {
@@ -96,18 +114,22 @@ namespace PandorasBox.Features.UI
             var workshopWindow = Svc.GameGui.GetAddonByName("MJICraftSchedule", 1);
             if (workshopWindow == IntPtr.Zero)
             {
-                hasOpened = false;
+                PrimarySchedule.Clear();
+                SecondarySchedule.Clear();
+                MultiCycleList.Clear();
+                currentWorkshop = 0;
+                maxWorkshops = 4;
+                selectedCycle = 0;
+                isScheduleRest = false;
+                overrideRest = false;
+                autoWorkshopSelect = true;
+                overrideExecutionDisable = false;
+                currentDay = 0;
                 return;
             }
             var addonPtr = (AtkUnitBase*)workshopWindow;
             if (addonPtr == null)
                 return;
-
-            if (!hasOpened && Config.OpenNextDay && IsAddonReady(addonPtr))
-            {
-                OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
-                hasOpened = true;
-            }
 
             if (addonPtr->UldManager.NodeListCount > 1)
             {
@@ -154,11 +176,11 @@ namespace PandorasBox.Features.UI
                     ScheduleImport(rawItemStrings);
 
                     if (MultiCycleList.All(x => x.PrimarySchedule.Count == 0))
-                        PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
+                        PrintModuleMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                 }
                 catch (Exception e)
                 {
-                    PrintPluginMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
+                    PrintModuleMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
                     PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
                 }
             }
@@ -204,7 +226,7 @@ namespace PandorasBox.Features.UI
                     continue;
 
                 var cycleNum = MultiCycleList.IndexOf(cycle)
-                    + (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
+                    + (selectedCycle == 0 ? IslandSanctuaryHelper.GetOpenCycle() + 1
                     : selectedCycle);
 
                 //var cycleNum = adjustedCycleNums[MultiCycleList.IndexOf(cycle)];
@@ -238,7 +260,7 @@ namespace PandorasBox.Features.UI
             }
             ImGui.SameLine();
 
-            var SelectedUnavailable = selectedCycle - 1 == MJIManager.Instance()->CurrentCycleDay || MJIManager.Instance()->CraftworksRestDays[1] <= MJIManager.Instance()->CurrentCycleDay;
+            var SelectedUnavailable = selectedCycle == MJIManager.Instance()->CurrentCycleDay || MJIManager.Instance()->CraftworksRestDays[1] <= MJIManager.Instance()->CurrentCycleDay;
             if (SelectedUnavailable)
                 ImGui.BeginDisabled();
 
@@ -253,14 +275,14 @@ namespace PandorasBox.Features.UI
             ImGui.SameLine();
             if (ImGui.Button("Prev"))
             {
-                OpenCycle(selectedCycle - 1);
+                TaskManager.Enqueue(() => OpenCycle(selectedCycle));
                 selectedCycle = selectedCycle == 0 ? 0 : selectedCycle - 1;
             }
 
             ImGui.SameLine();
             if (ImGui.Button("Next"))
             {
-                OpenCycle(selectedCycle + 1);
+                TaskManager.Enqueue(() => OpenCycle(selectedCycle));
                 selectedCycle = selectedCycle == 14 ? 14 : selectedCycle + 1;
             }
 
@@ -275,7 +297,7 @@ namespace PandorasBox.Features.UI
                 {
                     for (var i = 0; i < Workshops.Count; i++)
                     {
-                        if (!IsWorkshopUnlocked(i + 1))
+                        if (!IslandSanctuaryHelper.IsWorkshopUnlocked(i + 1, out var _))
                             ImGui.BeginDisabled();
 
                         try
@@ -289,7 +311,7 @@ namespace PandorasBox.Features.UI
                             ex.Log();
                         }
 
-                        if (!IsWorkshopUnlocked(i + 1))
+                        if (!IslandSanctuaryHelper.IsWorkshopUnlocked(i + 1, out var _))
                             ImGui.EndDisabled();
                     }
 
@@ -349,8 +371,7 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Button("Execute Schedule"))
                 {
                     currentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    currentDay = (selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset
-                        : selectedCycle);
+                    currentDay = (int)(selectedCycle == 0 ? IslandSanctuaryHelper.GetOpenCycle() : selectedCycle - 1);
                     ScheduleMultiCycleList();
                 }
 
@@ -358,51 +379,6 @@ namespace PandorasBox.Features.UI
                     ImGui.EndDisabled();
             }
             catch (Exception e) { PluginLog.Log(e.ToString()); return; }
-        }
-
-        private bool IsWorkshopUnlocked(int w)
-        {
-            try
-            {
-                var currentRank = MJIManager.Instance()->IslandState.CurrentRank;
-                switch (w)
-                {
-                    case 1:
-                        if (currentRank < 3)
-                        {
-                            maxWorkshops = 0;
-                            return false;
-                        }
-                        break;
-                    case 2:
-                        if (currentRank < 6)
-                        {
-                            maxWorkshops = 1;
-                            return false;
-                        }
-                        break;
-                    case 3:
-                        if (currentRank < 8)
-                        {
-                            maxWorkshops = 2;
-                            return false;
-                        }
-                        break;
-                    case 4:
-                        if (currentRank < 14)
-                        {
-                            maxWorkshops = 3;
-                            return false;
-                        }
-                        break;
-                }
-                return true;
-            }
-            catch (Exception ex)
-            {
-                ex.Log();
-                return false;
-            }
         }
 
         private static void DrawWorkshopListBox(string text, List<Item> schedule)
@@ -497,7 +473,7 @@ namespace PandorasBox.Features.UI
                             LevelReq = craftable.LevelReq,
                             OnRestDay = isRest
                         };
-                        item.InsufficientRank = !isCraftworkObjectCraftable(item);
+                        item.InsufficientRank = !IslandSanctuaryHelper.isCraftworkObjectCraftable(Svc.Data.GetExcelSheet<MJICraftworksObject>().GetRow(craftable.Key));
 
                         if (hours < 24)
                             items.Add(item);
@@ -526,93 +502,55 @@ namespace PandorasBox.Features.UI
             return (items, excessItems);
         }
 
-        private static bool IsMatch(string x, string y)
+        private static bool IsMatch(string x, string y) => Regex.IsMatch(x, $@"\b{Regex.Escape(y)}\b");
+
+        private bool WaitForAddButton(int workshopIndex)
         {
-            var pattern = $@"\b{Regex.Escape(y)}\b";
-            return Regex.IsMatch(x, pattern);
+            uint id = workshopIndex switch
+            {
+                0 => 8,
+                1 => 80001,
+                2 => 80002,
+                3 => 80003,
+                _ => 0
+            };
+            return TryGetAddonByName<AtkUnitBase>("MJICraftSchedule", out var addon) && id != 0 && addon->GetNodeById(id)->IsVisible;
         }
-
-        private static bool isCraftworkObjectCraftable(Item item) => MJIManager.Instance()->IslandState.CurrentRank >= item.LevelReq;
-
-        private static bool isWorkshopOpen() => Svc.GameGui.GetAddonByName("MJICraftSchedule") != IntPtr.Zero;
 
         private static unsafe bool OpenCycle(int cycle_day)
         {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
-            if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
-
-            try
+            if (TryGetAddonByName<AtkUnitBase>("MJICraftSchedule", out var addon))
             {
-                var workshopPTR = Svc.GameGui.GetAddonByName("MJICraftSchedule");
-                if (workshopPTR == IntPtr.Zero)
-                    return false;
-
-                var workshopWindow = (AtkUnitBase*)workshopPTR;
-                if (workshopWindow == null)
-                    return false;
-
-                Callback.Fire(workshopWindow, false, 19, (uint)(cycle_day - 1));
-
-                return true;
+                Callback.Fire(addon, false, 20, (uint)(cycle_day));
+                if (addon->AtkValues[0].Type == 0) return false;
+                return addon->AtkValues[0].UInt == cycle_day;
             }
-            catch
-            {
+            else
                 return false;
-            }
         }
 
-        private static unsafe bool OpenAgenda(uint index, int workshop, int prevHours)
+        private static unsafe bool OpenAgenda(int workshop, int prevHours)
         {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJICraftSchedule");
-            if (!isWorkshopOpen() || !GenericHelpers.IsAddonReady(addon)) return false;
-
-            try
+            if (TryGetAddonByName<AtkUnitBase>("MJICraftSchedule", out var addon))
             {
-                var workshopPTR = Svc.GameGui.GetAddonByName("MJICraftSchedule");
-                if (workshopPTR == IntPtr.Zero)
-                    return false;
-
-                var workshopWindow = (AtkUnitBase*)workshopPTR;
-                if (workshopWindow == null)
-                    return false;
-
-
-                Callback.Fire(workshopWindow, false, 16, (uint)(workshop), (uint)(index == 0 ? 0 : prevHours));
-
-                return true;
+                Callback.Fire(addon, false, 17, (uint)(workshop), (uint)(prevHours));
+                return IslandSanctuaryHelper.isCraftSelectOpen();
             }
-            catch
-            {
+            else
                 return false;
-            }
         }
 
         private unsafe bool ScheduleItem(Item item)
         {
-            var addon = Svc.GameGui.GetAddonByName("MJICraftSchedule");
-            if (addon == IntPtr.Zero)
-                return false;
-            if (!GenericHelpers.IsAddonReady((AtkUnitBase*)addon)) return false;
-
-            try
+            if (TryGetAddonByName<AtkUnitBase>("MJICraftScheduleSetting", out var addon))
             {
-                var schedulerPTR = Svc.GameGui.GetAddonByName("MJICraftScheduleSetting");
-                if (schedulerPTR == IntPtr.Zero)
-                    return false;
-                var schedulerWindow = (AtkUnitBase*)schedulerPTR;
-                if (schedulerWindow == null)
-                    return false;
-
-                Callback.Fire(schedulerWindow, false, 11, item.UIIndex);
-                Callback.Fire(schedulerWindow, false, 13);
-                schedulerWindow->Close(true);
-
-                return true;
+                Callback.Fire(addon, false, 11, item.UIIndex);
+                Callback.Fire(addon, false, 13);
+                addon->Close(true);
+                return !IslandSanctuaryHelper.isCraftSelectOpen();
             }
-            catch
-            {
+            else
                 return false;
-            }
         }
 
         private List<int> GetCurrentRestDays()
@@ -691,59 +629,38 @@ namespace PandorasBox.Features.UI
 
         public bool ScheduleList()
         {
-            if (isScheduleRest)
-            {
-                //var currentVal = selectedCycle;
-                //TaskManager.EnqueueImmediate(() => selectedCycle = currentDay, $"SetSelectedCycleToCurrentDay");
-                //TaskManager.EnqueueImmediate(() => SetRestDay(currentVal), $"SetRest");
-                //TaskManager.EnqueueImmediate(() => selectedCycle = currentVal, $"SetSelectedCycleBackToOriginal");
-                return true;
-            }
+            if (isScheduleRest) return true;
 
             var hours = 0;
+            var logPrefix = autoWorkshopSelect ? $"{nameof(PrimarySchedule)}Only" : "Manual";
+
             if (autoWorkshopSelect)
             {
-                if (SecondarySchedule.Count > 0)
+                for (var i = 0; i < maxWorkshops; i++)
                 {
-                    for (var i = 0; i < maxWorkshops - 1; i++)
+                    var ws = 0;
+                    var schedule = PrimarySchedule;
+
+                    if (SecondarySchedule.Count > 0 && i < maxWorkshops - 1)
                     {
-                        var ws = 0;
-                        TaskManager.EnqueueImmediate(() => hours = 0, $"PSSetHours0");
-                        foreach (var item in PrimarySchedule)
-                        {
-                            ws = i;
-                            TaskManager.DelayNextImmediate("PSOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"PSOpenAgendaW{ws + 1}");
-                            TaskManager.DelayNextImmediate("PSScheduleItemDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSScheduleItemW{ws + 1}");
-                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"PSIncrementHoursW{ws + 1}");
-                        }
+                        schedule = PrimarySchedule;
+                        logPrefix = $"{nameof(PrimarySchedule)}";
                     }
-                    TaskManager.EnqueueImmediate(() => hours = 0, $"SSSetHours0");
-                    foreach (var item in SecondarySchedule)
+                    else if (SecondarySchedule.Count > 0)
                     {
-                        TaskManager.DelayNextImmediate("SSOpenAgendaDelay", SecondarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
-                        TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, 3, hours), $"SSOpenAgendaW{maxWorkshops}");
-                        TaskManager.DelayNextImmediate("SSScheduleItemDelay", Config.taskDelay);
-                        TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"SSScheduleW{maxWorkshops}");
-                        TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"SSIncrementHoursW{maxWorkshops}");
+                        schedule = SecondarySchedule;
+                        logPrefix = $"{nameof(SecondarySchedule)}";
                     }
-                }
-                else
-                {
-                    for (var i = 0; i < maxWorkshops; i++)
+
+                    TaskManager.EnqueueImmediate(() => hours = 0, $"{logPrefix}.SetHours0");
+
+                    foreach (var item in schedule)
                     {
-                        var ws = 0;
-                        TaskManager.EnqueueImmediate(() => hours = 0, $"PSOSetHours0");
-                        foreach (var item in PrimarySchedule)
-                        {
-                            ws = i;
-                            TaskManager.DelayNextImmediate("PSOOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"PSOOpenAgendaW{ws + 1}");
-                            TaskManager.DelayNextImmediate("PSOScheduleItemDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"PSOScheduleW{ws + 1}");
-                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"PSOIncrementHoursW{ws + 1}");
-                        }
+                        ws = i;
+                        TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
+                        TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"{logPrefix}.{nameof(OpenAgenda)}.{ws}");
+                        TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"{logPrefix}.{nameof(ScheduleItem)}.{item.Name}");
+                        TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"{logPrefix}.Increment{nameof(hours)}W.{ws + 1}");
                     }
                 }
             }
@@ -754,20 +671,20 @@ namespace PandorasBox.Features.UI
                     var ws = 0;
                     if (Workshops[i])
                     {
-                        TaskManager.EnqueueImmediate(() => hours = 0, $"MSetHours0");
+                        TaskManager.EnqueueImmediate(() => hours = 0, $"{logPrefix}.Set{nameof(hours)}0");
                         foreach (var item in PrimarySchedule)
                         {
                             ws = i;
-                            TaskManager.DelayNextImmediate("MOpenAgendaDelay", PrimarySchedule.IndexOf(item) == 0 ? Config.taskAfterCycleSwitchDelay : Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => OpenAgenda(item.UIIndex, ws, hours), $"MOpenAgendaW{ws + 1}");
-                            TaskManager.DelayNextImmediate("MScheduleItemDelay", Config.taskDelay);
-                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"MScheduleW{ws + 1}");
-                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"MIncrementHoursW{ws + 1}");
-                            TaskManager.EnqueueImmediate(() => currentWorkshop += 1, $"MIncrementWFromW{ws + 1}");
+                            TaskManager.EnqueueImmediate(() => PluginLog.Log($"{item.Name} : {item.UIIndex} : {hours}"));
+                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
+                            TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"{logPrefix}.{nameof(OpenAgenda)}.{ws}");
+                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"{logPrefix}.{nameof(ScheduleItem)}.{item.Name}");
+                            TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"{logPrefix}.Increment{nameof(hours)}W.{ws + 1}");
+                            TaskManager.EnqueueImmediate(() => currentWorkshop += 1, $"{logPrefix}.Increment{nameof(currentWorkshop)}FromW.{ws + 1}");
                         }
                     }
                 }
-                TaskManager.EnqueueImmediate(() => currentWorkshop = 0, $"MSetWorkshop0");
+                TaskManager.EnqueueImmediate(() => currentWorkshop = 0, $"{logPrefix}.Set{nameof(currentWorkshop)}0");
             }
             return true;
         }
@@ -791,7 +708,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => OpenCycle(currentDay), $"MultiCycleOpenCycleOn{currentDay}");
                     TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"MultiCycleSetPrimaryCycleOn{currentDay}");
                     TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"MultiCyleSetSecondaryCycleOn{currentDay}");
-                    TaskManager.Enqueue(() => { isScheduleRest = overrideRest ? false : PrimarySchedule[0].OnRestDay; }, $"MultiCycleCheckRestOn{currentDay}");
+                    TaskManager.Enqueue(() => { isScheduleRest = !overrideRest && PrimarySchedule[0].OnRestDay; }, $"MultiCycleCheckRestOn{currentDay}");
                     TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
                     TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
                 }
@@ -813,34 +730,151 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private bool WorkshopsRemaining()
+        private bool WorkshopsRemaining() => Workshops.Skip(currentWorkshop).Any(pair => pair.Value);
+
+        private void OnWorkshopSetup(SetupAddonArgs obj)
         {
-            return Workshops.Skip(currentWorkshop).Any(pair => pair.Value);
+            if (obj.AddonName != "MJICraftSchedule") return;
+            TaskManager.Enqueue(() => obj.Addon->AtkValues[0].Type != 0, $"WaitingFor{obj.AddonName}");
+            TaskManager.Enqueue(() => {
+                if (Config.OpenNextDay)
+                    OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
+
+                if (Config.AutoImport)
+                {
+                    try
+                    {
+                        MultiCycleList.Clear();
+
+                        var text = ImGui.GetClipboardText();
+                        if (text.IsNullOrEmpty()) return;
+
+                        var rawItemStrings = text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                        ScheduleImport(rawItemStrings);
+
+                        if (MultiCycleList.All(x => x.PrimarySchedule.Count == 0))
+                            PrintModuleMessage("Failed to parse any items from clipboard.");
+                    }
+                    catch (Exception e)
+                    {
+                        PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
+                    }
+                }
+            }, $"{nameof(OnWorkshopSetup)}");
         }
 
-        public void PrintPluginMessage(String msg)
+        private void AutoSell(SetupAddonArgs obj)
         {
-            var message = new XivChatEntry
-            {
-                Message = new SeStringBuilder()
-                .AddUiForeground($"[{P.Name}] ", 45)
-                .AddUiForeground($"[{Name}] ", 62)
-                .AddText(msg)
-                .Build()
-            };
+            if (obj.AddonName != "MJIDisposeShop") return;
+            if (!Config.AutoSell) return;
 
-            Svc.Chat.PrintChat(message);
+            Callback.Fire(obj.Addon, false, 13, Config.AutoSellAmount);
+            AutoSellConfirm();
         }
+
+        private void AutoSellConfirm()
+        {
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJIDisposeShopShippingBulk");
+            TaskManager.Enqueue(() => addon != null && addon->IsVisible);
+            TaskManager.Enqueue(() => Callback.Fire(addon, true, 0));
+        }
+
+        private void AutoCollectPasture(SetupAddonArgs obj)
+        {
+            if (obj.AddonName != "MJIAnimalManagement") return;
+            if (!Config.AutoCollectPasture) return;
+            if (obj.Addon->AtkValues[219].Byte != 0) return;
+
+            Callback.Fire(obj.Addon, false, 5);
+            AutoYesNo();
+        }
+
+        private void AutoCollectFarm(SetupAddonArgs obj)
+        {
+            if (obj.AddonName != "MJIFarmManagement") return;
+            if (!Config.AutoCollectFarm) return;
+            if (obj.Addon->AtkValues[195].Byte != 0) return;
+
+            Callback.Fire(obj.Addon, false, 3);
+            AutoYesNo();
+        }
+
+        private void AutoCollectGranary(SetupAddonArgs obj)
+        {
+            if (obj.AddonName != "MJIGatheringHouse") return;
+            if (!Config.AutoCollectGranary) return;
+
+            if (obj.Addon->AtkValues[73].Int != 0)
+                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, false, 13, 0));
+            if (obj.Addon->AtkValues[147].Int != 0)
+                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, false, 13, 1));
+        }
+
+        //private void AutoSetGranary(SetupAddonArgs obj)
+        //{
+        //    if (obj.AddonName != "MJIGatheringHouse") return;
+        //    var agent = new AgentMJIPouch();
+        //    var x = agent.GetInventory()->Span.ToString();
+        //    PluginLog.Log($"{x}");
+
+        //    if (Config.AutoConfirmGranary)
+        //        Callback.Fire(obj.Addon, false, 15, 0, 0);
+        //}
+
+        private void AutoMaxGranary(SetupAddonArgs obj)
+        {
+            if (obj.AddonName != "MJISearchArea") return;
+            if (!Config.AutoMaxGranary) return;
+
+            if (!obj.Addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ToString().Equals("7/7"))
+                Callback.Fire(obj.Addon, false, 14, 7, 0);
+        }
+
+        private void AutoYesNo()
+        {
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno");
+            TaskManager.Enqueue(() => addon != null && addon->IsVisible && addon->UldManager.NodeList[15]->IsVisible);
+            TaskManager.Enqueue(() => new ClickSelectYesNo((IntPtr)addon).Yes());
+        }
+
+        //private void AutoConfirmGranary(SetupAddonArgs obj)
+        //{
+        //    if (obj.AddonName != "SelectYesno") return;
+        //    if (!Config.AutoConfirmGranary) return;
+
+        //    if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
+        //            addon->AtkUnitBase.IsVisible &&
+        //            addon->YesButton->IsEnabled &&
+        //            addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+        //        new ClickSelectYesNo((IntPtr)obj.Addon).Yes();
+        //}
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
                 .Where(x => x.Item.Row > 0)
-                .Select(x => (x.RowId, x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString.Replace("Isleworks", "").Replace("Islefish", "").Replace("Isleberry", "").Trim(), x.CraftingTime, x.LevelReq))
+                .Select(x =>
+                {
+                    var itemName = x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString;
+                    itemName = prefixes.Aggregate(itemName, (current, prefix) => current.Replace(prefix, "")).Trim();
+
+                    return (x.RowId, itemName, x.CraftingTime, x.LevelReq);
+                })
                 .ToArray();
             overlay = new Overlays(this);
+
             Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
+            //Svc.Framework.Update += HideTaskmaster;
+
+            Common.OnAddonSetup += OnWorkshopSetup;
+            Common.OnAddonSetup += AutoSell;
+            Common.OnAddonSetup += AutoCollectPasture;
+            Common.OnAddonSetup += AutoCollectFarm;
+            Common.OnAddonSetup += AutoCollectGranary;
+            //Common.OnAddonSetup += AutoSetGranary;
+            Common.OnAddonSetup += AutoMaxGranary;
+
             base.Enable();
         }
 
@@ -848,7 +882,18 @@ namespace PandorasBox.Features.UI
         {
             SaveConfig(Config);
             P.Ws.RemoveWindow(overlay);
+
             Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
+            //Svc.Framework.Update += HideTaskmaster;
+
+            Common.OnAddonSetup -= OnWorkshopSetup;
+            Common.OnAddonSetup -= AutoSell;
+            Common.OnAddonSetup -= AutoCollectPasture;
+            Common.OnAddonSetup -= AutoCollectFarm;
+            Common.OnAddonSetup -= AutoCollectGranary;
+            //Common.OnAddonSetup -= AutoSetGranary;
+            Common.OnAddonSetup -= AutoMaxGranary;
+
             base.Disable();
         }
     }

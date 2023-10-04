@@ -47,7 +47,7 @@ namespace PandorasBox.Features.Targets
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         { 
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
             {

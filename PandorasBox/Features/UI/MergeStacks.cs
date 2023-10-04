@@ -57,7 +57,7 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied | Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting])
             {

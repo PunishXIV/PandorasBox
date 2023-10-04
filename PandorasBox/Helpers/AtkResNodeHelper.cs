@@ -10,6 +10,15 @@ namespace PandorasBox.Helpers
 {
     internal static class AtkResNodeHelper
     {
+
+        public static unsafe bool GetAtkUnitBase(this nint ptr, out AtkUnitBase* atkUnitBase)
+        {
+            if (ptr == IntPtr.Zero) { atkUnitBase = null;  return false; }
+
+            atkUnitBase = (AtkUnitBase*) ptr;
+            return true;
+        }
+        
         public static unsafe Vector2 GetNodePosition(AtkResNode* node)
         {
             var pos = new Vector2(node->X, node->Y);

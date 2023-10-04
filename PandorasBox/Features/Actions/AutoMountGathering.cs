@@ -27,12 +27,10 @@ namespace PandorasBox.Features.Actions
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-
             public uint SelectedMount = 0;
-
             public bool AbortIfMoving = false;
-
             public bool UseOnIsland = false;
+            public bool JumpAfterMount = false;
         }
 
         public Configs Config { get; private set; }
@@ -57,6 +55,17 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() => EzThrottler.Throttle("GatherMount", (int)(Config.ThrottleF * 1000)));
                 TaskManager.Enqueue(() => EzThrottler.Check("GatherMount"));
                 TaskManager.Enqueue(TryMount, 3000);
+                TaskManager.Enqueue(() =>
+                {
+                    if (Config.JumpAfterMount)
+                    {
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                    }
+                });
             }
         }
 
@@ -76,8 +85,8 @@ namespace PandorasBox.Features.Actions
             }
             else
             {
-                if (am->GetActionStatus(ActionType.General, 9) != 0) return false;
-                TaskManager.Enqueue(() => am->UseAction(ActionType.General, 9));
+                if (am->GetActionStatus(ActionType.GeneralAction, 9) != 0) return false;
+                TaskManager.Enqueue(() => am->UseAction(ActionType.GeneralAction, 9));
 
                 return true;
             }
@@ -90,10 +99,10 @@ namespace PandorasBox.Features.Actions
             base.Disable();
         }
 
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             ImGui.PushItemWidth(300);
-            ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f");
+            if (ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f")) hasChanged = true;
             var ps = PlayerState.Instance();
             var preview = Svc.Data.GetExcelSheet<Mount>().First(x => x.RowId == Config.SelectedMount).Singular.ExtractText().ToTitleCase();
             if (ImGui.BeginCombo("Select Mount", preview))
@@ -101,6 +110,7 @@ namespace PandorasBox.Features.Actions
                 if (ImGui.Selectable("", Config.SelectedMount == 0))
                 {
                     Config.SelectedMount = 0;
+                    hasChanged = true;
                 }
 
                 foreach (var mount in Svc.Data.GetExcelSheet<Mount>().OrderBy(x => x.Singular.ExtractText()))
@@ -112,6 +122,7 @@ namespace PandorasBox.Features.Actions
                         if (selected)
                         {
                             Config.SelectedMount = mount.RowId;
+                            hasChanged = true;
                         }
                     }
                 }
@@ -119,8 +130,9 @@ namespace PandorasBox.Features.Actions
                 ImGui.EndCombo();
             }
 
-            ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving);
-            ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland);
+            if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
+            if (ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland)) hasChanged = true;
+            if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
 
         };
     }

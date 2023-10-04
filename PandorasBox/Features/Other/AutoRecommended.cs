@@ -20,13 +20,14 @@ namespace PandorasBox.Features.Other
 
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("Update Gearset")]
             public bool UpdateGearset = false;
         }
 
         public Configs Config { get; private set; }
         public override FeatureType FeatureType => FeatureType.Other;
 
-        public override bool UseAutoConfig => false;
+        public override bool UseAutoConfig => true;
 
         public override void Enable()
         {
@@ -37,6 +38,7 @@ namespace PandorasBox.Features.Other
 
         private void AutoEquip(uint? jobId)
         {
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
             var mod = RecommendEquipModule.Instance();
             //TaskManager.Abort();
@@ -58,10 +60,5 @@ namespace PandorasBox.Features.Other
             OnJobChanged -= AutoEquip;
             base.Disable();
         }
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-        {
-            ImGui.Checkbox("Update Gearset", ref Config.UpdateGearset);
-        };
     }
 }

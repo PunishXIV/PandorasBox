@@ -8,6 +8,7 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -32,11 +33,11 @@ namespace PandorasBox.Features
 
         public virtual bool Enabled { get; protected set; }
 
-        public virtual string Name { get; }
+        public abstract string Name { get; }
 
         public virtual string Key => GetType().Name;
 
-        public virtual string Description => null!;
+        public abstract string Description { get; }
 
         private uint? jobID = Svc.ClientState.LocalPlayer?.ClassJob.Id;
         public uint? JobID
@@ -84,7 +85,7 @@ namespace PandorasBox.Features
             Enabled = true;
         }
 
-        private void CheckJob(Framework framework)
+        private void CheckJob(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer is null) return;
             JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
@@ -264,16 +265,16 @@ namespace PandorasBox.Features
 
                 }
 
+                if (configChanged)
+                {
+                    SaveConfig((FeatureConfig)configObj);
+                }
+
             }
             catch (Exception ex)
             {
                 ImGui.Text($"Error with AutoConfig: {ex.Message}");
                 ImGui.TextWrapped($"{ex.StackTrace}");
-            }
-
-            if (configChanged && Enabled)
-            {
-                ConfigChanged();
             }
         }
 
@@ -316,7 +317,19 @@ namespace PandorasBox.Features
         protected delegate void DrawConfigDelegate(ref bool hasChanged);
         protected virtual DrawConfigDelegate DrawConfigTree => null;
 
-        protected virtual void ConfigChanged() { }
+        protected virtual void ConfigChanged() 
+        {
+            if (this is null) return;
+
+            var config = this.GetType().GetProperties().FirstOrDefault(p => p.PropertyType.IsSubclassOf(typeof(FeatureConfig)));
+
+            if (config != null)
+            {
+                var configObj = config.GetValue(this);
+                if (configObj != null)
+                    SaveConfig((FeatureConfig)configObj);
+            }
+        }
 
         public unsafe bool IsRpWalking()
         {
@@ -354,6 +367,7 @@ namespace PandorasBox.Features
             return slots;
         }
 
+        internal static unsafe bool IsTargetLocked => *(byte*)(((nint)TargetSystem.Instance()) + 309) == 1;
         internal static bool IsInventoryFree()
         {
             return GetInventoryFreeSlotCount() >= 1;
@@ -372,7 +386,7 @@ namespace PandorasBox.Features
                 .Build()
             };
 
-            Svc.Chat.PrintChat(message);
+            Svc.Chat.Print(message);
         }
 
         public void PrintModuleMessage(SeString msg)
@@ -386,7 +400,7 @@ namespace PandorasBox.Features
                 .Build()
             };
 
-            Svc.Chat.PrintChat(message);
+            Svc.Chat.Print(message);
         }
     }
 }
