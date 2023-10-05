@@ -1,7 +1,7 @@
 using ClickLib.Bases;
 using ClickLib.Structures;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Interface;
+using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using Dalamud.Logging;
@@ -17,7 +17,6 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using PandorasBox.Utility;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -126,10 +125,10 @@ namespace PandorasBox.Features.Other
          };
 
         private delegate void GatherEventDelegate(nint a1, ulong a2, nint a3, ulong a4);
-        private HookWrapper<GatherEventDelegate> gatherEventHook;
+        private Hook<GatherEventDelegate> gatherEventHook;
 
         private delegate void QuickGatherToggleDelegate(AddonGathering* a1);
-        private HookWrapper<QuickGatherToggleDelegate> quickGatherToggle;
+        private Hook<QuickGatherToggleDelegate> quickGatherToggle;
 
         internal Vector4 DarkTheme = new Vector4(0.26f, 0.26f, 0.26f, 1f);
         internal Vector4 LightTheme = new Vector4(0.97f, 0.87f, 0.75f, 1f);
@@ -397,10 +396,10 @@ namespace PandorasBox.Features.Other
         {
             Overlay = new Overlays(this);
             Config = LoadConfig<Configs>() ?? new Configs();
-            gatherEventHook ??= Common.Hook<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
+            gatherEventHook ??= Svc.Hook.HookFromSignature<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
             gatherEventHook.Enable();
 
-            quickGatherToggle ??= Common.Hook<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
+            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
 
             Common.OnAddonSetup += CheckLastItem;
             Svc.Condition.ConditionChange += ResetCounter;
@@ -996,8 +995,8 @@ namespace PandorasBox.Features.Other
         {
             P.Ws.RemoveWindow(Overlay);
             SaveConfig(Config);
-            gatherEventHook?.Disable();
-            quickGatherToggle?.Disable();
+            gatherEventHook?.Dispose();
+            quickGatherToggle?.Dispose();
             Common.OnAddonSetup -= CheckLastItem;
 
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");

@@ -1,6 +1,4 @@
 using ECommons;
-using ECommons.DalamudServices;
-using ECommons.Reflection;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using FFXIVClientStructs.Interop;

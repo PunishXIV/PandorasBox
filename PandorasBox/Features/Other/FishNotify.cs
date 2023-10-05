@@ -7,7 +7,6 @@ using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Data;
 
 namespace PandorasBox.Features.Other
 {

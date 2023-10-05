@@ -3,13 +3,8 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PandorasBox.Features.Other
 {
@@ -69,7 +64,6 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            UseActionHook?.Disable();
             UseActionHook?.Dispose();
             base.Disable();
         }

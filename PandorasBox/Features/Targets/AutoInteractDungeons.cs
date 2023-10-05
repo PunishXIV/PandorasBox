@@ -1,6 +1,4 @@
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Logging;
-using Dalamud.Memory;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;

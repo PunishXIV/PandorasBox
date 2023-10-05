@@ -1,10 +1,7 @@
-using ClickLib.Clicks;
-using Dalamud.Interface;
-using ECommons;
+using Dalamud.Hooking;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
-using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -14,10 +11,8 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using PandorasBox.Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using static ECommons.GenericHelpers;
 
@@ -32,15 +27,14 @@ namespace PandorasBox.Features.UI
         private delegate IntPtr UpdateItemDelegate(IntPtr a1, ulong index, IntPtr a3, ulong a4);
         private delegate byte UpdateListDelegate(IntPtr a1, IntPtr a2, IntPtr a3);
 
-        private HookWrapper<UpdateItemDelegate> updateItemHook;
-        private HookWrapper<UpdateListDelegate> updateListHook;
+        private Hook<UpdateItemDelegate> updateItemHook;
 
         private delegate void* SetupDropDownList(AtkComponentList* a1, ushort a2, byte** a3, byte a4);
-        private HookWrapper<SetupDropDownList> setupDropDownList;
+        private Hook<SetupDropDownList> setupDropDownList;
 
         private delegate byte PopulateItemList(AgentSalvage* agentSalvage);
 
-        private HookWrapper<PopulateItemList> populateHook;
+        private Hook<PopulateItemList> populateHook;
 
         private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
         public override FeatureType FeatureType => FeatureType.UI;
@@ -51,15 +45,13 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Overlay = new(this);
-            updateItemHook ??= Common.Hook<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
+            updateItemHook ??= Svc.Hook.HookFromSignature<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
             updateItemHook?.Enable();
-            //updateListHook ??= Common.Hook<UpdateListDelegate>("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0", UpdateListDetour);
-            //updateListHook?.Enable();
 
-            setupDropDownList ??= Common.Hook<SetupDropDownList>("E8 ?? ?? ?? ?? 8D 4F 55", SetupDropDownListDetour);
+            setupDropDownList ??= Svc.Hook.HookFromSignature<SetupDropDownList>("E8 ?? ?? ?? ?? 8D 4F 55", SetupDropDownListDetour);
             setupDropDownList?.Enable();
 
-            populateHook ??= Common.Hook<PopulateItemList>("E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 83 66 2C FE", PopulateDetour);
+            populateHook ??= Svc.Hook.HookFromSignature<PopulateItemList>("E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 83 66 2C FE", PopulateDetour);
             populateHook?.Enable();
 
             base.Enable();
@@ -80,11 +72,6 @@ namespace PandorasBox.Features.UI
             return setupDropDownList.Original(a1, a2, a3, a4);
         }
 
-        //private byte UpdateListDetour(nint a1, nint a2, nint a3)
-        //{
-        //    ListItems.Clear();
-        //    return updateListHook.Original(a1, a2, a3);
-        //}
 
         private nint UpdateItemDetour(nint a1, ulong index, nint a3, ulong a4)
         {
@@ -235,10 +222,9 @@ namespace PandorasBox.Features.UI
         {
             P.Ws.RemoveWindow(Overlay);
             Overlay = null;
-            updateItemHook?.Disable();
-            updateListHook?.Disable();
-            setupDropDownList?.Disable();
-            populateHook?.Disable();
+            updateItemHook?.Dispose();
+            setupDropDownList?.Dispose();
+            populateHook?.Dispose();
             base.Disable();
         }
     }

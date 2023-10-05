@@ -1,16 +1,12 @@
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
-using Dalamud.IoC;
 using Dalamud.Plugin;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
-using ECommons.Reflection;
 using PandorasBox.Features;
 using PandorasBox.UI;
 using PunishLib;
-using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -29,6 +25,7 @@ public class PandorasBox : IDalamudPlugin
     internal static Configuration Config;
 
     public List<FeatureProvider> FeatureProviders = new();
+    private FeatureProvider provider;
     public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
     internal TaskManager TaskManager;
 
@@ -41,11 +38,8 @@ public class PandorasBox : IDalamudPlugin
 
     private void Initialize()
     {
-        ECommonsMain.Init(pi, P, ECommons.Module.All);
+        ECommonsMain.Init(pi, P, ECommons.Module.DalamudReflector);
         PunishLibMain.Init(pi, "Pandora's Box", new AboutPlugin() { Sponsor = "https://ko-fi.com/taurenkey" });
-
-        //FFXIVClientStructs.Interop.Resolver.GetInstance.SetupSearchSpace(Svc.SigScanner.SearchBase);
-        //FFXIVClientStructs.Interop.Resolver.GetInstance.Resolve();
 
         Ws = new();
         MainWindow = new();
@@ -63,7 +57,7 @@ public class PandorasBox : IDalamudPlugin
         Svc.PluginInterface.UiBuilder.Draw += Ws.Draw;
         Svc.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
         Common.Setup();
-        var provider = new FeatureProvider(Assembly.GetExecutingAssembly());
+        provider = new FeatureProvider(Assembly.GetExecutingAssembly());
         provider.LoadFeatures();
         FeatureProviders.Add(provider);
 
@@ -72,12 +66,13 @@ public class PandorasBox : IDalamudPlugin
 
     public void Dispose()
     {
-        GC.SuppressFinalize(this);
         Svc.Commands.RemoveHandler(CommandName);
-        foreach (var t in FeatureProviders.Where(t => !t.Disposed))
+        foreach (var f in Features.Where(x => x is not null && x.Enabled))
         {
-            t.Dispose();
+            f.Disable();
         }
+
+        provider.UnloadFeatures();
 
         Svc.PluginInterface.UiBuilder.Draw -= Ws.Draw;
         Svc.PluginInterface.UiBuilder.OpenConfigUi -= DrawConfigUI;

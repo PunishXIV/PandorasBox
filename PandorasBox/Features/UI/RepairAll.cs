@@ -1,6 +1,4 @@
 using ClickLib.Clicks;
-using Dalamud.Interface;
-using ECommons;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Logging;

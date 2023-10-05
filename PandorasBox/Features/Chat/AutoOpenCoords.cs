@@ -1,4 +1,3 @@
-using PandorasBox.Features;
 using PandorasBox.FeaturesSetup;
 using ECommons.DalamudServices;
 using System.Linq;
@@ -14,7 +13,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Dalamud.Hooking;
 using System.Diagnostics;
 using System.Reflection;
-using System.Numerics;
 
 namespace PandorasBox.Features.ChatFeature
 {
@@ -29,6 +27,8 @@ namespace PandorasBox.Features.ChatFeature
         public Configs Config { get; private set; }
 
         public override bool UseAutoConfig => false;
+
+        GameIntegration GI;
 
         public class Configs : FeatureConfig
         {
@@ -143,7 +143,6 @@ namespace PandorasBox.Features.ChatFeature
             if (Config.DontOpenMap)
             {
                 var agent = AgentMap.Instance();
-                var GI = new GameIntegration();
                 GI.SetFlagMarker(agent, maplinkMessage.TerritoryId, map.Row, maplink.RawX, maplink.RawY, 60561);
             }
             else
@@ -154,6 +153,7 @@ namespace PandorasBox.Features.ChatFeature
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Chat.ChatMessage += OnChatMessage;
+            GI = new();
             base.Enable();
         }
 
@@ -161,6 +161,7 @@ namespace PandorasBox.Features.ChatFeature
         {
             SaveConfig(Config);
             Svc.Chat.ChatMessage -= OnChatMessage;
+            GI.Dispose();
             base.Disable();
         }
 
@@ -252,7 +253,6 @@ namespace PandorasBox.Features.ChatFeature
         public void Dispose()
         {
             setFlagMarkerHook?.Dispose();
-            throw new NotImplementedException();
         }
     }
 

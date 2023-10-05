@@ -1,7 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 
 namespace PandorasBox.Features.Actions

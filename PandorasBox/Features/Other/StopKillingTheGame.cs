@@ -1,17 +1,13 @@
 // Credit entirely to Bluefissure: https://github.com/Bluefissure/NoKillPlugin
 
-using Dalamud.Game;
 using Dalamud.Hooking;
 using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
-using PandorasBox.Utility;
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
-using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.Other
 {
@@ -51,7 +47,7 @@ namespace PandorasBox.Features.Other
         private delegate void DecodeSeStringHandlerDelegate(Int64 a1, Int64 a2, Int64 a3, Int64 a4);
         private Hook<StartHandlerDelegate> startHandlerHook;
         private Hook<LoginHandlerDelegate> loginHandlerHook;
-        private HookWrapper<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
+        private Hook<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
 
 
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
@@ -107,7 +103,7 @@ namespace PandorasBox.Features.Other
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            lobbyErrorHandlerHook ??= Common.Hook<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
+            lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
             try
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
@@ -144,9 +140,9 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            this.lobbyErrorHandlerHook?.Disable();
-            this.startHandlerHook?.Disable();
-            this.loginHandlerHook?.Disable();
+            this.lobbyErrorHandlerHook?.Dispose();
+            this.startHandlerHook?.Dispose();
+            this.loginHandlerHook?.Dispose();
             Svc.Framework.Update -= CheckDialogue;
 
             base.Disable();
