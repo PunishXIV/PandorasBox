@@ -29,7 +29,7 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private readonly DalamudContextMenu contextMenu = new();
+        private readonly DalamudContextMenu contextMenu = new(Svc.PluginInterface);
 
         private static readonly SeString DepositString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Deposit into FC Chest"));
 

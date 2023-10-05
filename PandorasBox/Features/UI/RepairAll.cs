@@ -1,13 +1,16 @@
 using ClickLib.Clicks;
 using Dalamud.Interface;
+using ECommons;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
+using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
+using PandorasBox.TemporaryFixes;
 using PandorasBox.UI;
 using System;
 using System.Linq;
@@ -38,13 +41,9 @@ namespace PandorasBox.Features
         {
             try
             {
-                if (Svc.GameGui.GetAddonByName("Repair", 1) != IntPtr.Zero)
+                if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon))
                 {
-                    var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Repair", 1);
-                    if (!ptr->IsVisible)
-                        return;
-
-                    var node = ptr->UldManager.NodeList[24];
+                    var node = addon->RepairAllButton->AtkComponentBase.AtkResNode;
 
                     if (node == null)
                         return;
@@ -80,7 +79,7 @@ namespace PandorasBox.Features
                             TryRepairAll();
                         }
 
-                        ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text);
+                        addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkTextNode()->SetText(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text);
                     }
                     else
                     {
@@ -89,7 +88,7 @@ namespace PandorasBox.Features
                             Repairing = false;
                             P.TaskManager.Abort();
                         }
-                        ptr->UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {P.TaskManager.NumQueuedTasks} tasks");
+                        addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {P.TaskManager.NumQueuedTasks} tasks");
                     }
 
                     ImGui.End();
@@ -120,7 +119,7 @@ namespace PandorasBox.Features
         private bool SwitchSection(int section)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
+            if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
             {
                 var values = stackalloc AtkValue[2];
                 values[0] = new AtkValue()
@@ -164,9 +163,10 @@ namespace PandorasBox.Features
         internal static bool Repair()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible && addon->RepairAllButton->IsEnabled)
+            if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon) && addon->AtkUnitBase.IsVisible && addon->RepairAllButton->IsEnabled)
             {
-                new ClickRepair((IntPtr)addon).RepairAll();
+                PluginLog.Debug($"{addon->RepairAllButton->AtkComponentBase.OwnerNode is null}");
+                new ClickRepairFixed((IntPtr)addon).RepairAll();
 
                 return true;
             }
@@ -177,7 +177,7 @@ namespace PandorasBox.Features
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
 
-            if (TryGetAddonByName<AddonRepair>("Repair", out var r) &&
+            if (TryGetAddonByName<AddonRepairFixed>("Repair", out var r) &&
                 r->AtkUnitBase.IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
@@ -209,4 +209,6 @@ namespace PandorasBox.Features
             base.Disable();
         }
     }
+
+
 }
