@@ -4,6 +4,7 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
+using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -52,8 +53,8 @@ namespace PandorasBox.Features.UI
             Overlay = new(this);
             updateItemHook ??= Common.Hook<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
             updateItemHook?.Enable();
-            updateListHook ??= Common.Hook<UpdateListDelegate>("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0", UpdateListDetour);
-            updateListHook?.Enable();
+            //updateListHook ??= Common.Hook<UpdateListDelegate>("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0", UpdateListDetour);
+            //updateListHook?.Enable();
 
             setupDropDownList ??= Common.Hook<SetupDropDownList>("E8 ?? ?? ?? ?? 8D 4F 55", SetupDropDownListDetour);
             setupDropDownList?.Enable();
@@ -79,11 +80,11 @@ namespace PandorasBox.Features.UI
             return setupDropDownList.Original(a1, a2, a3, a4);
         }
 
-        private byte UpdateListDetour(nint a1, nint a2, nint a3)
-        {
-            ListItems.Clear();
-            return updateListHook.Original(a1, a2, a3);
-        }
+        //private byte UpdateListDetour(nint a1, nint a2, nint a3)
+        //{
+        //    ListItems.Clear();
+        //    return updateListHook.Original(a1, a2, a3);
+        //}
 
         private nint UpdateItemDetour(nint a1, ulong index, nint a3, ulong a4)
         {
@@ -119,7 +120,7 @@ namespace PandorasBox.Features.UI
                 var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1);
                 if (addon != null && addon->AtkUnitBase.IsVisible)
                 {
-                    var node = addon->AtkUnitBase.UldManager.NodeList[10];
+                    var node = addon->AtkUnitBase.UldManager.NodeList[12];
 
                     if (node == null)
                         return;
@@ -129,7 +130,9 @@ namespace PandorasBox.Features.UI
                     var size = new Vector2(node->Width, node->Height) * scale;
 
                     ImGuiHelpers.ForceNextWindowMainViewport();
-                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position + size with { Y = 0 });
+                    var pos = position + size with { Y = 0 };
+                    pos.X += 12f;
+                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(pos);
 
                     ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
                     var oldSize = ImGui.GetFont().Scale;
@@ -184,17 +187,20 @@ namespace PandorasBox.Features.UI
 
         private void TryDesynthAll()
         {
-            if (ListItems.Count > 0)
+            if (TryGetAddonByName<AddonSalvageItemSelector>("SalvageItemSelector", out var addon))
             {
-                TaskManager.Enqueue(() => DesynthFirst(), "Desynthing");
-                TaskManager.Enqueue(() => ConfirmDesynth(), 200, "Confirm Desynth");
-                TaskManager.Enqueue(() => CloseResults(), 3000,  "Close Results");
-                TaskManager.DelayNext("WaitForDelay", 400);
-                TaskManager.Enqueue(() => TryDesynthAll(), "Repeat Loop");
-            }
-            else
-            {
-                TaskManager.Enqueue(() => Desynthing = false);
+                if (addon->ItemCount > 0)
+                {
+                    TaskManager.Enqueue(() => DesynthFirst(), "Desynthing");
+                    TaskManager.Enqueue(() => ConfirmDesynth(), 200, "Confirm Desynth");
+                    TaskManager.Enqueue(() => CloseResults(), 3000, "Close Results");
+                    TaskManager.DelayNext("WaitForDelay", 400);
+                    TaskManager.Enqueue(() => TryDesynthAll(), "Repeat Loop");
+                }
+                else
+                {
+                    TaskManager.Enqueue(() => Desynthing = false);
+                }
             }
         }
 

@@ -59,7 +59,7 @@ namespace PandorasBox.Features.Actions
                 {
                     if (Config.JumpAfterMount)
                     {
-                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
                         TaskManager.DelayNext(50);
                         TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
                         TaskManager.DelayNext(50);
