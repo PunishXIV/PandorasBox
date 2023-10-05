@@ -5,9 +5,14 @@ using Dalamud.Logging;
 using Dalamud.Plugin;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.Reflection;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Newtonsoft.Json;
 using PandorasBox.FeaturesSetup;
@@ -16,6 +21,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using TaskManager = ECommons.Automation.TaskManager;
 
 namespace PandorasBox.Features
 {
@@ -330,18 +336,20 @@ namespace PandorasBox.Features
         public unsafe bool IsRpWalking()
         {
             if (Svc.ClientState.LocalPlayer == null) return false;
-            var atkArrayDataHolder = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
-            if (atkArrayDataHolder.NumberArrays[72]->IntArray[6] == 1)
-                return true;
-            else
-                return false;
 
-            //if (Svc.GameGui.GetAddonByName("_DTR") == IntPtr.Zero) return false;
+            //var uiModule = Framework.Instance()->GetUiModule();
+            //var atkArrayDataHolder = uiModule->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
+            //if (atkArrayDataHolder.NumberArrays[72]->IntArray[6] == 1)
+            //    return true;
+            //else
+            //    return false;
 
-            //var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_DTR");
-            //if (addon->UldManager.NodeListCount < 9) return false;
+            if (Svc.GameGui.GetAddonByName("_DTR") == IntPtr.Zero) return false;
 
-            //return addon->UldManager.NodeList[9]->IsVisible;
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_DTR");
+            if (addon->UldManager.NodeListCount < 9) return false;
+
+            return addon->GetNodeById(10)->IsVisible;
         }
 
         internal static unsafe int GetInventoryFreeSlotCount()
