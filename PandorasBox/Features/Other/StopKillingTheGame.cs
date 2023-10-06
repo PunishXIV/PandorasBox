@@ -53,6 +53,60 @@ namespace PandorasBox.Features.Other
         private Hook<LoginHandlerDelegate> loginHandlerHook;
         private HookWrapper<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
 
+        public override void Enable()
+        {
+            Config = LoadConfig<Configs>() ?? new Configs();
+            lobbyErrorHandlerHook ??= Common.Hook<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
+            try
+            {
+                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
+            }
+            catch (Exception)
+            {
+                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
+            }
+            LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
+
+            lobbyErrorHandlerHook.Enable();
+
+            if (Config.AttemptLogin)
+            {
+                startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
+                loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
+                startHandlerHook.Enable();
+                loginHandlerHook.Enable();
+            }
+
+            Svc.Framework.Update += CheckDialogue;
+
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            lobbyErrorHandlerHook?.Disable();
+            if (Config.AttemptLogin)
+            {
+                startHandlerHook?.Disable();
+                loginHandlerHook?.Disable();
+            }
+
+            Svc.Framework.Update -= CheckDialogue;
+
+            base.Disable();
+        }
+
+        public override void Dispose()
+        {
+            lobbyErrorHandlerHook?.Dispose();
+            if (Config.AttemptLogin)
+            {
+                startHandlerHook?.Dispose();
+                loginHandlerHook?.Dispose();
+            }
+            base.Dispose();
+        }
 
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
         {
@@ -66,6 +120,7 @@ namespace PandorasBox.Features.Other
             }
             return startHandlerHook.Original(a1, a2);
         }
+
         private Int64 LoginHandlerDetour(Int64 a1, Int64 a2)
         {
             var a1_2165 = Marshal.ReadByte(new IntPtr(a1 + 2165));
@@ -104,35 +159,6 @@ namespace PandorasBox.Features.Other
             return lobbyErrorHandlerHook.Original(a1, a2, a3);
         }
 
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            lobbyErrorHandlerHook ??= Common.Hook<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
-            try
-            {
-                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
-            }
-            catch (Exception)
-            {
-                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
-            }
-            LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
-
-            lobbyErrorHandlerHook.Enable();
-
-            if (Config.AttemptLogin)
-            {
-                startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
-                loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
-                startHandlerHook.Enable();
-                loginHandlerHook.Enable();
-            }
-
-            Svc.Framework.Update += CheckDialogue;
-
-            base.Enable();
-        }
-
         private void CheckDialogue(IFramework framework)
         {
             if (!Config.CloseAutomatically) return;
@@ -144,21 +170,5 @@ namespace PandorasBox.Features.Other
                 WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.NumPad0);
             }
         }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            lobbyErrorHandlerHook?.Disable();
-            if (Config.AttemptLogin)
-            {
-                startHandlerHook?.Disable();
-                loginHandlerHook?.Disable();
-            }
-
-            Svc.Framework.Update -= CheckDialogue;
-
-            base.Disable();
-        }
-
     }
 }
