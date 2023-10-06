@@ -3,6 +3,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Reflection;
@@ -123,7 +124,9 @@ namespace PandorasBox.Features
             }
         }
 
-        protected void SaveConfig<T>(T config) where T : FeatureConfig
+        protected void SaveConfig<T>(T config) where T : FeatureConfig => SaveConfig<T>(config, this.Key);
+
+        protected void SaveConfig<T>(T config, string key) where T : FeatureConfig
         {
             try
             {
@@ -349,7 +352,16 @@ namespace PandorasBox.Features
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_DTR");
             if (addon->UldManager.NodeListCount < 9) return false;
 
-            return addon->GetNodeById(10)->IsVisible;
+            try
+            {
+                var isVisible = addon->GetNodeById(10)->IsVisible;
+                return isVisible;
+            }
+            catch(Exception ex) 
+            {
+                ex.Log();
+                return false; 
+            }
         }
 
         internal static unsafe int GetInventoryFreeSlotCount()

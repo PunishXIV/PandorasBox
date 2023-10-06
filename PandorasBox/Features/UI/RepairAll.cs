@@ -1,4 +1,5 @@
 using ClickLib.Clicks;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Logging;
@@ -13,7 +14,9 @@ using PandorasBox.UI;
 using System;
 using System.Linq;
 using System.Numerics;
+using PandorasBox.Helpers;
 using static ECommons.GenericHelpers;
+using ClickLib.Enums;
 
 namespace PandorasBox.Features
 {
@@ -41,13 +44,12 @@ namespace PandorasBox.Features
             {
                 if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon))
                 {
-                    var node = addon->RepairAllButton->AtkComponentBase.AtkResNode;
+                    var node = addon->RepairAllButton->AtkComponentBase.AtkResNode->ParentNode;
 
                     if (node == null)
                         return;
 
-                    if (node->IsVisible)
-                        node->ToggleVisibility(false);
+                    node->ToggleVisibility(false);
 
                     var position = AtkResNodeHelper.GetNodePosition(node);
                     var scale = AtkResNodeHelper.GetNodeScale(node);
@@ -107,30 +109,20 @@ namespace PandorasBox.Features
             for (var i = 1; i <= 7; i++)
             {
                 var val = i;
-                P.TaskManager.Enqueue(() => SwitchSection(val));
+                P.TaskManager.Enqueue(() => SwitchSection());
                 P.TaskManager.Enqueue(() => Repair(), 300, false);
                 P.TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
             }
             P.TaskManager.Enqueue(() => { Repairing = false; return true; });
         }
 
-        private bool SwitchSection(int section)
+        private bool SwitchSection()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
             if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
             {
-                var values = stackalloc AtkValue[2];
-                values[0] = new AtkValue()
-                {
-                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                    Int = 1
-                };
-                values[1] = new AtkValue()
-                {
-                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                    Int = section - 1
-                };
-                addon->AtkUnitBase.FireCallback(2, values);
+                var fwdBtn = addon->AtkUnitBase.GetNodeById(14)->GetAsAtkComponentButton();
+                fwdBtn->ClickAddonButton((AtkComponentBase*)addon, 2, EventType.CHANGE);
 
                 return true;
 
@@ -178,7 +170,6 @@ namespace PandorasBox.Features
             if (TryGetAddonByName<AddonRepairFixed>("Repair", out var r) &&
                 r->AtkUnitBase.IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
-                addon->YesButton->IsEnabled &&
                 addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
             {
                 new ClickSelectYesNo((IntPtr)addon).Yes();

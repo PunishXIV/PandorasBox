@@ -19,11 +19,11 @@ namespace PandorasBox.TemporaryFixes
         [FieldOffset(576)] public AtkTextNode* JobName;
         [FieldOffset(584)] public AtkTextNode* UnusedText2; // Top right corner
         [FieldOffset(592)] public AtkComponentDropDownList* Dropdown;
-        [FieldOffset(600 + 16)] public AtkComponentButton* RepairAllButton;
-        [FieldOffset(608 + 16)] public AtkResNode* HeaderContainer;
-        [FieldOffset(616 + 16)] public AtkTextNode* UnusedText3; // Bottom right corner
-        [FieldOffset(624 + 16)] public AtkTextNode* NothingToRepairText; // Middle of screen;
-        [FieldOffset(632 + 16)] public AtkComponentList* ItemList;
+        [FieldOffset(616)] public AtkComponentButton* RepairAllButton;
+        [FieldOffset(624)] public AtkResNode* HeaderContainer;
+        [FieldOffset(632)] public AtkTextNode* UnusedText3; // Bottom right corner
+        [FieldOffset(640)] public AtkTextNode* NothingToRepairText; // Middle of screen;
+        [FieldOffset(648)] public AtkComponentList* ItemList;
     }
 
     public sealed unsafe class ClickRepairFixed : ClickBase<ClickRepair, AddonRepairFixed>

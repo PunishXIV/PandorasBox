@@ -5,6 +5,9 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
+using PandorasBox.Helpers;
+using FFXIVClientStructs.FFXIV.Component.GUI;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
 {
@@ -51,21 +54,34 @@ namespace PandorasBox.Features.UI
         {
             if (obj.AddonName == "GrandCompanyExchange")
             {
-                TaskManager.DelayNext(50);
-                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, true, 1, Config.DefaultRank, 0, 0, 0, 0, 0, 0, 0));
-                TaskManager.DelayNext(50);
-                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, true, 2, Config.DefaultTab + 1, 0, 0, 0, 0, 0, 0, 0));
-                TaskManager.Enqueue(() => 
-                { 
-                    switch (Config.DefaultTab)
-                    {
-                        case 0:
-                            var button = obj.Addon->UldManager.NodeList[14]->GetAsAtkComponentRadioButton();
-                            
-                            break;
-                    }
+                var rankButton = Config.DefaultRank switch
+                {
+                    0 => obj.Addon->GetNodeById(37)->GetAsAtkComponentRadioButton(),
+                    1 => obj.Addon->GetNodeById(38)->GetAsAtkComponentRadioButton(),
+                    2 => obj.Addon->GetNodeById(39)->GetAsAtkComponentRadioButton()
+                };
 
-                });
+                var tabButton = Config.DefaultTab switch
+                {
+                    0 => obj.Addon->GetNodeById(46)->GetAsAtkComponentRadioButton(),
+                    1 => obj.Addon->GetNodeById(44)->GetAsAtkComponentRadioButton(),
+                    2 => obj.Addon->GetNodeById(45)->GetAsAtkComponentRadioButton(),
+                    3 => obj.Addon->GetNodeById(47)->GetAsAtkComponentRadioButton(),
+                };
+
+                TaskManager.DelayNext(50);
+                TaskManager.Enqueue(() => rankButton->ClickRadioButton((AtkComponentBase*)obj.Addon, (uint)Config.DefaultRank));
+                TaskManager.DelayNext(50);
+                uint param = Config.DefaultTab switch
+                {
+                    0 => 501,
+                    1 => 502,
+                    2 => 503,
+                    3 => 505
+                };
+
+                TaskManager.Enqueue(() => tabButton->ClickRadioButton((AtkComponentBase*)obj.Addon, param));
+                TaskManager.Enqueue(() => obj.Addon->Update(1f));
             }
         }
 
