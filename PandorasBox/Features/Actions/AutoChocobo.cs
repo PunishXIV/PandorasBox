@@ -1,11 +1,8 @@
-using PandorasBox.Features;
 using PandorasBox.FeaturesSetup;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
-using System.Linq;
 
 namespace PandorasBox.Features.Actions
 {
@@ -33,7 +30,7 @@ namespace PandorasBox.Features.Actions
             public bool UseInCombat = false;
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (!Svc.Condition[ConditionFlag.NormalConditions] || Svc.Condition[ConditionFlag.Casting] || IsMoving()) return;
             if (Svc.Condition[ConditionFlag.InCombat] && !Config.UseInCombat) return;

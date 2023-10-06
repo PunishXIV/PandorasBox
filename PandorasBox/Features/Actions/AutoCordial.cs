@@ -1,13 +1,9 @@
 using PandorasBox.FeaturesSetup;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using Dalamud.Game;
 using System.Linq;
-using ImGuiNET;
 using System.Collections.Generic;
 using Lumina.Excel.GeneratedSheets;
-using Dalamud.Configuration;
-using Dalamud.Logging;
 
 namespace PandorasBox.Features.Actions
 {
@@ -48,7 +44,7 @@ namespace PandorasBox.Features.Actions
             return ((int)Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery) > (int)Svc.ClientState.LocalPlayer.MaxGp;
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer is null) return;
             if (!(Svc.ClientState.LocalPlayer.ClassJob.Id == 16 || Svc.ClientState.LocalPlayer.ClassJob.Id == 17 || Svc.ClientState.LocalPlayer.ClassJob.Id == 18)) return;

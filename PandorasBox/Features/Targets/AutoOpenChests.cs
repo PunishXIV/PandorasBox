@@ -1,5 +1,3 @@
-using Dalamud.Game;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -9,8 +7,6 @@ using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
 using System.Linq;
-using System.Runtime.InteropServices;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
 
 namespace PandorasBox.Features.Targets
 {
@@ -47,7 +43,7 @@ namespace PandorasBox.Features.Targets
             base.Enable();
         }
 
-        private void RunFeature(Framework framework)
+        private void RunFeature(IFramework framework)
         { 
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
             {

@@ -1,7 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 
 namespace PandorasBox.Features.Actions
@@ -52,7 +51,7 @@ namespace PandorasBox.Features.Actions
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
-                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Spell, 7) == 0);
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
                 TaskManager.DelayNext("WaitForActionReady", 2500);
                 TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
@@ -66,15 +65,15 @@ namespace PandorasBox.Features.Actions
             var am = ActionManager.Instance();
             if (jobId is 26 or 27)
             {
-                if (am->GetActionStatus(ActionType.Spell, 25798) != 0) return false;
+                if (am->GetActionStatus(ActionType.Action, 25798) != 0) return false;
 
-                am->UseAction(ActionType.Spell, 25798);
+                am->UseAction(ActionType.Action, 25798);
             }
             if (jobId is 28)
             {
-                if (am->GetActionStatus(ActionType.Spell, 17215) != 0) return false;
+                if (am->GetActionStatus(ActionType.Action, 17215) != 0) return false;
 
-                am->UseAction(ActionType.Spell, 17215);
+                am->UseAction(ActionType.Action, 17215);
                 return true;
             }
             return true;

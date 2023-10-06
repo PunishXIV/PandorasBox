@@ -33,7 +33,7 @@ namespace PandorasBox.Features.Other
             base.Enable();
         }
 
-        private void RunFeature(Dalamud.Game.Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
@@ -87,7 +87,7 @@ namespace PandorasBox.Features.Other
             var gearsetModule = RaptureGearsetModule.Instance();
             for (var i = 0; i < 100; i++)
             {
-                var gearset = gearsetModule->Gearset[i];
+                var gearset = gearsetModule->GetGearset(i);
                 if (gearset == null) continue;
                 if (!gearset->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists)) continue;
                 if (gearset->ID != i) continue;

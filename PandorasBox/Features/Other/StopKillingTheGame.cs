@@ -1,17 +1,13 @@
 // Credit entirely to Bluefissure: https://github.com/Bluefissure/NoKillPlugin
 
-using Dalamud.Game;
 using Dalamud.Hooking;
 using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
-using PandorasBox.Utility;
 using System;
 using System.Runtime.InteropServices;
-using System.Text;
-using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.Other
 {
@@ -51,7 +47,7 @@ namespace PandorasBox.Features.Other
         private delegate void DecodeSeStringHandlerDelegate(Int64 a1, Int64 a2, Int64 a3, Int64 a4);
         private Hook<StartHandlerDelegate> startHandlerHook;
         private Hook<LoginHandlerDelegate> loginHandlerHook;
-        private HookWrapper<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
+        private Hook<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
 
 
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
@@ -107,7 +103,7 @@ namespace PandorasBox.Features.Other
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            lobbyErrorHandlerHook ??= Common.Hook<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
+            lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
             try
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
@@ -116,9 +112,9 @@ namespace PandorasBox.Features.Other
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
             }
-            this.startHandlerHook = Hook<StartHandlerDelegate>.FromAddress(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
+            this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
             this.LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
-            this.loginHandlerHook = Hook<LoginHandlerDelegate>.FromAddress(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
+            this.loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
 
             this.lobbyErrorHandlerHook.Enable();
             this.startHandlerHook.Enable();
@@ -129,7 +125,7 @@ namespace PandorasBox.Features.Other
             base.Enable();
         }
 
-        private void CheckDialogue(Framework framework)
+        private void CheckDialogue(IFramework framework)
         {
             if (!Config.CloseAutomatically) return;
             if (Svc.GameGui.GetAddonByName("Dialogue") != IntPtr.Zero && !Svc.Condition.Any())
@@ -144,9 +140,9 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            this.lobbyErrorHandlerHook?.Disable();
-            this.startHandlerHook?.Disable();
-            this.loginHandlerHook?.Disable();
+            this.lobbyErrorHandlerHook?.Dispose();
+            this.startHandlerHook?.Dispose();
+            this.loginHandlerHook?.Dispose();
             Svc.Framework.Update -= CheckDialogue;
 
             base.Disable();

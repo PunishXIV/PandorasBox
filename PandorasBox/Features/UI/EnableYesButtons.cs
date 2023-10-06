@@ -1,15 +1,5 @@
-using Dalamud.Game;
-using Dalamud.Logging;
-using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using PandorasBox.FeaturesSetup;
-using PandorasBox.Helpers;
-using PandorasBox.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI

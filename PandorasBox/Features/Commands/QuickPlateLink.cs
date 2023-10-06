@@ -1,19 +1,13 @@
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
-using System.Drawing;
 using System.Linq;
-using System.Security.Policy;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features.Commands
 {
@@ -162,7 +156,7 @@ namespace PandorasBox.Features.Commands
             {
                 for (var i = 0; i < 100; i++)
                 {
-                    var gs = gearsetModule->Gearset[i];
+                    var gs = gearsetModule->GetGearset(i);
                     if (gs == null || !gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists) || gs->ID != i)
                         continue;
 

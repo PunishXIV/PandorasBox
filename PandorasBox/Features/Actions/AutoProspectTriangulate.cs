@@ -1,10 +1,6 @@
-using Dalamud.Game;
 using ECommons.DalamudServices;
-using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using PandorasBox.FeaturesSetup;
-using System;
 using System.Linq;
 
 namespace PandorasBox.Features.Actions
@@ -46,21 +42,21 @@ namespace PandorasBox.Features.Actions
                 return;
             }
 
-            if (jobValue == 16 && am->GetActionStatus(ActionType.Spell, 210) == 0)
+            if (jobValue == 16 && am->GetActionStatus(ActionType.Action, 210) == 0)
             {
-                TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 210));
-                if (Config.AddTruth && am->GetActionStatus(ActionType.Spell, 221) == 0)
+                TaskManager.Enqueue(() => am->UseAction(ActionType.Action, 210));
+                if (Config.AddTruth && am->GetActionStatus(ActionType.Action, 221) == 0)
                 {
-                   TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 221));
+                   TaskManager.Enqueue(() => am->UseAction(ActionType.Action, 221));
                 }
                 return;
             }
-            if (jobValue == 17 && am->GetActionStatus(ActionType.Spell, 227) == 0)
+            if (jobValue == 17 && am->GetActionStatus(ActionType.Action, 227) == 0)
             {
-                TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 227));
-                if (Config.AddTruth && am->GetActionStatus(ActionType.Spell, 238) == 0)
+                TaskManager.Enqueue(() => am->UseAction(ActionType.Action, 227));
+                if (Config.AddTruth && am->GetActionStatus(ActionType.Action, 238) == 0)
                 {
-                    TaskManager.Enqueue(() => am->UseAction(ActionType.Spell, 238));
+                    TaskManager.Enqueue(() => am->UseAction(ActionType.Action, 238));
                 }
                 return;
             }

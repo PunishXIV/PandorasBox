@@ -1,14 +1,7 @@
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using ImGuiNET;
 using PandorasBox.FeaturesSetup;
-using PandorasBox.Helpers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.Features.Other
 {

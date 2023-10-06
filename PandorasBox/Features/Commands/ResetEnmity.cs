@@ -68,7 +68,7 @@ namespace PandorasBox.Features.Commands
                 for (var i = 0; i < addon->EnemyCount; i++)
                 {
                     var enemyObjectId = numArray->IntArray[8 + i * 6];
-                    var enemyChara = CharacterManager.Instance()->LookupBattleCharaByObjectId(enemyObjectId);
+                    var enemyChara = CharacterManager.Instance()->LookupBattleCharaByObjectId((uint)enemyObjectId);
                     if (enemyChara is null) continue;
                     if (enemyChara->Character.NameID == 541) Reset(enemyObjectId);
                 }

@@ -84,7 +84,7 @@ namespace PandorasBox.Features.Targets
                 TaskManager.DelayNext("GatheringDelay", (int)(Config.Cooldown * 1000));
         }
 
-        private void RunFeature(Dalamud.Game.Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.Condition[ConditionFlag.Gathering] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent])
                 return;

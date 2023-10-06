@@ -1,7 +1,6 @@
 using Dalamud.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -11,7 +10,6 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Collections.Generic;
-using System.Linq;
 
 
 namespace PandorasBox.Features.UI
@@ -24,13 +22,13 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private readonly DalamudContextMenu contextMenu = new();
+        private DalamudContextMenu contextMenu;
 
         private static readonly SeString OpenString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Open All"));
 
         public override void Enable()
         {
-            contextMenu.OnOpenGameObjectContextMenu += AddGameObjectItem;
+            contextMenu = new(Svc.PluginInterface);
             contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
             base.Enable();
         }
@@ -141,15 +139,10 @@ namespace PandorasBox.Features.UI
             return false;
         }
 
-        private void AddGameObjectItem(GameObjectContextMenuOpenArgs args)
-        {
-            //throw new NotImplementedException();
-        }
-
         public override void Disable()
         {
-            contextMenu.OnOpenGameObjectContextMenu -= AddGameObjectItem;
             contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
+            contextMenu?.Dispose();
             base.Disable();
         }
     }

@@ -1,6 +1,4 @@
 using ClickLib.Clicks;
-using Dalamud.Game;
-using Dalamud.Interface;
 using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -355,7 +353,7 @@ namespace PandorasBox.Features.UI
         {
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
-                ActionManager.Instance()->UseAction(ActionType.General, 14);
+                ActionManager.Instance()->UseAction(ActionType.GeneralAction, 14);
             }
         }
 

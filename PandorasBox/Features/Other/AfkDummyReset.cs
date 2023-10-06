@@ -3,13 +3,8 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
-using FFXIVClientStructs.FFXIV.Client.UI;
-using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace PandorasBox.Features.Other
 {
@@ -38,14 +33,14 @@ namespace PandorasBox.Features.Other
         public unsafe override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            UseActionHook ??= Hook<UseActionDelegate>.FromAddress((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
+            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
             UseActionHook?.Enable();
             base.Enable();
         }
 
         private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8)
         {
-            if (type is ActionType.Spell or ActionType.Ability)
+            if (type is ActionType.Action or ActionType.Ability)
             {
                 try
                 {
@@ -69,7 +64,6 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            UseActionHook?.Disable();
             UseActionHook?.Dispose();
             base.Disable();
         }

@@ -5,7 +5,7 @@
     "Description": "Pandora's Box is a collection of major QoL tweaks and adjustments.\n\nOpen the box with /pandora",
     "InternalName": "Pandora's Box",
     "ApplicableVersion": "any",
-    "DalamudApiLevel": 8,
+    "DalamudApiLevel": 9,
     "IconUrl": "https://love.puni.sh/resources/pandora.png",
     "RepoUrl": "https://github.com/PunishXIV/PandorasBox",
     "DownloadLinkTesting": "https://love.puni.sh/plugins/Pandora/Testing/latest.zip",

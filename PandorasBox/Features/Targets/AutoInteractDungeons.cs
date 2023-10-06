@@ -1,6 +1,4 @@
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Logging;
-using Dalamud.Memory;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -84,7 +82,7 @@ namespace PandorasBox.Features.Targets
                 TaskManager.DelayNext("InteractCooldown", (int)(Config.Cooldown * 1000));
         }
 
-        private void RunFeature(Dalamud.Game.Framework framework)
+        private void RunFeature(IFramework framework)
         {
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.CarryingItem] || Svc.Condition[ConditionFlag.CarryingObject])
             {

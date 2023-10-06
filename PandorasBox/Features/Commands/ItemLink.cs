@@ -1,5 +1,4 @@
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Game.Text;
 using ECommons.DalamudServices;
 using PandorasBox.FeaturesSetup;
 using System;
@@ -7,7 +6,6 @@ using System.Collections.Generic;
 using System.Linq;
 using Lumina.Excel.GeneratedSheets;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using ECommons;
 
 namespace PandorasBox.Features.Commands
 {

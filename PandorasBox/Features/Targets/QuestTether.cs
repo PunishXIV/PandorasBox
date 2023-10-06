@@ -1,4 +1,3 @@
-using Dalamud.Game;
 using ECommons.DalamudServices;
 using ECommons.Logging;
 using ECommons.SplatoonAPI;
@@ -32,7 +31,7 @@ namespace PandorasBox.Features.Targets
             }
         }
 
-        private unsafe void UpdateTethers(Framework framework)
+        private unsafe void UpdateTethers(IFramework framework)
         {
             foreach (var quest in QuestManager.Instance()->NormalQuestsSpan)
             {
