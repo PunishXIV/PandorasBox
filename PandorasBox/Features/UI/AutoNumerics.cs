@@ -1,9 +1,7 @@
 using System;
 using System.Linq;
 using System.Text;
-using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Logging;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;

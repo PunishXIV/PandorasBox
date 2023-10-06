@@ -1,15 +1,10 @@
-using Dalamud.Configuration.Internal;
-using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
-using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using PandorasBox.FeaturesSetup;
-using PandorasBox.Helpers;
 using System;
 using System.Linq;
 using System.Numerics;

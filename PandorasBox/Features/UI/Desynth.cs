@@ -1,6 +1,4 @@
-using ClickLib.Clicks;
-using Dalamud.Interface;
-using ECommons;
+using Dalamud.Hooking;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -13,10 +11,8 @@ using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using PandorasBox.Utility;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using static ECommons.GenericHelpers;
 
@@ -31,15 +27,14 @@ namespace PandorasBox.Features.UI
         private delegate IntPtr UpdateItemDelegate(IntPtr a1, ulong index, IntPtr a3, ulong a4);
         private delegate byte UpdateListDelegate(IntPtr a1, IntPtr a2, IntPtr a3);
 
-        private HookWrapper<UpdateItemDelegate> updateItemHook;
-        private HookWrapper<UpdateListDelegate> updateListHook;
+        private Hook<UpdateItemDelegate> updateItemHook;
 
         private delegate void* SetupDropDownList(AtkComponentList* a1, ushort a2, byte** a3, byte a4);
-        private HookWrapper<SetupDropDownList> setupDropDownList;
+        private Hook<SetupDropDownList> setupDropDownList;
 
         private delegate byte PopulateItemList(AgentSalvage* agentSalvage);
 
-        private HookWrapper<PopulateItemList> populateHook;
+        private Hook<PopulateItemList> populateHook;
 
         private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
         public override FeatureType FeatureType => FeatureType.UI;
@@ -50,15 +45,13 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Overlay = new(this);
-            updateItemHook ??= Common.Hook<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
+            updateItemHook ??= Svc.Hook.HookFromSignature<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
             updateItemHook?.Enable();
-            updateListHook ??= Common.Hook<UpdateListDelegate>("40 53 56 57 48 83 EC 20 48 8B D9 49 8B F0", UpdateListDetour);
-            updateListHook?.Enable();
 
-            setupDropDownList ??= Common.Hook<SetupDropDownList>("E8 ?? ?? ?? ?? 8D 4F 55", SetupDropDownListDetour);
+            setupDropDownList ??= Svc.Hook.HookFromSignature<SetupDropDownList>("E8 ?? ?? ?? ?? 8D 4F 55", SetupDropDownListDetour);
             setupDropDownList?.Enable();
 
-            populateHook ??= Common.Hook<PopulateItemList>("E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 83 66 2C FE", PopulateDetour);
+            populateHook ??= Svc.Hook.HookFromSignature<PopulateItemList>("E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 83 66 2C FE", PopulateDetour);
             populateHook?.Enable();
 
             base.Enable();
@@ -79,11 +72,6 @@ namespace PandorasBox.Features.UI
             return setupDropDownList.Original(a1, a2, a3, a4);
         }
 
-        private byte UpdateListDetour(nint a1, nint a2, nint a3)
-        {
-            ListItems.Clear();
-            return updateListHook.Original(a1, a2, a3);
-        }
 
         private nint UpdateItemDetour(nint a1, ulong index, nint a3, ulong a4)
         {
@@ -119,7 +107,7 @@ namespace PandorasBox.Features.UI
                 var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1);
                 if (addon != null && addon->AtkUnitBase.IsVisible)
                 {
-                    var node = addon->AtkUnitBase.UldManager.NodeList[10];
+                    var node = addon->AtkUnitBase.UldManager.NodeList[12];
 
                     if (node == null)
                         return;
@@ -129,7 +117,9 @@ namespace PandorasBox.Features.UI
                     var size = new Vector2(node->Width, node->Height) * scale;
 
                     ImGuiHelpers.ForceNextWindowMainViewport();
-                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position + size with { Y = 0 });
+                    var pos = position + size with { Y = 0 };
+                    pos.X += 12f;
+                    ImGuiHelpers.SetNextWindowPosRelativeMainViewport(pos);
 
                     ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
                     var oldSize = ImGui.GetFont().Scale;
@@ -184,17 +174,20 @@ namespace PandorasBox.Features.UI
 
         private void TryDesynthAll()
         {
-            if (ListItems.Count > 0)
+            if (TryGetAddonByName<AddonSalvageItemSelector>("SalvageItemSelector", out var addon))
             {
-                TaskManager.Enqueue(() => DesynthFirst(), "Desynthing");
-                TaskManager.Enqueue(() => ConfirmDesynth(), 200, "Confirm Desynth");
-                TaskManager.Enqueue(() => CloseResults(), 3000,  "Close Results");
-                TaskManager.DelayNext("WaitForDelay", 400);
-                TaskManager.Enqueue(() => TryDesynthAll(), "Repeat Loop");
-            }
-            else
-            {
-                TaskManager.Enqueue(() => Desynthing = false);
+                if (addon->ItemCount > 0)
+                {
+                    TaskManager.Enqueue(() => DesynthFirst(), "Desynthing");
+                    TaskManager.Enqueue(() => ConfirmDesynth(), 200, "Confirm Desynth");
+                    TaskManager.Enqueue(() => CloseResults(), 3000, "Close Results");
+                    TaskManager.DelayNext("WaitForDelay", 400);
+                    TaskManager.Enqueue(() => TryDesynthAll(), "Repeat Loop");
+                }
+                else
+                {
+                    TaskManager.Enqueue(() => Desynthing = false);
+                }
             }
         }
 
@@ -229,10 +222,9 @@ namespace PandorasBox.Features.UI
         {
             P.Ws.RemoveWindow(Overlay);
             Overlay = null;
-            updateItemHook?.Disable();
-            updateListHook?.Disable();
-            setupDropDownList?.Disable();
-            populateHook?.Disable();
+            updateItemHook?.Dispose();
+            setupDropDownList?.Dispose();
+            populateHook?.Dispose();
             base.Disable();
         }
     }

@@ -1,4 +1,3 @@
-using Dalamud.Interface;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -8,12 +7,7 @@ using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
-using System.Text;
-using System.Threading.Tasks;
-using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
 {

@@ -1,4 +1,3 @@
-using Dalamud.Game;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -26,7 +25,7 @@ namespace PandorasBox.Features
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         private delegate nint ParseMessageDelegate(nint a, nint b);
-        private readonly Hook<ParseMessageDelegate> parseMessageHook;
+        private Hook<ParseMessageDelegate> parseMessageHook;
 
         private readonly Dictionary<string, (uint, uint)> maps = new();
         private readonly Dictionary<string, string> unmaskedMapNames = new()
@@ -55,23 +54,6 @@ namespace PandorasBox.Features
             BindingFlags.NonPublic | BindingFlags.Instance);
 
         private readonly Dictionary<string, (uint, uint, int, int)> historyCoordinates = new();
-
-        public CoordsToMapLink()
-        {
-            var parseMessageAddress = Svc.SigScanner.ScanText(
-                "E8 ???????? 48 8B D0 48 8D 4C 24 30 E8 ???????? 48 8B 44 24 30 80 38 00 0F 84");
-            parseMessageHook = Svc.Hook.HookFromAddress<ParseMessageDelegate>(parseMessageAddress, new(HandleParseMessageDetour));
-            parseMessageHook.Enable();
-
-            foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
-            {
-                var name = territoryType.PlaceName.Value.Name.RawString;
-                if (name != "" && !maps.ContainsKey(name))
-                {
-                    maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
-                }
-            }
-        }
 
         private nint HandleParseMessageDetour(nint a, nint b)
         {
@@ -215,14 +197,25 @@ namespace PandorasBox.Features
 
         public override void Enable()
         {
+            parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 30 E8 ?? ?? ?? ?? 48 8B 44 24 30 80 38 00 0F 84", new(HandleParseMessageDetour));
+            parseMessageHook?.Enable();
+
+            foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
+            {
+                var name = territoryType.PlaceName.Value.Name.RawString;
+                if (name != "" && !maps.ContainsKey(name))
+                {
+                    maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
+                }
+            }
+
             Svc.Chat.ChatMessage += HandleChatMessage;
             base.Enable();
         }
 
         public override void Disable()
         {
-            GC.SuppressFinalize(this);
-            parseMessageHook.Dispose();
+            parseMessageHook?.Dispose();
             Svc.Chat.ChatMessage -= HandleChatMessage;
             base.Disable();
         }

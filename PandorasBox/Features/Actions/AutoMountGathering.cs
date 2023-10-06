@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Logging;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
@@ -10,8 +9,6 @@ using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
-using System;
-using System.Collections.Generic;
 using System.Linq;
 
 namespace PandorasBox.Features.Actions
@@ -59,7 +56,7 @@ namespace PandorasBox.Features.Actions
                 {
                     if (Config.JumpAfterMount)
                     {
-                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted]);
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
                         TaskManager.DelayNext(50);
                         TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
                         TaskManager.DelayNext(50);

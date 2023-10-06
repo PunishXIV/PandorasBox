@@ -1,10 +1,6 @@
-using Dalamud.Game;
 using ECommons.DalamudServices;
-using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.UI;
 using PandorasBox.FeaturesSetup;
-using System;
 using System.Linq;
 
 namespace PandorasBox.Features.Actions
