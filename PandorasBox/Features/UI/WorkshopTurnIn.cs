@@ -1,8 +1,6 @@
 using AutoRetainer.Modules;
 using ClickLib.Clicks;
-using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Interface;
 using Dalamud.Utility;
 using ECommons;
 using ECommons.Automation;
@@ -179,7 +177,7 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private void Tick(Framework framework)
+        private static void Tick(IFramework framework)
         {
             TextAdvanceManager.Tick();
             YesAlready.Tick();
