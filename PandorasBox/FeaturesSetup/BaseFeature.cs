@@ -131,7 +131,7 @@ namespace PandorasBox.Features
             try
             {
                 var configDirectory = pi.GetPluginConfigDirectory();
-                var configFile = Path.Combine(configDirectory, this.Key + ".json");
+                var configFile = Path.Combine(configDirectory, key + ".json");
                 var jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
 
                 File.WriteAllText(configFile, jsonString);
