@@ -418,7 +418,7 @@ namespace PandorasBox.Features
                     if (GenericHelpers.IsAddonReady(addon))
                     {
                         var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText().Replace(" ", "");
+                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText();
                         if (compare(text))
                         {
                             PluginLog.Verbose($"SelectYesno {text} addon {i} by predicate");
