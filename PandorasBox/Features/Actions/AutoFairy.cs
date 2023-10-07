@@ -60,7 +60,7 @@ namespace PandorasBox.Features.Actions
 
         public bool TrySummon(uint? jobId)
         {
-            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
+            if (Config.OnlyInDuty && !IsInDuty()) return true;
 
             var am = ActionManager.Instance();
             if (jobId is 26 or 27)

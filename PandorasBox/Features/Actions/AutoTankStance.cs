@@ -60,7 +60,8 @@ namespace PandorasBox.Features.Actions
         private void CheckParty(IFramework framework)
         {
             if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
-            if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
+
+            if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer?.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
             {
                 MainTank = Svc.Party.First(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).ObjectId;
             }
@@ -73,7 +74,7 @@ namespace PandorasBox.Features.Actions
             {
                 if (MainTank != 0 && Svc.Party.First(x => x.ObjectId == MainTank).GameObject.IsDead && !Svc.ClientState.LocalPlayer.StatusList.Any(x => Stances.Any(y => x.StatusId == y)))
                 {
-                    EnableStance(Svc.ClientState.LocalPlayer.ClassJob.Id);
+                    EnableStance();
                     TaskManager.Enqueue(() => TaskManager.Abort());
                 }
             }
@@ -84,9 +85,8 @@ namespace PandorasBox.Features.Actions
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
             TaskManager.Enqueue(() => Svc.ClientState.LocalPlayer != null);
             TaskManager.DelayNext("TankWaitForConditions", 2000);
-            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "TankCheckConditionBetweenAreas");
-            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent], "TankCheckConditionCutscene");
-            TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer?.ClassJob.Id), "TankStanceDungeonEnabled");
+            TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted);
+            TaskManager.Enqueue(() => EnableStance(), "TankStanceDungeonEnabled");
 
         }
 
@@ -95,7 +95,7 @@ namespace PandorasBox.Features.Actions
             var ps = PlayerState.Instance();
             if (Config.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
             {
-                TaskManager.Enqueue(() => EnableStance(Svc.ClientState.LocalPlayer.ClassJob.Id));
+                TaskManager.Enqueue(() => EnableStance());
             }
         }
 
@@ -103,14 +103,14 @@ namespace PandorasBox.Features.Actions
         {
             if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role == 1)
             {
-                EnableStance(jobId);
+                EnableStance();
             }
         }
 
-        private bool EnableStance(uint? jobId)
+        private bool EnableStance()
         {
             if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role != 1) return true;
-            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
+            if (Config.OnlyInDuty && !IsInDuty()) return true;
 
             var am = ActionManager.Instance();
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
@@ -119,46 +119,31 @@ namespace PandorasBox.Features.Actions
             {
                 if (Svc.Party.Length > Config.MaxParty) return true;
                 if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
-                switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
-                {
-                    case 1:
-                    case 19:
-                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 79)) return true;
-                        if (am->GetActionStatus(ActionType.Action, 28) == 0)
-                        {
-                            am->UseAction(ActionType.Action, 28);
-                            return true;
-                        }
-                        return false;
-                    case 3:
-                    case 21:
-                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 91)) return true;
-                        if (am->GetActionStatus(ActionType.Action, 48) == 0)
-                        {
-                            am->UseAction(ActionType.Action, 48);
-                            return true;
-                        }
-                        return false;
-                    case 32:
-                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 743)) return true;
-                        if (am->GetActionStatus(ActionType.Action, 3629) == 0)
-                        {
-                            am->UseAction(ActionType.Action, 3629);
-                            return true;
-                        }
-                        return false;
-                    case 37:
-                        if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1833)) return true;
-                        if (am->GetActionStatus(ActionType.Action, 16142) == 0)
-                        {
-                            am->UseAction(ActionType.Action, 16142);
-                            return true;
-                        }
-                        return false;
 
+                uint action = Svc.ClientState.LocalPlayer.ClassJob.Id switch
+                {
+                    1 or 19 => 28,
+                    3 or 21 => 48,
+                    32 => 3629,
+                    37 => 16142
+                };
+
+                ushort stance = Svc.ClientState.LocalPlayer.ClassJob.Id switch
+                {
+                    1 or 19 => 79,
+                    3 or 21 => 91,
+                    32 => 743,
+                    37 => 1833
+                };
+
+                if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == stance)) return true;
+                if (am->GetActionStatus(ActionType.Action, action) == 0)
+                {
+                    am->UseAction(ActionType.Action, action);
+                    return true;
                 }
 
-                return true;
+                return false;
             });
 
 

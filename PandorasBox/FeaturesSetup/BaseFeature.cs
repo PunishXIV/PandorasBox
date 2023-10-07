@@ -4,14 +4,9 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Logging;
 using Dalamud.Plugin;
 using ECommons;
-using ECommons.Automation;
 using ECommons.DalamudServices;
-using ECommons.Reflection;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -322,7 +317,7 @@ namespace PandorasBox.Features
         protected delegate void DrawConfigDelegate(ref bool hasChanged);
         protected virtual DrawConfigDelegate DrawConfigTree => null;
 
-        protected virtual void ConfigChanged() 
+        protected virtual void ConfigChanged()
         {
             if (this is null) return;
 
@@ -357,10 +352,10 @@ namespace PandorasBox.Features
                 var isVisible = addon->GetNodeById(10)->IsVisible;
                 return isVisible;
             }
-            catch(Exception ex) 
+            catch (Exception ex)
             {
                 ex.Log();
-                return false; 
+                return false;
             }
         }
 
@@ -418,5 +413,10 @@ namespace PandorasBox.Features
 
             Svc.Chat.Print(message);
         }
+
+        public bool IsInDuty() => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty] ||
+                                Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty56] ||
+                                Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty95] ||
+                                Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundToDuty97];
     }
 }

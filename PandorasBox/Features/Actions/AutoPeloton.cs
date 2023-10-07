@@ -72,7 +72,7 @@ namespace PandorasBox.Features
             if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[ConditionFlag.InCombat]) return;
             if (Svc.ClientState.LocalPlayer is null) return;
-            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return;
+            if (Config.OnlyInDuty && !IsInDuty()) return;
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;

@@ -26,7 +26,6 @@ namespace PandorasBox.Features
         public class Configs : FeatureConfig
         {
             public float ThrottleF = 0.1f;
-            public bool OnlyInDuty = false;
             public bool RPWalk = false;
             public bool ExcludeHousing = false;
         }
@@ -68,8 +67,6 @@ namespace PandorasBox.Features
 
         private void UseSprint()
         {
-            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return;
-
             var am = ActionManager.Instance();
             var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
             var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
@@ -91,7 +88,6 @@ namespace PandorasBox.Features
         {
             ImGui.PushItemWidth(300);
             if (ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f")) hasChanged = true;
-            if (ImGui.Checkbox("Function only in a duty", ref Config.OnlyInDuty)) hasChanged = true;
             if (ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk)) hasChanged = true;
             if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
         };

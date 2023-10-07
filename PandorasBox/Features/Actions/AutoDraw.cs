@@ -39,10 +39,8 @@ namespace PandorasBox.Features.Actions
         private void CheckIfDungeon(ushort e)
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
-
             TaskManager.DelayNext("WaitForConditions", 2000);
-            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
-            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent], "CheckConditionCutscene");
+            TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted);
             TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
         }
 
@@ -72,7 +70,7 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryDrawCard()
         {
-            if (Config.OnlyInDuty && !Svc.Condition[ConditionFlag.BoundByDuty56]) return true;
+            if (Config.OnlyInDuty && !IsInDuty()) return true;
 
             if (Svc.Gauges.Get<ASTGauge>().DrawnCard == Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE)
             {
