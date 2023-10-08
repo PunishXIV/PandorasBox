@@ -1,4 +1,3 @@
-using AutoRetainer.Modules;
 using ClickLib.Clicks;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Utility;
@@ -41,6 +40,8 @@ namespace PandorasBox.Features.UI
         internal bool phaseActive = false;
         internal bool projectActive = false;
         internal bool partLoopActive = false;
+        internal bool needToDisableTurnIns = false;
+        internal bool needToDisableConfig = false;
         private static readonly string[] SkipCutsceneStr = { "Skip cutscene?", "要跳过这段过场动画吗？", "要跳過這段過場動畫嗎？", "Videosequenz überspringen?", "Passer la scène cinématique ?", "このカットシーンをスキップしますか？" };
         private static readonly string[] ContributeMaterialsStr = { "Contribute materials.", "Materialien abliefern", "Fournir des matériaux", "素材を納品する" }; // 2
         private static readonly string[] AdvancePhaseStr = { "Advance to the next phase of production.", "Arbeitsschritt ausführen", "Faire progresser un projet de con", "作業工程を進捗させる" }; // 5
@@ -61,7 +62,6 @@ namespace PandorasBox.Features.UI
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             overlay = new Overlays(this);
-            Svc.Framework.Update += Tick;
             base.Enable();
         }
 
@@ -69,7 +69,6 @@ namespace PandorasBox.Features.UI
         {
             SaveConfig(Config);
             P.Ws.RemoveWindow(overlay);
-            Svc.Framework.Update -= Tick;
             base.Disable();
         }
 
@@ -183,11 +182,6 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private static void Tick(IFramework framework)
-        {
-            TextAdvanceManager.Tick();
-            YesAlready.Tick();
-        }
 
         private bool MustEndLoop(bool condition, string message)
         {
@@ -206,17 +200,35 @@ namespace PandorasBox.Features.UI
             phaseActive = false;
             projectActive = false;
             partLoopActive = false;
+
+            YesAlready.EnableIfNeeded();
+
+            if (needToDisableTurnIns)
+                FeatureHelper.DisableFeature<AutoSelectTurnin>();
+
+            if (needToDisableConfig)
+                FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", false);
+
             TaskManager.Abort();
             return true;
         }
 
         private bool TurnInPhase()
         {
+            YesAlready.DisableIfNeeded();
+            needToDisableConfig = false;
+            needToDisableTurnIns = false;
+
             if (!FeatureHelper.IsEnabled<AutoSelectTurnin>())
             {
-                PrintModuleMessage("Please enable the Auto-Select Turn In feature.");
-                EndLoop("Auto-Select Turn In not enabled");
-                return true;
+                needToDisableTurnIns = true;
+                FeatureHelper.EnableFeature<AutoSelectTurnin>();
+            }
+
+            if (!FeatureHelper.GetConfig<AutoSelectTurnin>().IsEnabled("AutoConfirm").Value)
+            {
+                needToDisableConfig = true;
+                FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", true);
             }
 
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon) && addon->AtkValues[12].Type != 0)
@@ -224,9 +236,17 @@ namespace PandorasBox.Features.UI
                 var requiredIngredients = GetRequiredItems();
                 if (requiredIngredients?.Count == 0) { PluginLog.Log("req is 0"); return true; }
 
-                if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn in items") ||
-                    MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id is < 8 or > 15, "Must be a DoH to turn in items."))
+                if (MustEndLoop(!IsSufficientlyLeveled(requiredIngredients), "Not high enough level to turn-in items") ||
+                    MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id is < 8 or > 15, "Must be a DoH to turn-in items.") ||
+                    MustEndLoop(requiredIngredients.All(x => x.AmountInInventory < x.AmountPerTurnIn), "No items to turn-in."))
                 {
+                    YesAlready.EnableIfNeeded();
+
+                    if (needToDisableTurnIns)
+                        FeatureHelper.DisableFeature<AutoSelectTurnin>();
+
+                    if (needToDisableConfig)
+                        FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", false);
                     return true;
                 }
 
@@ -236,36 +256,43 @@ namespace PandorasBox.Features.UI
 
                     for (var i = ingredient.TurnedInSoFar; i < ingredient.TotalTimesToTurnIn; i++)
                     {
-                        TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"{nameof(ClickItem)} {ingredient.Ingredient.Name}");
-                        TaskManager.EnqueueImmediate(() => ConfirmContribution(), $"{nameof(ConfirmContribution)}");
-                        TaskManager.EnqueueImmediate(() => ConfirmHQTrade(), $"{nameof(ConfirmHQTrade)}");
+                        TaskManager.Enqueue(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"{nameof(ClickItem)} {ingredient.Ingredient.Name}");
+                        TaskManager.DelayNext(300);
+                        TaskManager.Enqueue(() => ConfirmHQTrade(), 300, $"{nameof(ConfirmHQTrade)}");
+                        TaskManager.DelayNext(300);
+                        TaskManager.Enqueue(() => ConfirmContribution(), $"{nameof(ConfirmContribution)}");
+                        TaskManager.DelayNext(300);
                     }
                 }
 
                 var hasMorePhases = addon->AtkValues[6].UInt != addon->AtkValues[7].UInt - 1;
-                TaskManager.EnqueueImmediate(!hasMorePhases ? CompleteConstruction : AdvancePhase);
-                TaskManager.EnqueueImmediate(WaitForCutscene, $"{nameof(WaitForCutscene)}");
-                TaskManager.EnqueueImmediate(PressEsc, $"{nameof(PressEsc)}");
-                TaskManager.EnqueueImmediate(ConfirmSkip, $"{nameof(ConfirmSkip)}");
+                TaskManager.Enqueue(!hasMorePhases ? CompleteConstruction : AdvancePhase);
+                TaskManager.Enqueue(WaitForCutscene, 2000, $"{nameof(WaitForCutscene)}");
+                TaskManager.Enqueue(PressEsc, 1000, $"{nameof(PressEsc)}");
+                TaskManager.Enqueue(ConfirmSkip, 1000, $"{nameof(ConfirmSkip)}");
+                TaskManager.Enqueue(() =>
+                {
+                    YesAlready.EnableIfNeeded();
 
-                if (phaseActive) TaskManager.Enqueue(() => EndLoop($"Finished {nameof(TurnInPhase)}"));
+                    if (needToDisableTurnIns)
+                        FeatureHelper.DisableFeature<AutoSelectTurnin>();
+
+                    if (needToDisableConfig)
+                        FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", false);
+                });
+
+                TaskManager.Enqueue(() => EndLoop("Phase Complete"));
                 return true;
             }
             else
             {
+                YesAlready.EnableIfNeeded();
                 return false;
             }
         }
 
         private bool TurnInProject()
         {
-            if (!FeatureHelper.IsEnabled<AutoSelectTurnin>())
-            {
-                PrintModuleMessage("Please enable the Auto-Select Turn In feature.");
-                EndLoop("Auto-Select Turn In not enabled");
-                return true;
-            }
-
             if (TryGetAddonByName<AtkUnitBase>("SubmarinePartsMenu", out var addon))
             {
                 for (var i = addon->AtkValues[6].UInt; i < addon->AtkValues[7].UInt; i++)
@@ -360,13 +387,13 @@ namespace PandorasBox.Features.UI
 
         private static bool ConfirmHQTrade()
         {
-            var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, Svc.Data.GetExcelSheet<Addon>(Svc.ClientState.ClientLanguage).GetRow(102434).Text.ToDalamudString().ExtractText()));
+            var x = GetSpecificYesno(Svc.Data.GetExcelSheet<Addon>().GetRow(102434).Text);
             if (x != null)
             {
                 ClickSelectYesNo.Using((nint)x).Yes();
                 return true;
             }
-            return true;
+            return false;
         }
 
         private static bool ConfirmProductRetrieval() =>

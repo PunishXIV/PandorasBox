@@ -5,6 +5,7 @@ using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using PandorasBox.Features;
+using PandorasBox.IPC;
 using PandorasBox.UI;
 using PunishLib;
 using System.Collections.Generic;
@@ -57,6 +58,7 @@ public class PandorasBox : IDalamudPlugin
         Svc.PluginInterface.UiBuilder.Draw += Ws.Draw;
         Svc.PluginInterface.UiBuilder.OpenConfigUi += DrawConfigUI;
         Common.Setup();
+        PandoraIPC.Init();
         provider = new FeatureProvider(Assembly.GetExecutingAssembly());
         provider.LoadFeatures();
         FeatureProviders.Add(provider);
@@ -83,6 +85,7 @@ public class PandorasBox : IDalamudPlugin
         PunishLibMain.Dispose();
         FeatureProviders.Clear();
         Common.Shutdown();
+        PandoraIPC.Dispose();
         P = null;
     }
 

@@ -1,13 +1,10 @@
 using Dalamud.Logging;
-using Dalamud.Utility;
 using ECommons.Reflection;
-using PandorasBox.Features.UI;
 
 namespace PandorasBox.Helpers;
 
 internal static class YesAlready
 {
-    private static bool IsBusy => FeatureHelper.IsBusy;
     internal static bool Reenable = false;
     internal static void DisableIfNeeded()
     {
@@ -36,24 +33,6 @@ internal static class YesAlready
             return pl.GetStaticFoP("YesAlready.Service", "Configuration").GetFoP<bool>("Enabled");
         }
         return false;
-    }
-
-    internal static void Tick()
-    {
-        if (IsBusy)
-        {
-            if (IsEnabled())
-            {
-                DisableIfNeeded();
-            }
-        }
-        else
-        {
-            if (Reenable)
-            {
-                EnableIfNeeded();
-            }
-        }
     }
 
     internal static bool? WaitForYesAlreadyDisabledTask()

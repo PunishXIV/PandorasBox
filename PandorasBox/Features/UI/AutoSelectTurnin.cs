@@ -1,4 +1,3 @@
-using AutoRetainer.Modules;
 using ClickLib.Clicks;
 using Dalamud.Logging;
 using ECommons.Automation;
@@ -20,25 +19,32 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        internal static bool active = false;
         private List<int> SlotsFilled { get; set; } = new();
+
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Automatically Confirm")]
+            public bool AutoConfirm = false;
+        }
+
+        public Configs Config { get; private set; }
+
+        public override bool UseAutoConfig => true;
 
         public override void Enable()
         {
+            Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
 
         private void RunFeature(IFramework framework)
         {
-            TextAdvanceManager.Tick();
-
             if (TryGetAddonByName<AddonRequest>("Request", out var addon))
             {
                 for (var i = 1; i <= addon->EntryCount; i++)
                 {
-                    active = true;
-                    if (SlotsFilled.Contains(addon->EntryCount)) Confirm(addon);
+                    if (SlotsFilled.Contains(addon->EntryCount)) ConfirmOrAbort(addon);
                     if (SlotsFilled.Contains(i)) return;
                     var val = i;
                     TaskManager.DelayNext($"ClickTurnin{val}", 10);
@@ -47,7 +53,6 @@ namespace PandorasBox.Features.UI
             }
             else
             {
-                active = false;
                 SlotsFilled.Clear();
                 TaskManager.Abort();
             }
@@ -77,18 +82,27 @@ namespace PandorasBox.Features.UI
             }
         }
 
-        private bool? Confirm(AddonRequest* addon)
+        private bool? ConfirmOrAbort(AddonRequest* addon)
         {
-            if (addon->HandOverButton != null && addon->HandOverButton->IsEnabled)
+            if (!Config.AutoConfirm)
             {
-                ClickRequest.Using((IntPtr)addon).HandOver();
+                TaskManager.Abort();
                 return true;
             }
-            return false;
+            else
+            {
+                if (addon->HandOverButton != null && addon->HandOverButton->IsEnabled)
+                {
+                    ClickRequest.Using((IntPtr)addon).HandOver();
+                    return true;
+                }
+                return false;
+            }
         }
 
         public override void Disable()
         {
+            SaveConfig(Config);
             Svc.Framework.Update -= RunFeature;
             SlotsFilled.Clear();
             base.Disable();
