@@ -172,8 +172,16 @@ namespace PandorasBox.Features
                 addon->AtkUnitBase.IsVisible &&
                 addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
             {
-                new ClickSelectYesNo((IntPtr)addon).Yes();
-                return true;
+                try
+                {
+                    new ClickSelectYesNo((IntPtr)addon).Yes();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    ex.LogWarning();
+                    return false;
+                }
             }
 
             return false;

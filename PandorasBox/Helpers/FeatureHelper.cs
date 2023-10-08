@@ -1,4 +1,5 @@
 using PandorasBox.Features;
+using PandorasBox.Features.UI;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -21,5 +22,7 @@ namespace PandorasBox.Helpers
             return IsEnabled(f);
 
         }
+
+        internal static bool IsBusy => P.TaskManager.IsBusy || WorkshopTurnin.active || AutoSelectTurnin.active;
     }
 }

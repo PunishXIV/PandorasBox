@@ -1,12 +1,18 @@
+using ClickLib.Clicks;
+using Dalamud.Game;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Logging;
+using Dalamud.Memory;
 using Dalamud.Plugin;
 using ECommons;
+using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -14,10 +20,10 @@ using Newtonsoft.Json;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using TaskManager = ECommons.Automation.TaskManager;
 
 namespace PandorasBox.Features
 {
@@ -334,9 +340,7 @@ namespace PandorasBox.Features
         public unsafe bool IsRpWalking()
         {
             if (Svc.ClientState.LocalPlayer == null) return false;
-
-            //var uiModule = Framework.Instance()->GetUiModule();
-            //var atkArrayDataHolder = uiModule->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
+            //var atkArrayDataHolder = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
             //if (atkArrayDataHolder.NumberArrays[72]->IntArray[6] == 1)
             //    return true;
             //else
@@ -413,6 +417,115 @@ namespace PandorasBox.Features
 
             Svc.Chat.Print(message);
         }
+
+        internal static unsafe AtkUnitBase* GetSpecificYesno(Predicate<string> compare)
+        {
+            for (var i = 1; i < 100; i++)
+            {
+                try
+                {
+                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i);
+                    if (addon == null) return null;
+                    if (GenericHelpers.IsAddonReady(addon))
+                    {
+                        var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
+                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText().Replace(" ", "");
+                        if (compare(text))
+                        {
+                            PluginLog.Verbose($"SelectYesno {text} addon {i} by predicate");
+                            return addon;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error("", e);
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        internal static unsafe AtkUnitBase* GetSpecificYesno(params string[] s)
+        {
+            for (var i = 1; i < 100; i++)
+            {
+                try
+                {
+                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i);
+                    if (addon == null) return null;
+                    if (GenericHelpers.IsAddonReady(addon))
+                    {
+                        var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
+                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText().Replace(" ", "");
+                        if (text.EqualsAny(s.Select(x => x.Replace(" ", ""))))
+                        {
+                            PluginLog.Verbose($"SelectYesno {s.Print()} addon {i}");
+                            return addon;
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    PluginLog.Error("", e);
+                    return null;
+                }
+            }
+            return null;
+        }
+
+        internal static bool TrySelectSpecificEntry(string text, Func<bool> Throttler = null)
+        {
+            return TrySelectSpecificEntry(new string[] { text }, Throttler);
+        }
+
+        internal static unsafe bool TrySelectSpecificEntry(IEnumerable<string> text, Func<bool> Throttler = null)
+        {
+            if (GenericHelpers.TryGetAddonByName<AddonSelectString>("SelectString", out var addon) && GenericHelpers.IsAddonReady(&addon->AtkUnitBase))
+            {
+                var entry = GetEntries(addon).FirstOrDefault(x => x.ContainsAny(text));
+                if (entry != null)
+                {
+                    var index = GetEntries(addon).IndexOf(entry);
+                    if (index >= 0 && IsSelectItemEnabled(addon, index) && (Throttler?.Invoke() ?? GenericThrottle))
+                    {
+                        ClickSelectString.Using((nint)addon).SelectItem((ushort)index);
+                        PluginLog.Debug($"TrySelectSpecificEntry: selecting {entry}/{index} as requested by {text.Print()}");
+                        return true;
+                    }
+                }
+            }
+            else
+            {
+                RethrottleGeneric();
+            }
+            return false;
+        }
+
+        internal static unsafe bool IsSelectItemEnabled(AddonSelectString* addon, int index)
+        {
+            var step1 = (AtkTextNode*)addon->AtkUnitBase
+                        .UldManager.NodeList[2]
+                        ->GetComponent()->UldManager.NodeList[index + 1]
+                        ->GetComponent()->UldManager.NodeList[3];
+            return GenericHelpers.IsSelectItemEnabled(step1);
+        }
+
+        internal static unsafe List<string> GetEntries(AddonSelectString* addon)
+        {
+            var list = new List<string>();
+            for (var i = 0; i < addon->PopupMenu.PopupMenu.EntryCount; i++)
+            {
+                list.Add(MemoryHelper.ReadSeStringNullTerminated((nint)addon->PopupMenu.PopupMenu.EntryNames[i]).ExtractText());
+            }
+            return list;
+        }
+
+        internal static bool GenericThrottle => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200);
+        internal static void RethrottleGeneric(int num) => EzThrottler.Throttle("PandorasBoxGenericThrottle", num, true);
+        internal static void RethrottleGeneric() => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200, true);
+
+        internal static unsafe bool IsLoading() => (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeBack", out var fb) && fb->IsVisible) || (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var fm) && fm->IsVisible);
 
         public bool IsInDuty() => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty] ||
                                 Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty56] ||
