@@ -42,7 +42,13 @@ namespace PandorasBox.Features.UI
         internal bool projectActive = false;
         internal bool partLoopActive = false;
         private static readonly string[] SkipCutsceneStr = { "Skip cutscene?", "要跳过这段过场动画吗？", "要跳過這段過場動畫嗎？", "Videosequenz überspringen?", "Passer la scène cinématique ?", "このカットシーンをスキップしますか？" };
-        internal static string[] PanelName = new string[] { "Fabrication Station" };
+        private static readonly string[] ContributeMaterialsStr = { "Contribute materials.", "Materialien abliefern", "Fournir des matériaux", "素材を納品する" }; // 2
+        private static readonly string[] AdvancePhaseStr = { "Advance to the next phase of production.", "Arbeitsschritt ausführen", "Faire progresser un projet de con", "作業工程を進捗させる" }; // 5
+        private static readonly string[] CompleteConstructionStr = { "Complete the construction", "Herstellung", "Terminer la con", "を完成させる" }; // 6
+        private static readonly string[] CollectProductStr = { "Collect finished product.", "Produkt entgegennehmen", "Récupérer un projet terminé", "アイテムを受け取る" }; // 4
+        private static readonly string[] LeaveWorkshopStr = { "Nothing.", "Nichts", "Annuler", "やめる" }; // 7
+        private static readonly string[] ConfirmContributionStr = { "to the company project?", "schaftsprojekt bereitstellen?", "pour le projet de con", "カンパニー製作設備に納品します。" };
+        private static readonly string[] ConfirmProductRetrievalStr = { "Retrieve", "entnehmen", "Récupérer", "を回収します。" };
 
         public Configs Config { get; private set; }
         public class Configs : FeatureConfig
@@ -99,7 +105,7 @@ namespace PandorasBox.Features.UI
 
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(7f, 7f));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, new Vector2(10f, 10f));
-                ImGui.Begin($"###LoopMelding{node->NodeID}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                ImGui.Begin($"###LoopButtons{node->NodeID}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                 | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
                 if (active && !phaseActive) ImGui.BeginDisabled();
@@ -340,16 +346,17 @@ namespace PandorasBox.Features.UI
             return false;
         }
 
-        private static bool ConfirmContribution()
-        {
-            var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, "contribute"));
-            if (x != null)
+        private static bool ConfirmContribution() =>
+            ConfirmContributionStr.Any(str =>
             {
-                ClickSelectYesNo.Using((nint)x).Yes();
-                return true;
-            }
-            return false;
-        }
+                var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, str));
+                if (x != null)
+                {
+                    ClickSelectYesNo.Using((nint)x).Yes();
+                    return true;
+                }
+                return false;
+            });
 
         private static bool ConfirmHQTrade()
         {
@@ -362,31 +369,34 @@ namespace PandorasBox.Features.UI
             return true;
         }
 
-        private static bool ConfirmProductRetrieval()
-        {
-            var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, "retrieve"));
-            if (x != null)
+        private static bool ConfirmProductRetrieval() =>
+            ConfirmProductRetrievalStr.Any(str =>
             {
-                ClickSelectYesNo.Using((nint)x).Yes();
-                return true;
-            }
-            return false;
-        }
+                var x = GetSpecificYesno((s) => s.ContainsAny(StringComparison.OrdinalIgnoreCase, str));
+                if (x != null)
+                {
+                    ClickSelectYesNo.Using((nint)x).Yes();
+                    return true;
+                }
+                return false;
+            });
+
+
 
         private static bool? ContributeMaterials() =>
-            TrySelectSpecificEntry("Contribute materials.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(ContributeMaterials)}", 1000));
+            ContributeMaterialsStr.Any(str => TrySelectSpecificEntry(str, () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(ContributeMaterials)}", 1000)));
 
         private static bool? AdvancePhase() =>
-            TrySelectSpecificEntry("Advance to the next phase of production.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(AdvancePhase)}", 1000));
+            AdvancePhaseStr.Any(str => TrySelectSpecificEntry(str, () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(AdvancePhase)}", 1000)));
 
         private static bool? CompleteConstruction() =>
-            TrySelectSpecificEntry("Complete the construction", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CompleteConstruction)}", 1000));
+            CompleteConstructionStr.Any(str => TrySelectSpecificEntry(str, () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CompleteConstruction)}", 1000)));
 
         private static bool? CollectProduct() =>
-            TrySelectSpecificEntry("Collect finished product.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CollectProduct)}", 1000));
+            CollectProductStr.Any(str => TrySelectSpecificEntry(str, () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CollectProduct)}", 1000)));
 
         private static bool? LeaveWorkshop() =>
-            TrySelectSpecificEntry("Nothing.", () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CollectProduct)}", 1000));
+            LeaveWorkshopStr.Any(str => TrySelectSpecificEntry(str, () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(CollectProduct)}", 1000)));
 
         private static bool? WaitForCutscene() =>
             Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent] || Svc.Condition[ConditionFlag.WatchingCutscene78];
@@ -433,7 +443,7 @@ namespace PandorasBox.Features.UI
         }
 
         internal static bool TryGetNearestFabricationPanel(out Dalamud.Game.ClientState.Objects.Types.GameObject obj) =>
-            Svc.Objects.TryGetFirst(x => x.Name.ToString().EqualsAny(PanelName) && x.IsTargetable, out obj);
+            Svc.Objects.TryGetFirst(x => x.Name.ToString().EqualsIgnoreCaseAny(Svc.Data.GetExcelSheet<EObjName>(Svc.ClientState.ClientLanguage).GetRow(2005).Singular.RawString) && x.IsTargetable, out obj);
 
         internal static bool? InteractWithFabricationPanel()
         {
