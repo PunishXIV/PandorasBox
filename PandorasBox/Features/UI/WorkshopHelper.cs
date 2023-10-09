@@ -821,13 +821,16 @@ namespace PandorasBox.Features.UI
         //        Callback.Fire(obj.Addon, false, 15, 0, 0);
         //}
 
-        private void AutoMaxGranary(SetupAddonArgs obj)
+        private unsafe void AutoMaxGranary(SetupAddonArgs obj)
         {
             if (obj.AddonName != "MJISearchArea") return;
             if (!Config.AutoMaxGranary) return;
 
-            if (!obj.Addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ToString().Equals("7/7"))
-                Callback.Fire(obj.Addon, false, 14, 7, 0);
+            if (!obj.Addon->GetTextNodeById(50)->NodeText.ToString().Equals("7/7"))
+            {
+                //Callback.Fire(obj.Addon, true, 14, 7, 0);
+                obj.Addon->GetButtonNodeById(45)->ClickAddonButton((AtkComponentBase*)obj.Addon, 26);
+            }
         }
 
         private void AutoYesNo()
