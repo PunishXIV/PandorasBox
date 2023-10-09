@@ -256,21 +256,21 @@ namespace PandorasBox.Features.UI
 
                     for (var i = ingredient.TurnedInSoFar; i < ingredient.TotalTimesToTurnIn; i++)
                     {
-                        TaskManager.Enqueue(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"{nameof(ClickItem)} {ingredient.Ingredient.Name}");
-                        TaskManager.DelayNext(300);
-                        TaskManager.Enqueue(() => ConfirmHQTrade(), 300, $"{nameof(ConfirmHQTrade)}");
-                        TaskManager.DelayNext(300);
-                        TaskManager.Enqueue(() => ConfirmContribution(), $"{nameof(ConfirmContribution)}");
-                        TaskManager.DelayNext(300);
+                        TaskManager.EnqueueImmediate(() => ClickItem(requiredIngredients.IndexOf(ingredient), ingredient.AmountPerTurnIn), $"{nameof(ClickItem)} {ingredient.Ingredient.Name}");
+                        TaskManager.DelayNextImmediate(300);
+                        TaskManager.EnqueueImmediate(() => ConfirmHQTrade(), 300, $"{nameof(ConfirmHQTrade)}");
+                        TaskManager.DelayNextImmediate(300);
+                        TaskManager.EnqueueImmediate(() => ConfirmContribution(), $"{nameof(ConfirmContribution)}");
+                        TaskManager.DelayNextImmediate(300);
                     }
                 }
 
                 var hasMorePhases = addon->AtkValues[6].UInt != addon->AtkValues[7].UInt - 1;
-                TaskManager.Enqueue(!hasMorePhases ? CompleteConstruction : AdvancePhase);
-                TaskManager.Enqueue(WaitForCutscene, 2000, $"{nameof(WaitForCutscene)}");
-                TaskManager.Enqueue(PressEsc, 1000, $"{nameof(PressEsc)}");
-                TaskManager.Enqueue(ConfirmSkip, 1000, $"{nameof(ConfirmSkip)}");
-                TaskManager.Enqueue(() =>
+                TaskManager.EnqueueImmediate(!hasMorePhases ? CompleteConstruction : AdvancePhase);
+                TaskManager.EnqueueImmediate(WaitForCutscene, 2000, $"{nameof(WaitForCutscene)}");
+                TaskManager.EnqueueImmediate(PressEsc, 1000, $"{nameof(PressEsc)}");
+                TaskManager.EnqueueImmediate(ConfirmSkip, 1000, $"{nameof(ConfirmSkip)}");
+                TaskManager.EnqueueImmediate(() =>
                 {
                     YesAlready.EnableIfNeeded();
 
@@ -281,7 +281,7 @@ namespace PandorasBox.Features.UI
                         FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", false);
                 });
 
-                TaskManager.Enqueue(() => EndLoop("Phase Complete"));
+                TaskManager.EnqueueImmediate(() => EndLoop("Phase Complete"));
                 return true;
             }
             else
