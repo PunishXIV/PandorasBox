@@ -1,5 +1,4 @@
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using PandorasBox.Features.ChatFeature;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
@@ -16,7 +15,7 @@ namespace PandorasBox.Features.Commands
         public override FeatureType FeatureType => FeatureType.Commands;
         protected override void OnCommand(List<string> args)
         {
-            var fauxMapLinkMessage = new MapLinkMessage(
+            var fauxMapLinkMessage = new CoordinatesHelper.MapLinkMessage(
                 (ushort)0,
                 "",
                 "",
