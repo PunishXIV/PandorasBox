@@ -61,18 +61,21 @@ namespace PandorasBox.Features.Actions
 
             var am = ActionManager.Instance();
 
-            for (var i = Config.InvertPriority ? cordials.Length - 1 : 0; Config.InvertPriority ? i >= 0 : i < cordials.Length; i += Config.InvertPriority ? -1 : 1)
+            foreach (var cordial in Config.InvertPriority ? cordials.Reverse() : cordials)
             {
                 foreach (var cont in container)
                 {
                     for (var j = 0; j < cont->Size; j++)
                     {
-                        if (cont->GetInventorySlot(j)->ItemID == cordials[i].Id)
+                        if (cont->GetInventorySlot(j)->ItemID == (cordial.Id >= 1000000 ? cordial.Id - 1_000_000 : cordial.Id))
                         {
-                            if (am->GetActionStatus(ActionType.Item, cordials[i].Id) == 0)
+                            if (am->GetActionStatus(ActionType.Item, cordial.Id) == 0)
                             {
-                                if (!Config.PreventOvercap || (Config.PreventOvercap && !WillOvercap(cordials[i].GP)))
-                                    am->UseAction(ActionType.Item, cordials[i].Id, a4: 65535);
+                                if (!Config.PreventOvercap || (Config.PreventOvercap && !WillOvercap(cordial.GP)))
+                                {
+                                    am->UseAction(ActionType.Item, cordial.Id, a4: 65535);
+                                    return;
+                                }
                             }
                         }
                     }

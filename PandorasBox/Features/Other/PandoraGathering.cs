@@ -8,6 +8,7 @@ using Dalamud.Logging;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -419,7 +420,7 @@ namespace PandorasBox.Features.Other
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
-            if (ImGui.Checkbox($"Hold Shift to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
+            if (ImGui.Checkbox($"Hold Shift / {GamePad.ControllerButtons[Dalamud.Game.ClientState.GamePad.GamepadButtons.L2]} to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
                 SaveConfig(Config);
 
             if (ImGui.Checkbox($"Disable Starting Buffs on Nodes with Collectibles", ref Config.CollectibleStop))
@@ -551,7 +552,7 @@ namespace PandorasBox.Features.Other
 
         private void CheckLastItem(SetupAddonArgs obj)
         {
-            if (obj.AddonName == "Gathering" && Config.Gathering && (Config.ShiftStop && !ImGui.GetIO().KeyShift || !Config.ShiftStop))
+            if (obj.AddonName == "Gathering" && Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                 TaskManager.Enqueue(() =>

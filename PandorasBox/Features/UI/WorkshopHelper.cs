@@ -208,28 +208,12 @@ namespace PandorasBox.Features.UI
 
             ImGui.BeginChild("ScrollableSection", new Vector2(0, (!autoWorkshopSelect || MultiCycleList.All(x => x.PrimarySchedule.Count == 0) || (MultiCycleList.Count == 1 && MultiCycleList[0].SecondarySchedule.Count == 0) ? 6 : 12) * ImGui.GetTextLineHeightWithSpacing()));
 
-            // if I want to actually use this code I need to take into account rest overrides and the outcome of a schedule being executed
-
-            //var initialCycleNum = selectedCycle == 0 ? MJIManager.Instance()->CurrentCycleDay + nextDayOffset : selectedCycle;
-            //var adjustedCycleNums = MultiCycleList.Select((cycle, index) =>
-            //{
-            //    var cycleNum = initialCycleNum + index;
-            //    var daysToAdd = 0;
-            //    while (GetCurrentRestDays().Any(x => x == cycleNum - 1 + daysToAdd))
-            //        daysToAdd++;
-            //    return cycleNum + daysToAdd;
-            //}).ToList();
-
             foreach (var cycle in MultiCycleList)
             {
                 if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
                     continue;
 
-                var cycleNum = MultiCycleList.IndexOf(cycle)
-                    + (selectedCycle == 0 ? IslandSanctuaryHelper.GetOpenCycle() + 1
-                    : selectedCycle);
-
-                //var cycleNum = adjustedCycleNums[MultiCycleList.IndexOf(cycle)];
+                var cycleNum = MultiCycleList.IndexOf(cycle) + 1 + selectedCycle;
 
                 DrawWorkshopListBox($"Cycle {cycleNum} Workshops {(!autoWorkshopSelect ? string.Join(", ", Workshops.Where(x => x.Value).Select(x => x.Key + 1)) : (cycle.SecondarySchedule.Count > 0 ? "1-3" : "1-4"))}", cycle.PrimarySchedule);
 
@@ -243,24 +227,25 @@ namespace PandorasBox.Features.UI
             ImGuiComponents.HelpMarker("Leave blank to execute on next available day.");
 
             ImGui.SetNextItemWidth(100);
-            var cyclePrev = selectedCycle == 0 ? "" : Cycles[selectedCycle - 1].ToString();
+            var cyclePrev = Cycles[selectedCycle].ToString();
             if (ImGui.BeginCombo("", cyclePrev))
             {
-                if (ImGui.Selectable("", selectedCycle == 0))
-                    selectedCycle = 0;
-
                 foreach (var cycle in Cycles)
                 {
-                    var selected = ImGui.Selectable(cycle.ToString(), selectedCycle == cycle);
+                    var selected = ImGui.Selectable(cycle.ToString(), selectedCycle == cycle - 1);
 
                     if (selected)
-                        selectedCycle = cycle;
+                    {
+                        selectedCycle = cycle - 1;
+                        OpenCycle(selectedCycle);
+                    }
+
                 }
                 ImGui.EndCombo();
             }
             ImGui.SameLine();
 
-            var SelectedUnavailable = selectedCycle == MJIManager.Instance()->CurrentCycleDay || MJIManager.Instance()->CraftworksRestDays[1] <= MJIManager.Instance()->CurrentCycleDay;
+            var SelectedUnavailable = selectedCycle <= MJIManager.Instance()->CurrentCycleDay || GetCurrentRestDays().Contains(selectedCycle);
             if (SelectedUnavailable)
                 ImGui.BeginDisabled();
 
@@ -272,18 +257,23 @@ namespace PandorasBox.Features.UI
             if (SelectedUnavailable)
                 ImGui.EndDisabled();
 
+            var restDays = GetCurrentRestDays();
+
+
             ImGui.SameLine();
             if (ImGui.Button("Prev"))
             {
-                TaskManager.Enqueue(() => OpenCycle(selectedCycle));
+                if (!restDays.Contains(selectedCycle - 1))
+                    TaskManager.Enqueue(() => OpenCycle(selectedCycle));
                 selectedCycle = selectedCycle == 0 ? 0 : selectedCycle - 1;
             }
 
             ImGui.SameLine();
             if (ImGui.Button("Next"))
             {
-                TaskManager.Enqueue(() => OpenCycle(selectedCycle));
-                selectedCycle = selectedCycle == 14 ? 14 : selectedCycle + 1;
+                if (!restDays.Contains(selectedCycle + 1))
+                    TaskManager.Enqueue(() => OpenCycle(selectedCycle));
+                selectedCycle = selectedCycle == 13 ? 13 : selectedCycle + 1;
             }
 
             if (autoWorkshopSelect)
@@ -349,10 +339,9 @@ namespace PandorasBox.Features.UI
 
                 var IsInsufficientRank = (PrimarySchedule.Count > 0 && PrimarySchedule.Any(x => x.InsufficientRank))
                     || (SecondarySchedule.Count > 0 && SecondarySchedule.Any(x => x.InsufficientRank));
-                var ScheduleInProgress = selectedCycle - 1 <= MJIManager.Instance()->CurrentCycleDay && selectedCycle != 0;
-                var restDays = GetCurrentRestDays();
-                var SelectedIsRest = restDays.Contains(selectedCycle - 1);
+                var ScheduleInProgress = selectedCycle < MJIManager.Instance()->CurrentCycleDay;
                 var NoWorkshopsSelected = Workshops.Values.All(x => !x) && !autoWorkshopSelect;
+                var SelectedIsRest = restDays.Contains(selectedCycle);
 
                 if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest || NoWorkshopsSelected || (BadFortune && !overrideExecutionDisable))
                 {
@@ -371,7 +360,7 @@ namespace PandorasBox.Features.UI
                 if (ImGui.Button("Execute Schedule"))
                 {
                     currentWorkshop = Workshops.FirstOrDefault(pair => pair.Value).Key;
-                    currentDay = (int)(selectedCycle == 0 ? IslandSanctuaryHelper.GetOpenCycle() : selectedCycle - 1);
+                    currentDay = (int)(selectedCycle == 0 ? IslandSanctuaryHelper.GetOpenCycle() : selectedCycle);
                     ScheduleMultiCycleList();
                 }
 
@@ -523,7 +512,8 @@ namespace PandorasBox.Features.UI
             {
                 Callback.Fire(addon, false, 20, (uint)(cycle_day));
                 if (addon->AtkValues[0].Type == 0) return false;
-                return addon->AtkValues[0].UInt == cycle_day;
+                return true;
+                //return addon->AtkValues[0].UInt == cycle_day;
             }
             else
                 return false;
@@ -559,6 +549,7 @@ namespace PandorasBox.Features.UI
             var restDays2 = MJIManager.Instance()->CraftworksRestDays[1];
             var restDays3 = MJIManager.Instance()->CraftworksRestDays[2];
             var restDays4 = MJIManager.Instance()->CraftworksRestDays[3];
+
             return new List<int> { restDays1, restDays2, restDays3, restDays4 };
         }
 
@@ -583,11 +574,11 @@ namespace PandorasBox.Features.UI
 
                 var restDays = GetCurrentRestDays();
                 if (cycle <= 7 && cycle > 0)
-                    restDays[1] = cycle - 1;
+                    restDays[1] = cycle;
                 else if (cycle > 7)
-                    restDays[3] = cycle - 1;
+                    restDays[3] = cycle;
                 else if (cycle <= 0)
-                    restDays[1] = MJIManager.Instance()->CurrentCycleDay + 1;
+                    restDays[1] = MJIManager.Instance()->CurrentCycleDay;
 
                 //if (selectedCycle <= 6 && selectedCycle > 0)
                 //    restDays[1] = selectedCycle - 1;
@@ -657,7 +648,7 @@ namespace PandorasBox.Features.UI
                     foreach (var item in schedule)
                     {
                         ws = i;
-                        TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
+                        TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), 200, $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
                         TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"{logPrefix}.{nameof(OpenAgenda)}.{ws}");
                         TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"{logPrefix}.{nameof(ScheduleItem)}.{item.Name}");
                         TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"{logPrefix}.Increment{nameof(hours)}W.{ws + 1}");
@@ -676,7 +667,7 @@ namespace PandorasBox.Features.UI
                         {
                             ws = i;
                             TaskManager.EnqueueImmediate(() => PluginLog.Log($"{item.Name} : {item.UIIndex} : {hours}"));
-                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
+                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), 200, $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
                             TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"{logPrefix}.{nameof(OpenAgenda)}.{ws}");
                             TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"{logPrefix}.{nameof(ScheduleItem)}.{item.Name}");
                             TaskManager.EnqueueImmediate(() => hours += item.CraftingTime, $"{logPrefix}.Increment{nameof(hours)}W.{ws + 1}");
@@ -736,7 +727,8 @@ namespace PandorasBox.Features.UI
         {
             if (obj.AddonName != "MJICraftSchedule") return;
             TaskManager.Enqueue(() => obj.Addon->AtkValues[0].Type != 0, $"WaitingFor{obj.AddonName}");
-            TaskManager.Enqueue(() => {
+            TaskManager.Enqueue(() =>
+            {
                 if (Config.OpenNextDay)
                     OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
 
@@ -765,18 +757,12 @@ namespace PandorasBox.Features.UI
 
         private void AutoSell(SetupAddonArgs obj)
         {
-            if (obj.AddonName != "MJIDisposeShop") return;
+            if (obj.AddonName != "MJIDisposeShop" || obj.Addon is null) return;
             if (!Config.AutoSell) return;
 
             Callback.Fire(obj.Addon, false, 13, Config.AutoSellAmount);
-            AutoSellConfirm();
-        }
-
-        private void AutoSellConfirm()
-        {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJIDisposeShopShippingBulk");
-            TaskManager.Enqueue(() => addon != null && addon->IsVisible);
-            TaskManager.Enqueue(() => Callback.Fire(addon, true, 0));
+            Callback.Fire(addon, true, 0);
         }
 
         private void AutoCollectPasture(SetupAddonArgs obj)
@@ -826,11 +812,10 @@ namespace PandorasBox.Features.UI
             if (obj.AddonName != "MJISearchArea") return;
             if (!Config.AutoMaxGranary) return;
 
-            if (!obj.Addon->GetTextNodeById(50)->NodeText.ToString().Equals("7/7"))
-            {
-                //Callback.Fire(obj.Addon, true, 14, 7, 0);
-                obj.Addon->GetButtonNodeById(45)->ClickAddonButton((AtkComponentBase*)obj.Addon, 26);
-            }
+
+            //Callback.Fire(obj.Addon, true, 14, 7, 0);
+            obj.Addon->GetButtonNodeById(45)->ClickAddonButton((AtkComponentBase*)obj.Addon, 26);
+
         }
 
         private void AutoYesNo()
@@ -869,6 +854,7 @@ namespace PandorasBox.Features.UI
 
             Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
             //Svc.Framework.Update += HideTaskmaster;
+            Svc.Framework.Update += CancelOnClose;
 
             Common.OnAddonSetup += OnWorkshopSetup;
             Common.OnAddonSetup += AutoSell;
@@ -879,6 +865,12 @@ namespace PandorasBox.Features.UI
             Common.OnAddonSetup += AutoMaxGranary;
 
             base.Enable();
+        }
+
+        private unsafe void CancelOnClose(IFramework framework)
+        {
+            if (Svc.GameGui.GetAddonByName("MJICraftSchedule") == IntPtr.Zero)
+                TaskManager.Abort();
         }
 
         public override void Disable()

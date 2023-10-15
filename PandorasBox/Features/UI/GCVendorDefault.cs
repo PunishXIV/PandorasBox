@@ -80,8 +80,7 @@ namespace PandorasBox.Features.UI
                     3 => 505
                 };
 
-                TaskManager.Enqueue(() => tabButton->ClickRadioButton((AtkComponentBase*)obj.Addon, param));
-                TaskManager.Enqueue(() => obj.Addon->Update(1f));
+                TaskManager.Enqueue(() => tabButton->ClickRadioButton(obj.Addon));
             }
         }
 
