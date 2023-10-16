@@ -40,36 +40,33 @@ namespace PandorasBox.Features.UI
         private Overlays overlay;
         public static bool ResetPosition = false;
 
+        private static SetupAddonArgs CachedAddonSetup;
         public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
         public class Configs : FeatureConfig
         {
             [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.", "", 1)]
             public bool OpenNextDay = false;
+
             [FeatureConfigOption("Automatically import from clipboard when loading the workshop.", "", 2)]
             public bool AutoImport = false;
-
-            //[FeatureConfigOption("Hide the Taskmaster. Useful for EXPlosion.", "", 3)]
-            //public bool HideTaskmaster = false;
 
             [FeatureConfigOption("Automatically export materials when speaking with the export mammet.", "", 4)]
             public bool AutoSell = false;
             public bool ShouldShowAutoSellAmount() => AutoSell;
+
             [FeatureConfigOption("Auto Sell Above", "", 5, IntMin = 0, IntMax = 999, EditorSize = 300, ConditionalDisplay = true)]
             public int AutoSellAmount = 900;
 
             [FeatureConfigOption("Automatically collect drops from pasture", "", 6)]
             public bool AutoCollectPasture = false;
+
             [FeatureConfigOption("Automatically collect crops from farm", "", 7)]
             public bool AutoCollectFarm = false;
 
             [FeatureConfigOption("Auto Collect Granary", "", 8)]
             public bool AutoCollectGranary = false;
-            //[FeatureConfigOption("Auto Set Granary", "", 9)]
-            //public bool AutoSetGranary = false;
-            //public bool ShouldShowAutoConfirmGranary() => AutoSetGranary;
-            //[FeatureConfigOption("Auto Confirm Granary", "", 10, ConditionalDisplay = true)]
-            //public bool AutoConfirmGranary = false;
+
             [FeatureConfigOption("Auto Max Granary", "", 11)]
             public bool AutoMaxGranary = false;
         }
@@ -107,6 +104,50 @@ namespace PandorasBox.Features.UI
             public ushort LevelReq { get; set; }
             public bool InsufficientRank { get; set; }
             public bool OnRestDay { get; set; }
+        }
+
+        public override void Enable()
+        {
+            Config = LoadConfig<Configs>() ?? new Configs();
+            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
+                .Where(x => x.Item.Row > 0)
+                .Select(x =>
+                {
+                    var itemName = x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString;
+                    itemName = prefixes.Aggregate(itemName, (current, prefix) => current.Replace(prefix, "")).Trim();
+
+                    return (x.RowId, itemName, x.CraftingTime, x.LevelReq);
+                })
+                .ToArray();
+            overlay = new Overlays(this);
+
+            Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
+
+            Common.OnAddonSetup += OnWorkshopSetup;
+            Common.OnAddonSetup += AutoSell;
+            Common.OnAddonSetup += AutoCollectPasture;
+            Common.OnAddonSetup += AutoCollectFarm;
+            Svc.Framework.Update += AutoCollectGranary;
+            Common.OnAddonSetup += AutoMaxGranary;
+
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            P.Ws.RemoveWindow(overlay);
+
+            Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
+
+            Common.OnAddonSetup -= OnWorkshopSetup;
+            Common.OnAddonSetup -= AutoSell;
+            Common.OnAddonSetup -= AutoCollectPasture;
+            Common.OnAddonSetup -= AutoCollectFarm;
+            Svc.Framework.Update -= AutoCollectGranary;
+            Common.OnAddonSetup -= AutoMaxGranary;
+
+            base.Disable();
         }
 
         public override void Draw()
@@ -484,7 +525,6 @@ namespace PandorasBox.Features.UI
                         UIIndex = 0,
                         LevelReq = 0
                     };
-                    // items.Add(invalidItem);
                 }
             }
 
@@ -579,13 +619,6 @@ namespace PandorasBox.Features.UI
                     restDays[3] = cycle;
                 else if (cycle <= 0)
                     restDays[1] = MJIManager.Instance()->CurrentCycleDay;
-
-                //if (selectedCycle <= 6 && selectedCycle > 0)
-                //    restDays[1] = selectedCycle - 1;
-                //else if (selectedCycle >= 7)
-                //    restDays[3] = selectedCycle - 1;
-                //else if (selectedCycle <= 0)
-                //    restDays[1] = 1JIManager.Instance()->CurrentCycleDay + 1;
 
                 var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
                 Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
@@ -726,7 +759,8 @@ namespace PandorasBox.Features.UI
         private void OnWorkshopSetup(SetupAddonArgs obj)
         {
             if (obj.AddonName != "MJICraftSchedule") return;
-            TaskManager.Enqueue(() => obj.Addon->AtkValues[0].Type != 0, $"WaitingFor{obj.AddonName}");
+            CachedAddonSetup = obj;
+            TaskManager.Enqueue(() => CachedAddonSetup.Addon->AtkValues[0].Type != 0, $"WaitingFor{CachedAddonSetup.AddonName}");
             TaskManager.Enqueue(() =>
             {
                 if (Config.OpenNextDay)
@@ -762,7 +796,8 @@ namespace PandorasBox.Features.UI
 
             Callback.Fire(obj.Addon, false, 13, Config.AutoSellAmount);
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("MJIDisposeShopShippingBulk");
-            Callback.Fire(addon, true, 0);
+            if (addon != null)
+                Callback.Fire(addon, true, 0);
         }
 
         private void AutoCollectPasture(SetupAddonArgs obj)
@@ -785,111 +820,44 @@ namespace PandorasBox.Features.UI
             AutoYesNo();
         }
 
-        private void AutoCollectGranary(SetupAddonArgs obj)
+        private void AutoCollectGranary(IFramework framework)
         {
-            if (obj.AddonName != "MJIGatheringHouse") return;
             if (!Config.AutoCollectGranary) return;
-
-            if (obj.Addon->AtkValues[73].Int != 0)
-                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, false, 13, 0));
-            if (obj.Addon->AtkValues[147].Int != 0)
-                TaskManager.Enqueue(() => Callback.Fire(obj.Addon, false, 13, 1));
+            
+            if (TryGetAddonByName<AtkUnitBase>("MJIGatheringHouse", out var addon))
+            {
+                if (!TaskManager.IsBusy)
+                {
+                    if (addon->AtkValues[73].Byte != 0)
+                    {
+                        TaskManager.Enqueue(() => { TryGetAddonByName<AtkUnitBase>("MJIGatheringHouse", out var granary1); Callback.Fire(granary1, false, 13, 0); }, "CollectGranary1");
+                        TaskManager.DelayNext(200);
+                        TaskManager.Enqueue(() => AutoYesNo());
+                    }
+                    if (addon->AtkValues[147].Byte != 0)
+                    {
+                        TaskManager.Enqueue(() => { TryGetAddonByName<AtkUnitBase>("MJIGatheringHouse", out var granary2); Callback.Fire(granary2, false, 13, 1); }, "CollectGranary2");
+                        TaskManager.DelayNext(200);
+                        TaskManager.Enqueue(() => AutoYesNo());
+                    }
+                }
+            }
         }
 
-        //private void AutoSetGranary(SetupAddonArgs obj)
-        //{
-        //    if (obj.AddonName != "MJIGatheringHouse") return;
-        //    var agent = new AgentMJIPouch();
-        //    var x = agent.GetInventory()->Span.ToString();
-        //    PluginLog.Log($"{x}");
-
-        //    if (Config.AutoConfirmGranary)
-        //        Callback.Fire(obj.Addon, false, 15, 0, 0);
-        //}
 
         private unsafe void AutoMaxGranary(SetupAddonArgs obj)
         {
             if (obj.AddonName != "MJISearchArea") return;
             if (!Config.AutoMaxGranary) return;
 
-
-            //Callback.Fire(obj.Addon, true, 14, 7, 0);
             obj.Addon->GetButtonNodeById(45)->ClickAddonButton((AtkComponentBase*)obj.Addon, 26);
-
         }
 
         private void AutoYesNo()
         {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno");
-            TaskManager.Enqueue(() => addon != null && addon->IsVisible && addon->UldManager.NodeList[15]->IsVisible);
-            TaskManager.Enqueue(() => new ClickSelectYesNo((IntPtr)addon).Yes());
-        }
-
-        //private void AutoConfirmGranary(SetupAddonArgs obj)
-        //{
-        //    if (obj.AddonName != "SelectYesno") return;
-        //    if (!Config.AutoConfirmGranary) return;
-
-        //    if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
-        //            addon->AtkUnitBase.IsVisible &&
-        //            addon->YesButton->IsEnabled &&
-        //            addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
-        //        new ClickSelectYesNo((IntPtr)obj.Addon).Yes();
-        //}
-
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Craftables = Svc.Data.GetExcelSheet<MJICraftworksObject>()
-                .Where(x => x.Item.Row > 0)
-                .Select(x =>
-                {
-                    var itemName = x.Item.GetDifferentLanguage(ClientLanguage.English).Value.Name.RawString;
-                    itemName = prefixes.Aggregate(itemName, (current, prefix) => current.Replace(prefix, "")).Trim();
-
-                    return (x.RowId, itemName, x.CraftingTime, x.LevelReq);
-                })
-                .ToArray();
-            overlay = new Overlays(this);
-
-            Svc.Toasts.ErrorToast += CheckIfInvalidSchedule;
-            //Svc.Framework.Update += HideTaskmaster;
-            Svc.Framework.Update += CancelOnClose;
-
-            Common.OnAddonSetup += OnWorkshopSetup;
-            Common.OnAddonSetup += AutoSell;
-            Common.OnAddonSetup += AutoCollectPasture;
-            Common.OnAddonSetup += AutoCollectFarm;
-            Common.OnAddonSetup += AutoCollectGranary;
-            //Common.OnAddonSetup += AutoSetGranary;
-            Common.OnAddonSetup += AutoMaxGranary;
-
-            base.Enable();
-        }
-
-        private unsafe void CancelOnClose(IFramework framework)
-        {
-            if (Svc.GameGui.GetAddonByName("MJICraftSchedule") == IntPtr.Zero)
-                TaskManager.Abort();
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            P.Ws.RemoveWindow(overlay);
-
-            Svc.Toasts.ErrorToast -= CheckIfInvalidSchedule;
-            //Svc.Framework.Update += HideTaskmaster;
-
-            Common.OnAddonSetup -= OnWorkshopSetup;
-            Common.OnAddonSetup -= AutoSell;
-            Common.OnAddonSetup -= AutoCollectPasture;
-            Common.OnAddonSetup -= AutoCollectFarm;
-            Common.OnAddonSetup -= AutoCollectGranary;
-            //Common.OnAddonSetup -= AutoSetGranary;
-            Common.OnAddonSetup -= AutoMaxGranary;
-
-            base.Disable();
+            if (addon != null && addon->IsVisible && addon->UldManager.NodeList[15]->IsVisible)
+                new ClickSelectYesNo((IntPtr)addon).Yes();
         }
     }
 }
