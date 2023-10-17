@@ -87,7 +87,7 @@ namespace PandorasBox.Features.UI
         private bool overrideExecutionDisable;
         private int currentDay;
 
-        private readonly List<string> prefixes = new() { "Isleworks", "Islefish", "Isleberry", "Island" };
+        private readonly List<string> prefixes = new() { "Isleworks", "Islefish", "Isleberry", "Island", " of the Cycle" };
 
         public class CyclePreset
         {
