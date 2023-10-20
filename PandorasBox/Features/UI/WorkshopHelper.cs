@@ -490,7 +490,7 @@ namespace PandorasBox.Features.UI
             if (indexOfCycleStart > 0 && itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle - 1) == -1)
             {
                 (var firstItems, var firstExcess) = ParseItems(itemStrings, cycle - 1);
-                MultiCycleList.Add(new CyclePreset { Cycle = cycle - 1, PrimarySchedule = firstItems, SecondarySchedule = firstExcess });
+                MultiCycleList.Add(new CyclePreset { Cycle = cycle == 1 ? 14 : cycle - 1, PrimarySchedule = firstItems, SecondarySchedule = firstExcess });
             }
 
             for (int i = indexOfCycleStart + 1; i < indexOfNextCycleStart; i++)
