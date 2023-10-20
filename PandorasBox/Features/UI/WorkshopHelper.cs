@@ -22,6 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using System.Windows.Forms;
 using static ECommons.GenericHelpers;
 
 // TODO:
@@ -91,6 +92,7 @@ namespace PandorasBox.Features.UI
 
         public class CyclePreset
         {
+            public int Cycle { get; set; }
             public List<Item> PrimarySchedule { get; set; }
             public List<Item> SecondarySchedule { get; set; }
         }
@@ -218,6 +220,9 @@ namespace PandorasBox.Features.UI
 
                     if (MultiCycleList.All(x => x.PrimarySchedule.Count == 0))
                         PrintModuleMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
+
+                    OpenCycle(MultiCycleList.First().Cycle -1);
+                    selectedCycle = MultiCycleList.First().Cycle -1;
                 }
                 catch (Exception e)
                 {
@@ -264,8 +269,6 @@ namespace PandorasBox.Features.UI
             ImGui.EndChild();
 
             ImGui.Text("Select Cycle");
-
-            ImGuiComponents.HelpMarker("Leave blank to execute on next available day.");
 
             ImGui.SetNextItemWidth(100);
             var cyclePrev = Cycles[selectedCycle].ToString();
@@ -442,50 +445,50 @@ namespace PandorasBox.Features.UI
 
         internal static void ScheduleImport(List<string> rawItemStrings)
         {
-            var rawCycles = SplitCycles(rawItemStrings);
+            var cycles = ParseCycles(rawItemStrings);
 
-            foreach (var cycle in rawCycles)
+            foreach (var cycle in cycles)
             {
-                (var items, var excessItems) = ParseItems(cycle);
+                (var items, var excessItems) = ParseItems(rawItemStrings, cycle);
                 if (items == null || items.Count == 0)
                     continue;
-                MultiCycleList.Add(new CyclePreset { PrimarySchedule = items, SecondarySchedule = excessItems });
+                MultiCycleList.Add(new CyclePreset { Cycle = cycle, PrimarySchedule = items, SecondarySchedule = excessItems });
             }
         }
 
-        public static List<List<string>> SplitCycles(List<string> rawLines)
+        public static List<int> ParseCycles(List<string> rawLines)
         {
-            var cycles = new List<List<string>>();
-            var currentCycle = new List<string>();
+            var output = new List<int>();
 
             foreach (var line in rawLines)
             {
                 if (line.StartsWith("Cycle"))
                 {
-                    if (currentCycle.Count > 0)
-                    {
-                        cycles.Add(currentCycle);
-                        currentCycle = new List<string>();
-                    }
-                    if (currentCycle.Count == 0)
-                        currentCycle = new List<string>();
+                    var cycleStr = Regex.Match(line, @"\d+").Value;
+                    int cycleNo = int.Parse(cycleStr);
+                    output.Add(cycleNo);
                 }
-                currentCycle.Add(line);
             }
-            if (currentCycle.Count > 0)
-                cycles.Add(currentCycle);
 
-            return cycles;
+            return output;
         }
 
-        public static (List<Item>, List<Item>) ParseItems(List<string> itemStrings)
+        public static (List<Item>, List<Item>) ParseItems(List<string> itemStrings, int cycle)
         {
             var items = new List<Item>();
             var excessItems = new List<Item>();
             var hours = 0;
             var isRest = false;
-            foreach (var itemString in itemStrings)
+
+            int indexOfCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle);
+            int indexOfNextCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle + 1);
+            if (indexOfNextCycleStart == -1)
+                indexOfNextCycleStart = itemStrings.Count;
+
+            for (int i = indexOfCycleStart + 1; i < indexOfNextCycleStart; i++)
             {
+                string itemString = itemStrings[i];
+
                 if (itemString.ToLower().Contains("rest"))
                     isRest = true;
 
