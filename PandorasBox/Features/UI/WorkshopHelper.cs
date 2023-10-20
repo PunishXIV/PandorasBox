@@ -22,7 +22,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
-using System.Windows.Forms;
 using static ECommons.GenericHelpers;
 
 // TODO:
@@ -221,8 +220,8 @@ namespace PandorasBox.Features.UI
                     if (MultiCycleList.All(x => x.PrimarySchedule.Count == 0))
                         PrintModuleMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
 
-                    OpenCycle(MultiCycleList.First().Cycle -1);
-                    selectedCycle = MultiCycleList.First().Cycle -1;
+                    OpenCycle(MultiCycleList.First().Cycle - 1);
+                    selectedCycle = MultiCycleList.First().Cycle - 1;
                 }
                 catch (Exception e)
                 {
@@ -484,6 +483,15 @@ namespace PandorasBox.Features.UI
             int indexOfNextCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle + 1);
             if (indexOfNextCycleStart == -1)
                 indexOfNextCycleStart = itemStrings.Count;
+
+            if (indexOfCycleStart == -1)
+                indexOfCycleStart = 0;
+
+            if (indexOfCycleStart > 0 && itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle - 1) == -1)
+            {
+                (var firstItems, var firstExcess) = ParseItems(itemStrings, cycle - 1);
+                MultiCycleList.Add(new CyclePreset { Cycle = cycle - 1, PrimarySchedule = firstItems, SecondarySchedule = firstExcess });
+            }
 
             for (int i = indexOfCycleStart + 1; i < indexOfNextCycleStart; i++)
             {
@@ -767,7 +775,10 @@ namespace PandorasBox.Features.UI
             TaskManager.Enqueue(() =>
             {
                 if (Config.OpenNextDay)
-                    OpenCycle(MJIManager.Instance()->CurrentCycleDay + 2);
+                {
+                    OpenCycle(MJIManager.Instance()->CurrentCycleDay + 1);
+                    selectedCycle = MJIManager.Instance()->CurrentCycleDay + 1;
+                }
 
                 if (Config.AutoImport)
                 {
@@ -783,6 +794,10 @@ namespace PandorasBox.Features.UI
 
                         if (MultiCycleList.All(x => x.PrimarySchedule.Count == 0))
                             PrintModuleMessage("Failed to parse any items from clipboard.");
+
+                        OpenCycle(MultiCycleList.First().Cycle - 1);
+                        selectedCycle = MultiCycleList.First().Cycle - 1;
+
                     }
                     catch (Exception e)
                     {
@@ -826,7 +841,7 @@ namespace PandorasBox.Features.UI
         private void AutoCollectGranary(IFramework framework)
         {
             if (!Config.AutoCollectGranary) return;
-            
+
             if (TryGetAddonByName<AtkUnitBase>("MJIGatheringHouse", out var addon))
             {
                 if (!TaskManager.IsBusy)
