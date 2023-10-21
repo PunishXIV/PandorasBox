@@ -15,16 +15,11 @@ namespace PandorasBox.Features.UI
     public unsafe class AutoNumerics : Feature
     {
         public override string Name => "Auto-Fill Numeric Dialogs";
-
         public override string Description => "Automatically fills any numeric input dialog boxes. Works on a whitelist system. Hold shift when opening a numeric dialog to disable.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
         public Configs Config { get; private set; }
-
-        private readonly string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
-
-        private bool hasDisabled;
 
         public class Configs : FeatureConfig
         {
@@ -59,6 +54,9 @@ namespace PandorasBox.Features.UI
             public bool TransmuteConfirm = true;
         }
 
+        private readonly string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
+        private bool hasDisabled;
+
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -67,14 +65,22 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= FillRegularNumeric;
+            //Svc.Framework.Update -= FillBankNumeric;
+            base.Disable();
+        }
+
         private void FillRegularNumeric(IFramework framework)
         {
             var numeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InputNumeric");
             if (numeric == null) { hasDisabled = false; return; }
 
-            if (numeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(numeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
+            if (numeric->IsVisible && GenericHelpers.IsAddonReady(numeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
 
-            if (numeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(numeric) && !hasDisabled)
+            if (numeric->IsVisible && GenericHelpers.IsAddonReady(numeric) && !hasDisabled)
             {
                 try
                 {
@@ -141,9 +147,9 @@ namespace PandorasBox.Features.UI
             var bankNumeric = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Bank");
             if (bankNumeric == null) { hasDisabled = false; return; }
 
-            if (bankNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(bankNumeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
+            if (bankNumeric->IsVisible && GenericHelpers.IsAddonReady(bankNumeric) && ImGui.GetIO().KeyShift) { hasDisabled = true; return; }
 
-            if (Config.WorkOnFCChest && bankNumeric->IsVisible && ECommons.GenericHelpers.IsAddonReady(bankNumeric) && !hasDisabled)
+            if (Config.WorkOnFCChest && bankNumeric->IsVisible && GenericHelpers.IsAddonReady(bankNumeric) && !hasDisabled)
             {
                 try
                 {
@@ -220,14 +226,6 @@ namespace PandorasBox.Features.UI
             byte* ptr;
             fixed (byte* tmpPtr = bArray) { ptr = tmpPtr; }
             return ptr;
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= FillRegularNumeric;
-            //Svc.Framework.Update -= FillBankNumeric;
-            base.Disable();
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>

@@ -8,8 +8,8 @@ namespace PandorasBox.Features.Commands
     public unsafe class TestCommand : CommandFeature
     {
         public override string Name => "Test Command";
-        public override string Command { get; set; } = "/pan-test";
-        public override string[] Alias => new string[] { "/pan-t" };
+        public override string Command { get; set; } = "/ptest";
+        public override string[] Alias => new string[] { "/pt" };
 
         public override List<string> Parameters => new() { "test", "test2", "test3" };
         public override string Description => "This is a test command.";

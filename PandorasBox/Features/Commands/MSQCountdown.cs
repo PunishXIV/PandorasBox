@@ -1,4 +1,3 @@
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.GeneratedSheets;
@@ -10,16 +9,15 @@ namespace PandorasBox.Features.Commands
     public unsafe class MSQCountdown : CommandFeature
     {
         public override string Name => "MSQ Countdown";
+        public override string Command { get; set; } = "/pmsq";
 
         public override string Description => "Prints a message in chat with how many main scenario quests left in the current expansion you have to complete.";
 
-        public override string Command { get; set; } = "/pmsq";
-
-        private ExVersion CurrentExpansion;
+        private ExVersion currentExpansion;
 
         protected override void OnCommand(List<string> args)
         {
-            string debug = "";
+            var debug = "";
             if (args.Count > 0)
             {
                 debug = args[0];
@@ -30,7 +28,7 @@ namespace PandorasBox.Features.Commands
             var uim = UIState.Instance();
 
             var filteredList = questsheet.Where(x => x.JournalGenre.Value.Icon == 61412 && !string.IsNullOrEmpty(x.Name.RawString));
-            CurrentExpansion = Svc.Data.GetExcelSheet<ExVersion>().GetRow(0);
+            currentExpansion = Svc.Data.GetExcelSheet<ExVersion>().GetRow(0);
 
             if (debug == "")
             {
@@ -38,14 +36,14 @@ namespace PandorasBox.Features.Commands
                 {
                     if (uim->IsUnlockLinkUnlockedOrQuestCompleted(quest.RowId, quest.ToDoCompleteSeq.Max()))
                     {
-                        if (quest.Expansion.Value.RowId > CurrentExpansion.RowId)
-                            CurrentExpansion = quest.Expansion.Value;
+                        if (quest.Expansion.Value.RowId > currentExpansion.RowId)
+                            currentExpansion = quest.Expansion.Value;
                     }
                 }
             }
             else
             {
-                CurrentExpansion = debug.ToLower() switch
+                currentExpansion = debug.ToLower() switch
                 {
                     "arr" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(0),
                     "hw" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(1),
@@ -55,27 +53,27 @@ namespace PandorasBox.Features.Commands
                 };
             }
 
-            int completed = 0;
-            var totalMSQ = filteredList.Where(x => x.Expansion.Row == CurrentExpansion.RowId).Count();
+            var completed = 0;
+            var totalMSQ = filteredList.Where(x => x.Expansion.Row == currentExpansion.RowId).Count();
 
-            int uncompleted = 0;
-            foreach (var quest in filteredList.Where(x => x.Expansion.Row == CurrentExpansion.RowId).OrderBy(x => x.Name.RawString))
+            var uncompleted = 0;
+            foreach (var quest in filteredList.Where(x => x.Expansion.Row == currentExpansion.RowId).OrderBy(x => x.Name.RawString))
             {
                 if (uim->IsUnlockLinkUnlockedOrQuestCompleted(quest.RowId, quest.ToDoCompleteSeq.Max()))
                 {
-                    PluginLog.Debug($"{quest.Name} - Completed!");
+                    Svc.Log.Debug($"{quest.Name} - Completed!");
                     completed++;
                 }
                 else
                 {
-                    PluginLog.Error($"{quest.Name} - Not Completed!");
+                    Svc.Log.Error($"{quest.Name} - Not Completed!");
                     uncompleted++;
                 }
 
             }
 
-            PluginLog.Error($"{uncompleted} quests not done, total MSQ is {totalMSQ}.");
-            if (CurrentExpansion.RowId == 0)
+            Svc.Log.Error($"{uncompleted} quests not done, total MSQ is {totalMSQ}.");
+            if (currentExpansion.RowId == 0)
             {
                 if (PlayerState.Instance()->StartTown != 1)
                     totalMSQ -= 23;
@@ -91,28 +89,28 @@ namespace PandorasBox.Features.Commands
 
             var diff = totalMSQ - completed;
 
-            PluginLog.Debug($"{diff} - {totalMSQ} {completed}");
+            Svc.Log.Debug($"{diff} - {totalMSQ} {completed}");
             if (diff > 0)
             {
-                if (Svc.Data.GetExcelSheet<ExVersion>().Max(x => x.RowId) == CurrentExpansion.RowId)
+                if (Svc.Data.GetExcelSheet<ExVersion>().Max(x => x.RowId) == currentExpansion.RowId)
                 {
-                    Svc.Chat.Print($"You are currently in {CurrentExpansion.Name} with {diff} quests until completion.");
+                    Svc.Chat.Print($"You are currently in {currentExpansion.Name} with {diff} quests until completion.");
                 }
                 else
                 {
-                    Svc.Chat.Print($"You are currently in {CurrentExpansion.Name} with {diff} quests until {Svc.Data.GetExcelSheet<ExVersion>().GetRow(CurrentExpansion.RowId + 1).Name}");
+                    Svc.Chat.Print($"You are currently in {currentExpansion.Name} with {diff} quests until {Svc.Data.GetExcelSheet<ExVersion>().GetRow(currentExpansion.RowId + 1).Name}");
                 }
             }
 
             if (diff == 0)
             {
-                if (Svc.Data.GetExcelSheet<ExVersion>().Max(x => x.RowId) == CurrentExpansion.RowId)
+                if (Svc.Data.GetExcelSheet<ExVersion>().Max(x => x.RowId) == currentExpansion.RowId)
                 {
                     Svc.Chat.Print($"Congratulations! You have no more MSQ quests to complete.... for now!");
                 }
                 else
                 {
-                    Svc.Chat.Print($"Congratulations on beating {CurrentExpansion.Name}! Onwards to {Svc.Data.GetExcelSheet<ExVersion>().GetRow(CurrentExpansion.RowId + 1).Name}!!!");
+                    Svc.Chat.Print($"Congratulations on beating {currentExpansion.Name}! Onwards to {Svc.Data.GetExcelSheet<ExVersion>().GetRow(currentExpansion.RowId + 1).Name}!!!");
                 }
             }
 

@@ -1,6 +1,5 @@
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons.DalamudServices;
-using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,8 +16,6 @@ namespace PandorasBox.Features.Commands
 
         public override List<string> Parameters => new() { "[<item name>], [<id>]" };
         public override string Description => "It's like the other item link commands, but allows searching.";
-
-        public override FeatureType FeatureType => FeatureType.Commands;
 
         protected override void OnCommand(List<string> args)
         {
@@ -42,7 +39,6 @@ namespace PandorasBox.Features.Commands
 
 
             var link = SeString.CreateItemLink(item, false);
-            // TODO: remove in Dalamud v9
             link.Payloads.Add(UIGlowPayload.UIGlowOff);
             link.Payloads.Add(UIForegroundPayload.UIForegroundOff);
             return link;

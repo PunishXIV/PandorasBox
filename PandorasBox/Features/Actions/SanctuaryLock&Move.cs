@@ -14,17 +14,23 @@ namespace PandorasBox.Features.Actions
     internal class SanctuaryLock_Move : Feature
     {
         public override string Name => "Island Sanctuary Auto-Lock & Move";
-
         public override string Description => "After gathering from an island sanctuary node, try to auto-lock onto the nearest gatherable and walk towards it.";
-
         public override FeatureType FeatureType => FeatureType.Other;
 
-        private bool LockingOn = false;
+        private bool lockingOn;
+
         public override void Enable()
         {
             Svc.Framework.Update += CheckToJump;
             Svc.Condition.ConditionChange += CheckToLockAndMove;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            Svc.Framework.Update -= CheckToJump;
+            Svc.Condition.ConditionChange -= CheckToLockAndMove;
+            base.Disable();
         }
 
         private unsafe void CheckToJump(IFramework framework)
@@ -64,20 +70,13 @@ namespace PandorasBox.Features.Actions
 
                     if (MJIManager.Instance()->CurrentMode == 1)
                     {
-                        TaskManager.Enqueue(() => { LockingOn = true; Chat.Instance.SendMessage("/lockon on"); });
+                        TaskManager.Enqueue(() => { lockingOn = true; Chat.Instance.SendMessage("/lockon on"); });
                         TaskManager.DelayNext(new Random().Next(100, 250));
-                        TaskManager.Enqueue(() => { if (IsTargetLocked) { Chat.Instance.SendMessage("/automove on"); LockingOn = false; } });
+                        TaskManager.Enqueue(() => { if (IsTargetLocked) { Chat.Instance.SendMessage("/automove on"); lockingOn = false; } });
 
                     }
                 });
             }
-        }
-
-        public override void Disable()
-        {
-            Svc.Framework.Update -= CheckToJump;
-            Svc.Condition.ConditionChange -= CheckToLockAndMove;
-            base.Disable();
         }
     }
 }

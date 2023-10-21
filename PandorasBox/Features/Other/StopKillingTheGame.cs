@@ -1,7 +1,6 @@
 // Credit entirely to Bluefissure: https://github.com/Bluefissure/NoKillPlugin
 
 using Dalamud.Hooking;
-using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -14,10 +13,12 @@ namespace PandorasBox.Features.Other
     public unsafe class NoKill : Feature
     {
         public override string Name => "Prevent Lobby Error Crashes";
-
         public override string Description => "Prevents the game from closing itself when it gets a lobby error";
 
         public override FeatureType FeatureType => FeatureType.Other;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -34,10 +35,6 @@ namespace PandorasBox.Features.Other
             public bool CloseAutomatically = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
-
         internal IntPtr StartHandler;
         internal IntPtr LoginHandler;
         internal IntPtr LobbyErrorHandler;
@@ -49,29 +46,65 @@ namespace PandorasBox.Features.Other
         private Hook<LoginHandlerDelegate> loginHandlerHook;
         private Hook<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
 
+        public override void Enable()
+        {
+            Config = LoadConfig<Configs>() ?? new Configs();
+            lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
+            try
+            {
+                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
+            }
+            catch (Exception)
+            {
+                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
+            }
+            startHandlerHook = Svc.Hook.HookFromAddress(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
+            LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
+            loginHandlerHook = Svc.Hook.HookFromAddress(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
+
+            lobbyErrorHandlerHook.Enable();
+            startHandlerHook.Enable();
+            loginHandlerHook.Enable();
+
+            Svc.Framework.Update += CheckDialogue;
+
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            lobbyErrorHandlerHook?.Dispose();
+            startHandlerHook?.Dispose();
+            loginHandlerHook?.Dispose();
+            Svc.Framework.Update -= CheckDialogue;
+
+            base.Disable();
+        }
+
 
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
         {
             var a1_88 = (UInt16)Marshal.ReadInt16(new IntPtr(a1 + 88));
             var a1_456 = Marshal.ReadInt32(new IntPtr(a1 + 456));
-            PluginLog.Log($"Start a1_456:{a1_456}");
+            Svc.Log.Debug($"Start a1_456:{a1_456}");
             if (a1_456 != 0 && Config.QueueMode)
             {
                 Marshal.WriteInt32(new IntPtr(a1 + 456), 0);
-                PluginLog.Log($"a1_456: {a1_456} => 0");
+                Svc.Log.Debug($"a1_456: {a1_456} => 0");
             }
-            return this.startHandlerHook.Original(a1, a2);
+            return startHandlerHook.Original(a1, a2);
         }
         private Int64 LoginHandlerDetour(Int64 a1, Int64 a2)
         {
             var a1_2165 = Marshal.ReadByte(new IntPtr(a1 + 2165));
-            PluginLog.Log($"Login a1_2165:{a1_2165}");
+            Svc.Log.Debug($"Login a1_2165:{a1_2165}");
             if (a1_2165 != 0 && Config.QueueMode)
             {
                 Marshal.WriteByte(new IntPtr(a1 + 2165), 0);
-                PluginLog.Log($"a1_2165: {a1_2165} => 0");
+                Svc.Log.Debug($"a1_2165: {a1_2165} => 0");
             }
-            return this.loginHandlerHook.Original(a1, a2);
+            return loginHandlerHook.Original(a1, a2);
         }
 
         private char LobbyErrorHandlerDetour(Int64 a1, Int64 a2, Int64 a3)
@@ -80,12 +113,12 @@ namespace PandorasBox.Features.Other
             var t1 = Marshal.ReadByte(p3);
             var v4 = ((t1 & 0xF) > 0) ? (uint)Marshal.ReadInt32(p3 + 8) : 0;
             var v4_16 = (UInt16)(v4);
-            PluginLog.Log($"LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
+            Svc.Log.Debug($"LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
             if (v4 > 0)
             {
                 if (v4_16 == 0x332C && Config.SkipAuthError) // Auth failed
                 {
-                    PluginLog.Log($"Skip Auth Error");
+                    Svc.Log.Debug($"Skip Auth Error");
                 }
                 else
                 {
@@ -95,34 +128,9 @@ namespace PandorasBox.Features.Other
                     v4_16 = (UInt16)(v4);
                 }
             }
-            PluginLog.Log($"After LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
+            Svc.Log.Debug($"After LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
 
-            return this.lobbyErrorHandlerHook.Original(a1, a2, a3);
-        }
-
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
-            try
-            {
-                this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
-            }
-            catch (Exception)
-            {
-                this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
-            }
-            this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
-            this.LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
-            this.loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
-
-            this.lobbyErrorHandlerHook.Enable();
-            this.startHandlerHook.Enable();
-            this.loginHandlerHook.Enable();
-
-            Svc.Framework.Update += CheckDialogue;
-
-            base.Enable();
+            return lobbyErrorHandlerHook.Original(a1, a2, a3);
         }
 
         private void CheckDialogue(IFramework framework)
@@ -136,17 +144,5 @@ namespace PandorasBox.Features.Other
                 WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.NumPad0);
             }
         }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            this.lobbyErrorHandlerHook?.Dispose();
-            this.startHandlerHook?.Dispose();
-            this.loginHandlerHook?.Dispose();
-            Svc.Framework.Update -= CheckDialogue;
-
-            base.Disable();
-        }
-
     }
 }

@@ -1,5 +1,4 @@
 using ECommons.DalamudServices;
-using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
@@ -35,19 +34,19 @@ namespace PandorasBox.Features.Commands
         }
 
         private delegate long ExecuteCommandDelegate(uint id, int a1, int a2, int a3, int a4);
-        private ExecuteCommandDelegate ExecuteCommand;
+        private ExecuteCommandDelegate executeCommand;
 
         private void Reset(int objectId)
         {
             // Reset enmity at target sig. This doesn't change often, but it does sometimes.
-            nint scanText = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 43 0A");
-            ExecuteCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
+            var scanText = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 43 0A");
+            executeCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
 
-            PluginLog.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
-            PluginLog.Information($"Resetting enmity {objectId}");
+            Svc.Log.Debug($"{nameof(executeCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
+            Svc.Log.Information($"Resetting enmity {objectId}");
 
-            long success = ExecuteCommand(0x13f, objectId, 0, 0, 0);
-            PluginLog.Debug($"Reset enmity of {objectId} returned: {success}");
+            var success = executeCommand(0x13f, objectId, 0, 0, 0);
+            Svc.Log.Debug($"Reset enmity of {objectId} returned: {success}");
         }
 
         private void ResetTarget()

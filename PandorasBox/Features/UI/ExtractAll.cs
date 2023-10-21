@@ -1,5 +1,4 @@
 using ClickLib.Clicks;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Throttlers;
@@ -17,18 +16,35 @@ namespace PandorasBox.Features.UI
     public unsafe class ExtractAll : Feature
     {
         public override string Name => "Extract All Materia";
-
         public override string Description => "Adds a button to the extract materia window to start extracting all.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
         internal Overlays OverlayWindow;
-
         internal bool Extracting = false;
+
         public override void Enable()
         {
             OverlayWindow = new(this);
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            P.Ws.RemoveWindow(OverlayWindow);
+            OverlayWindow = null;
+            if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
+            {
+                var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
+
+                var node = ptr->UldManager.NodeList[2];
+
+                if (node == null)
+                    return;
+
+                node->ToggleVisibility(true);
+            }
+            base.Disable();
         }
 
         public override void Draw()
@@ -97,7 +113,7 @@ namespace PandorasBox.Features.UI
             }
             catch (Exception e)
             {
-                PluginLog.Debug(e, "ExtractAllException");
+                Svc.Log.Debug(e, "ExtractAllException");
             }
         }
 
@@ -357,7 +373,6 @@ namespace PandorasBox.Features.UI
             }
         }
 
-
         public unsafe bool? SwitchTabs(int section)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
@@ -444,23 +459,6 @@ namespace PandorasBox.Features.UI
             ptr->FireCallback(2, values);
 
             return true;
-        }
-        public override void Disable()
-        {
-            P.Ws.RemoveWindow(OverlayWindow);
-            OverlayWindow = null;
-            if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
-            {
-                var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);
-
-                var node = ptr->UldManager.NodeList[2];
-
-                if (node == null)
-                    return;
-
-                node->ToggleVisibility(true);
-            }
-            base.Disable();
         }
     }
 }

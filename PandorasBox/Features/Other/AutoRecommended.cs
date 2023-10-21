@@ -8,19 +8,18 @@ namespace PandorasBox.Features.Other
     public unsafe class AutoRecommended : Feature
     {
         public override string Name => "Auto-Equip Recommended Gear";
-
         public override string Description => "Automatically equip recommended gear upon job changing.";
+
+        public override FeatureType FeatureType => FeatureType.Other;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
             [FeatureConfigOption("Update Gearset")]
             public bool UpdateGearset = false;
         }
-
-        public Configs Config { get; private set; }
-        public override FeatureType FeatureType => FeatureType.Other;
-
-        public override bool UseAutoConfig => true;
 
         public override void Enable()
         {
@@ -29,10 +28,18 @@ namespace PandorasBox.Features.Other
             base.Enable();
         }
 
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            OnJobChanged -= AutoEquip;
+            base.Disable();
+        }
+
         private void AutoEquip(uint? jobId)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
+
             var mod = RecommendEquipModule.Instance();
             //TaskManager.Abort();
             TaskManager.DelayNext("EquipMod", 500);
@@ -45,13 +52,6 @@ namespace PandorasBox.Features.Other
                 TaskManager.DelayNext("UpdatingGS", 1000);
                 TaskManager.Enqueue(() => RaptureGearsetModule.Instance()->UpdateGearset(id));
             }
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            OnJobChanged -= AutoEquip;
-            base.Disable();
         }
     }
 }

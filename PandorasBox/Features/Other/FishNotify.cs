@@ -1,7 +1,24 @@
+// This is a rewrite of the original FishNotify plugin by carvelli
+// Original source available here: https://git.carvel.li/liza/FishNotify
+
+// Copyright (C) 2023 Liza Carvelli
+
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published
+// by the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
@@ -13,7 +30,6 @@ namespace PandorasBox.Features.Other
     public unsafe class FishNotify : Feature
     {
         public override string Name => "Fish Notify";
-
         public override string Description => "Play a sound or send a chat message when a fish is hooked.";
 
         public override FeatureType FeatureType => FeatureType.Other;
@@ -120,7 +136,7 @@ namespace PandorasBox.Features.Other
                         if (name == "IsSndSe")
                         {
                             var value = entry.Value.UInt;
-                            PluginLog.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
+                            Svc.Log.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
 
                             seEnabled = value == 0;
                         }
@@ -128,7 +144,7 @@ namespace PandorasBox.Features.Other
                         if (name == "IsSndMaster")
                         {
                             var value = entry.Value.UInt;
-                            PluginLog.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
+                            Svc.Log.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
 
                             masterEnabled = value == 0;
                         }
@@ -139,7 +155,7 @@ namespace PandorasBox.Features.Other
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, $"[{Name}]: Error checking if sfx is enabled");
+                Svc.Log.Error(ex, $"Exception during {nameof(CheckIsSfxEnabled)}");
                 return true;
             }
         }
@@ -219,22 +235,17 @@ namespace PandorasBox.Features.Other
             Address = sigScanner.GetStaticAddressFromSig(signature);
             if (Address != IntPtr.Zero)
                 Address += offset;
-            var baseOffset = (ulong)Address.ToInt64() - (ulong)sigScanner.Module.BaseAddress.ToInt64();
+            _ = (ulong)Address.ToInt64() - (ulong)sigScanner.Module.BaseAddress.ToInt64();
         }
     }
 
-    public sealed class SeTugType : SeAddressBase
+    public sealed class SeTugType(ISigScanner sigScanner) : SeAddressBase(sigScanner, "4C 8D 0D ?? ?? ?? ?? 4D 8B 13 49 8B CB 45 0F B7 43 ?? 49 8B 93 ?? ?? ?? ?? 88 44 24 20 41 FF 92 ?? ?? ?? ?? 48 83 C4 38 C3")
     {
-        public SeTugType(ISigScanner sigScanner)
-            : base(sigScanner,
-                "4C 8D 0D ?? ?? ?? ?? 4D 8B 13 49 8B CB 45 0F B7 43 ?? 49 8B 93 ?? ?? ?? ?? 88 44 24 20 41 FF 92 ?? ?? ?? ?? 48 83 C4 38 C3")
-        { }
-
         public unsafe FishNotify.BiteType Bite
             => Address != IntPtr.Zero ? *(FishNotify.BiteType*)Address : FishNotify.BiteType.Unknown;
     }
 
-    public sealed class EventFramework : SeAddressBase
+    public sealed class EventFramework(ISigScanner sigScanner) : SeAddressBase(sigScanner, "48 8B 2D ?? ?? ?? ?? 48 8B F1 48 8B 85 ?? ?? ?? ?? 48 8B 18 48 3B D8 74 35 0F 1F 00 F6 83 ?? ?? ?? ?? ?? 75 1D 48 8B 46 28 48 8D 4E 28 48 8B 93 ?? ?? ?? ??")
     {
         private const int FishingManagerOffset = 0x70;
         private const int FishingStateOffset = 0x220;
@@ -274,10 +285,5 @@ namespace PandorasBox.Features.Other
                 return ptr != IntPtr.Zero ? *(FishNotify.FishingState*)ptr : FishNotify.FishingState.None;
             }
         }
-
-        public EventFramework(ISigScanner sigScanner)
-            : base(sigScanner,
-                "48 8B 2D ?? ?? ?? ?? 48 8B F1 48 8B 85 ?? ?? ?? ?? 48 8B 18 48 3B D8 74 35 0F 1F 00 F6 83 ?? ?? ?? ?? ?? 75 1D 48 8B 46 28 48 8D 4E 28 48 8B 93 ?? ?? ?? ??")
-        { }
     }
 }

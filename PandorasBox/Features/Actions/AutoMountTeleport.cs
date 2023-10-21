@@ -14,10 +14,10 @@ namespace PandorasBox.Features.Actions
     public unsafe class AutoMountZoneChange : Feature
     {
         public override string Name => "Auto-Mount on Zone Change";
-
         public override string Description => "Mounts on zone change if not already mounted.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
+
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
@@ -28,15 +28,18 @@ namespace PandorasBox.Features.Actions
             public bool JumpAfterMount = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => false;
-
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.ClientState.TerritoryChanged += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.ClientState.TerritoryChanged -= RunFeature;
+            base.Disable();
         }
 
         private void RunFeature(ushort e)
@@ -65,6 +68,7 @@ namespace PandorasBox.Features.Actions
         }
 
         private static bool NotBetweenAreas => !Svc.Condition[ConditionFlag.BetweenAreas];
+
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
@@ -90,14 +94,6 @@ namespace PandorasBox.Features.Actions
 
                 return true;
             }
-
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.ClientState.TerritoryChanged -= RunFeature;
-            base.Disable();
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
@@ -134,7 +130,6 @@ namespace PandorasBox.Features.Actions
             if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
             if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
-
         };
     }
 }

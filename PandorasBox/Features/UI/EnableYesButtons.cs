@@ -7,7 +7,6 @@ namespace PandorasBox.Features.UI
     public unsafe class EnableYesButtons : Feature
     {
         public override string Name => "Automatically Enabled Yes Buttons";
-
         public override string Description => "Sets the Yes button on Yes/No prompts to automatically be enabled if normally a checkbox needed checked.";
 
         public override FeatureType FeatureType => FeatureType.UI;
@@ -16,6 +15,12 @@ namespace PandorasBox.Features.UI
         {
             Common.OnAddonSetup += EnableButton;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            Common.OnAddonSetup -= EnableButton;
+            base.Disable();
         }
 
         private void EnableButton(SetupAddonArgs args)
@@ -44,12 +49,5 @@ namespace PandorasBox.Features.UI
                 }
             }
         }
-
-        public override void Disable()
-        {
-            Common.OnAddonSetup -= EnableButton;
-            base.Disable();
-        }
-
     }
 }

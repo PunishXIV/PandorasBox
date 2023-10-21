@@ -9,13 +9,13 @@ namespace PandorasBox.Features.Other
 {
     public unsafe class AutoSyncFate : Feature
     {
-        private ushort fateID;
-
         public override string Name => "Auto-Sync FATEs";
-
         public override string Description => "Syncs when entering a FATE if you're overlevelled.";
 
         public override FeatureType FeatureType => FeatureType.Other;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -38,9 +38,7 @@ namespace PandorasBox.Features.Other
             public bool ExcludeCombat = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
+        private ushort fateID;
 
         public ushort FateID
         {
@@ -55,11 +53,32 @@ namespace PandorasBox.Features.Other
         }
 
         public byte FateMaxLevel;
+
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += CheckFates;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= CheckFates;
+            base.Disable();
+        }
+
+        private void CheckFates(IFramework framework)
+        {
+            if (FateManager.Instance()->CurrentFate != null)
+            {
+                FateMaxLevel = FateManager.Instance()->CurrentFate->MaxLevel;
+                FateID = FateManager.Instance()->CurrentFate->FateId;
+            }
+            else
+            {
+                FateID = 0;
+            }
         }
 
         public void SyncFate(ushort value)
@@ -77,26 +96,6 @@ namespace PandorasBox.Features.Other
                 if (Svc.ClientState.LocalPlayer.Level > FateMaxLevel)
                 Chat.Instance.SendMessage("/lsync");
             }
-        }
-        private void CheckFates(IFramework framework)
-        {
-            if (FateManager.Instance()->CurrentFate != null)
-            {
-                FateMaxLevel = FateManager.Instance()->CurrentFate->MaxLevel;
-                FateID = FateManager.Instance()->CurrentFate->FateId;
-              
-            }
-            else
-            {
-                FateID = 0;
-            }
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= CheckFates;
-            base.Disable();
         }
     }
 }

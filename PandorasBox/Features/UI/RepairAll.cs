@@ -1,5 +1,4 @@
 using ClickLib.Clicks;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Logging;
@@ -14,7 +13,6 @@ using PandorasBox.UI;
 using System;
 using System.Linq;
 using System.Numerics;
-using PandorasBox.Helpers;
 using static ECommons.GenericHelpers;
 using ClickLib.Enums;
 

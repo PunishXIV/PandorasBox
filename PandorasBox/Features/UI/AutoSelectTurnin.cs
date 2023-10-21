@@ -1,5 +1,4 @@
 using ClickLib.Clicks;
-using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -14,12 +13,12 @@ namespace PandorasBox.Features.UI
     public unsafe class AutoSelectTurnin : Feature
     {
         public override string Name => "Auto-select Turn-ins";
-
         public override string Description => "Whenever you have to select an item to turn in, it will automatically fill in the interface.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private List<int> SlotsFilled { get; set; } = new();
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -27,15 +26,21 @@ namespace PandorasBox.Features.UI
             public bool AutoConfirm = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
+        private List<int> SlotsFilled { get; set; } = new();
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= RunFeature;
+            SlotsFilled.Clear();
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -76,7 +81,7 @@ namespace PandorasBox.Features.UI
             else
             {
                 Callback.Fire(contextMenu, false, 0, 0, 1021003, 0, 0);
-                PluginLog.Debug($"Filled slot {i}");
+                Svc.Log.Debug($"Filled slot {i}");
                 SlotsFilled.Add(i);
                 return true;
             }
@@ -98,14 +103,6 @@ namespace PandorasBox.Features.UI
                 }
                 return false;
             }
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            SlotsFilled.Clear();
-            base.Disable();
         }
     }
 }

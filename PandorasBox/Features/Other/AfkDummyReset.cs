@@ -11,11 +11,11 @@ namespace PandorasBox.Features.Other
     internal class AfkDummyReset : Feature
     {
         public override string Name => "Inactivity Dummy Reset";
-
         public override string Description => "Automatically reset enmity on target dummies if you do not perform an action after a specified amount of time.";
 
         public override FeatureType FeatureType => FeatureType.Other;
 
+        public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
@@ -24,18 +24,22 @@ namespace PandorasBox.Features.Other
             public int InactivityTimer = 1;
         }
 
-        public Configs Config { get; private set; }
-
         internal unsafe delegate bool UseActionDelegate(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8);
         internal Hook<UseActionDelegate> UseActionHook;
 
-
-        public unsafe override void Enable()
+        public override unsafe void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
             UseActionHook?.Enable();
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            UseActionHook?.Dispose();
+            base.Disable();
         }
 
         private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8)
@@ -60,13 +64,5 @@ namespace PandorasBox.Features.Other
             }
             return UseActionHook.Original(am, type, acId, target, a5, a6, a7, a8);
         }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            UseActionHook?.Dispose();
-            base.Disable();
-        }
-
     }
 }

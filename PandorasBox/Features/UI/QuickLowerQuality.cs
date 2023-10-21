@@ -12,7 +12,6 @@ namespace PandorasBox.Features.UI
     public unsafe class QuickLowerQuality : Feature
     {
         public override string Name => "Quick Lower Quality";
-
         public override string Description => "Automatically confirms the lower quality popup menu.";
 
         public override FeatureType FeatureType => FeatureType.UI;
@@ -21,6 +20,12 @@ namespace PandorasBox.Features.UI
         {
             Common.OnAddonSetup += Common_AddonSetup;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            Common.OnAddonSetup -= Common_AddonSetup;
+            base.Disable();
         }
 
         private void Common_AddonSetup(SetupAddonArgs obj)
@@ -47,12 +52,6 @@ namespace PandorasBox.Features.UI
                     obj.Addon->FireCallback(1, values, (void*)1);
                 }
             }
-        }
-
-        public override void Disable()
-        {
-            Common.OnAddonSetup -= Common_AddonSetup;
-            base.Disable();
         }
     }
 }

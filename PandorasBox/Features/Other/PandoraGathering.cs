@@ -4,7 +4,6 @@ using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
-using Dalamud.Logging;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -29,6 +28,53 @@ namespace PandorasBox.Features.Other
 {
     public unsafe class PandoraGathering : Feature
     {
+        public override string Name => "Pandora Quick Gather";
+        public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
+
+        public override FeatureType FeatureType => FeatureType.Other;
+
+        public Configs Config { get; private set; }
+
+        public class Configs : FeatureConfig
+        {
+            public bool CollectibleStop = false;
+
+            public bool ShiftStop = false;
+
+            public bool Gathering = false;
+
+            public bool RememberLastNode = false;
+
+            public bool Use500GPYield = false;
+
+            public int GP500Yield = 500;
+
+            public bool Use100GPYield = false;
+
+            public int GP100Yield = 100;
+
+            public bool UseTidings = false;
+
+            public int GPTidings = 200;
+
+            public int GatherersBoon = 100;
+
+            public bool UseGivingLand = false;
+
+            public int GPGivingLand = 200;
+
+            public bool UseTwelvesBounty = false;
+
+            public int GPTwelvesBounty = 150;
+
+            public bool UseSolidReason = false;
+
+            public int GPSolidReason = 300;
+
+            public bool UseLuck = false;
+
+            public int GPLuck = 200;
+        }
 
         public static readonly (uint ItemId, uint SeedId)[] Seeds =
         {
@@ -131,74 +177,59 @@ namespace PandorasBox.Features.Other
         private delegate void QuickGatherToggleDelegate(AddonGathering* a1);
         private Hook<QuickGatherToggleDelegate> quickGatherToggle;
 
-        internal Vector4 DarkTheme = new Vector4(0.26f, 0.26f, 0.26f, 1f);
-        internal Vector4 LightTheme = new Vector4(0.97f, 0.87f, 0.75f, 1f);
-        internal Vector4 ClassicFFTheme = new Vector4(0.21f, 0f, 0.68f, 1f);
-        internal Vector4 LightBlueTheme = new Vector4(0.21f, 0.36f, 0.59f, 0.25f);
+        internal Vector4 DarkTheme = new(0.26f, 0.26f, 0.26f, 1f);
+        internal Vector4 LightTheme = new(0.97f, 0.87f, 0.75f, 1f);
+        internal Vector4 ClassicFFTheme = new(0.21f, 0f, 0.68f, 1f);
+        internal Vector4 LightBlueTheme = new(0.21f, 0.36f, 0.59f, 0.25f);
 
         internal int SwingCount = 0;
-        public override string Name => "Pandora Quick Gather";
+        public static bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
-        public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
-
-        public bool InDiadem => Svc.ClientState.TerritoryType == 939;
-
-        private string LocationEffect;
-
-        public class Configs : FeatureConfig
-        {
-            public bool CollectibleStop = false;
-
-            public bool ShiftStop = false;
-
-            public bool Gathering = false;
-
-            public bool RememberLastNode = false;
-
-            public bool Use500GPYield = false;
-
-            public int GP500Yield = 500;
-
-            public bool Use100GPYield = false;
-
-            public int GP100Yield = 100;
-
-            public bool UseTidings = false;
-
-            public int GPTidings = 200;
-
-            public int GatherersBoon = 100;
-
-            public bool UseGivingLand = false;
-
-            public int GPGivingLand = 200;
-
-            public bool UseTwelvesBounty = false;
-
-            public int GPTwelvesBounty = 150;
-
-            public bool UseSolidReason = false;
-
-            public int GPSolidReason = 300;
-
-            public bool UseLuck = false;
-
-            public int GPLuck = 200;
-        }
-
-        public Configs Config { get; private set; }
-
-
-        public override FeatureType FeatureType => FeatureType.Other;
-
-        private Overlays Overlay;
-
-        public override bool UseAutoConfig => false;
+        private string locationEffect;
 
         private ulong lastGatheredIndex = 10;
         private uint lastGatheredItem = 0;
 
-        public unsafe override void Draw()
+        private Overlays overlay;
+
+        public override void Enable()
+        {
+            overlay = new Overlays(this);
+            Config = LoadConfig<Configs>() ?? new Configs();
+            gatherEventHook ??= Svc.Hook.HookFromSignature<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
+            gatherEventHook.Enable();
+
+            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
+
+            Common.OnAddonSetup += CheckLastItem;
+            Svc.Condition.ConditionChange += ResetCounter;
+
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            P.Ws.RemoveWindow(overlay);
+            SaveConfig(Config);
+            gatherEventHook?.Dispose();
+            quickGatherToggle?.Dispose();
+            Common.OnAddonSetup -= CheckLastItem;
+
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
+            if (addon != null)
+            {
+                addon->UldManager.NodeList[5]->ToggleVisibility(true);
+                addon->UldManager.NodeList[6]->ToggleVisibility(true);
+                addon->UldManager.NodeList[8]->ToggleVisibility(true);
+                addon->UldManager.NodeList[9]->ToggleVisibility(true);
+                addon->UldManager.NodeList[10]->ToggleVisibility(true);
+            }
+            Svc.Condition.ConditionChange -= ResetCounter;
+
+            base.Disable();
+        }
+
+        public override unsafe void Draw()
         {
             if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
             {
@@ -235,7 +266,7 @@ namespace PandorasBox.Features.Other
                     addon->UldManager.NodeList[8]->ToggleVisibility(false);
                 }
 
-                LocationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ExtractText();
+                locationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ExtractText();
                 if (color == 1)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
@@ -374,11 +405,11 @@ namespace PandorasBox.Features.Other
 
                 ImGui.Columns(1);
 
-                if (LocationEffect.Length > 0)
+                if (locationEffect.Length > 0)
                 {
                     ImGuiEx.ImGuiLineCentered("###LocationEffect", () =>
                     {
-                        ImGui.Text($"{LocationEffect}");
+                        ImGui.Text($"{locationEffect}");
                     });
                 }
                 ImGui.End();
@@ -393,21 +424,6 @@ namespace PandorasBox.Features.Other
             }
         }
 
-        public override void Enable()
-        {
-            Overlay = new Overlays(this);
-            Config = LoadConfig<Configs>() ?? new Configs();
-            gatherEventHook ??= Svc.Hook.HookFromSignature<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
-            gatherEventHook.Enable();
-
-            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
-
-            Common.OnAddonSetup += CheckLastItem;
-            Svc.Condition.ConditionChange += ResetCounter;
-
-            base.Enable();
-        }
-
         private void ResetCounter(ConditionFlag flag, bool value)
         {
             if (flag == ConditionFlag.Gathering && !value)
@@ -416,139 +432,6 @@ namespace PandorasBox.Features.Other
                 TaskManager.Enqueue(() => SwingCount = 0);
             }
         }
-
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
-        {
-            if (ImGui.Checkbox($"Hold Shift / {GamePad.ControllerButtons[Dalamud.Game.ClientState.GamePad.GamepadButtons.L2]} to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
-                SaveConfig(Config);
-
-            if (ImGui.Checkbox($"Disable Starting Buffs on Nodes with Collectibles", ref Config.CollectibleStop))
-                SaveConfig(Config);
-
-            ImGuiComponents.HelpMarker("This will stop Pandora from using any actions when you start a node with a collectible on it. This is intended to prevent wasting GP on buffs that don't apply to collectibles.");
-
-            if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
-            {
-                if (!Config.Gathering)
-                    TaskManager.Abort();
-
-                SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
-                SaveConfig(Config);
-
-            if (ImGui.IsItemHovered() && InDiadem)
-            {
-                ImGui.BeginTooltip();
-                ImGui.Text("In the Diadem, this will remember the last slot selected and not the last item due to the varying nature of the nodes.");
-                ImGui.EndTooltip();
-            }
-            var language = Svc.ClientState.ClientLanguage;
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
-            {
-                Config.UseGivingLand = false;
-                Config.UseTwelvesBounty = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.Use100GPYield)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP1", ref Config.GP100Yield, 100, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
-            {
-                Config.UseGivingLand = false;
-                Config.UseTwelvesBounty = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.Use500GPYield)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP2", ref Config.GP500Yield, 500, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.RawString}", ref Config.UseTidings))
-            {
-                Config.UseGivingLand = false;
-                Config.UseTwelvesBounty = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.UseTidings)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP3", ref Config.GPTidings, 200, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (Config.UseTidings)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. Gatherer's Boon% For Tidings", ref Config.GatherersBoon, 1, 100))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.RawString}", ref Config.UseSolidReason))
-            {
-                SaveConfig(Config);
-            }
-
-            if (Config.UseSolidReason)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP4", ref Config.GPSolidReason, 300, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.RawString}", ref Config.UseGivingLand))
-            {
-                Config.Use100GPYield = false;
-                Config.Use500GPYield = false;
-                Config.UseTidings = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.UseGivingLand)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP5", ref Config.GPGivingLand, 200, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.RawString.ToTitleCase()}", ref Config.UseTwelvesBounty))
-            {
-                Config.Use100GPYield = false;
-                Config.Use500GPYield = false;
-                Config.UseTidings = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.UseTwelvesBounty)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP6", ref Config.GPTwelvesBounty, 150, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
-                SaveConfig(Config);
-
-            if (Config.UseLuck)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP7", ref Config.GPLuck, 200, 1000))
-                    SaveConfig(Config);
-            }
-
-        };
 
         private void CheckLastItem(SetupAddonArgs obj)
         {
@@ -571,7 +454,7 @@ namespace PandorasBox.Features.Other
                     addon->GatheredItemId8
                     };
 
-                    PluginLog.Debug($"{string.Join(", ", ids)}");
+                    Svc.Log.Debug($"{string.Join(", ", ids)}");
                     if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
@@ -580,7 +463,7 @@ namespace PandorasBox.Features.Other
                     }
 
                     var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
-                    PluginLog.Debug($"{nodeHasCollectibles}");
+                    Svc.Log.Debug($"{nodeHasCollectibles}");
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
                         Dictionary<int, int> boonChances = new();
@@ -876,7 +759,7 @@ namespace PandorasBox.Features.Other
             try
             {
                 SwingCount++;
-                PluginLog.Debug($"SWING {SwingCount}");
+                Svc.Log.Debug($"SWING {SwingCount}");
                 var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
                 var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
                 if (quickGathering)
@@ -992,26 +875,136 @@ namespace PandorasBox.Features.Other
             return true;
         }
 
-        public override void Disable()
+        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
-            P.Ws.RemoveWindow(Overlay);
-            SaveConfig(Config);
-            gatherEventHook?.Dispose();
-            quickGatherToggle?.Dispose();
-            Common.OnAddonSetup -= CheckLastItem;
+            if (ImGui.Checkbox($"Hold Shift / {GamePad.ControllerButtons[Dalamud.Game.ClientState.GamePad.GamepadButtons.L2]} to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
+                SaveConfig(Config);
 
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
-            if (addon != null)
+            if (ImGui.Checkbox($"Disable Starting Buffs on Nodes with Collectibles", ref Config.CollectibleStop))
+                SaveConfig(Config);
+
+            ImGuiComponents.HelpMarker("This will stop Pandora from using any actions when you start a node with a collectible on it. This is intended to prevent wasting GP on buffs that don't apply to collectibles.");
+
+            if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
             {
-                addon->UldManager.NodeList[5]->ToggleVisibility(true);
-                addon->UldManager.NodeList[6]->ToggleVisibility(true);
-                addon->UldManager.NodeList[8]->ToggleVisibility(true);
-                addon->UldManager.NodeList[9]->ToggleVisibility(true);
-                addon->UldManager.NodeList[10]->ToggleVisibility(true);
-            }
-            Svc.Condition.ConditionChange -= ResetCounter;
+                if (!Config.Gathering)
+                    TaskManager.Abort();
 
-            base.Disable();
-        }
+                SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
+                SaveConfig(Config);
+
+            if (ImGui.IsItemHovered() && InDiadem)
+            {
+                ImGui.BeginTooltip();
+                ImGui.Text("In the Diadem, this will remember the last slot selected and not the last item due to the varying nature of the nodes.");
+                ImGui.EndTooltip();
+            }
+            var language = Svc.ClientState.ClientLanguage;
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
+            {
+                Config.UseGivingLand = false;
+                Config.UseTwelvesBounty = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.Use100GPYield)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP1", ref Config.GP100Yield, 100, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
+            {
+                Config.UseGivingLand = false;
+                Config.UseTwelvesBounty = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.Use500GPYield)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP2", ref Config.GP500Yield, 500, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.RawString}", ref Config.UseTidings))
+            {
+                Config.UseGivingLand = false;
+                Config.UseTwelvesBounty = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.UseTidings)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP3", ref Config.GPTidings, 200, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (Config.UseTidings)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. Gatherer's Boon% For Tidings", ref Config.GatherersBoon, 1, 100))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.RawString}", ref Config.UseSolidReason))
+            {
+                SaveConfig(Config);
+            }
+
+            if (Config.UseSolidReason)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP4", ref Config.GPSolidReason, 300, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.RawString}", ref Config.UseGivingLand))
+            {
+                Config.Use100GPYield = false;
+                Config.Use500GPYield = false;
+                Config.UseTidings = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.UseGivingLand)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP5", ref Config.GPGivingLand, 200, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.RawString.ToTitleCase()}", ref Config.UseTwelvesBounty))
+            {
+                Config.Use100GPYield = false;
+                Config.Use500GPYield = false;
+                Config.UseTidings = false;
+                SaveConfig(Config);
+            }
+
+            if (Config.UseTwelvesBounty)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP6", ref Config.GPTwelvesBounty, 150, 1000))
+                    SaveConfig(Config);
+            }
+
+            if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
+                SaveConfig(Config);
+
+            if (Config.UseLuck)
+            {
+                ImGui.PushItemWidth(300);
+                if (ImGui.SliderInt("Min. GP###MinGP7", ref Config.GPLuck, 200, 1000))
+                    SaveConfig(Config);
+            }
+
+        };
     }
 }

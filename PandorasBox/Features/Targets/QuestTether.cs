@@ -13,7 +13,6 @@ namespace PandorasBox.Features.Targets
     internal class QuestTether : Feature
     {
         public override string Name => "Quest Tether (Requires Splatoon)";
-
         public override string Description => "Draw tethers to your current quest objectives";
 
         public override FeatureType FeatureType => FeatureType.Disabled;
@@ -31,6 +30,12 @@ namespace PandorasBox.Features.Targets
             }
         }
 
+        public override void Disable()
+        {
+            Svc.Framework.Update -= UpdateTethers;
+            base.Disable();
+        }
+
         private unsafe void UpdateTethers(IFramework framework)
         {
             foreach (var quest in QuestManager.Instance()->NormalQuestsSpan)
@@ -42,7 +47,7 @@ namespace PandorasBox.Features.Targets
 
                 if (sheetItem != null)
                 {
-                    for (int i = 0; i <= 49; i++)
+                    for (var i = 0; i <= 49; i++)
                     {
                         if (quest.Sequence == i)
                         {
@@ -72,12 +77,6 @@ namespace PandorasBox.Features.Targets
         private unsafe void DrawQuestTethers()
         {
 
-        }
-
-        public override void Disable()
-        {
-            Svc.Framework.Update -= UpdateTethers;
-            base.Disable();
         }
     }
 }

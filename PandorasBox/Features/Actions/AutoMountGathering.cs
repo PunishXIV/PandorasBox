@@ -16,10 +16,10 @@ namespace PandorasBox.Features.Actions
     public unsafe class AutoMountGathering : Feature
     {
         public override string Name => "Auto-Mount after Gathering";
-
         public override string Description => "Mounts upon finishing gathering from a node. Will try to execute for up to 3 seconds after the delay if moving.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
+
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
@@ -30,9 +30,6 @@ namespace PandorasBox.Features.Actions
             public bool JumpAfterMount = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => false;
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -40,14 +37,16 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private bool GatheredOnIsland(ConditionFlag flag, bool value)
+        public override void Disable()
         {
-            return flag == ConditionFlag.OccupiedInQuestEvent && !value && MJIManager.Instance()->IsPlayerInSanctuary != 0;
+            SaveConfig(Config);
+            Svc.Condition.ConditionChange -= RunFeature;
+            base.Disable();
         }
 
         private void RunFeature(ConditionFlag flag, bool value)
         {
-            if (flag == ConditionFlag.Gathering && !value || (GatheredOnIsland(flag, value) && Config.UseOnIsland))
+            if ((flag == ConditionFlag.Gathering && !value) || (GatheredOnIsland(flag, value) && Config.UseOnIsland))
             {
                 TaskManager.Enqueue(() => EzThrottler.Throttle("GatherMount", (int)(Config.ThrottleF * 1000)));
                 TaskManager.Enqueue(() => EzThrottler.Check("GatherMount"));
@@ -65,6 +64,9 @@ namespace PandorasBox.Features.Actions
                 });
             }
         }
+
+        private bool GatheredOnIsland(ConditionFlag flag, bool value) =>
+            flag == ConditionFlag.OccupiedInQuestEvent && !value && MJIManager.Instance()->IsPlayerInSanctuary != 0;
 
         private bool? TryMount()
         {
@@ -87,13 +89,6 @@ namespace PandorasBox.Features.Actions
 
                 return true;
             }
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Condition.ConditionChange -= RunFeature;
-            base.Disable();
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
@@ -130,7 +125,6 @@ namespace PandorasBox.Features.Actions
             if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
             if (ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland)) hasChanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
-
         };
     }
 }

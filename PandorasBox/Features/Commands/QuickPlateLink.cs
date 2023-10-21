@@ -4,7 +4,6 @@ using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Lumina.Excel.GeneratedSheets;
-using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,8 +19,6 @@ namespace PandorasBox.Features.Commands
         public override List<string> Parameters => new() { "[-r <role>]", "[-j <jobs>]", "[-g <gearset names/nums>]", "[-n plate number]" };
         public override string Description => "For quickly linking multiple gearsets to a glamour plate.";
 
-        public override FeatureType FeatureType => FeatureType.Commands;
-
         public struct Gearset
         {
             public byte ID { get; set; }
@@ -34,6 +31,7 @@ namespace PandorasBox.Features.Commands
         private readonly List<Gearset> gearsets = new();
         private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged", "doh", "crafters", "doh", "gatherers" };
         private List<ClassJob> jobsList = new();
+
         protected override void OnCommand(List<string> args)
         {
             gearsets.Clear();

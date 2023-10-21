@@ -1,11 +1,9 @@
-using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
@@ -16,27 +14,36 @@ namespace PandorasBox.Features
     public unsafe class AutoSprint : Feature
     {
         public override string Name => "Auto-Sprint in Sanctuaries";
-
         public override string Description => "Automatically uses sprint when in an area you are gaining rested experience, such as cities.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public override bool UseAutoConfig => false;
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
+            [FeatureConfigOption("Set delay (seconds)", "", 1, FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
+
+            [FeatureConfigOption("Use whilst walk status is toggled", "", 2)]
             public bool RPWalk = false;
+
+            [FeatureConfigOption("Exclude using in housing districts", "", 3)]
             public bool ExcludeHousing = false;
         }
-
-        public Configs Config { get; private set; }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            Svc.Framework.Update -= RunFeature;
+            SaveConfig(Config);
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -76,20 +83,5 @@ namespace PandorasBox.Features
                 am->UseAction(ActionType.GeneralAction, 4);
             }
         }
-
-        public override void Disable()
-        {
-            Svc.Framework.Update -= RunFeature;
-            SaveConfig(Config);
-            base.Disable();
-        }
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
-        {
-            ImGui.PushItemWidth(300);
-            if (ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f")) hasChanged = true;
-            if (ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk)) hasChanged = true;
-            if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
-        };
     }
 }

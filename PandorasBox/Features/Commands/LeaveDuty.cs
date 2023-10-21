@@ -11,8 +11,10 @@ namespace PandorasBox.Features.Commands
     {
         public override string Name => "Leave Duty";
         public override string Command { get; set; } = "/pdfleave";
+        public override string[] Alias => new string[] { "/pleaveduty" };
 
         public override string Description => "Quickly leaves a duty.";
+
         protected unsafe override void OnCommand(List<string> args)
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId != 0 && !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])

@@ -10,9 +10,7 @@ namespace PandorasBox.Features
     public unsafe class SanctuarySprint : Feature
     {
         public override string Name => "Auto-Sprint on Island Sanctuary";
-
         public override string Description => "Automatically uses Isle Sprint.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
 
         public Configs Config { get; private set; }
@@ -52,7 +50,6 @@ namespace PandorasBox.Features
 
             if (isSprintReady && !hasBuff && AgentMap.Instance()->IsPlayerMoving == 1)
                 am->UseAction(ActionType.Action, 31314);
-
         }
     }
 }

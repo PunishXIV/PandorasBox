@@ -8,11 +8,10 @@ namespace PandorasBox.Features.Actions
     public unsafe class AutoProspectTriangulate : Feature
     {
         public override string Name => "Auto-Prospect/Triangulate";
-
         public override string Description => "When switching to MIN or BTN, automatically activate the other jobs searching ability.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
 
+        public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
@@ -24,18 +23,30 @@ namespace PandorasBox.Features.Actions
             public bool AddTruth = false;
         }
 
-        public Configs Config { get; private set; }
+        public override void Enable()
+        {
+            Config = LoadConfig<Configs>() ?? new Configs();
+            OnJobChanged += ActivateBuff;
+            base.Enable();
+        }
 
-        
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            base.Disable();
+        }
+
         private void ActivateBuff(uint? jobValue)
         {
             if (jobValue is null) return;
             if (jobValue is not (16 or 17)) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
+
             TaskManager.DelayNext(this.GetType().Name, (int)(Config.ThrottleF * 1000));
+
             var am = ActionManager.Instance();   
-            if (Svc.ClientState.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
-                return;
+
+            if (Svc.ClientState.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering])
             {
                 TaskManager.Abort();
@@ -60,20 +71,6 @@ namespace PandorasBox.Features.Actions
                 }
                 return;
             }
-
-        }
-
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            OnJobChanged += ActivateBuff;
-            base.Enable();
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            base.Disable();
         }
     }
 }

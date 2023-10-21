@@ -9,8 +9,11 @@ namespace PandorasBox.Features.Actions
     public unsafe class AutoDraw : Feature
     {
         public override string Name => "Auto-Draw Card";
-
         public override string Description => "Draws an AST card upon job switching or entering a duty.";
+        public override FeatureType FeatureType => FeatureType.Actions;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -21,12 +24,6 @@ namespace PandorasBox.Features.Actions
             public bool OnlyInDuty = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
-
-        public override FeatureType FeatureType => FeatureType.Actions;
-
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -36,25 +33,13 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void CheckIfDungeon(ushort e)
+        public override void Disable()
         {
-            if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
-            TaskManager.DelayNext("WaitForConditions", 2000);
-            TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted);
-            TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
-        }
-
-        private void CheckIfRespawned(ConditionFlag flag, bool value)
-        {
-            if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
-            {
-                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
-                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
-                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
-                TaskManager.DelayNext("WaitForActionReady", 2500);
-                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
-            }
+            SaveConfig(Config);
+            OnJobChanged -= DrawCard;
+            Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
+            Svc.Condition.ConditionChange -= CheckIfRespawned;
+            base.Disable();
         }
 
         private void DrawCard(uint? jobId)
@@ -82,13 +67,25 @@ namespace PandorasBox.Features.Actions
             return false;
         }
 
-        public override void Disable()
+        private void CheckIfDungeon(ushort e)
         {
-            SaveConfig(Config);
-            OnJobChanged -= DrawCard;
-            Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
-            Svc.Condition.ConditionChange -= CheckIfRespawned;
-            base.Disable();
+            if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
+            TaskManager.DelayNext("WaitForConditions", 2000);
+            TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted);
+            TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
+        }
+
+        private void CheckIfRespawned(ConditionFlag flag, bool value)
+        {
+            if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
+            {
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
+                TaskManager.DelayNext("WaitForActionReady", 2500);
+                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
+                TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
+            }
         }
     }
 }

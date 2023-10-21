@@ -1,5 +1,4 @@
 using ClickLib.Clicks;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons;
 using ECommons.Automation;
@@ -21,16 +20,11 @@ namespace PandorasBox.Features.UI
     public unsafe class AutoSelectGardening : Feature
     {
         public override string Name => "Auto-select Gardening Soil/Seeds";
-
         public override string Description => "Automatically fill in gardening windows with seeds and soil.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        public Dictionary<uint, Item> Seeds { get; set; }
-        public Dictionary<uint, Item> Soils { get; set; }
-        public Dictionary<uint, Item> Fertilizers { get; set; }
-
-        public Dictionary<uint, Addon> AddonText { get; set; }
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
@@ -44,10 +38,14 @@ namespace PandorasBox.Features.UI
             public bool OnlyShowInventoryItems = false;
         }
 
-        public Configs Config { get; private set; }
+        public Dictionary<uint, Item> Seeds { get; set; }
+        public Dictionary<uint, Item> Soils { get; set; }
+        public Dictionary<uint, Item> Fertilizers { get; set; }
+        public Dictionary<uint, Addon> AddonText { get; set; }
 
         private bool Fertilized { get; set; } = false;
         private List<int> SlotsFilled { get; set; } = new();
+
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -57,6 +55,18 @@ namespace PandorasBox.Features.UI
             AddonText = Svc.Data.GetExcelSheet<Addon>().ToDictionary(x => x.RowId, x => x);
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Seeds = null;
+            Soils = null;
+            AddonText = null;
+            Fertilizers = null;
+            Svc.Framework.Update -= RunFeature;
+            SlotsFilled.Clear();
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -217,7 +227,7 @@ namespace PandorasBox.Features.UI
             {
                 var slot = i - 1;
 
-                PluginLog.Debug($"{slot}");
+                Svc.Log.Debug($"{slot}");
                 var values = stackalloc AtkValue[5];
                 values[0] = new AtkValue()
                 {
@@ -281,7 +291,7 @@ namespace PandorasBox.Features.UI
 
 
                 contextMenu->FireCallback(5, values, (void*)2476827163393);
-                PluginLog.Debug($"Filled slot {i}");
+                Svc.Log.Debug($"Filled slot {i}");
                 SlotsFilled.Add(i);
                 return true;
             }
@@ -321,21 +331,9 @@ namespace PandorasBox.Features.UI
             return false;
         }
 
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Seeds = null;
-            Soils = null;
-            AddonText = null;
-            Fertilizers = null;
-            Svc.Framework.Update -= RunFeature;
-            SlotsFilled.Clear();
-            base.Disable();
-        }
-
         protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
         {
-            bool hasChanged = false;
+            var hasChanged = false;
 
             if (ImGui.Checkbox("Show Only Inventory Items", ref Config.OnlyShowInventoryItems))
                 hasChanged = true;

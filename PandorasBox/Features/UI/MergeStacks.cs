@@ -12,27 +12,12 @@ namespace PandorasBox.Features.UI
     public unsafe class MergeStacks : Feature
     {
         public override string Name => "Automatically merge stacks of same items";
-
         public override string Description => "When you open your inventory, the plugin will try and pull all stacks of the same item together.";
 
         public override FeatureType FeatureType => FeatureType.Disabled;
 
-        public List<InventorySlot> inventorySlots = new();
-
-        private bool InventoryOpened { get; set; } = false;
-
-        private Dictionary<uint, Item> Sheet { get; set; }
-
-        public class InventorySlot
-        {
-            public InventoryType Container { get; set; }
-
-            public short Slot { get; set; }
-
-            public uint ItemID { get; set; }
-
-            public bool ItemHQ { get; set; }
-        }
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -40,10 +25,18 @@ namespace PandorasBox.Features.UI
             public bool SortAfter = false;
         }
 
-        public Configs Config { get; private set; }
+        public List<InventorySlot> inventorySlots = new();
+        private bool InventoryOpened { get; set; } = false;
 
-        public override bool UseAutoConfig => true;
+        private Dictionary<uint, Item> Sheet { get; set; }
 
+        public class InventorySlot
+        {
+            public InventoryType Container { get; set; }
+            public short Slot { get; set; }
+            public uint ItemID { get; set; }
+            public bool ItemHQ { get; set; }
+        }
 
         public override void Enable()
         {
@@ -51,6 +44,14 @@ namespace PandorasBox.Features.UI
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Sheet = null;
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -130,14 +131,6 @@ namespace PandorasBox.Features.UI
             {
                 InventoryOpened = false;
             }
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Sheet = null;
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
         }
     }
 }

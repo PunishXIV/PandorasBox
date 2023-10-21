@@ -8,10 +8,11 @@ namespace PandorasBox.Features.Actions
     public unsafe class AutoFairy : Feature
     {
         public override string Name => "Auto-Summon Fairy/Carbuncle";
-
         public override string Description => "Automatically summons your Fairy or Carbuncle upon switching to SCH or SMN respectively.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -22,16 +23,20 @@ namespace PandorasBox.Features.Actions
             public bool OnlyInDuty = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
-
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             OnJobChanged += RunFeature;
             Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            OnJobChanged -= RunFeature;
+            Svc.Condition.ConditionChange -= CheckIfRespawned;
+            base.Disable();
         }
 
         private void RunFeature(uint? jobId)
@@ -63,27 +68,14 @@ namespace PandorasBox.Features.Actions
             if (Config.OnlyInDuty && !IsInDuty()) return true;
 
             var am = ActionManager.Instance();
-            if (jobId is 26 or 27)
+            if (jobId is 26 or 27 or 28)
             {
-                if (am->GetActionStatus(ActionType.Action, 25798) != 0) return false;
+                var actionID = jobId == 28 ? 17215u : 25798u;
+                if (am->GetActionStatus(ActionType.Action, actionID) != 0) return false;
 
-                am->UseAction(ActionType.Action, 25798);
-            }
-            if (jobId is 28)
-            {
-                if (am->GetActionStatus(ActionType.Action, 17215) != 0) return false;
-
-                am->UseAction(ActionType.Action, 17215);
-                return true;
+                am->UseAction(ActionType.Action, actionID);
             }
             return true;
-        }
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            OnJobChanged -= RunFeature;
-            Svc.Condition.ConditionChange -= CheckIfRespawned;
-            base.Disable();
         }
     }
 }

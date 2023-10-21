@@ -22,6 +22,7 @@ namespace PandorasBox.Features.Targets
 
         public override FeatureType FeatureType => FeatureType.Targeting;
 
+        public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
@@ -55,10 +56,7 @@ namespace PandorasBox.Features.Targets
 
             [FeatureConfigOption("Exclude Spearfishing Nodes", "", 6)]
             public bool ExcludeFishing = false;
-
         }
-
-        public Configs Config { get; private set; }
 
         public override void Enable()
         {
@@ -67,21 +65,6 @@ namespace PandorasBox.Features.Targets
             Svc.Condition.ConditionChange += TriggerCooldown;
             Svc.Toasts.ErrorToast += CheckIfLanding;
             base.Enable();
-        }
-
-        private void CheckIfLanding(ref SeString message, ref bool isHandled)
-        {
-            if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
-            {
-                TaskManager.Abort();
-                TaskManager.DelayNext("ErrorMessage", 2000);
-            }
-        }
-
-        private void TriggerCooldown(ConditionFlag flag, bool value)
-        {
-            if (flag == ConditionFlag.Gathering && !value)
-                TaskManager.DelayNext("GatheringDelay", (int)(Config.Cooldown * 1000));
         }
 
         private void RunFeature(IFramework framework)
@@ -122,7 +105,7 @@ namespace PandorasBox.Features.Targets
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
 
-            string Folklore = "";
+            var Folklore = "";
 
             if (gatheringPoint.GatheringSubCategory.IsValueCreated && gatheringPoint.GatheringSubCategory.Value.FolkloreBook != null)
                 Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
@@ -152,7 +135,6 @@ namespace PandorasBox.Features.Targets
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-
         }
 
         public override void Disable()
@@ -160,6 +142,21 @@ namespace PandorasBox.Features.Targets
             SaveConfig(Config);
             Svc.Framework.Update -= RunFeature;
             base.Disable();
+        }
+
+        private void CheckIfLanding(ref SeString message, ref bool isHandled)
+        {
+            if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
+            {
+                TaskManager.Abort();
+                TaskManager.DelayNext("ErrorMessage", 2000);
+            }
+        }
+
+        private void TriggerCooldown(ConditionFlag flag, bool value)
+        {
+            if (flag == ConditionFlag.Gathering && !value)
+                TaskManager.DelayNext("GatheringDelay", (int)(Config.Cooldown * 1000));
         }
     }
 }

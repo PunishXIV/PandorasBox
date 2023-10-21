@@ -12,13 +12,13 @@ namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoOpenChests : Feature
     {
-        private uint lastChestId = 0;
-
         public override string Name => "Automatically Open Chests";
-
         public override string Description => "Walk up to a chest to automatically open it.";
 
         public override FeatureType FeatureType => FeatureType.Targeting;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -32,15 +32,20 @@ namespace PandorasBox.Features.Targets
             public bool OpenInHighEndDuty = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
+        private uint lastChestId = 0;
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -108,13 +113,6 @@ namespace PandorasBox.Features.Targets
             }
 
             return false;
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
         }
     }
 }

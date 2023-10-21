@@ -9,13 +9,10 @@ namespace PandorasBox.Features.Actions
     public unsafe class AutoChocobo : Feature
     {
         public override string Name => "Auto-Summon Chocobo";
-
         public override string Description => "Automatically consumes a Gysahl Green in the overworld if you don't have your chocobo out.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
 
         public Configs Config { get; private set; }
-
         public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
@@ -30,6 +27,20 @@ namespace PandorasBox.Features.Actions
             public bool UseInCombat = false;
         }
 
+        public override void Enable()
+        {
+            Config = LoadConfig<Configs>() ?? new Configs();
+            Svc.Framework.Update += RunFeature;
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
+        }
+
         private void RunFeature(IFramework framework)
         {
             if (!Svc.Condition[ConditionFlag.NormalConditions] || Svc.Condition[ConditionFlag.Casting] || IsMoving()) return;
@@ -42,20 +53,6 @@ namespace PandorasBox.Features.Actions
                 if (am->GetActionStatus(ActionType.Item, 4868) != 0) return;
                 am->UseAction(ActionType.Item, 4868, a4: 65535);
             }
-        }
-
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
-            base.Enable();
-        }
-
-        public override void Disable()
-        {
-            Svc.Framework.Update -= RunFeature;
-            SaveConfig(Config);
-            base.Disable();
         }
     }
 }

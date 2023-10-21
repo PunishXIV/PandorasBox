@@ -14,11 +14,11 @@ namespace PandorasBox.Features.Actions
 {
     public unsafe class AutoMountCombat : Feature
     {
-        public override string Name => "Auto-Mount After Combat ";
-
+        public override string Name => "Auto-Mount After Combat";
         public override string Description => "Mounts upon ending combat.";
-
         public override FeatureType FeatureType => FeatureType.Actions;
+
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
@@ -30,10 +30,6 @@ namespace PandorasBox.Features.Actions
             public bool JumpAfterMount = false;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => false;
-
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -41,28 +37,36 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Condition.ConditionChange -= RunFeature;
+            base.Disable();
+        }
+
         private void RunFeature(ConditionFlag flag, bool value)
         {
             if (flag == ConditionFlag.InCombat && !value)
             {
-                    TaskManager.Enqueue(() => NotInCombat);
-                    TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
-                    TaskManager.Enqueue(TryMount, 3000);
-                    TaskManager.Enqueue(() =>
+                TaskManager.Enqueue(() => NotInCombat);
+                TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
+                TaskManager.Enqueue(TryMount, 3000);
+                TaskManager.Enqueue(() =>
+                {
+                    if (Config.JumpAfterMount)
                     {
-                        if (Config.JumpAfterMount)
-                        {
-                            TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
-                            TaskManager.DelayNext(50);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
-                            TaskManager.DelayNext(50);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
-                        }
-                    });
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                    }
+                });
             }
         }
 
         private static bool NotInCombat => !Svc.Condition[ConditionFlag.InCombat];
+
         private bool? TryMount()
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
@@ -96,14 +100,6 @@ namespace PandorasBox.Features.Actions
 
                 return true;
             }
-
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Condition.ConditionChange -= RunFeature;
-            base.Disable();
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool haschanged) =>
@@ -141,7 +137,6 @@ namespace PandorasBox.Features.Actions
             if (ImGui.Checkbox("Disable in fates", ref Config.DisableInFates)) haschanged = true;
             if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) haschanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) haschanged = true;
-
         };
     }
 }

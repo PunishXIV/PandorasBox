@@ -12,7 +12,6 @@ namespace PandorasBox.Features.UI
     public unsafe class AutoJoinPF : Feature
     {
         public override string Name => "Auto-Join Party Finder Groups";
-
         public override string Description => "Whenever you click a Party Finder listing, this will bypass the description window and auto click the join button.";
 
         public override FeatureType FeatureType => FeatureType.UI;
@@ -21,6 +20,12 @@ namespace PandorasBox.Features.UI
         {
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -66,12 +71,6 @@ namespace PandorasBox.Features.UI
             }
 
             return false;
-        }
-
-        public override void Disable()
-        {
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
         }
     }
 }

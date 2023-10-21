@@ -14,18 +14,32 @@ namespace PandorasBox.Features.UI
     public unsafe class ReduceAll : Feature
     {
         public override string Name => "Reduce All Items";
-
         public override string Description => "Adds a button to Aetherial Reduction to process all items.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
         internal Overlays Overlay;
-
         internal bool Reducing;
+
         public override void Enable()
         {
             Overlay = new(this);
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            P.Ws.RemoveWindow(Overlay);
+            Overlay = null;
+            if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
+            {
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);
+                var node = addon->UldManager.NodeList[5];
+
+                node->ToggleVisibility(true);
+            }
+
+            base.Disable();
         }
 
         public override void Draw()
@@ -142,21 +156,6 @@ namespace PandorasBox.Features.UI
             addon->FireCallback(2, values);
 
             return true;
-        }
-
-        public override void Disable()
-        {
-            P.Ws.RemoveWindow(Overlay);
-            Overlay = null;
-            if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
-            {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);
-                var node = addon->UldManager.NodeList[5];
-
-                node->ToggleVisibility(true);
-            }
-
-            base.Disable();
         }
     }
 }

@@ -17,27 +17,26 @@ namespace PandorasBox.Features.UI
 {
     internal unsafe class FCChestQuickDeposit : Feature
     {
-        internal delegate nint AgentFreeCompanyChest_MoveFCItemDelegate(void* AgentFreeCompanyChest, InventoryType SourceInventory, uint SourceSlot, InventoryType TargetInventory, uint TargetSlot);
-        internal Hook<AgentFreeCompanyChest_MoveFCItemDelegate> AgentFreeCompanyChest_MoveFCItem;
-
         public override string Name => "FC Chest Quick Deposit";
-
         public override string Description => "Adds a context menu to items whilst the FC chest is open to quickly deposit them.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private DalamudContextMenu contextMenu;
-
-        private static readonly SeString DepositString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Deposit into FC Chest"));
-
+        public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
+
         public class Configs : FeatureConfig
         {
             [FeatureConfigOption($"Ctrl + Right Click Shortcut")]
             public bool UseShortcut = false;
         }
 
-        public Configs Config { get; private set; }
+        internal delegate nint AgentFreeCompanyChest_MoveFCItemDelegate(void* AgentFreeCompanyChest, InventoryType SourceInventory, uint SourceSlot, InventoryType TargetInventory, uint TargetSlot);
+        internal Hook<AgentFreeCompanyChest_MoveFCItemDelegate> AgentFreeCompanyChest_MoveFCItem;
+
+        private DalamudContextMenu contextMenu;
+
+        private static readonly SeString DepositString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Deposit into FC Chest"));
 
         public override void Enable()
         {
@@ -46,6 +45,15 @@ namespace PandorasBox.Features.UI
             AgentFreeCompanyChest_MoveFCItem ??= Svc.Hook.HookFromSignature<AgentFreeCompanyChest_MoveFCItemDelegate>("40 53 56 57 41 56 41 57 48 83 EC 30", MoveItem);
             Config = LoadConfig<Configs>() ?? new Configs();
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
+            contextMenu?.Dispose();
+            SaveConfig(Config);
+            AgentFreeCompanyChest_MoveFCItem?.Dispose();
+            base.Disable();
         }
 
         private nint MoveItem(void* AgentFreeCompanyChest, InventoryType SourceInventory, uint SourceSlot, InventoryType TargetInventory, uint TargetSlot)
@@ -92,9 +100,9 @@ namespace PandorasBox.Features.UI
 
         private unsafe void DepositItem(uint itemId, AtkUnitBase* addon, bool itemHq, uint itemAmount)
         {
-            uint FCPage = (uint)InventoryType.FreeCompanyPage1;
+            var FCPage = (uint)InventoryType.FreeCompanyPage1;
 
-            for (int i = 101; i >= 97; i--)
+            for (var i = 101; i >= 97; i--)
             {
                 var radioButton = addon->UldManager.NodeList[i];
                 if (!radioButton->IsVisible) continue;
@@ -113,8 +121,8 @@ namespace PandorasBox.Features.UI
             }
 
             var invManager = InventoryManager.Instance();
-            InventoryType? sourceInventory = GetInventoryItemPage(itemId, itemHq, itemAmount, out short slot);
-            short destSlot = CheckFCChestSlots(FCPage, itemId, itemAmount);
+            var sourceInventory = GetInventoryItemPage(itemId, itemHq, itemAmount, out var slot);
+            var destSlot = CheckFCChestSlots(FCPage, itemId, itemAmount);
             if (sourceInventory != null && destSlot != -1)
             {
                 AgentFreeCompanyChest_MoveFCItem.Original(UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.FreeCompanyChest), (InventoryType)sourceInventory, (uint)slot, (InventoryType)FCPage, (uint)destSlot);
@@ -125,7 +133,7 @@ namespace PandorasBox.Features.UI
         private unsafe short CheckFCChestSlots(uint fCPage, uint itemid, uint stack)
         {
             var invManager = InventoryManager.Instance();
-            InventoryType fcPage = (InventoryType)fCPage;
+            var fcPage = (InventoryType)fCPage;
 
             var container = invManager->GetInventoryContainer(fcPage);
 
@@ -187,15 +195,6 @@ namespace PandorasBox.Features.UI
 
             slot = -1;
             return null;
-        }
-
-        public override void Disable()
-        {
-            contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
-            contextMenu?.Dispose();
-            SaveConfig(Config);
-            AgentFreeCompanyChest_MoveFCItem?.Dispose();
-            base.Disable();
         }
     }
 }

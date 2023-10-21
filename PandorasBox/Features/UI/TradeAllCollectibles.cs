@@ -14,19 +14,26 @@ namespace PandorasBox.Features.UI
     public unsafe class TradeAllCollectibles : Feature
     {
         public override string Name => "Trade All Collectables";
-
         public override string Description => "Replaces the Trade button on the collectables interface with a Trade All button for the selected collectable.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
         public bool Trading { get; private set; } = false;
-
         internal Overlays overlay;
+
         public override void Enable()
         {
             overlay = new(this);
             base.Enable();
         }
+        public override void Disable()
+        {
+            P.Ws.RemoveWindow(overlay);
+            overlay = null;
+            ReEnableButton();
+            base.Disable();
+        }
+
 
         public override void Draw()
         {
@@ -116,14 +123,6 @@ namespace PandorasBox.Features.UI
             TaskManager.Enqueue(() => { Trading = false; TaskManager.Abort(); });
         }
 
-        public override void Disable()
-        {
-            P.Ws.RemoveWindow(overlay);
-            overlay = null;
-            ReEnableButton();
-            base.Disable();
-        }
-
         private void ReEnableButton()
         {
             if (Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero)
@@ -135,8 +134,6 @@ namespace PandorasBox.Features.UI
 
                 if (!tradeButton->IsVisible)
                     tradeButton->ToggleVisibility(true);
-
-
             }
         }
     }

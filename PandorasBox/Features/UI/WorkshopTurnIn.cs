@@ -1,6 +1,5 @@
 using ClickLib.Clicks;
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Utility;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -28,10 +27,16 @@ namespace PandorasBox.Features.UI
     public unsafe class WorkshopTurnin : Feature
     {
         public override string Name => "FC Workshop Hand-In";
-
         public override string Description => "Adds buttons to auto hand-in the current phase and the entire project to the workshop menu.";
 
         public override FeatureType FeatureType => FeatureType.UI;
+
+        public Configs Config { get; private set; }
+        public class Configs : FeatureConfig
+        {
+            [FeatureConfigOption("Times to loop", "", 1, IntMin = 0, IntMax = 100, EditorSize = 300)]
+            public int partsToBuild = 1;
+        }
 
         private Overlays overlay;
         private float height;
@@ -50,13 +55,6 @@ namespace PandorasBox.Features.UI
         private static readonly string[] LeaveWorkshopStr = { "Nothing.", "Nichts", "Annuler", "やめる" }; // 7
         private static readonly string[] ConfirmContributionStr = { "to the company project?", "schaftsprojekt bereitstellen?", "pour le projet de con", "カンパニー製作設備に納品します。" };
         private static readonly string[] ConfirmProductRetrievalStr = { "Retrieve", "entnehmen", "Récupérer", "を回収します。" };
-
-        public Configs Config { get; private set; }
-        public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption("Times to loop", "", 1, IntMin = 0, IntMax = 100, EditorSize = 300)]
-            public int partsToBuild = 1;
-        }
 
         public override void Enable()
         {
@@ -407,8 +405,6 @@ namespace PandorasBox.Features.UI
                 }
                 return false;
             });
-
-
 
         private static bool? ContributeMaterials() =>
             ContributeMaterialsStr.Any(str => TrySelectSpecificEntry(str, () => GenericThrottle && EzThrottler.Throttle($"{nameof(WorkshopTurnin)}.{nameof(ContributeMaterials)}", 1000)));

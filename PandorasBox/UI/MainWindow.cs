@@ -1,6 +1,5 @@
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
 using Dalamud.Utility;
 using ECommons;
 using ECommons.DalamudServices;
@@ -114,7 +113,7 @@ internal class MainWindow : Window
     }
 
     private string searchString = string.Empty;
-    private List<BaseFeature> FilteredFeatures = new();
+    private readonly List<BaseFeature> filteredFeatures = new();
     private bool hornybonk;
 
     public override void Draw()
@@ -188,7 +187,7 @@ internal class MainWindow : Window
                         {
                             hornybonk = false;
                         }
-                        FilteredFeatures.Clear();
+                        filteredFeatures.Clear();
                         if (searchString.Length > 0)
                         {
                             foreach (var feature in P.Features)
@@ -197,7 +196,7 @@ internal class MainWindow : Window
 
                                 if (feature.Description.Contains(searchString, StringComparison.CurrentCultureIgnoreCase) ||
                                     feature.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase))
-                                    FilteredFeatures.Add(feature);
+                                    filteredFeatures.Add(feature);
                             }
                         }
                     }
@@ -208,9 +207,9 @@ internal class MainWindow : Window
                 ImGui.TableNextColumn();
                 if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (false ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
                 {
-                    if (FilteredFeatures.Count() > 0)
+                    if (filteredFeatures.Count() > 0)
                     {
-                        DrawFeatures(FilteredFeatures.ToArray());
+                        DrawFeatures(filteredFeatures.ToArray());
                     }
                     else
                     {
@@ -292,7 +291,7 @@ internal class MainWindow : Window
 
         ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () =>
         {
-            if (FilteredFeatures.Count > 0)
+            if (filteredFeatures.Count > 0)
             {
                 ImGui.Text($"Search Results");
             }
@@ -318,7 +317,7 @@ internal class MainWindow : Window
                     }
                     catch (Exception ex)
                     {
-                        PluginLog.Error(ex, $"Failed to enabled {feature.Name}");
+                        Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                     }
                 }
                 else
@@ -331,7 +330,7 @@ internal class MainWindow : Window
                     }
                     catch (Exception ex)
                     {
-                        PluginLog.Error(ex, $"Failed to enabled {feature.Name}");
+                        Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                     }
                 }
                 Config.Save();

@@ -33,16 +33,13 @@ namespace PandorasBox.Features.UI
     public unsafe class WorkshopHelper : Feature
     {
         public override string Name => "Workshop Helper";
-
         public override string Description => "Adds a menu to the Island Sanctuary workshop to allow quick setting your daily schedules. Supports importing from Overseas Casuals.";
 
         public override FeatureType FeatureType => FeatureType.UI;
-        private Overlays overlay;
-        public static bool ResetPosition = false;
 
-        private static SetupAddonArgs CachedAddonSetup;
         public Configs Config { get; private set; }
         public override bool UseAutoConfig => true;
+
         public class Configs : FeatureConfig
         {
             [FeatureConfigOption("Automatically go to the next day's cycle when opening the workshop menu.", "", 1)]
@@ -70,6 +67,11 @@ namespace PandorasBox.Features.UI
             [FeatureConfigOption("Auto Max Granary", "", 11)]
             public bool AutoMaxGranary = false;
         }
+
+        private Overlays overlay;
+        public static bool ResetPosition;
+
+        private static SetupAddonArgs CachedAddonSetup;
 
         internal static (uint Key, string Name, ushort CraftingTime, ushort LevelReq)[] Craftables;
         public static List<Item> PrimarySchedule = new();
@@ -464,7 +466,7 @@ namespace PandorasBox.Features.UI
                 if (line.StartsWith("Cycle"))
                 {
                     var cycleStr = Regex.Match(line, @"\d+").Value;
-                    int cycleNo = int.Parse(cycleStr);
+                    var cycleNo = int.Parse(cycleStr);
                     output.Add(cycleNo);
                 }
             }
@@ -479,8 +481,8 @@ namespace PandorasBox.Features.UI
             var hours = 0;
             var isRest = false;
 
-            int indexOfCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle);
-            int indexOfNextCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle + 1);
+            var indexOfCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle);
+            var indexOfNextCycleStart = itemStrings.IndexOf(x => x.StartsWith("Cycle") && int.Parse(Regex.Match(x, @"\d+").Value) == cycle + 1);
             if (indexOfNextCycleStart == -1)
                 indexOfNextCycleStart = itemStrings.Count;
 
@@ -493,9 +495,9 @@ namespace PandorasBox.Features.UI
                 MultiCycleList.Add(new CyclePreset { Cycle = cycle == 1 ? 14 : cycle - 1, PrimarySchedule = firstItems, SecondarySchedule = firstExcess });
             }
 
-            for (int i = indexOfCycleStart + 1; i < indexOfNextCycleStart; i++)
+            for (var i = indexOfCycleStart + 1; i < indexOfNextCycleStart; i++)
             {
-                string itemString = itemStrings[i];
+                var itemString = itemStrings[i];
 
                 if (itemString.ToLower().Contains("rest"))
                     isRest = true;
@@ -730,7 +732,7 @@ namespace PandorasBox.Features.UI
             if (restCycleIndex != -1 && !overrideRest)
             {
                 // delay when cycle that is open is the one being set to rest?
-                TaskManager.Enqueue(() => SetRestDay(currentDay + restCycleIndex), $"MultiCycleSetRestOn{currentDay + restCycleIndex}");
+                TaskManager.Enqueue(() => SetRestDay(currentDay + restCycleIndex), $"{nameof(ScheduleMultiCycleList)}.{nameof(SetRestDay)}{currentDay + restCycleIndex}");
             }
 
             TaskManager.Enqueue(() =>
@@ -740,12 +742,12 @@ namespace PandorasBox.Features.UI
                     if (MultiCycleList.IndexOf(cycle) > 0 && !autoWorkshopSelect)
                         return;
 
-                    TaskManager.Enqueue(() => OpenCycle(currentDay), $"MultiCycleOpenCycleOn{currentDay}");
-                    TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"MultiCycleSetPrimaryCycleOn{currentDay}");
-                    TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"MultiCyleSetSecondaryCycleOn{currentDay}");
-                    TaskManager.Enqueue(() => { isScheduleRest = !overrideRest && PrimarySchedule[0].OnRestDay; }, $"MultiCycleCheckRestOn{currentDay}");
-                    TaskManager.Enqueue(() => ScheduleList(), $"MultiCycleScheduleListOn{currentDay}");
-                    TaskManager.Enqueue(() => currentDay += 1, $"MultiCycleScheduleIncrementDayFrom{currentDay}");
+                    TaskManager.Enqueue(() => OpenCycle(currentDay), $"{nameof(ScheduleMultiCycleList)}.OpenCycleOn{currentDay}");
+                    TaskManager.Enqueue(() => PrimarySchedule = cycle.PrimarySchedule, $"{nameof(ScheduleMultiCycleList)}.Set{nameof(PrimarySchedule)}On{currentDay}");
+                    TaskManager.Enqueue(() => SecondarySchedule = cycle.SecondarySchedule, $"{nameof(ScheduleMultiCycleList)}.Set{nameof(SecondarySchedule)}On{currentDay}");
+                    TaskManager.Enqueue(() => { isScheduleRest = !overrideRest && PrimarySchedule[0].OnRestDay; }, $"{nameof(ScheduleMultiCycleList)}.CheckRestOn{currentDay}");
+                    TaskManager.Enqueue(() => ScheduleList(), $"{nameof(ScheduleMultiCycleList)}.{nameof(ScheduleList)}On{currentDay}");
+                    TaskManager.Enqueue(() => currentDay += 1, $"{nameof(ScheduleMultiCycleList)}.ScheduleIncrementDayFrom{currentDay}");
                 }
             }, "ScheduleMultiCycleForEach");
         }
@@ -861,7 +863,6 @@ namespace PandorasBox.Features.UI
                 }
             }
         }
-
 
         private unsafe void AutoMaxGranary(SetupAddonArgs obj)
         {

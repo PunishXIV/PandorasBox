@@ -11,10 +11,12 @@ namespace PandorasBox.Features.Other
     public unsafe class AutoSwitchGatherer : Feature
     {
         public override string Name => "Switch Gatherers Automatically";
-
         public override string Description => "Switches to the appropriate gathering job when approaching a gathering spot and you have both Triangulate & Prospect active. Must have a gearset for the job to switch to.";
 
         public override FeatureType FeatureType => FeatureType.Other;
+
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
@@ -22,15 +24,18 @@ namespace PandorasBox.Features.Other
             public float Throttle = 0.1f;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => true;
-
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -94,13 +99,6 @@ namespace PandorasBox.Features.Other
                 if (gearset->ClassJob == cjId) return gearset->ID;
             }
             return null;
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
         }
     }
 }

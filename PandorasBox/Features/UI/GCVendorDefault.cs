@@ -7,27 +7,23 @@ using System.Collections.Generic;
 using System.Linq;
 using PandorasBox.Helpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
 {
     public unsafe class GCVendorDefault : Feature
     {
         public override string Name => "Default Grand Company Shop Menu";
-
         public override string Description => "Sets the default tab in the grand company menu when you open it.";
 
         public override FeatureType FeatureType => FeatureType.UI;
+
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
             public int DefaultRank = 0;
             public int DefaultTab = 0;
         }
-
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => false;
 
         private List<string> Tabs { get; set; } = new()
         {
@@ -47,6 +43,13 @@ namespace PandorasBox.Features.UI
             Config = LoadConfig<Configs>() ?? new Configs();
             Common.OnAddonSetup += Common_AddonSetup;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Common.OnAddonSetup -= Common_AddonSetup;
+            base.Disable();
         }
 
 
@@ -118,12 +121,5 @@ namespace PandorasBox.Features.UI
             if (hasChanged)
                 SaveConfig(Config);
         };
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Common.OnAddonSetup -= Common_AddonSetup;
-            base.Disable();
-        }
     }
 }

@@ -13,10 +13,11 @@ namespace PandorasBox.Features.Targets
     public unsafe class ActionTargeting : Feature
     {
         public override string Name => "Action Combat Targeting";
-
         public override string Description => "Automatically targets and switches your target to the nearest within your line of sight.";
 
         public override FeatureType FeatureType => FeatureType.Targeting;
+
+        public Configs Config { get; private set; }
 
         public class Configs : FeatureConfig
         {
@@ -30,9 +31,6 @@ namespace PandorasBox.Features.Targets
             public float MaxDistance = 3f;
         }
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => false;
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
@@ -40,10 +38,14 @@ namespace PandorasBox.Features.Targets
             base.Enable();
         }
 
-        private void RunFeature(IFramework framework)
+        public override void Disable()
         {
-            TargetEnemy();
+            SaveConfig(Config);
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
         }
+
+        private void RunFeature(IFramework framework) => TargetEnemy();
 
         public unsafe void TargetEnemy()
         {
@@ -82,50 +84,28 @@ namespace PandorasBox.Features.Targets
             return null;
         }
 
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(GameObject obj)
-        {
-            return (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)obj?.Address;
-        }
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(BattleChara chara)
-        {
-            return (FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)chara?.Address;
-        }
+        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(GameObject obj) =>
+            (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)obj?.Address;
+        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(BattleChara chara) =>
+            (FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)chara?.Address;
 
-        public static unsafe bool GameObjectIsTargetable(GameObject obj)
-        {
-            return GameObjectInternal(obj)->GetIsTargetable();
-        }
+        public static unsafe bool GameObjectIsTargetable(GameObject obj) =>
+            GameObjectInternal(obj)->GetIsTargetable();
 
-        public static unsafe bool GameObjectIsDead(GameObject obj)
-        {
-            return GameObjectInternal(obj)->IsDead();
-        }
+        public static unsafe bool GameObjectIsDead(GameObject obj) =>
+            GameObjectInternal(obj)->IsDead();
 
-        public static bool PointInCone(Vector3 offsetFromOrigin, Vector3 direction, float halfAngle)
-        {
-            return Vector3.Dot(Vector3.Normalize(offsetFromOrigin), direction) >= MathF.Cos(halfAngle);
-        }
-        public static bool PointInCone(Vector3 offsetFromOrigin, float direction, float halfAngle)
-        {
-            return PointInCone(offsetFromOrigin, DirectionToVec3(direction), halfAngle);
-        }
+        public static bool PointInCone(Vector3 offsetFromOrigin, Vector3 direction, float halfAngle) =>
+            Vector3.Dot(Vector3.Normalize(offsetFromOrigin), direction) >= MathF.Cos(halfAngle);
 
-        public static Vector3 DirectionToVec3(float direction)
-        {
-            return new(MathF.Sin(direction), 0, MathF.Cos(direction));
-        }
+        public static bool PointInCone(Vector3 offsetFromOrigin, float direction, float halfAngle) =>
+            PointInCone(offsetFromOrigin, DirectionToVec3(direction), halfAngle);
 
-        public static bool PointInCircle(Vector3 offsetFromOrigin, float radius)
-        {
-            return offsetFromOrigin.LengthSquared() <= radius * radius;
-        }
+        public static Vector3 DirectionToVec3(float direction) =>
+            new(MathF.Sin(direction), 0, MathF.Cos(direction));
 
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
-        }
+        public static bool PointInCircle(Vector3 offsetFromOrigin, float radius) =>
+            offsetFromOrigin.LengthSquared() <= radius * radius;
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {

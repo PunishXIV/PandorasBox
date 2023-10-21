@@ -3,7 +3,6 @@ using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
@@ -14,35 +13,39 @@ namespace PandorasBox.Features
     public unsafe class AutoPeloton : Feature
     {
         public override string Name => "Auto-Peloton";
-
         public override string Description => "Uses Peloton automatically outside of combat. (Physical Ranged only)";
-
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public override bool UseAutoConfig => false;
+        public Configs Config { get; private set; }
+        public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
+            [FeatureConfigOption("Set delay (seconds)", "", 1, FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
 
-            [FeatureConfigOption("Function only in a duty")]
+            [FeatureConfigOption("Function only in a duty", "", 2)]
             public bool OnlyInDuty = false;
 
-            [FeatureConfigOption("Use whilst walk status is toggled")]
+            [FeatureConfigOption("Use whilst walk status is toggled", "", 3)]
             public bool RPWalk = false;
 
-            [FeatureConfigOption("Exclude using in housing districts")]
+            [FeatureConfigOption("Exclude using in housing districts", "", 4)]
             public bool ExcludeHousing = false;
         }
-
-        public Configs Config { get; private set; }
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += RunFeature;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            Svc.Framework.Update -= RunFeature;
+            SaveConfig(Config);
+            base.Disable();
         }
 
         private void RunFeature(IFramework framework)
@@ -83,22 +86,5 @@ namespace PandorasBox.Features
                 am->UseAction(ActionType.Action, 7557);
             }
         }
-
-
-        public override void Disable()
-        {
-            Svc.Framework.Update -= RunFeature;
-            SaveConfig(Config);
-            base.Disable();
-        }
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
-        {
-            ImGui.PushItemWidth(300);
-            if (ImGui.SliderFloat("Set Delay (seconds)", ref Config.ThrottleF, 0.1f, 10f, "%.1f")) hasChanged = true;
-            if (ImGui.Checkbox("Function only in a duty", ref Config.OnlyInDuty)) hasChanged = true;
-            if (ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk)) hasChanged = true;
-            if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
-        };
     }
 }

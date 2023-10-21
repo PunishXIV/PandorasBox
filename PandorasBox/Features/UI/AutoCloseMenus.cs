@@ -1,4 +1,3 @@
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -13,7 +12,6 @@ namespace PandorasBox.Features.UI
     public unsafe class AutoCloseMenus : Feature
     {
         public override string Name => "Auto-Close Menus";
-
         public override string Description => "Automatically closes specific menus whenever they appear.";
 
         public override FeatureType FeatureType => FeatureType.UI;
@@ -43,6 +41,13 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            Svc.Framework.Update -= RunFeature;
+            base.Disable();
+        }
+
         private void RunFeature(IFramework framework)
         {
             if (Config.doEntrustDuplicates && TryGetAddonByName<AtkUnitBase>("RetainerItemTransferProgress", out var retainerProgress))
@@ -50,7 +55,7 @@ namespace PandorasBox.Features.UI
                 // Successfully entrusted items.
                 if (MemoryHelper.ReadSeStringNullTerminated(new nint(retainerProgress->AtkValues[0].String)).ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 13528).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Entrust Duplicates menu");
+                    Svc.Log.Info($"Closing {nameof(retainerProgress)}");
                     Callback.Fire(retainerProgress, true, -1);
                 }
             }
@@ -60,7 +65,7 @@ namespace PandorasBox.Features.UI
                 // Desynthesis successful
                 if (salvageResult->UldManager.NodeList[16]->GetAsAtkTextNode()->NodeText.ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1835).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Salvage Results menu");
+                    Svc.Log.Info($"Closing {nameof(salvageResult)}");
                     Callback.Fire(salvageResult, true, 1);
                 }
             }
@@ -70,7 +75,7 @@ namespace PandorasBox.Features.UI
                 // Desynthesis successful
                 if (salvageAutoResult->AtkValues[17].Byte == 0)
                 {
-                    PluginLog.Log("Closing Salvage Auto Results menu");
+                    Svc.Log.Info($"Closing {nameof(salvageAutoResult)}");
                     Callback.Fire(salvageAutoResult, true, 1);
                 }
             }
@@ -80,28 +85,21 @@ namespace PandorasBox.Features.UI
                 // Aetherial Reduction successful
                 if (purifyResult->UldManager.NodeList[17]->GetAsAtkTextNode()->NodeText.ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 2171).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Purify Results menu");
+                    Svc.Log.Info($"Closing {nameof(purifyResult)}");
                     Callback.Fire(purifyResult, true, -1);
                 }
             }
 
-            if (Config.doFullMail && TryGetAddonByName<AtkUnitBase>("SelectOk", out var okAddon))
+            if (Config.doFullMail && TryGetAddonByName<AtkUnitBase>("SelectOk", out var fullMailSelectOk))
             {
-                var addonText = MemoryHelper.ReadSeStringNullTerminated(new nint(okAddon->AtkValues[0].String)).ToString();
+                var addonText = MemoryHelper.ReadSeStringNullTerminated(new nint(fullMailSelectOk->AtkValues[0].String)).ToString();
 
                 if (addonText == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1856).Text.ExtractText() || addonText == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1857).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Full Mail menu");
-                    Callback.Fire(okAddon, true, 0);
+                    Svc.Log.Info($"Closing {nameof(fullMailSelectOk)}");
+                    Callback.Fire(fullMailSelectOk, true, 0);
                 }
             }
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
         }
     }
 }

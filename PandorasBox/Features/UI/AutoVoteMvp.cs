@@ -1,7 +1,6 @@
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Logging;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
@@ -21,18 +20,11 @@ namespace PandorasBox.Features.UI;
 public class AutoVoteMvp : Feature
 {
     public override string Name => "Auto-Commendation after Duty";
-
     public override string Description => "Automatically give a commendation to a random player in your party at the end of a duty.";
 
     public override FeatureType FeatureType => FeatureType.UI;
 
-    public override bool UseAutoConfig => false;
-
-    private List<string> PremadePartyID { get; set; } = new();
-
-    private List<uint> DeadPlayers { get; set; } = new();
-
-    private Dictionary<uint, int> DeathTracker { get; set; } = new();
+    public Configs Config { get; private set; }
 
     public class Configs : FeatureConfig
     {
@@ -47,7 +39,9 @@ public class AutoVoteMvp : Feature
         public bool ResetOnWipe = false;
     }
 
-    public Configs Config { get; private set; }
+    private List<string> PremadePartyID { get; set; } = new();
+    private List<uint> DeadPlayers { get; set; } = new();
+    private Dictionary<uint, int> DeathTracker { get; set; } = new();
 
     public override unsafe void Enable()
     {
@@ -63,6 +57,14 @@ public class AutoVoteMvp : Feature
         base.Enable();
     }
 
+    public override void Disable()
+    {
+        SaveConfig(Config);
+        Svc.Framework.Update -= FrameworkUpdate;
+        Svc.Condition.ConditionChange -= UpdatePartyCache;
+        base.Disable();
+    }
+
     private void UpdatePartyCache(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
     {
         if (Svc.Condition.Any())
@@ -71,14 +73,14 @@ public class AutoVoteMvp : Feature
             {
                 foreach (var partyMember in Svc.Party)
                 {
-                    PluginLog.Debug($"Adding {partyMember.Name.ExtractText()} {partyMember.ObjectId} to premade list");
+                    Svc.Log.Debug($"Adding {partyMember.Name.ExtractText()} {partyMember.ObjectId} to premade list");
                     PremadePartyID.Add(partyMember.Name.ExtractText());
                 }
 
                 var countRemaining =
                     Svc.Party.Where(i => i.ObjectId != Player.Object.ObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.ExtractText())).Count();
 
-                PluginLog.Debug($"Party has {countRemaining} available to commend.");
+                Svc.Log.Debug($"Party has {countRemaining} available to commend.");
             }
 
             if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty && !value)
@@ -86,14 +88,6 @@ public class AutoVoteMvp : Feature
                 PremadePartyID.Clear();
             }
         }
-    }
-
-    public override void Disable()
-    {
-        SaveConfig(Config);
-        Svc.Framework.Update -= FrameworkUpdate;
-        Svc.Condition.ConditionChange -= UpdatePartyCache;
-        base.Disable();
     }
 
     private unsafe void FrameworkUpdate(IFramework framework)
@@ -110,7 +104,7 @@ public class AutoVoteMvp : Feature
         }
         catch (Exception e)
         {
-            PluginLog.Error(e, "Failed to vote!");
+            Svc.Log.Error(e, "Failed to vote!");
         }
     }
 

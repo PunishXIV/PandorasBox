@@ -18,10 +18,33 @@ namespace PandorasBox.Features
     public unsafe partial class CoordsToMapLink : Feature
     {
         public override string Name => "Preserve Map Links in Clipboard";
-
         public override string Description => "Preserves the formatting for map links so they can be interacted with after pasting.";
-
         public override FeatureType FeatureType => FeatureType.ChatFeature;
+
+        public override void Enable()
+        {
+            parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 30 E8 ?? ?? ?? ?? 48 8B 44 24 30 80 38 00 0F 84", new(HandleParseMessageDetour));
+            parseMessageHook?.Enable();
+
+            foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
+            {
+                var name = territoryType.PlaceName.Value.Name.RawString;
+                if (name != "" && !maps.ContainsKey(name))
+                {
+                    maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
+                }
+            }
+
+            Svc.Chat.ChatMessage += HandleChatMessage;
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            parseMessageHook?.Dispose();
+            Svc.Chat.ChatMessage -= HandleChatMessage;
+            base.Disable();
+        }
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         private delegate nint ParseMessageDelegate(nint a, nint b);
@@ -48,10 +71,8 @@ namespace PandorasBox.Features
         private static partial Regex MapLinkRegex();
         private readonly Regex mapLinkPattern = MapLinkRegex();
 
-        private readonly FieldInfo territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly FieldInfo mapIdField = typeof(MapLinkPayload).GetField("mapId",
-            BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly FieldInfo territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly FieldInfo mapIdField = typeof(MapLinkPayload).GetField("mapId", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private readonly Dictionary<string, (uint, uint, int, int)> historyCoordinates = new();
 
@@ -194,51 +215,17 @@ namespace PandorasBox.Features
             var scaledPos = (((visibleCoordinate - 1.0f) * scale / 41.0f * 2048.0f) - 1024.0f) / scale;
             return (int)Math.Ceiling(scaledPos - offset) * 1000;
         }
-
-        public override void Enable()
-        {
-            parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 30 E8 ?? ?? ?? ?? 48 8B 44 24 30 80 38 00 0F 84", new(HandleParseMessageDetour));
-            parseMessageHook?.Enable();
-
-            foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
-            {
-                var name = territoryType.PlaceName.Value.Name.RawString;
-                if (name != "" && !maps.ContainsKey(name))
-                {
-                    maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
-                }
-            }
-
-            Svc.Chat.ChatMessage += HandleChatMessage;
-            base.Enable();
-        }
-
-        public override void Disable()
-        {
-            parseMessageHook?.Dispose();
-            Svc.Chat.ChatMessage -= HandleChatMessage;
-            base.Disable();
-        }
     }
 
-    public class PreMapLinkPayload : Payload
+    public class PreMapLinkPayload(uint territoryTypeId, uint mapId, int rawX, int rawY) : Payload
     {
         public override PayloadType Type => PayloadType.AutoTranslateText;
 
-        private readonly uint territoryTypeId;
-        private readonly uint mapId;
-        private readonly int rawX;
-        private readonly int rawY;
-        private readonly int rawZ;
-
-        public PreMapLinkPayload(uint territoryTypeId, uint mapId, int rawX, int rawY)
-        {
-            this.territoryTypeId = territoryTypeId;
-            this.mapId = mapId;
-            this.rawX = rawX;
-            this.rawY = rawY;
-            this.rawZ = -30000;
-        }
+        private readonly uint territoryTypeId = territoryTypeId;
+        private readonly uint mapId = mapId;
+        private readonly int rawX = rawX;
+        private readonly int rawY = rawY;
+        private readonly int rawZ = -30000;
 
         protected override byte[] EncodeImpl()
         {

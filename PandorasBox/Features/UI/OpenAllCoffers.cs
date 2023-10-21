@@ -17,7 +17,6 @@ namespace PandorasBox.Features.UI
     public class OpenAllCoffers : Feature
     {
         public override string Name => $@"Add ""Open All"" to Coffers";
-
         public override string Description => $@"Adds an ""Open All"" option to the right click menu of various items that stack and can be opened from the inventory.";
 
         public override FeatureType FeatureType => FeatureType.UI;
@@ -31,6 +30,13 @@ namespace PandorasBox.Features.UI
             contextMenu = new(Svc.PluginInterface);
             contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
             base.Enable();
+        }
+
+        public override void Disable()
+        {
+            contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
+            contextMenu?.Dispose();
+            base.Disable();
         }
 
         private void AddInventoryItem(InventoryContextMenuOpenArgs args)
@@ -100,27 +106,27 @@ namespace PandorasBox.Features.UI
                             var values = stackalloc AtkValue[5];
                             values[0] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = ValueType.Int,
                                 Int = 0
                             };
                             values[1] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = ValueType.Int,
                                 UInt = 0
                             };
                             values[2] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = ValueType.Int,
                                 Int = 0
                             };
                             values[3] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = ValueType.Int,
                                 Int = 0
                             };
                             values[4] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = ValueType.Int,
                                 UInt = 0
                             };
                             contextMenu->FireCallback(5, values, (void*)1);
@@ -137,13 +143,6 @@ namespace PandorasBox.Features.UI
             }
 
             return false;
-        }
-
-        public override void Disable()
-        {
-            contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
-            contextMenu?.Dispose();
-            base.Disable();
         }
     }
 }

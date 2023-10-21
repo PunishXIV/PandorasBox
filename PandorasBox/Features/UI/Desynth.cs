@@ -21,27 +21,10 @@ namespace PandorasBox.Features.UI
     public unsafe class Desynth : Feature
     {
         public override string Name => "Desynth All";
-
         public override string Description => "Adds a button to the desynthesis window to desynth all from the current dropdown. (Disclaimer: Pandora takes no responsibility for the loss of any Ultimate weapons or other rare items. Please use responsibly.)";
 
-        private delegate IntPtr UpdateItemDelegate(IntPtr a1, ulong index, IntPtr a3, ulong a4);
-        private delegate byte UpdateListDelegate(IntPtr a1, IntPtr a2, IntPtr a3);
-
-        private Hook<UpdateItemDelegate> updateItemHook;
-
-        private delegate void* SetupDropDownList(AtkComponentList* a1, ushort a2, byte** a3, byte a4);
-        private Hook<SetupDropDownList> setupDropDownList;
-
-        private delegate byte PopulateItemList(AgentSalvage* agentSalvage);
-
-        private Hook<PopulateItemList> populateHook;
-
-        private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private Overlays Overlay { get; set; }
-
-        private bool Desynthing { get; set; } = false;
         public override void Enable()
         {
             Overlay = new(this);
@@ -62,15 +45,33 @@ namespace PandorasBox.Features.UI
             base.Setup();
         }
 
-        private byte PopulateDetour(AgentSalvage* agentSalvage)
+        public override void Disable()
         {
-            return populateHook.Original(agentSalvage);
+            P.Ws.RemoveWindow(Overlay);
+            Overlay = null;
+            updateItemHook?.Dispose();
+            setupDropDownList?.Dispose();
+            populateHook?.Dispose();
+            base.Disable();
         }
 
-        private void* SetupDropDownListDetour(AtkComponentList* a1, ushort a2, byte** a3, byte a4)
-        {
-            return setupDropDownList.Original(a1, a2, a3, a4);
-        }
+        private delegate IntPtr UpdateItemDelegate(IntPtr a1, ulong index, IntPtr a3, ulong a4);
+        private delegate byte UpdateListDelegate(IntPtr a1, IntPtr a2, IntPtr a3);
+        private Hook<UpdateItemDelegate> updateItemHook;
+
+        private delegate void* SetupDropDownList(AtkComponentList* a1, ushort a2, byte** a3, byte a4);
+        private Hook<SetupDropDownList> setupDropDownList;
+
+        private delegate byte PopulateItemList(AgentSalvage* agentSalvage);
+        private Hook<PopulateItemList> populateHook;
+
+        private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
+        private Overlays Overlay { get; set; }
+        private bool Desynthing { get; set; } = false;
+
+        private byte PopulateDetour(AgentSalvage* agentSalvage) => populateHook.Original(agentSalvage);
+
+        private void* SetupDropDownListDetour(AtkComponentList* a1, ushort a2, byte** a3, byte a4) => setupDropDownList.Original(a1, a2, a3, a4);
 
 
         private nint UpdateItemDetour(nint a1, ulong index, nint a3, ulong a4)
@@ -216,16 +217,6 @@ namespace PandorasBox.Features.UI
             if (addon == null) return null;
             Callback.Fire(addon, false, 12, 0);
             return true;
-        }
-
-        public override void Disable()
-        {
-            P.Ws.RemoveWindow(Overlay);
-            Overlay = null;
-            updateItemHook?.Dispose();
-            setupDropDownList?.Dispose();
-            populateHook?.Dispose();
-            base.Disable();
         }
     }
 }

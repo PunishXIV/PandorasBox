@@ -7,7 +7,6 @@ namespace PandorasBox.Features.Commands
     {
         public override string Name => "Interact with Target";
         public override string Command { get; set; } = "/pinteract";
-
         public override string[] Alias => new string[] { "/pint" };
 
         public override string Description => "Interacts with your current target.";
