@@ -1,9 +1,9 @@
 // Credit entirely to Bluefissure: https://github.com/Bluefissure/NoKillPlugin
 
 using Dalamud.Hooking;
-using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
 using System;
@@ -32,6 +32,9 @@ namespace PandorasBox.Features.Other
 
             [FeatureConfigOption("Try to Close Error Automatically")]
             public bool CloseAutomatically = false;
+
+            [FeatureConfigOption("Try to Login After")]
+            public bool AttemptLogin = true;
         }
 
         public Configs Config { get; private set; }
@@ -49,6 +52,49 @@ namespace PandorasBox.Features.Other
         private Hook<LoginHandlerDelegate> loginHandlerHook;
         private Hook<LobbyErrorHandlerDelegate> lobbyErrorHandlerHook;
 
+        public override void Enable()
+        {
+            Config = LoadConfig<Configs>() ?? new Configs();
+            lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
+            try
+            {
+                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
+            }
+            catch (Exception)
+            {
+                StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
+            }
+            LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
+
+            lobbyErrorHandlerHook.Enable();
+
+            if (Config.AttemptLogin)
+            {
+                startHandlerHook = Svc.Hook.HookFromAddress(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
+                loginHandlerHook = Svc.Hook.HookFromAddress(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
+                startHandlerHook.Enable();
+                loginHandlerHook.Enable();
+            }
+
+            Svc.Framework.Update += CheckDialogue;
+
+            base.Enable();
+        }
+
+        public override void Disable()
+        {
+            SaveConfig(Config);
+            lobbyErrorHandlerHook?.Disable();
+            if (Config.AttemptLogin)
+            {
+                startHandlerHook?.Disable();
+                loginHandlerHook?.Disable();
+            }
+
+            Svc.Framework.Update -= CheckDialogue;
+
+            base.Disable();
+        }
 
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
         {
@@ -60,7 +106,7 @@ namespace PandorasBox.Features.Other
                 Marshal.WriteInt32(new IntPtr(a1 + 456), 0);
                 PluginLog.Log($"a1_456: {a1_456} => 0");
             }
-            return this.startHandlerHook.Original(a1, a2);
+            return startHandlerHook.Original(a1, a2);
         }
         private Int64 LoginHandlerDetour(Int64 a1, Int64 a2)
         {
@@ -71,7 +117,7 @@ namespace PandorasBox.Features.Other
                 Marshal.WriteByte(new IntPtr(a1 + 2165), 0);
                 PluginLog.Log($"a1_2165: {a1_2165} => 0");
             }
-            return this.loginHandlerHook.Original(a1, a2);
+            return loginHandlerHook.Original(a1, a2);
         }
 
         private char LobbyErrorHandlerDetour(Int64 a1, Int64 a2, Int64 a3)
@@ -97,32 +143,7 @@ namespace PandorasBox.Features.Other
             }
             PluginLog.Log($"After LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
 
-            return this.lobbyErrorHandlerHook.Original(a1, a2, a3);
-        }
-
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
-            try
-            {
-                this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
-            }
-            catch (Exception)
-            {
-                this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
-            }
-            this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
-            this.LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
-            this.loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
-
-            this.lobbyErrorHandlerHook.Enable();
-            this.startHandlerHook.Enable();
-            this.loginHandlerHook.Enable();
-
-            Svc.Framework.Update += CheckDialogue;
-
-            base.Enable();
+            return lobbyErrorHandlerHook.Original(a1, a2, a3);
         }
 
         private void CheckDialogue(IFramework framework)
@@ -136,17 +157,5 @@ namespace PandorasBox.Features.Other
                 WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.NumPad0);
             }
         }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            this.lobbyErrorHandlerHook?.Dispose();
-            this.startHandlerHook?.Dispose();
-            this.loginHandlerHook?.Dispose();
-            Svc.Framework.Update -= CheckDialogue;
-
-            base.Disable();
-        }
-
     }
 }
