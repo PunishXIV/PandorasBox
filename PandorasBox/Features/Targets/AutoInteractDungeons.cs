@@ -176,7 +176,6 @@ namespace PandorasBox.Features.Targets
                 Config.InteractMethod = 3;
                 hasChanged = true;
             }
-
         };
     }
 }
