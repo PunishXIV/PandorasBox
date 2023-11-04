@@ -72,6 +72,7 @@ public class PandorasBox : IDalamudPlugin
         foreach (var f in Features.Where(x => x is not null && x.Enabled))
         {
             f.Disable();
+            f.Dispose();
         }
 
         provider.UnloadFeatures();

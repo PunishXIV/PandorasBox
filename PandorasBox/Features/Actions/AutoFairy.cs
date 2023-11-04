@@ -1,7 +1,9 @@
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
+using System;
 
 namespace PandorasBox.Features.Actions
 {
@@ -18,8 +20,14 @@ namespace PandorasBox.Features.Actions
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
 
-            [FeatureConfigOption("Function only in a duty")]
-            public bool OnlyInDuty = false;
+            [FeatureConfigOption("Trigger at Duty Start")]
+            public bool DutyStart = false;
+
+            [FeatureConfigOption("Trigger on Respawn")]
+            public bool OnRespawn = false;
+
+            [FeatureConfigOption("Trigger on Job Change")]
+            public bool OnJobChange = true;
         }
 
         public Configs Config { get; private set; }
@@ -31,7 +39,20 @@ namespace PandorasBox.Features.Actions
             Config = LoadConfig<Configs>() ?? new Configs();
             OnJobChanged += RunFeature;
             Svc.Condition.ConditionChange += CheckIfRespawned;
+            Svc.ClientState.TerritoryChanged += CheckForDuty;
             base.Enable();
+        }
+
+        private void CheckForDuty(ushort obj)
+        {
+            if (!Config.DutyStart) return;
+
+            if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
+
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas]);
+            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
+            TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
+            TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
         }
 
         private void RunFeature(uint? jobId)
@@ -39,7 +60,6 @@ namespace PandorasBox.Features.Actions
             if (Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (jobId is 26 or 27 or 28)
             {
-                TaskManager.Abort();
                 TaskManager.DelayNext("Summoning", (int)(Config.ThrottleF * 1000));
                 TaskManager.Enqueue(() => TrySummon(jobId), 5000);
             }
@@ -47,6 +67,8 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfRespawned(ConditionFlag flag, bool value)
         {
+            if (!Config.OnRespawn) return;
+
             if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
@@ -60,7 +82,7 @@ namespace PandorasBox.Features.Actions
 
         public bool TrySummon(uint? jobId)
         {
-            if (Config.OnlyInDuty && !IsInDuty()) return true;
+            if (Svc.Buddies.PetBuddy != null) return true;
 
             var am = ActionManager.Instance();
             if (jobId is 26 or 27)

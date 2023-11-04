@@ -143,36 +143,6 @@ namespace PandorasBox.Features.UI
 
                 if (active && !projectActive) ImGui.EndDisabled();
 
-                //ImGui.SameLine();
-
-                //if (active && !partLoopActive) ImGui.BeginDisabled();
-
-                //if (ImGui.Button(!partLoopActive ? $"Part Loop Turn In###StartPartLooping" : $"Turning in... Click to Abort###AbortPartLoop"))
-                //{
-                //    if (!partLoopActive)
-                //    {
-                //        partLoopActive = true;
-                //        TaskManager.Enqueue(TurnInProject);
-                //        TaskManager.Enqueue(() => EndLoop("Finished Task"));
-                //    }
-                //    else
-                //    {
-                //        EndLoop("User cancelled");
-                //    }
-                //}
-
-                //if (active && !partLoopActive) ImGui.EndDisabled();
-
-                //ImGui.SameLine();
-
-                //if (active) ImGui.BeginDisabled();
-
-                //ImGui.PushItemWidth(225);
-                //if (ImGui.SliderInt("Parts to Build", ref Config.partsToBuild, 0, 100))
-                //    SaveConfig(Config);
-
-                //if (active) ImGui.EndDisabled();
-
                 active = phaseActive || projectActive || partLoopActive;
 
                 height = ImGui.GetWindowSize().Y;
@@ -210,6 +180,7 @@ namespace PandorasBox.Features.UI
                 FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", false);
 
             TaskManager.Abort();
+
             return true;
         }
 
@@ -281,7 +252,7 @@ namespace PandorasBox.Features.UI
                         FeatureHelper.GetConfig<AutoSelectTurnin>().ToggleConfig("AutoConfirm", false);
                 });
 
-                TaskManager.EnqueueImmediate(() => EndLoop("Phase Complete"));
+                if (phaseActive) TaskManager.EnqueueImmediate(() => EndLoop("Phase Complete"));
                 return true;
             }
             else

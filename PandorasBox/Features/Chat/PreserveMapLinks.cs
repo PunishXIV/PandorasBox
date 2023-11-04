@@ -215,9 +215,15 @@ namespace PandorasBox.Features
 
         public override void Disable()
         {
-            parseMessageHook?.Dispose();
+            parseMessageHook?.Disable();
             Svc.Chat.ChatMessage -= HandleChatMessage;
             base.Disable();
+        }
+
+        public override void Dispose()
+        {
+            parseMessageHook?.Dispose();
+            base.Dispose();
         }
     }
 

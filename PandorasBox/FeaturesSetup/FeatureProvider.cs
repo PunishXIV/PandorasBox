@@ -1,5 +1,4 @@
 using Dalamud.Logging;
-using ECommons.DalamudServices;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -32,9 +31,7 @@ namespace PandorasBox.Features
                     feature.Setup();
                     if ((feature.Ready && Config.EnabledFeatures.Contains(t.Name)) || feature.FeatureType == FeatureType.Commands)
                     {
-                        if (feature.FeatureType == FeatureType.Disabled)
-                            feature.Disable();
-                        else
+                        if (feature.FeatureType != FeatureType.Disabled)
                             feature.Enable();
                     }
 

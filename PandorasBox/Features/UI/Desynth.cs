@@ -222,10 +222,17 @@ namespace PandorasBox.Features.UI
         {
             P.Ws.RemoveWindow(Overlay);
             Overlay = null;
+            updateItemHook?.Disable();
+            setupDropDownList?.Disable();
+            populateHook?.Disable();
+            base.Disable();
+        }
+
+        public override void Dispose()
+        {
             updateItemHook?.Dispose();
             setupDropDownList?.Dispose();
             populateHook?.Dispose();
-            base.Disable();
         }
     }
 }

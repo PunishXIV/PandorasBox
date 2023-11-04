@@ -99,6 +99,7 @@ public class AutoVoteMvp : Feature
     private unsafe void FrameworkUpdate(IFramework framework)
     {
         if (Player.Object == null) return;
+        if (Svc.ClientState.IsPvP) return;
         CheckForDeadPartyMembers();
 
         var bannerWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("BannerMIP", 1);

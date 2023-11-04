@@ -64,9 +64,14 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            UseActionHook?.Dispose();
+            UseActionHook?.Disable();
             base.Disable();
         }
 
+        public override void Dispose()
+        {
+            UseActionHook?.Dispose();
+            base.Dispose();
+        }
     }
 }

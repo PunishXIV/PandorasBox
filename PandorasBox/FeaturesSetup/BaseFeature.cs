@@ -79,6 +79,7 @@ namespace PandorasBox.Features
         public virtual void Setup()
         {
             TaskManager.TimeoutSilently = true;
+            TaskManager.ShowDebug = false;
             Ready = true;
         }
 
@@ -527,9 +528,6 @@ namespace PandorasBox.Features
 
         internal static unsafe bool IsLoading() => (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeBack", out var fb) && fb->IsVisible) || (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var fm) && fm->IsVisible);
 
-        public bool IsInDuty() => Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty] ||
-                                Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty56] ||
-                                Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty95] ||
-                                Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundToDuty97];
+        public unsafe bool IsInDuty() => GameMain.Instance()->CurrentContentFinderConditionId > 0;
     }
 }

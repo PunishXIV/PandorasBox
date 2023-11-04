@@ -192,10 +192,15 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
-            contextMenu?.Dispose();
             SaveConfig(Config);
-            AgentFreeCompanyChest_MoveFCItem?.Dispose();
             base.Disable();
+        }
+
+        public override void Dispose()
+        {
+            contextMenu?.Dispose();
+            AgentFreeCompanyChest_MoveFCItem?.Dispose();
+            base.Dispose();
         }
     }
 }

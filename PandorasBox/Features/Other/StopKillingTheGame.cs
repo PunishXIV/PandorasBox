@@ -140,13 +140,20 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            this.lobbyErrorHandlerHook?.Dispose();
-            this.startHandlerHook?.Dispose();
-            this.loginHandlerHook?.Dispose();
+            this.lobbyErrorHandlerHook?.Disable();
+            this.startHandlerHook?.Disable();
+            this.loginHandlerHook?.Disable();
             Svc.Framework.Update -= CheckDialogue;
 
             base.Disable();
         }
 
+        public override void Dispose()
+        {
+            this.lobbyErrorHandlerHook?.Dispose();
+            this.startHandlerHook?.Dispose();
+            this.loginHandlerHook?.Dispose();
+            base.Dispose();
+        }
     }
 }

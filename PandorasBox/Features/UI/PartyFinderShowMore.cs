@@ -32,8 +32,14 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            partyFinderHook?.Dispose();
+            partyFinderHook?.Disable();
             base.Disable();
+        }
+
+        public override void Dispose()
+        {
+            partyFinderHook?.Dispose();
+            base.Dispose();
         }
     }
 }

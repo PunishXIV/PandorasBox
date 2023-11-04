@@ -996,8 +996,8 @@ namespace PandorasBox.Features.Other
         {
             P.Ws.RemoveWindow(Overlay);
             SaveConfig(Config);
-            gatherEventHook?.Dispose();
-            quickGatherToggle?.Dispose();
+            gatherEventHook?.Disable();
+            quickGatherToggle?.Disable();
             Common.OnAddonSetup -= CheckLastItem;
 
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
@@ -1012,6 +1012,13 @@ namespace PandorasBox.Features.Other
             Svc.Condition.ConditionChange -= ResetCounter;
 
             base.Disable();
+        }
+
+        public override void Dispose()
+        {
+            gatherEventHook?.Dispose();
+            quickGatherToggle?.Dispose();
+            base.Dispose();
         }
     }
 }
