@@ -6,6 +6,7 @@ using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
+using System.Windows.Forms.Design;
 
 namespace PandorasBox.Features.Other
 {
@@ -19,7 +20,7 @@ namespace PandorasBox.Features.Other
         private Hook<ControllerPoll>? gamepadPoll;
         private delegate int ControllerPoll(IntPtr controllerInput);
 
-        private long ThrottleTime = Environment.TickCount64;
+        private long ThrottleTime { get; set; } = Environment.TickCount64;
 
         public class Configs : FeatureConfig
         {
@@ -49,7 +50,7 @@ namespace PandorasBox.Features.Other
                 {
                     if (Config.ExcludedButtons.Contains(btn.Key))
                         continue;
-                    
+
                     if (Environment.TickCount64 >= ThrottleTime)
                     {
                         ThrottleTime = Environment.TickCount64 + Config.Throttle;
@@ -58,8 +59,7 @@ namespace PandorasBox.Features.Other
                 }
             }
 
-            gamepadInput = (IntPtr)input;
-            return gamepadPoll.Original(gamepadInput);
+            return gamepadPoll.Original((IntPtr)input);
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
