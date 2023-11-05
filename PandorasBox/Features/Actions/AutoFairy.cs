@@ -38,8 +38,8 @@ namespace PandorasBox.Features.Actions
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             OnJobChanged += RunFeature;
-            Svc.Condition.ConditionChange += CheckIfRespawned;
             Svc.ClientState.TerritoryChanged += CheckForDuty;
+            Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
         }
 
@@ -57,6 +57,8 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(uint? jobId)
         {
+            if (!Config.OnJobChange) return;
+
             if (Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (jobId is 26 or 27 or 28)
             {

@@ -17,8 +17,14 @@ namespace PandorasBox.Features.Actions
             [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300)]
             public float ThrottleF = 0.1f;
 
-            [FeatureConfigOption("Function only in a duty")]
-            public bool OnlyInDuty = false;
+            [FeatureConfigOption("Trigger at Duty Start")]
+            public bool DutyStart = false;
+
+            [FeatureConfigOption("Trigger on Respawn")]
+            public bool OnRespawn = false;
+
+            [FeatureConfigOption("Trigger on Job Change")]
+            public bool OnJobChange = true;
         }
 
         public Configs Config { get; private set; }
@@ -38,14 +44,20 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfDungeon(ushort e)
         {
+            if (!Config.DutyStart) return;
+
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
-            TaskManager.DelayNext("WaitForConditions", 2000);
-            TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted);
-            TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
+
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas]);
+            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
+            TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
+            TaskManager.Enqueue(() => TryDrawCard());
         }
 
         private void CheckIfRespawned(ConditionFlag flag, bool value)
         {
+            if (!Config.OnRespawn) return;
+
             if (flag == ConditionFlag.Unconscious && !value && !Svc.Condition[ConditionFlag.InCombat])
             {
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
@@ -53,14 +65,18 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
                 TaskManager.DelayNext("WaitForActionReady", 2500);
                 TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => DrawCard(Svc.ClientState.LocalPlayer?.ClassJob.Id));
+                TaskManager.Enqueue(() => TryDrawCard());
             }
         }
 
         private void DrawCard(uint? jobId)
         {
+            if (!Config.OnJobChange) return;
+
             if (jobId == 33)
             {
+                if (Svc.Gauges.Get<ASTGauge>().DrawnCard != Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE) return;
+
                 if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.UsingParasol]) return;
 
                 TaskManager.DelayNext("ASTCard", (int)(Config.ThrottleF * 1000));
@@ -70,8 +86,6 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryDrawCard()
         {
-            if (Config.OnlyInDuty && !IsInDuty()) return true;
-
             if (Svc.Gauges.Get<ASTGauge>().DrawnCard == Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE)
             {
                 var am = ActionManager.Instance();
