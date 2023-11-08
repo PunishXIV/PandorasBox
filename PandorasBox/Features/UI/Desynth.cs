@@ -144,9 +144,9 @@ namespace PandorasBox.Features.UI
                             if (ImGui.Button($"Desynth All"))
                             {
                                 Desynthing = true;
-                                TaskManager.Enqueue(() => YesAlready.DisableIfNeeded());
+                                TaskManager.Enqueue(() => YesAlready.Lock());
                                 TaskManager.Enqueue(() => TryDesynthAll());
-                                TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
+                                TaskManager.Enqueue(() => YesAlready.Unlock());
                             }
                         }
                         else
@@ -155,7 +155,7 @@ namespace PandorasBox.Features.UI
                             {
                                 Desynthing = false;
                                 TaskManager.Abort();
-                                TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
+                                TaskManager.Enqueue(() => YesAlready.Unlock());
                             }
                         }
                     }

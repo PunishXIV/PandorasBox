@@ -27,6 +27,8 @@ namespace PandorasBox.Features.Other
             public int Throttle = 250;
 
             public List<GamepadButtons> ExcludedButtons = new();
+
+            public bool CombatOnly = false;
         }
 
         public Configs Config { get; set; }
@@ -43,6 +45,9 @@ namespace PandorasBox.Features.Other
         private unsafe int GamepadPollDetour(IntPtr gamepadInput)
         {
             var input = (GamepadInput*)gamepadInput;
+
+            if (Config.CombatOnly && !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
+                return gamepadPoll.Original(gamepadInput);
 
             foreach (var btn in GamePad.ControllerButtons)
             {
@@ -65,6 +70,9 @@ namespace PandorasBox.Features.Other
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
         {
             if (ImGui.InputInt("Interval (ms)", ref Config.Throttle, 10, 50))
+                hasChanged = true;
+
+            if (ImGui.Checkbox("In Combat Only", ref Config.CombatOnly))
                 hasChanged = true;
 
             ImGui.Spacing();

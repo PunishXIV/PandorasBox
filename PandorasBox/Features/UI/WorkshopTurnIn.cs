@@ -171,7 +171,7 @@ namespace PandorasBox.Features.UI
             projectActive = false;
             partLoopActive = false;
 
-            YesAlready.EnableIfNeeded();
+            YesAlready.Unlock();
 
             if (needToDisableTurnIns)
                 FeatureHelper.DisableFeature<AutoSelectTurnin>();
@@ -186,7 +186,7 @@ namespace PandorasBox.Features.UI
 
         private bool TurnInPhase()
         {
-            YesAlready.DisableIfNeeded();
+            YesAlready.Lock();
             needToDisableConfig = false;
             needToDisableTurnIns = false;
 
@@ -211,7 +211,7 @@ namespace PandorasBox.Features.UI
                     MustEndLoop(Svc.ClientState.LocalPlayer.ClassJob.Id is < 8 or > 15, "Must be a DoH to turn-in items.") ||
                     MustEndLoop(requiredIngredients.All(x => x.AmountInInventory < x.AmountPerTurnIn), "No items to turn-in."))
                 {
-                    YesAlready.EnableIfNeeded();
+                    YesAlready.Unlock();
 
                     if (needToDisableTurnIns)
                         FeatureHelper.DisableFeature<AutoSelectTurnin>();
@@ -243,7 +243,7 @@ namespace PandorasBox.Features.UI
                 TaskManager.EnqueueImmediate(ConfirmSkip, 1000, $"{nameof(ConfirmSkip)}");
                 TaskManager.EnqueueImmediate(() =>
                 {
-                    YesAlready.EnableIfNeeded();
+                    YesAlready.Unlock();
 
                     if (needToDisableTurnIns)
                         FeatureHelper.DisableFeature<AutoSelectTurnin>();
@@ -257,7 +257,7 @@ namespace PandorasBox.Features.UI
             }
             else
             {
-                YesAlready.EnableIfNeeded();
+                YesAlready.Unlock();
                 return false;
             }
         }

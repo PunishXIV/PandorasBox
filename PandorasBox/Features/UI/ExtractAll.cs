@@ -83,7 +83,7 @@ namespace PandorasBox.Features.UI
                         {
                             Extracting = false;
                             TaskManager.Abort();
-                            TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
+                            TaskManager.Enqueue(() => YesAlready.Unlock());
                         }
                     }
 
@@ -168,7 +168,7 @@ namespace PandorasBox.Features.UI
             var spiritBondedItems6 = Array.Empty<InventoryItem>();
             var spiritBondedItems7 = Array.Empty<InventoryItem>();
 
-            TaskManager.Enqueue(() => YesAlready.DisableIfNeeded());
+            TaskManager.Enqueue(() => YesAlready.Lock());
             //Container 1
             foreach (var container in container1)
             {
@@ -346,7 +346,7 @@ namespace PandorasBox.Features.UI
                 }
             }
             TaskManager.Enqueue(() => { Extracting = false; return true; });
-            TaskManager.Enqueue(() => YesAlready.EnableIfNeeded());
+            TaskManager.Enqueue(() => YesAlready.Unlock());
         }
 
         public static unsafe void CloseMateriaMenu()

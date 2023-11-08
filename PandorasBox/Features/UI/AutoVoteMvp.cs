@@ -105,6 +105,8 @@ public class AutoVoteMvp : Feature
         var bannerWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("BannerMIP", 1);
         if (bannerWindow == null) return;
 
+        var agentBanner = AgentBannerMIP.Instance();
+
         try
         {
             VoteBanner(bannerWindow, ChoosePlayer());
