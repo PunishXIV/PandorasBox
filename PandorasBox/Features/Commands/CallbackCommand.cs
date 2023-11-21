@@ -1,4 +1,5 @@
 using ECommons.Automation;
+using ECommons.DalamudServices;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using System.Collections.Generic;
@@ -25,12 +26,12 @@ namespace PandorasBox.Features.Commands
         {
             if (!TryGetAddonByName<AtkUnitBase>(args[0], out var addonArg))
             {
-                PluginLog.Log($"Invalid addon {args[0]}. Please follow \"{Command} <addon> <bool> <atkValues>\"");
+                Svc.Log.Debug($"Invalid addon {args[0]}. Please follow \"{Command} <addon> <bool> <atkValues>\"");
                 return;
             }
             if (!bool.TryParse(args[1], out var boolArg))
             {
-                PluginLog.Log($"Invalid bool. Please follow \"{Command} <addon> <bool> <atkValues>\"");
+                Svc.Log.Debug($"Invalid bool. Please follow \"{Command} <addon> <bool> <atkValues>\"");
                 return;
             }
 
@@ -80,7 +81,7 @@ namespace PandorasBox.Features.Commands
 
             if (!string.IsNullOrEmpty(current))
             {
-                PluginLog.Log("Error: Unclosed quotes.");
+                Svc.Log.Debug("Error: Unclosed quotes.");
             }
 
             return valueArgs;

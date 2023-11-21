@@ -71,7 +71,7 @@ namespace PandorasBox.Features
                 {
                     if (payload is AutoTranslatePayload p && p.Encode()[3] == 0xC9 && p.Encode()[4] == 0x04)
                     {
-                        if (Pi.IsDebugging) PluginLog.Log($"<- {BitConverter.ToString(message)}");
+                        if (Pi.IsDebugging) Svc.Log.Debug($"<- {BitConverter.ToString(message)}");
                         return ret;
                     }
                 }
@@ -93,13 +93,13 @@ namespace PandorasBox.Features
                     if (historyCoordinates.TryGetValue(historyKey, out var history))
                     {
                         (territoryId, mapId, rawX, rawY) = history;
-                        PluginLog.Log($"recall {historyKey} => {history}");
+                        Svc.Log.Debug($"recall {historyKey} => {history}");
                     }
                     else
                     {
                         if (!maps.TryGetValue(mapName, out var mapInfo))
                         {
-                            PluginLog.Warning($"Can't find map {mapName}");
+                            Svc.Log.Warning($"Can't find map {mapName}");
                             continue;
                         }
                         (territoryId, mapId) = mapInfo;
@@ -112,7 +112,7 @@ namespace PandorasBox.Features
                         }
                         history = (territoryId, mapId, rawX, rawY);
                         historyCoordinates[historyKey] = history;
-                        PluginLog.Log($"generate {historyKey} => {history}");
+                        Svc.Log.Debug($"generate {historyKey} => {history}");
                     }
 
                     var newPayloads = new List<Payload>();
@@ -129,12 +129,12 @@ namespace PandorasBox.Features
                     parsed.Payloads.InsertRange(i, newPayloads);
 
                     var newMessage = parsed.Encode();
-                    if (Pi.IsDebugging) PluginLog.Log($"-> {BitConverter.ToString(newMessage)}");
+                    if (Pi.IsDebugging) Svc.Log.Debug($"-> {BitConverter.ToString(newMessage)}");
                     var messageCapacity = Marshal.ReadInt64(ret + 8);
                     if (newMessage.Length + 1 > messageCapacity)
                     {
                         // FIXME: should call std::string#resize(or maybe _Reallocate_grow_by) here, but haven't found the signature yet
-                        PluginLog.LogError($"Reached message capacity. Aborting conversion for {historyKey}");
+                        Svc.Log.Error($"Reached message capacity. Aborting conversion for {historyKey}");
                         return ret;
                     }
                     Marshal.WriteInt64(ret + 16, newMessage.Length + 1);
@@ -146,7 +146,7 @@ namespace PandorasBox.Features
             }
             catch (Exception ex)
             {
-                PluginLog.Error($"Exception on HandleParseMessageDetour. {ex}");
+                Svc.Log.Error($"Exception on HandleParseMessageDetour. {ex}");
             }
             return ret;
         }
@@ -175,14 +175,14 @@ namespace PandorasBox.Features
                     }
                     var history = (territoryId, mapId, payload.RawX, payload.RawY);
                     historyCoordinates[historyKey] = history;
-                    PluginLog.Log($"memorize {historyKey} => {history}");
-                    //PluginLog.Log(BitConverter.ToString(payload.Encode()));
-                    //PluginLog.Log(BitConverter.ToString(payload.Encode(true)));
+                    Svc.Log.Debug($"memorize {historyKey} => {history}");
+                    //Svc.Log.Log(BitConverter.ToString(payload.Encode()));
+                    //Svc.Log.Log(BitConverter.ToString(payload.Encode(true)));
                 }
             }
             catch (Exception ex)
             {
-                PluginLog.Debug($"Exception on HandleChatMessage. {ex}");
+                Svc.Log.Debug($"Exception on HandleChatMessage. {ex}");
             }
         }
 

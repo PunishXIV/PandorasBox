@@ -76,7 +76,7 @@ namespace PandorasBox.Features.UI
             else
             {
                 Callback.Fire(contextMenu, false, 0, 0, 1021003, 0, 0);
-                PluginLog.Debug($"Filled slot {i}");
+                Svc.Log.Debug($"Filled slot {i}");
                 SlotsFilled.Add(i);
                 return true;
             }

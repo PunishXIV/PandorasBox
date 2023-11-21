@@ -50,7 +50,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            OnJobChanged += RunFeature;
+            Events.OnJobChanged += RunFeature;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
             Svc.Framework.Update += CheckParty;
             Svc.Framework.Update += CheckForFateSync;
@@ -153,7 +153,7 @@ namespace PandorasBox.Features.Actions
         public override void Disable()
         {
             SaveConfig(Config);
-            OnJobChanged -= RunFeature;
+            Events.OnJobChanged -= RunFeature;
             Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
             Svc.Framework.Update -= CheckParty;
             Svc.Framework.Update -= CheckForFateSync;

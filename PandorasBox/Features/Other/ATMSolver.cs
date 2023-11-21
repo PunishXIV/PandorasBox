@@ -32,7 +32,7 @@ namespace PandorasBox.Features.Other
                 if (Environment.TickCount64 >= Throttler)
                 {
                     WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.A); //Mashes to try and resolve the QTE
-                    Throttler = Environment.TickCount64 + random.Next(50, 75);
+                    Throttler = Environment.TickCount64 + random.Next(25, 50);
                 }
             }
         }

@@ -1,5 +1,5 @@
 using ClickLib.Clicks;
-using Dalamud.Game;
+using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -42,24 +42,7 @@ namespace PandorasBox.Features
         public virtual string Key => GetType().Name;
 
         public abstract string Description { get; }
-
-        private uint? jobID = Svc.ClientState.LocalPlayer?.ClassJob.Id;
-        public uint? JobID
-        {
-            get => jobID;
-            set
-            {
-                if (value != null && jobID != value)
-                {
-                    jobID = value;
-                    OnJobChanged?.Invoke(value);
-                }
-            }
-        }
-
-        public delegate void OnJobChangeDelegate(uint? jobId);
-        public event OnJobChangeDelegate OnJobChanged;
-
+        
         public static readonly SeString PandoraPayload = new SeString(new UIForegroundPayload(32)).Append($"{SeIconChar.BoxedLetterP.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()}{SeIconChar.BoxedLetterN.ToIconString()}{SeIconChar.BoxedLetterD.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterR.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()} ").Append(new UIForegroundPayload(0));
         public virtual void Draw() { }
 
@@ -85,20 +68,12 @@ namespace PandorasBox.Features
 
         public virtual void Enable()
         {
-            PluginLog.Debug($"Enabling {Name}");
-            Svc.Framework.Update += CheckJob;
+            Svc.Log.Debug($"Enabling {Name}");
             Enabled = true;
-        }
-
-        private void CheckJob(IFramework framework)
-        {
-            if (Svc.ClientState.LocalPlayer is null) return;
-            JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
         }
 
         public virtual void Disable()
         {
-            Svc.Framework.Update -= CheckJob;
             Enabled = false;
         }
 
@@ -121,7 +96,7 @@ namespace PandorasBox.Features
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, $"Failed to load config for feature {Name}");
+                Svc.Log.Error(ex, $"Failed to load config for feature {Name}");
                 return default;
             }
         }
@@ -140,7 +115,7 @@ namespace PandorasBox.Features
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, $"Feature failed to write config {this.Name}");
+                Svc.Log.Error(ex, $"Feature failed to write config {this.Name}");
             }
         }
 
@@ -433,14 +408,14 @@ namespace PandorasBox.Features
                         var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText();
                         if (compare(text))
                         {
-                            PluginLog.Verbose($"SelectYesno {text} addon {i} by predicate");
+                            Svc.Log.Verbose($"SelectYesno {text} addon {i} by predicate");
                             return addon;
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    PluginLog.Error("", e);
+                    Svc.Log.Error("", e);
                     return null;
                 }
             }
@@ -461,14 +436,14 @@ namespace PandorasBox.Features
                         var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText().Replace(" ", "");
                         if (text.EqualsAny(s.Select(x => x.Replace(" ", ""))))
                         {
-                            PluginLog.Verbose($"SelectYesno {s.Print()} addon {i}");
+                            Svc.Log.Verbose($"SelectYesno {s.Print()} addon {i}");
                             return addon;
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    PluginLog.Error("", e);
+                    Svc.Log.Error("", e);
                     return null;
                 }
             }
@@ -491,7 +466,7 @@ namespace PandorasBox.Features
                     if (index >= 0 && IsSelectItemEnabled(addon, index) && (Throttler?.Invoke() ?? GenericThrottle))
                     {
                         ClickSelectString.Using((nint)addon).SelectItem((ushort)index);
-                        PluginLog.Debug($"TrySelectSpecificEntry: selecting {entry}/{index} as requested by {text.Print()}");
+                        Svc.Log.Debug($"TrySelectSpecificEntry: selecting {entry}/{index} as requested by {text.Print()}");
                         return true;
                     }
                 }

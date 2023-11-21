@@ -97,7 +97,7 @@ namespace PandorasBox.Features.UI
             }
             catch (Exception e)
             {
-                PluginLog.Debug(e, "ExtractAllException");
+                Svc.Log.Debug(e, "ExtractAllException");
             }
         }
 

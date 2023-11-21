@@ -54,22 +54,22 @@ namespace PandorasBox.Features.Other
         {
             var a1_88 = (UInt16)Marshal.ReadInt16(new IntPtr(a1 + 88));
             var a1_456 = Marshal.ReadInt32(new IntPtr(a1 + 456));
-            PluginLog.Log($"Start a1_456:{a1_456}");
+            Svc.Log.Debug($"Start a1_456:{a1_456}");
             if (a1_456 != 0 && Config.QueueMode)
             {
                 Marshal.WriteInt32(new IntPtr(a1 + 456), 0);
-                PluginLog.Log($"a1_456: {a1_456} => 0");
+                Svc.Log.Debug($"a1_456: {a1_456} => 0");
             }
             return this.startHandlerHook.Original(a1, a2);
         }
         private Int64 LoginHandlerDetour(Int64 a1, Int64 a2)
         {
             var a1_2165 = Marshal.ReadByte(new IntPtr(a1 + 2165));
-            PluginLog.Log($"Login a1_2165:{a1_2165}");
+            Svc.Log.Debug($"Login a1_2165:{a1_2165}");
             if (a1_2165 != 0 && Config.QueueMode)
             {
                 Marshal.WriteByte(new IntPtr(a1 + 2165), 0);
-                PluginLog.Log($"a1_2165: {a1_2165} => 0");
+                Svc.Log.Debug($"a1_2165: {a1_2165} => 0");
             }
             return this.loginHandlerHook.Original(a1, a2);
         }
@@ -80,12 +80,12 @@ namespace PandorasBox.Features.Other
             var t1 = Marshal.ReadByte(p3);
             var v4 = ((t1 & 0xF) > 0) ? (uint)Marshal.ReadInt32(p3 + 8) : 0;
             var v4_16 = (UInt16)(v4);
-            PluginLog.Log($"LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
+            Svc.Log.Debug($"LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
             if (v4 > 0)
             {
                 if (v4_16 == 0x332C && Config.SkipAuthError) // Auth failed
                 {
-                    PluginLog.Log($"Skip Auth Error");
+                    Svc.Log.Debug($"Skip Auth Error");
                 }
                 else
                 {
@@ -95,7 +95,7 @@ namespace PandorasBox.Features.Other
                     v4_16 = (UInt16)(v4);
                 }
             }
-            PluginLog.Log($"After LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
+            Svc.Log.Debug($"After LobbyErrorHandler a1:{a1} a2:{a2} a3:{a3} t1:{t1} v4:{v4_16}");
 
             return this.lobbyErrorHandlerHook.Original(a1, a2, a3);
         }

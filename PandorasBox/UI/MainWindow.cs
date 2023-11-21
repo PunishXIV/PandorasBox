@@ -303,6 +303,9 @@ internal class MainWindow : Window
 
         foreach (var feature in features)
         {
+            if (feature.Name == "Auto-Close Menus")
+                ImGui.BeginDisabled();
+
             var enabled = feature.Enabled;
             if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
             {
@@ -318,7 +321,7 @@ internal class MainWindow : Window
                     }
                     catch (Exception ex)
                     {
-                        PluginLog.Error(ex, $"Failed to enabled {feature.Name}");
+                        Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                     }
                 }
                 else
@@ -331,7 +334,7 @@ internal class MainWindow : Window
                     }
                     catch (Exception ex)
                     {
-                        PluginLog.Error(ex, $"Failed to enabled {feature.Name}");
+                        Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                     }
                 }
                 Config.Save();
@@ -342,6 +345,9 @@ internal class MainWindow : Window
             ImGui.TextWrapped($"{feature.Description}");
 
             ImGui.Separator();
+
+            if (feature.Name == "Auto-Close Menus")
+                ImGui.EndDisabled();
         }
     }
 }

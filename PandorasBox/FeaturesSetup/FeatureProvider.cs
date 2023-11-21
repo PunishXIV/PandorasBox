@@ -1,4 +1,5 @@
 using Dalamud.Logging;
+using ECommons.DalamudServices;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -39,7 +40,7 @@ namespace PandorasBox.Features
                 }
                 catch (Exception ex)
                 {
-                    PluginLog.Error(ex, $"Feature not loaded: {t.Name}");
+                    Svc.Log.Error(ex, $"Feature not loaded: {t.Name}");
                 }
             }
         }
@@ -56,7 +57,7 @@ namespace PandorasBox.Features
                     }
                     catch (Exception ex)
                     {
-                        PluginLog.Error(ex, $"Cannot disable {t.Name}");
+                        Svc.Log.Error(ex, $"Cannot disable {t.Name}");
                     }
                 }
             }

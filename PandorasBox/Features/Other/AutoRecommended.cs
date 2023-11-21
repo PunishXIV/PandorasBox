@@ -25,7 +25,7 @@ namespace PandorasBox.Features.Other
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            OnJobChanged += AutoEquip;
+            Events.OnJobChanged += AutoEquip;
             base.Enable();
         }
 
@@ -50,7 +50,7 @@ namespace PandorasBox.Features.Other
         public override void Disable()
         {
             SaveConfig(Config);
-            OnJobChanged -= AutoEquip;
+            Events.OnJobChanged -= AutoEquip;
             base.Disable();
         }
     }

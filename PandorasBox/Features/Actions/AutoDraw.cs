@@ -36,7 +36,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            OnJobChanged += DrawCard;
+            Events.OnJobChanged += DrawCard;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
             Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
@@ -99,7 +99,7 @@ namespace PandorasBox.Features.Actions
         public override void Disable()
         {
             SaveConfig(Config);
-            OnJobChanged -= DrawCard;
+            Events.OnJobChanged -= DrawCard;
             Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
             Svc.Condition.ConditionChange -= CheckIfRespawned;
             base.Disable();

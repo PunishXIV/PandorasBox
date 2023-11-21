@@ -71,14 +71,14 @@ public class AutoVoteMvp : Feature
             {
                 foreach (var partyMember in Svc.Party)
                 {
-                    PluginLog.Debug($"Adding {partyMember.Name.ExtractText()} {partyMember.ObjectId} to premade list");
+                    Svc.Log.Debug($"Adding {partyMember.Name.ExtractText()} {partyMember.ObjectId} to premade list");
                     PremadePartyID.Add(partyMember.Name.ExtractText());
                 }
 
                 var countRemaining =
                     Svc.Party.Where(i => i.ObjectId != Player.Object.ObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.ExtractText())).Count();
 
-                PluginLog.Debug($"Party has {countRemaining} available to commend.");
+                Svc.Log.Debug($"Party has {countRemaining} available to commend.");
             }
 
             if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty && !value)
@@ -113,7 +113,7 @@ public class AutoVoteMvp : Feature
         }
         catch (Exception e)
         {
-            PluginLog.Error(e, "Failed to vote!");
+            Svc.Log.Error(e, "Failed to vote!");
         }
     }
 

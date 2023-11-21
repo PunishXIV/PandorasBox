@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>1.5.3.0</Version>
+        <Version>1.5.3.2</Version>
     </PropertyGroup>
 
     <PropertyGroup>
@@ -21,7 +21,7 @@
         <PackageId>$(PluginName)</PackageId>
         <Product>$(PluginName)</Product>
         <RootNamespace>$(PluginName)</RootNamespace>
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
         <NoWarn>CS1591</NoWarn>
     </PropertyGroup>
 

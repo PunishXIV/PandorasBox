@@ -155,7 +155,7 @@ namespace PandorasBox.Features
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
             if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon) && addon->AtkUnitBase.IsVisible && addon->RepairAllButton->IsEnabled)
             {
-                PluginLog.Debug($"{addon->RepairAllButton->AtkComponentBase.OwnerNode is null}");
+                Svc.Log.Debug($"{addon->RepairAllButton->AtkComponentBase.OwnerNode is null}");
                 new ClickRepairFixed((IntPtr)addon).RepairAll();
 
                 return true;

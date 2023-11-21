@@ -28,6 +28,9 @@ namespace PandorasBox.Features.Actions
 
             [FeatureConfigOption("Use whilst in combat")]
             public bool UseInCombat = false;
+
+            [FeatureConfigOption("Prevent Use After 5 Minutes Idle")]
+            public bool AfkCheck = true;
         }
 
         private void RunFeature(IFramework framework)
@@ -35,6 +38,7 @@ namespace PandorasBox.Features.Actions
             if (!Svc.Condition[ConditionFlag.NormalConditions] || Svc.Condition[ConditionFlag.Casting] || IsMoving()) return;
             if (Svc.Condition[ConditionFlag.InCombat] && !Config.UseInCombat) return;
             if (Svc.Party.Length > 1 && !Config.UseInParty) return;
+            if (AFKTimer.Stopwatch.Elapsed.TotalMinutes >= 5 && Config.AfkCheck) return;
 
             var am = ActionManager.Instance();
             if (UIState.Instance()->Buddy.TimeLeft <= Config.RemainingTimeLimit)

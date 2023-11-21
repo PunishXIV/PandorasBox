@@ -66,7 +66,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            OnJobChanged += ActivateBuff;
+            Events.OnJobChanged += ActivateBuff;
             base.Enable();
         }
 

@@ -72,7 +72,7 @@ namespace PandorasBox.Features.ChatFeature
                     // coordY = ConvertRawPositionToMapCoordinate(mapLinkload.RawY, scale) - fudge;
                     coordX = mapLinkload.XCoord;
                     coordY = mapLinkload.YCoord;
-                    PluginLog.Log($"TerritoryId: {mapLinkload.TerritoryType.RowId} {mapLinkload.PlaceName} ({coordX} ,{coordY})");
+                    Svc.Log.Debug($"TerritoryId: {mapLinkload.TerritoryType.RowId} {mapLinkload.PlaceName} ({coordX} ,{coordY})");
                 }
             }
 
@@ -125,7 +125,7 @@ namespace PandorasBox.Features.ChatFeature
                     if (mapLink.RecordTime.Add(new TimeSpan(0, filterDupeTimeout, 0)) < DateTime.Now)
                         MapLinkMessageList.Remove(mapLink);
             }
-            catch (Exception ex) { PluginLog.Log($"{ex}"); }
+            catch (Exception ex) { Svc.Log.Debug($"{ex}"); }
         }
 
         public void TeleportToAetheryte(MapLinkMessage maplinkMessage)
@@ -133,12 +133,12 @@ namespace PandorasBox.Features.ChatFeature
             var aetheryteName = GetNearestAetheryte(maplinkMessage);
             if (aetheryteName != "")
             {
-                PluginLog.Log($"Teleporting to {aetheryteName}");
+                Svc.Log.Debug($"Teleporting to {aetheryteName}");
                 Svc.Commands.ProcessCommand($"/tp {aetheryteName}");
             }
             else
             {
-                PluginLog.Error($"Cannot find nearest aetheryte of {maplinkMessage.PlaceName}({maplinkMessage.X}, {maplinkMessage.Y}).");
+                Svc.Log.Error($"Cannot find nearest aetheryte of {maplinkMessage.PlaceName}({maplinkMessage.X}, {maplinkMessage.Y}).");
             }
         }
 
@@ -157,12 +157,12 @@ namespace PandorasBox.Features.ChatFeature
                     var mapMarker = AetherytesMap.FirstOrDefault(m => (m.DataType == 3 && m.DataKey == data.RowId));
                     if (mapMarker == null)
                     {
-                        PluginLog.Error($"Cannot find aetherytes position for {maplinkMessage.PlaceName}#{data.PlaceName.Value.Name}");
+                        Svc.Log.Error($"Cannot find aetherytes position for {maplinkMessage.PlaceName}#{data.PlaceName.Value.Name}");
                         continue;
                     }
                     var AethersX = ConvertMapMarkerToMapCoordinate(mapMarker.X, scale);
                     var AethersY = ConvertMapMarkerToMapCoordinate(mapMarker.Y, scale);
-                    PluginLog.Log($"Aetheryte: {data.PlaceName.Value.Name} ({AethersX} ,{AethersY})");
+                    Svc.Log.Debug($"Aetheryte: {data.PlaceName.Value.Name} ({AethersX} ,{AethersY})");
                     var temp_distance = Math.Pow(AethersX - maplinkMessage.X, 2) + Math.Pow(AethersY - maplinkMessage.Y, 2);
                     if (aetheryteName == "" || temp_distance < distance)
                     {

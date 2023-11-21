@@ -57,7 +57,7 @@ public static unsafe class Common
         }
         catch (Exception ex)
         {
-            PluginLog.Error(ex, "AddonSetupError");
+            Svc.Log.Error(ex, "AddonSetupError");
         }
         var retVal = AddonSetupHook.Original(addon);
         try
@@ -69,7 +69,7 @@ public static unsafe class Common
         }
         catch (Exception ex)
         {
-            PluginLog.Error(ex, "AddonSetupError2");
+            Svc.Log.Error(ex, "AddonSetupError2");
         }
 
         return retVal;
@@ -86,7 +86,7 @@ public static unsafe class Common
         }
         catch (Exception ex)
         {
-            PluginLog.Error(ex, "FinalizeAddonError");
+            Svc.Log.Error(ex, "FinalizeAddonError");
         }
         FinalizeAddonHook?.Original(unitManager, atkUnitBase);
     }

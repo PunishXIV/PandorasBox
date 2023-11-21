@@ -14,12 +14,12 @@ namespace PandorasBox.Features.UI
     {
         public override string Name => "Auto-Close Menus";
 
-        public override string Description => "Automatically closes specific menus whenever they appear.";
+        public override string Description => "This feature has been migrated to YesAlready found in our repo. This message will be removed in an upcoming version.";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
         public Configs Config { get; private set; }
-        public override bool UseAutoConfig => true;
+        public override bool UseAutoConfig => false;
 
         public class Configs : FeatureConfig
         {
@@ -38,8 +38,8 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
+            //Config = LoadConfig<Configs>() ?? new Configs();
+            //Svc.Framework.Update += RunFeature;
             base.Enable();
         }
 
@@ -50,7 +50,7 @@ namespace PandorasBox.Features.UI
                 // Successfully entrusted items.
                 if (MemoryHelper.ReadSeStringNullTerminated(new nint(retainerProgress->AtkValues[0].String)).ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 13528).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Entrust Duplicates menu");
+                    Svc.Log.Debug("Closing Entrust Duplicates menu");
                     Callback.Fire(retainerProgress, true, -1);
                 }
             }
@@ -60,7 +60,7 @@ namespace PandorasBox.Features.UI
                 // Desynthesis successful
                 if (salvageResult->UldManager.NodeList[16]->GetAsAtkTextNode()->NodeText.ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1835).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Salvage Results menu");
+                    Svc.Log.Debug("Closing Salvage Results menu");
                     Callback.Fire(salvageResult, true, 1);
                 }
             }
@@ -70,7 +70,7 @@ namespace PandorasBox.Features.UI
                 // Desynthesis successful
                 if (salvageAutoResult->AtkValues[17].Byte == 0)
                 {
-                    PluginLog.Log("Closing Salvage Auto Results menu");
+                    Svc.Log.Debug("Closing Salvage Auto Results menu");
                     Callback.Fire(salvageAutoResult, true, 1);
                 }
             }
@@ -80,7 +80,7 @@ namespace PandorasBox.Features.UI
                 // Aetherial Reduction successful
                 if (purifyResult->UldManager.NodeList[17]->GetAsAtkTextNode()->NodeText.ToString() == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 2171).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Purify Results menu");
+                    Svc.Log.Debug("Closing Purify Results menu");
                     Callback.Fire(purifyResult, true, -1);
                 }
             }
@@ -91,7 +91,7 @@ namespace PandorasBox.Features.UI
 
                 if (addonText == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1856).Text.ExtractText() || addonText == Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 1857).Text.ExtractText())
                 {
-                    PluginLog.Log("Closing Full Mail menu");
+                    Svc.Log.Debug("Closing Full Mail menu");
                     Callback.Fire(okAddon, true, 0);
                 }
             }
@@ -99,8 +99,8 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
+            //SaveConfig(Config);
+            //Svc.Framework.Update -= RunFeature;
             base.Disable();
         }
     }

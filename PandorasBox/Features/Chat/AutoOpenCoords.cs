@@ -13,6 +13,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using Dalamud.Hooking;
 using System.Diagnostics;
 using System.Reflection;
+using ECommons;
 
 namespace PandorasBox.Features.ChatFeature
 {
@@ -78,7 +79,7 @@ namespace PandorasBox.Features.ChatFeature
                     // coordY = ConvertRawPositionToMapCoordinate(mapLinkload.RawY, scale) - fudge;
                     coordX = mapLinkload.XCoord;
                     coordY = mapLinkload.YCoord;
-                    PluginLog.Log($"TerritoryId: {mapLinkload.TerritoryType.RowId} {mapLinkload.PlaceName} ({coordX} ,{coordY})");
+                    Svc.Log.Debug($"TerritoryId: {mapLinkload.TerritoryType.RowId} {mapLinkload.PlaceName} ({coordX} ,{coordY})");
                 }
             }
 
@@ -131,12 +132,12 @@ namespace PandorasBox.Features.ChatFeature
                     if (mapLink.RecordTime.Add(new TimeSpan(0, filterDupeTimeout, 0)) < DateTime.Now)
                         MapLinkMessageList.Remove(mapLink);
             }
-            catch (Exception ex) { PluginLog.Log($"{ex}");  }
+            catch (Exception ex) { ex.Log(); }
         }
 
         public unsafe void PlaceMapMarker(MapLinkMessage maplinkMessage)
         {
-            PluginLog.Log($"Viewing {maplinkMessage.Text}");
+            Svc.Log.Debug($"Viewing {maplinkMessage.Text}");
             var map = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(maplinkMessage.TerritoryId).Map;
             var maplink = new MapLinkPayload(maplinkMessage.TerritoryId, map.Row, maplinkMessage.X, maplinkMessage.Y);
 
@@ -245,7 +246,7 @@ namespace PandorasBox.Features.ChatFeature
         //internal void SetFlagMarker(AgentMap* agent, uint territoryId, uint mapId, float mapX, float mapY, uint iconId)
         internal void SetFlagMarker(AgentMap* agent, uint territoryId, uint mapId, float mapX, float mapY, uint iconId) => Safety.ExecuteSafe(() =>
         {
-            PluginLog.Debug($"SetFlagMarker : {mapX} {mapY}");
+            Svc.Log.Debug($"SetFlagMarker : {mapX} {mapY}");
 
             setFlagMarkerHook!.Original(agent, territoryId, mapId, mapX, mapY, iconId);
         }, "Exception during SetFlagMarker");
@@ -274,10 +275,10 @@ namespace PandorasBox.Features.ChatFeature
                     var callingClass = trace.GetMethod()?.DeclaringType;
                     var callingName = trace.GetMethod()?.Name;
 
-                    PluginLog.Error($"Exception Source: {callingAssembly} :: {callingClass} :: {callingName}");
+                    Svc.Log.Error($"Exception Source: {callingAssembly} :: {callingClass} :: {callingName}");
                 }
 
-                PluginLog.Error(exception, message ?? "Caught Exception Safely");
+                Svc.Log.Error(exception, message ?? "Caught Exception Safely");
             }
         }
     }

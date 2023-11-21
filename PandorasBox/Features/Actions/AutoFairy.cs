@@ -37,7 +37,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            OnJobChanged += RunFeature;
+            Events.OnJobChanged += RunFeature;
             Svc.ClientState.TerritoryChanged += CheckForDuty;
             Svc.Condition.ConditionChange += CheckIfRespawned;
             base.Enable();
@@ -105,7 +105,7 @@ namespace PandorasBox.Features.Actions
         public override void Disable()
         {
             SaveConfig(Config);
-            OnJobChanged -= RunFeature;
+            Events.OnJobChanged -= RunFeature;
             Svc.Condition.ConditionChange -= CheckIfRespawned;
             base.Disable();
         }

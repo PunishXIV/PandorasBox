@@ -103,7 +103,19 @@ namespace PandorasBox.Features.Other
             (12537, 286), // Titanium Ore             
             (12579, 356), // Birch Log                
             (12878, 297), // Cyclops Onion            
-            (12879, 298), // Emerald Beans            
+            (12879, 298), // Emerald Beans
+            (39806, 920), // Custom Ice Crystal
+            (39808, 930), // Custom Wind Crystal
+            (38791, 924), // Splendorous Water Shard
+            (38789, 926), // Splendorous Earth Shard
+            (38795, 923), // Adaptive Lightning Crystal
+            (38797, 925), // Adaptive Fire Crystal
+            (39812, 929), // Brilliant Lightning Cluster
+            (39814, 931), // Brilliant Earth Cluster
+            (41287, 938), // Inspirational Wind Cluster
+            (41289, 940), // Inspirational Fire Cluster
+            (41291, 939), // Nightforged Ice Cluster
+            (41293, 941), // Nightforged Water Cluster
         };
 
         public static readonly (uint MapId, uint[] NodeIds)[] Maps =
@@ -571,7 +583,6 @@ namespace PandorasBox.Features.Other
                     addon->GatheredItemId8
                     };
 
-                    PluginLog.Debug($"{string.Join(", ", ids)}");
                     if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
@@ -580,7 +591,6 @@ namespace PandorasBox.Features.Other
                     }
 
                     var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
-                    PluginLog.Debug($"{nodeHasCollectibles}");
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
                         Dictionary<int, int> boonChances = new();
@@ -603,6 +613,7 @@ namespace PandorasBox.Features.Other
                         boonChances.Add(6, n7b);
                         boonChances.Add(7, n8b);
 
+                        Svc.Log.Debug($"{NodeHasHiddenItems(ids)}");
                         if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck)
                         {
                             TaskManager.Enqueue(() => UseLuck(), "UseLuck");
@@ -701,9 +712,11 @@ namespace PandorasBox.Features.Other
                 if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
             }
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
-            var nodeId = Svc.ClientState.LocalPlayer.TargetObject?.DataId;
-            if (Items.Any(x => x.NodeId == nodeId)) return true;
-            if (Maps.Any(x => x.NodeIds.Any(y => y == nodeId))) return true;
+            var nodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
+            var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == nodeId).First().GatheringPointBase.Value;
+            Svc.Log.Debug($"{baseNode.RowId}");
+            if (Items.Any(x => x.NodeId == baseNode.RowId)) return true;
+            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode.RowId))) return true;
 
 
             return false;
@@ -876,7 +889,6 @@ namespace PandorasBox.Features.Other
             try
             {
                 SwingCount++;
-                PluginLog.Debug($"SWING {SwingCount}");
                 var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
                 var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
                 if (quickGathering)

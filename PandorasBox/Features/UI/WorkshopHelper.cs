@@ -226,7 +226,7 @@
 //                catch (Exception e)
 //                {
 //                    PrintModuleMessage("Failed to parse any items from clipboard. Refer to help icon for how to import.");
-//                    PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
+//                    Svc.Log.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
 //                }
 //            }
 
@@ -410,7 +410,7 @@
 //                if (IsInsufficientRank || ScheduleInProgress || SelectedIsRest || NoWorkshopsSelected || (BadFortune && !overrideExecutionDisable))
 //                    ImGui.EndDisabled();
 //            }
-//            catch (Exception e) { PluginLog.Log(e.ToString()); return; }
+//            catch (Exception e) { Svc.Log.Log(e.ToString()); return; }
 //        }
 
 //        private static void DrawWorkshopListBox(string text, List<Item> schedule)
@@ -527,7 +527,7 @@
 //                }
 //                if (!matchFound)
 //                {
-//                    PluginLog.Debug($"Failed to match string to craftable: {itemString}");
+//                    Svc.Log.Debug($"Failed to match string to craftable: {itemString}");
 //                    var invalidItem = new Item
 //                    {
 //                        Key = 0,
@@ -634,7 +634,7 @@
 //                var restDaysMask = restDays.Sum(n => (int)Math.Pow(2, n));
 //                Callback.Fire(schedulerWindow, false, 11, (uint)restDaysMask);
 
-//                PluginLog.Debug($"Setting Rest Days to {string.Join("", restDays)} => {restDaysMask}");
+//                Svc.Log.Debug($"Setting Rest Days to {string.Join("", restDays)} => {restDaysMask}");
 //                TaskManager.Enqueue(() => ConfirmYesNo());
 
 //                return true;
@@ -710,7 +710,7 @@
 //                        foreach (var item in PrimarySchedule)
 //                        {
 //                            ws = i;
-//                            TaskManager.EnqueueImmediate(() => PluginLog.Log($"{item.Name} : {item.UIIndex} : {hours}"));
+//                            TaskManager.EnqueueImmediate(() => Svc.Log.Log($"{item.Name} : {item.UIIndex} : {hours}"));
 //                            TaskManager.EnqueueImmediate(() => WaitForAddButton(ws), 200, $"{logPrefix}.{nameof(WaitForAddButton)}.{ws}");
 //                            TaskManager.EnqueueImmediate(() => OpenAgenda(ws, hours), $"{logPrefix}.{nameof(OpenAgenda)}.{ws}");
 //                            TaskManager.EnqueueImmediate(() => ScheduleItem(item), $"{logPrefix}.{nameof(ScheduleItem)}.{item.Name}");
@@ -755,7 +755,7 @@
 //            // Unable to set agenda. Insufficient time for handicraft production.
 //            if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 10146).Text.ExtractText())
 //            {
-//                PluginLog.Log("Detected error in scheduling. Aborting current workshop's queue.");
+//                Svc.Log.Log("Detected error in scheduling. Aborting current workshop's queue.");
 //                TaskManager.Abort();
 //                if (WorkshopsRemaining())
 //                {
@@ -801,7 +801,7 @@
 //                    }
 //                    catch (Exception e)
 //                    {
-//                        PluginLog.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
+//                        Svc.Log.Error($"Could not parse clipboard. Clipboard may be empty.\n{e}");
 //                    }
 //                }
 //            }, $"{nameof(OnWorkshopSetup)}");

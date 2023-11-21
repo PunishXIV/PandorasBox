@@ -43,11 +43,11 @@ namespace PandorasBox.Features.Commands
             nint scanText = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 43 0A");
             ExecuteCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
 
-            PluginLog.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
-            PluginLog.Information($"Resetting enmity {objectId}");
+            Svc.Log.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
+            Svc.Log.Information($"Resetting enmity {objectId}");
 
             long success = ExecuteCommand(0x13f, objectId, 0, 0, 0);
-            PluginLog.Debug($"Reset enmity of {objectId} returned: {success}");
+            Svc.Log.Debug($"Reset enmity of {objectId} returned: {success}");
         }
 
         private void ResetTarget()

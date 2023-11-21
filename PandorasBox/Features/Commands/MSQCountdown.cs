@@ -63,18 +63,18 @@ namespace PandorasBox.Features.Commands
             {
                 if (uim->IsUnlockLinkUnlockedOrQuestCompleted(quest.RowId, quest.ToDoCompleteSeq.Max()))
                 {
-                    PluginLog.Debug($"{quest.Name} - Completed!");
+                    Svc.Log.Debug($"{quest.Name} - Completed!");
                     completed++;
                 }
                 else
                 {
-                    PluginLog.Error($"{quest.Name} - Not Completed!");
+                    Svc.Log.Error($"{quest.Name} - Not Completed!");
                     uncompleted++;
                 }
 
             }
 
-            PluginLog.Error($"{uncompleted} quests not done, total MSQ is {totalMSQ}.");
+            Svc.Log.Error($"{uncompleted} quests not done, total MSQ is {totalMSQ}.");
             if (CurrentExpansion.RowId == 0)
             {
                 if (PlayerState.Instance()->StartTown != 1)
@@ -91,7 +91,7 @@ namespace PandorasBox.Features.Commands
 
             var diff = totalMSQ - completed;
 
-            PluginLog.Debug($"{diff} - {totalMSQ} {completed}");
+            Svc.Log.Debug($"{diff} - {totalMSQ} {completed}");
             if (diff > 0)
             {
                 if (Svc.Data.GetExcelSheet<ExVersion>().Max(x => x.RowId) == CurrentExpansion.RowId)

@@ -120,7 +120,7 @@ namespace PandorasBox.Features.Other
                         if (name == "IsSndSe")
                         {
                             var value = entry.Value.UInt;
-                            PluginLog.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
+                            Svc.Log.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
 
                             seEnabled = value == 0;
                         }
@@ -128,7 +128,7 @@ namespace PandorasBox.Features.Other
                         if (name == "IsSndMaster")
                         {
                             var value = entry.Value.UInt;
-                            PluginLog.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
+                            Svc.Log.Verbose($"[{Name}]: {name} - {entry.Type} - {value}");
 
                             masterEnabled = value == 0;
                         }
@@ -139,7 +139,7 @@ namespace PandorasBox.Features.Other
             }
             catch (Exception ex)
             {
-                PluginLog.Error(ex, $"[{Name}]: Error checking if sfx is enabled");
+                Svc.Log.Error(ex, $"[{Name}]: Error checking if sfx is enabled");
                 return true;
             }
         }
