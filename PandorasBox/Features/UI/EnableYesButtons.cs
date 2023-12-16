@@ -28,6 +28,7 @@ namespace PandorasBox.Features.UI
                     {
                         addon->YesButton->AtkComponentBase.SetEnabledState(true);
                         addon->AtkUnitBase.UldManager.NodeList[13]->ToggleVisibility(false);
+                        addon->AtkUnitBase.SetFocusNode(addon->YesButton->AtkComponentBase.AtkResNode);
                     }
                 }
             }
@@ -40,6 +41,7 @@ namespace PandorasBox.Features.UI
                     {
                         addon->DesynthesizeButton->AtkComponentBase.SetEnabledState(true);
                         addon->AtkUnitBase.UldManager.NodeList[5]->ToggleVisibility(false);
+                        addon->AtkUnitBase.SetFocusNode(addon->DesynthesizeButton->AtkComponentBase.AtkResNode);
                     }
                 }
             }

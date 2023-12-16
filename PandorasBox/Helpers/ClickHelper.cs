@@ -55,11 +55,15 @@ namespace PandorasBox.Helpers
         public static void ClickAddonButton(this AtkComponentButton target, AtkComponentBase* addon, uint which, EventType type = EventType.CHANGE, EventData? eventData = null)
             => ClickHelper.ClickAddonComponent(addon, target.AtkComponentBase.OwnerNode, which, type, eventData);
 
-
         public static void ClickRadioButton(this AtkComponentRadioButton target, AtkComponentBase* addon, uint which, EventType type = EventType.CHANGE)
             => ClickHelper.ClickAddonComponent(addon, target.AtkComponentBase.OwnerNode, which, type);
 
         public static void ClickAddonButton(this AtkComponentButton target, AtkUnitBase* addon, AtkEvent* eventData)
+        {
+            Helper.Listener.Invoke((nint)addon, eventData->Type, eventData->Param, eventData);
+        }
+
+        public static void ClickAddonButton(this AtkCollisionNode target, AtkUnitBase* addon, AtkEvent* eventData)
         {
             Helper.Listener.Invoke((nint)addon, eventData->Type, eventData->Param, eventData);
         }
@@ -72,6 +76,18 @@ namespace PandorasBox.Helpers
             addon->ReceiveEvent(evt->Type, (int)evt->Param, btnRes.AtkEventManager.Event);
 
         }
+        public static void ClickAddonButton(this AtkCollisionNode target, AtkUnitBase* addon)
+        {
+            var btnRes = target.AtkResNode;
+            var evt = btnRes.AtkEventManager.Event;
+
+            while (evt->Type != AtkEventType.MouseClick)
+                evt = evt->NextEvent;
+
+            addon->ReceiveEvent(evt->Type, (int)evt->Param, btnRes.AtkEventManager.Event);
+
+        }
+
 
         public static void ClickRadioButton(this AtkComponentRadioButton target, AtkUnitBase* addon)
         {

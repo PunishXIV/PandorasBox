@@ -17,25 +17,32 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private bool NeedsToUpdate = true;
         public override void Enable()
         {
             Svc.AddonLifeCycle.RegisterListener(AddonEvent.PreUpdate, ["SelectIconString", "SelectString"], AddonSetup);
             base.Enable();
         }
 
-        public static readonly (uint RelicQuestId, string RelicStep)[] SimpleRelics =
+        public static readonly (uint[] RelicQuestId, string RelicStep)[] SimpleRelics =
         {
-           (69381, "Step 1"),
-           (69506, "Step 2"),
-           (69507, "Step 3"),
-           (69574, "Step 4"),
-           (69576, "Step 5"),
-           (69637, "Step 6"),
-           (70189, "Step 1"),
-           (70262, "Step 2"),
-           (70308, "Step 3")
-
+           ([69381, 70189, 70267, 69429, 67748], "Step 1"),
+           ([69506, 70262, 70268, 69430, 67749], "Step 2"),
+           ([69507, 70308, 70304, 69519, 67750], "Step 3"),
+           ([69574, 70305, 67820], "Step 4"),
+           ([69576, 70339, 67864], "Step 5"),
+           ([69637, 70340, 67915], "Step 6"),
+           ([67932], "Step 7"),
+           ([67940], "Step 8"),
+           ([66655], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(22)!.Name),
+           ([66656], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(20)!.Name),
+           ([66657], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(21)!.Name),
+           ([66658], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(23)!.Name),
+           ([66659], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(26)!.Name),
+           ([66660], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(25)!.Name),
+           ([66661], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(24)!.Name),
+           ([66662], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(28)!.Name),
+           ([66663], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(29)!.Name),
+           ([67115], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(92)!.Name),
         };
 
         private unsafe void AddonSetup(AddonEvent type, AddonArgs args)
@@ -59,26 +66,6 @@ namespace PandorasBox.Features.UI
                         UpdateAddonText(buttonTextNode, out var questReplacedId);
                     }
 
-                    //if (NeedsToUpdate)
-                    //{
-                    //    var part3 = list->ItemRendererList[1];
-                    //    var part2 = list->ItemRendererList[2];
-                    //    list->ItemRendererList[1] = part2;
-                    //    list->ItemRendererList[2] = part3;
-
-                    //    part2.AtkComponentListItemRenderer->ListItemIndex = 1;
-                    //    part3.AtkComponentListItemRenderer->ListItemIndex = 2;
-
-                    //    var evt = part2.AtkComponentListItemRenderer->AtkComponentButton.AtkComponentBase.AtkResNode->AtkEventManager.Event;
-                    //    while (evt->Type != AtkEventType.ButtonClick)
-                    //        evt = evt->NextEvent;
-
-                    //    evt->Param = 1;
-                        
-
-                    //    NeedsToUpdate = false;
-                    //    return;
-                    //}
                 }
                 catch (Exception ex)
                 {
@@ -125,20 +112,17 @@ namespace PandorasBox.Features.UI
 
             foreach (var simpleRelic in SimpleRelics)
             {
-                var quest = Svc.Data.GetExcelSheet<Quest>().GetRow(simpleRelic.RelicQuestId);
-                if (text.Contains(quest.Name.RawString))
+                foreach (var questID in simpleRelic.RelicQuestId)
                 {
-                    text = $"{simpleRelic.RelicStep}: {quest.Name}";
-                    buttonTextNode->SetText(text);
+                    var quest = Svc.Data.GetExcelSheet<Quest>().GetRow(questID);
+                    if (text.Contains(quest.Name.RawString))
+                    {
+                        text = $"{simpleRelic.RelicStep}: {quest.Name}";
+                        buttonTextNode->SetText(text);
 
-                    questReplacedId = quest.RowId;
-
-                    if (questReplacedId == 70262)
-                        NeedsToUpdate = true;
-                    else
-                        NeedsToUpdate = false;
-
-                    return;
+                        questReplacedId = quest.RowId;
+                        return;
+                    }
                 }
             }
         }

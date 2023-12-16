@@ -7,7 +7,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using PandorasBox.Helpers;
 using static ECommons.GenericHelpers;
+using Dalamud.Game.Config;
+using System.Runtime.InteropServices;
 
 namespace PandorasBox.Features.Other
 {
@@ -25,15 +28,62 @@ namespace PandorasBox.Features.Other
             base.Enable();
         }
 
+        bool hasDirectChat = false;
+
         private unsafe void RunFeature(IFramework framework)
         {
             if (TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible)
             {
+                DisableDirectChatIfNeeded();
+
                 if (Environment.TickCount64 >= Throttler)
                 {
+                    if (ChatLogIsFocused())
+                        WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.Escape);
+
                     WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.A); //Mashes to try and resolve the QTE
                     Throttler = Environment.TickCount64 + random.Next(25, 50);
                 }
+            }
+            else
+            {
+                EnableDirectChatIfNeeded();
+            }
+        }
+
+        private unsafe bool ChatLogIsFocused()
+        {
+            var stage = AtkStage.GetSingleton();
+            var unitManagers = &stage->RaptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
+
+            foreach (var i in unitManagers->EntriesSpan)
+            {
+                if (i.Value != null)
+                {
+                    var addonName = Marshal.PtrToStringAnsi(new IntPtr(i.Value->Name));
+                    if (addonName == "ChatLog")
+                        return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void EnableDirectChatIfNeeded()
+        {
+            if (hasDirectChat)
+            {
+                Svc.GameConfig.UiControl.Set("DirectChat", true);
+                hasDirectChat = false;
+            }
+        }
+
+        private void DisableDirectChatIfNeeded()
+        {
+            if (Svc.GameConfig.UiControl.GetBool("DirectChat"))
+            {
+                Svc.GameConfig.UiControl.Set("DirectChat", false);
+                hasDirectChat = true;
             }
         }
 

@@ -11,6 +11,7 @@ using ECommons.DalamudServices;
 using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -156,6 +157,8 @@ namespace PandorasBox.Features.Other
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
         private string LocationEffect;
+
+        private bool HiddenRevealed = false;
 
         public class Configs : FeatureConfig
         {
@@ -613,14 +616,16 @@ namespace PandorasBox.Features.Other
                         boonChances.Add(6, n7b);
                         boonChances.Add(7, n8b);
 
-                        Svc.Log.Debug($"{NodeHasHiddenItems(ids)}");
-                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck)
+                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck && !HiddenRevealed)
                         {
                             TaskManager.Enqueue(() => UseLuck(), "UseLuck");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() => CheckLastItem(obj));
+                            HiddenRevealed = true;
                             return;
                         }
+
+                        HiddenRevealed = false;
 
                         if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && (boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                         {
@@ -710,6 +715,9 @@ namespace PandorasBox.Features.Other
             foreach (var id in ids.Where(x => x != 0))
             {
                 if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
+                if (Maps.Any(x => x.MapId == id)) return false;
+                if (Items.Any(x => x.ItemId == id)) return false;
+
             }
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
             var nodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
