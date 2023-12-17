@@ -48,7 +48,7 @@ namespace PandorasBox.Features
 
         public virtual bool Ready { get; protected set; }
 
-        public virtual FeatureType FeatureType { get; }
+        public abstract FeatureType FeatureType { get; }
 
         public void InterfaceSetup(PandorasBox plugin, DalamudPluginInterface pluginInterface, Configuration config, FeatureProvider fp)
         {
