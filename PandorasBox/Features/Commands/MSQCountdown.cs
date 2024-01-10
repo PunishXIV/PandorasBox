@@ -25,7 +25,6 @@ namespace PandorasBox.Features.Commands
                 debug = args[0];
             }
 
-
             var questsheet = Svc.Data.GetExcelSheet<Quest>();
             var uim = UIState.Instance();
 

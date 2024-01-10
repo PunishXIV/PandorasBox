@@ -162,6 +162,7 @@ namespace PandorasBox.Features.Other
             Svc.Framework.Update += RunFeature;
             TugType = new SeTugType(Svc.SigScanner);
             audioHandler = new(System.IO.Path.Combine(Pi.AssemblyLocation.Directory?.FullName!, "Sounds"));
+            audioHandler.Volume = Config.Volume / 100f;
             base.Enable();
         }
 

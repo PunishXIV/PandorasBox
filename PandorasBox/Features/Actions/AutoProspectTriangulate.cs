@@ -73,6 +73,7 @@ namespace PandorasBox.Features.Actions
         public override void Disable()
         {
             SaveConfig(Config);
+            Events.OnJobChanged -= ActivateBuff;
             base.Disable();
         }
     }

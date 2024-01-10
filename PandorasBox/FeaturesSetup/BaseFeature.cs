@@ -74,6 +74,7 @@ namespace PandorasBox.Features
 
         public virtual void Disable()
         {
+            TaskManager.Abort();
             Enabled = false;
         }
 

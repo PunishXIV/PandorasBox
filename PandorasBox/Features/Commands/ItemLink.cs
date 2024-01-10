@@ -13,8 +13,6 @@ namespace PandorasBox.Features.Commands
     {
         public override string Name => "Item Link";
         public override string Command { get; set; } = "/plink";
-        public override string[] Alias => new string[] { "" };
-
         public override List<string> Parameters => new() { "[<item name>], [<id>]" };
         public override string Description => "It's like the other item link commands, but allows searching.";
 
@@ -22,7 +20,6 @@ namespace PandorasBox.Features.Commands
 
         protected override void OnCommand(List<string> args)
         {
-
             var item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(0);
             var argName = string.Join(' ', args).Replace("\"", "");
 
