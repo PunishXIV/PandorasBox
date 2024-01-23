@@ -16,7 +16,7 @@ namespace PandorasBox.Features.ChatFeature
     {
         public override string Name => "Auto-Teleport to Map Coords";
 
-        public override string Description => "Automatically teleports to the nearest aetheryte to a map link posted in chat";
+        public override string Description => "Automatically teleports to the nearest aetheryte to a map link posted in chat. Requires Teleporter plugin.";
 
         public override FeatureType FeatureType => FeatureType.ChatFeature;
 
