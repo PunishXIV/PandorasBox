@@ -56,7 +56,7 @@ namespace PandorasBox.Features.Targets
             var player = Player.Object;
             var treasure = Svc.Objects.FirstOrDefault(o =>
             {
-                if (o == null) return false;
+                if (o == null || !o.IsTargetable) return false;
                 var dis = Vector3.Distance(player.Position, o.Position) - player.HitboxRadius - o.HitboxRadius;
                 if (dis > 0.5f) return false;
 
