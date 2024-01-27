@@ -1,19 +1,20 @@
+using Dalamud.Game.ClientState.Objects.Enums;
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
-using PandorasBox.Helpers;
 using System;
 using System.Linq;
+using System.Numerics;
 
 namespace PandorasBox.Features.Targets
 {
     public unsafe class AutoOpenChests : Feature
     {
-        private uint lastChestId = 0;
-
         public override string Name => "Automatically Open Chests";
 
         public override string Description => "Walk up to a chest to automatically open it.";
@@ -22,9 +23,6 @@ namespace PandorasBox.Features.Targets
 
         public class Configs : FeatureConfig
         {
-            [FeatureConfigOption("Set delay (seconds)", FloatMin = 0.1f, FloatMax = 10f, EditorSize = 300, EnforcedLimit = true)]
-            public float Throttle = 0.1f;
-
             [FeatureConfigOption("Immediately Close Loot Window After Opening", "", 1)]
             public bool CloseLootWindow = false;
 
@@ -43,71 +41,80 @@ namespace PandorasBox.Features.Targets
             base.Enable();
         }
 
+        private static DateTime NextOpenTime = DateTime.Now;
+        private static uint LastChestId = 0;
+
         private void RunFeature(IFramework framework)
         { 
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
-            {
-                TaskManager.Abort();
                 return;
-            }
 
             var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
             if (!Config.OpenInHighEndDuty && contentFinderInfo.HighEndDuty)
-            {
-                TaskManager.Abort();
                 return;
+
+            var player = Player.Object;
+            var treasure = Svc.Objects.FirstOrDefault(o =>
+            {
+                if (o == null) return false;
+                var dis = Vector3.Distance(player.Position, o.Position) - player.HitboxRadius - o.HitboxRadius;
+                if (dis > 0.5f) return false;
+
+                var address = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)o.Address;
+                if ((ObjectKind)address->ObjectKind != ObjectKind.Treasure) return false;
+
+                // Opened
+                foreach (var item in Loot.Instance()->ItemArraySpan)
+                    if (item.ChestObjectId == o.ObjectId) return false;
+
+                return true;
+            });
+
+            if (treasure == null) return;
+            if (DateTime.Now < NextOpenTime) return;
+            if (treasure.ObjectId == LastChestId && DateTime.Now - NextOpenTime < TimeSpan.FromSeconds(10)) return;
+
+            NextOpenTime = DateTime.Now.AddSeconds(new Random().NextDouble() + 0.2);
+            LastChestId = treasure.ObjectId;
+
+            try
+            {
+                Svc.Targets.Target = treasure;
+                TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)treasure.Address);
+            }
+            catch (Exception ex)
+            {
+                Svc.Log.Error(ex, "Failed to open the chest!");
             }
 
-            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.Treasure && GameObjectHelper.GetTargetDistance(x) <= 2 && GameObjectHelper.GetHeightDifference(x) < 1).ToList();
-            if (nearbyNodes.Count == 0)
-                return;
-
-            var nearestNode = nearbyNodes.OrderBy(GameObjectHelper.GetTargetDistance).First();
-            var baseObj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)nearestNode.Address;
-
-            if (!baseObj->GetIsTargetable())
-                return;
-
-            //Opened it.
-            if (lastChestId == nearestNode.ObjectId) return;
-
-            if (!TaskManager.IsBusy)
+            if (Config.CloseLootWindow)
             {
-                TaskManager.DelayNext("Chests", (int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() =>
-                {
-                    if (GameObjectHelper.GetTargetDistance(nearestNode) > 2) return true;
-                    TargetSystem.Instance()->InteractWithObject(baseObj, true);
-                    lastChestId = nearestNode.ObjectId;
-                    if (Config.CloseLootWindow)
-                    {
-                        TaskManager.DelayNextImmediate(100);
-                        TaskManager.EnqueueImmediate(() => CloseWindow(), 5000, false);
-                    }
-                    return true;
-                }, 10, true);
+                CloseWindowTime = DateTime.Now.AddSeconds(0.5);
+                CloseWindow();
             }
         }
 
-        private static unsafe bool? CloseWindow()
+        private static DateTime CloseWindowTime = DateTime.Now;
+        private static unsafe void CloseWindow()
         {
+            if (CloseWindowTime < DateTime.Now) return;
             if (Svc.GameGui.GetAddonByName("NeedGreed", 1) != IntPtr.Zero)
             {
                 var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1);
-                if (needGreedWindow == null) return false;
+                if (needGreedWindow == null) return;
 
                 if (needGreedWindow->IsVisible)
                 {
                     needGreedWindow->Close(true);
-                    return true;
+                    return;
                 }
             }
             else
             {
-                return false;
+                return;
             }
 
-            return false;
+            return;
         }
 
         public override void Disable()
