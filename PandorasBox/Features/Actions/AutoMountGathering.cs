@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using ECommons;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -28,6 +29,7 @@ namespace PandorasBox.Features.Actions
             public bool AbortIfMoving = false;
             public bool UseOnIsland = false;
             public bool JumpAfterMount = false;
+            public bool MoveAfterMount = false;
         }
 
         public Configs Config { get; private set; }
@@ -54,13 +56,24 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(TryMount, 3000);
                 TaskManager.Enqueue(() =>
                 {
-                    if (Config.JumpAfterMount)
+                    Svc.GameConfig.TryGet(Dalamud.Game.Config.UiControlOption.FlyingControlType, out uint type);
+                    if (Config.JumpAfterMount && Svc.ClientState.LocalPlayer!.ClassJob.Id != 18)
                     {
                         TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
                         TaskManager.DelayNext(50);
                         TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
-                        TaskManager.DelayNext(50);
-                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                        if (type == 1)
+                        {
+                            TaskManager.DelayNext(50);
+                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                        }
+                    }
+
+                    if (Config.MoveAfterMount)
+                    {
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.InFlight] || Svc.Condition[ConditionFlag.Diving], 2000);
+                        TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove on"); });
                     }
                 });
             }
@@ -130,7 +143,7 @@ namespace PandorasBox.Features.Actions
             if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
             if (ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland)) hasChanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
-
+            hasChanged |= ImGui.Checkbox("Start moving after mounting", ref Config.MoveAfterMount);
         };
     }
 }

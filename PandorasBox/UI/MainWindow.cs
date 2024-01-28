@@ -7,7 +7,9 @@ using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
 using PandorasBox.Features;
+using PandorasBox.Features.ChatFeature;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.IPC;
 using PunishLib.ImGuiMethods;
 using System;
 using System.Collections.Generic;
@@ -31,6 +33,7 @@ internal class MainWindow : Window
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
+        RespectCloseHotkey = false;
     }
 
     public static void Dispose()
@@ -303,7 +306,7 @@ internal class MainWindow : Window
 
         foreach (var feature in features)
         {
-            if (feature.Name == "Auto-Close Menus")
+            if (feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled())
                 ImGui.BeginDisabled();
 
             var enabled = feature.Enabled;
@@ -346,7 +349,7 @@ internal class MainWindow : Window
 
             ImGui.Separator();
 
-            if (feature.Name == "Auto-Close Menus")
+            if (feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled())
                 ImGui.EndDisabled();
         }
     }

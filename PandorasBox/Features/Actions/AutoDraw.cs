@@ -3,6 +3,7 @@ using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
+using System;
 
 namespace PandorasBox.Features.Actions
 {
@@ -25,6 +26,9 @@ namespace PandorasBox.Features.Actions
 
             [FeatureConfigOption("Trigger on Job Change")]
             public bool OnJobChange = true;
+
+            [FeatureConfigOption("Trigger out of combat")]
+            public bool OutOfCombat = false;
         }
 
         public Configs Config { get; private set; }
@@ -39,7 +43,25 @@ namespace PandorasBox.Features.Actions
             Events.OnJobChanged += DrawCard;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
             Svc.Condition.ConditionChange += CheckIfRespawned;
+            Svc.Framework.Update += CheckOutOfCombat;
             base.Enable();
+        }
+
+        private void CheckOutOfCombat(IFramework framework)
+        {
+            if (Config.OutOfCombat && !Svc.Condition[ConditionFlag.InCombat] && !TaskManager.IsBusy)
+            {
+                if (Svc.ClientState.LocalPlayer is null) return;
+                if (Svc.ClientState.LocalPlayer.ClassJob.Id != 33) return;
+                var am = ActionManager.Instance();
+                if (am->GetActionStatus(ActionType.Action, 3590) != 0) return;
+                if (Svc.Gauges.Get<ASTGauge>().DrawnCard != Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE) return;
+
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas]);
+                TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
+                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
+                TaskManager.Enqueue(() => TryDrawCard());
+            }
         }
 
         private void CheckIfDungeon(ushort e)
@@ -102,6 +124,7 @@ namespace PandorasBox.Features.Actions
             Events.OnJobChanged -= DrawCard;
             Svc.ClientState.TerritoryChanged -= CheckIfDungeon;
             Svc.Condition.ConditionChange -= CheckIfRespawned;
+            Svc.Framework.Update -= CheckOutOfCombat;
             base.Disable();
         }
     }

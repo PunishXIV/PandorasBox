@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
 using ECommons;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
@@ -137,18 +138,21 @@ namespace PandorasBox.Features.Targets
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }

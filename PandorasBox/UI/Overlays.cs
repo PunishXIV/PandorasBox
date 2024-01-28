@@ -1,6 +1,7 @@
 using Dalamud.Interface.Windowing;
 using ImGuiNET;
 using PandorasBox.Features;
+using System.Linq;
 
 namespace PandorasBox.UI
 {
@@ -19,6 +20,10 @@ namespace PandorasBox.UI
             {
                 MaximumSize = new System.Numerics.Vector2(0, 0),
             };
+            if (P.Ws.Windows.Any(x => x.WindowName == this.WindowName))
+            {
+                P.Ws.RemoveWindow(P.Ws.Windows.First(x => x.WindowName == this.WindowName));
+            }
             P.Ws.AddWindow(this);
         }
 

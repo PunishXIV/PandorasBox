@@ -9,6 +9,7 @@ using Lumina.Excel.GeneratedSheets;
 using Dalamud.Logging;
 using System.Collections.Generic;
 using ImGuiNET;
+using PandorasBox.IPC;
 
 namespace PandorasBox.Features.ChatFeature
 {
@@ -16,7 +17,7 @@ namespace PandorasBox.Features.ChatFeature
     {
         public override string Name => "Auto-Teleport to Map Coords";
 
-        public override string Description => "Automatically teleports to the nearest aetheryte to a map link posted in chat";
+        public override string Description => "Automatically teleports to the nearest aetheryte to a map link posted in chat. Requires \"Teleporter\" plugin installed.";
 
         public override FeatureType FeatureType => FeatureType.ChatFeature;
 
@@ -33,6 +34,9 @@ namespace PandorasBox.Features.ChatFeature
             public bool IgnorePOS = false;
 
             public List<ushort> FilteredChannels = new();
+
+            [FeatureConfigOption("Disable in same zone")]
+            public bool DisableSameZone = false;
         }
 
         public List<MapLinkMessage> MapLinkMessageList = new();
@@ -73,6 +77,7 @@ namespace PandorasBox.Features.ChatFeature
                     coordX = mapLinkload.XCoord;
                     coordY = mapLinkload.YCoord;
                     Svc.Log.Debug($"TerritoryId: {mapLinkload.TerritoryType.RowId} {mapLinkload.PlaceName} ({coordX} ,{coordY})");
+                    if (Config.DisableSameZone && maplinkPayload.TerritoryType.RowId == Svc.ClientState.TerritoryType) return;
                 }
             }
 
@@ -190,15 +195,22 @@ namespace PandorasBox.Features.ChatFeature
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
+            Svc.Framework.Update += CheckForTeleporter;
             Svc.Chat.ChatMessage += OnChatMessage;
             Aetherytes = Svc.Data.GetExcelSheet<Aetheryte>(Svc.ClientState.ClientLanguage);
             AetherytesMap = Svc.Data.GetExcelSheet<MapMarker>(Svc.ClientState.ClientLanguage);
             base.Enable();
         }
 
+        private void CheckForTeleporter(IFramework framework)
+        {
+            if (Svc.ClientState.IsLoggedIn && !TeleporterIPC.IsEnabled()) this.Disable();
+        }
+
         public override void Disable()
         {
             SaveConfig(Config);
+            Svc.Framework.Update -= CheckForTeleporter;
             Svc.Chat.ChatMessage -= OnChatMessage;
             base.Disable();
         }

@@ -45,7 +45,7 @@ namespace PandorasBox.Features.UI
             if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == itemId, out var sheetItem))
             {
                 if (sheetItem.StackSize <= 1) return null;
-                if (sheetItem.ItemAction.Row == 388 || sheetItem.ItemAction.Row == 367)
+                if (sheetItem.ItemAction.Row is 388 or 367 or 2462)
                     return new InventoryContextMenuItem(OpenString, _ => TaskManager.Enqueue(() => OpenItem(itemId), true), false);
             }
 

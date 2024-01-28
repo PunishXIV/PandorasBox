@@ -6,6 +6,7 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System.Linq;
 using System.Text.RegularExpressions;
 
@@ -34,6 +35,9 @@ namespace PandorasBox.Features
 
             [FeatureConfigOption("Exclude using in housing districts")]
             public bool ExcludeHousing = false;
+
+            [FeatureConfigOption("Abort pending Peloton use during countdown")]
+            public bool AbortCooldown = false;
         }
 
         public Configs Config { get; private set; }
@@ -54,6 +58,12 @@ namespace PandorasBox.Features
             if (Svc.ClientState.LocalPlayer is null) return;
             var r = new Regex("/hou/|/ind/");
             if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString) && Config.ExcludeHousing) return;
+
+            if (Config.AbortCooldown && Countdown.TimeRemaining() > 0)
+            {
+                TaskManager.Abort();
+                return;
+            }
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
@@ -99,6 +109,7 @@ namespace PandorasBox.Features
             if (ImGui.Checkbox("Function only in a duty", ref Config.OnlyInDuty)) hasChanged = true;
             if (ImGui.Checkbox("Use whilst walk status is toggled", ref Config.RPWalk)) hasChanged = true;
             if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
+            if (ImGui.Checkbox($"Abort pending Peloton use during countdown", ref Config.AbortCooldown)) hasChanged = true;
         };
     }
 }

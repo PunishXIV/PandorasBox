@@ -157,6 +157,7 @@ namespace PandorasBox.Features.Other
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
         private string LocationEffect;
+        private string LocationEffect2;
 
         private bool HiddenRevealed = false;
 

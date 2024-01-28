@@ -16,7 +16,7 @@ namespace PandorasBox.Features.UI
 
         public override string Description => "This feature has been migrated to YesAlready found in our repo. This message will be removed in an upcoming version.";
 
-        public override FeatureType FeatureType => FeatureType.UI;
+        public override FeatureType FeatureType => FeatureType.Disabled;
 
         public Configs Config { get; private set; }
         public override bool UseAutoConfig => false;

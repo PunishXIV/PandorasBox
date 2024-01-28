@@ -49,8 +49,8 @@ namespace PandorasBox.Features.Targets
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
                 return;
 
-            var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-            if (!Config.OpenInHighEndDuty && contentFinderInfo.HighEndDuty)
+            var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+            if (!Config.OpenInHighEndDuty && contentFinderInfo is not null && contentFinderInfo.HighEndDuty)
                 return;
 
             var player = Player.Object;
@@ -60,8 +60,9 @@ namespace PandorasBox.Features.Targets
                 var dis = Vector3.Distance(player.Position, o.Position) - player.HitboxRadius - o.HitboxRadius;
                 if (dis > 0.5f) return false;
 
-                var address = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)o.Address;
-                if ((ObjectKind)address->ObjectKind != ObjectKind.Treasure) return false;
+                var obj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)o.Address;
+                if (!obj->GetIsTargetable()) return false;
+                if ((ObjectKind)obj->ObjectKind != ObjectKind.Treasure) return false;
 
                 // Opened
                 foreach (var item in Loot.Instance()->ItemArraySpan)
