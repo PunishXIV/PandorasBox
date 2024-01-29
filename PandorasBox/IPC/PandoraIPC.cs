@@ -1,3 +1,4 @@
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Reflection;
 using PandorasBox.Features;
@@ -13,6 +14,7 @@ namespace PandorasBox.IPC
 {
     internal static class PandoraIPC
     {
+        private static TaskManager TM = new();
         internal static void Init()
         {
             Svc.PluginInterface.GetIpcProvider<string, bool?>("PandorasBox.GetFeatureEnabled").RegisterFunc(GetFeatureEnabled);
@@ -20,6 +22,8 @@ namespace PandorasBox.IPC
 
             Svc.PluginInterface.GetIpcProvider<string, string, bool?>("PandorasBox.GetConfigEnabled").RegisterFunc(GetConfigEnabled);
             Svc.PluginInterface.GetIpcProvider<string, string, bool, object>("PandorasBox.SetConfigEnabled").RegisterAction(SetConfigEnabled);
+
+            Svc.PluginInterface.GetIpcProvider<string, int, object>("PandorasBox.PauseFeature").RegisterAction(PauseFeature);
         }
 
         internal static void Dispose()
@@ -29,6 +33,8 @@ namespace PandorasBox.IPC
 
             Svc.PluginInterface.GetIpcProvider<string, string, bool?>("PandorasBox.GetConfigEnabled").UnregisterFunc();
             Svc.PluginInterface.GetIpcProvider<string, string, bool, object>("PandorasBox.SetConfigEnabled").UnregisterAction();
+
+            Svc.PluginInterface.GetIpcProvider<string, int, object>("PandorasBox.PauseFeature").UnregisterAction();
         }
 
         private static void SetConfigEnabled(string featureName, string configPropName, bool state)
@@ -98,5 +104,15 @@ namespace PandorasBox.IPC
             return null;
         }
 
+        private static void PauseFeature(string featureName, int pauseMS)
+        {
+            if (GetFeatureEnabled(featureName) == null) return;
+            if (GetFeatureEnabled(featureName)!.Value)
+            {
+                SetFeatureEnabled(featureName, false);
+                TM.DelayNext($"Pausing{featureName}", pauseMS);
+                TM.Enqueue(() => SetFeatureEnabled(featureName, true), $"Resuming{featureName}");
+            }
+        }
     }
 }
