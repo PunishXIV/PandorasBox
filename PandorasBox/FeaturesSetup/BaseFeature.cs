@@ -29,10 +29,10 @@ namespace PandorasBox.Features
 {
     public abstract class BaseFeature
     {
-        protected PandorasBox P;
-        protected DalamudPluginInterface Pi;
-        protected Configuration config;
-        protected TaskManager TaskManager;
+        protected PandorasBox? P;
+        protected DalamudPluginInterface? Pi;
+        protected Configuration? config;
+        protected TaskManager? TaskManager;
         public FeatureProvider Provider { get; private set; } = null!;
 
         public virtual bool Enabled { get; protected set; }
@@ -61,7 +61,7 @@ namespace PandorasBox.Features
 
         public virtual void Setup()
         {
-            TaskManager.TimeoutSilently = true;
+            TaskManager!.TimeoutSilently = true;
             TaskManager.ShowDebug = false;
             Ready = true;
         }
@@ -74,7 +74,7 @@ namespace PandorasBox.Features
 
         public virtual void Disable()
         {
-            TaskManager.Abort();
+            TaskManager!.Abort();
             Enabled = false;
         }
 
@@ -83,9 +83,9 @@ namespace PandorasBox.Features
             Ready = false;
         }
 
-        protected T LoadConfig<T>() where T : FeatureConfig => LoadConfig<T>(this.Key);
+        protected T? LoadConfig<T>() where T : FeatureConfig? => LoadConfig<T>(Key);
 
-        protected T LoadConfig<T>(string key) where T : FeatureConfig
+        protected T? LoadConfig<T>(string key) where T : FeatureConfig?
         {
             try
             {
@@ -102,9 +102,9 @@ namespace PandorasBox.Features
             }
         }
 
-        protected void SaveConfig<T>(T config) where T : FeatureConfig => SaveConfig<T>(config, this.Key);
+        protected void SaveConfig<T>(T config) where T : FeatureConfig? => SaveConfig(config, this.Key);
 
-        protected void SaveConfig<T>(T config, string key) where T : FeatureConfig
+        protected void SaveConfig<T>(T config, string key) where T : FeatureConfig?
         {
             try
             {
@@ -126,18 +126,20 @@ namespace PandorasBox.Features
             try
             {
                 // ReSharper disable once PossibleNullReferenceException
-                var configObj = this.GetType().GetProperties().FirstOrDefault(p => p.PropertyType.IsSubclassOf(typeof(FeatureConfig))).GetValue(this);
+                var configObj = this.GetType().GetProperties().FirstOrDefault(p => p.PropertyType.IsSubclassOf(typeof(FeatureConfig)))?.GetValue(this);
 
 
-                var fields = configObj.GetType().GetFields()
+                var fields = configObj?.GetType().GetFields()
                     .Where(f => f.GetCustomAttribute(typeof(FeatureConfigOptionAttribute)) != null)
-                    .Select(f => (f, (FeatureConfigOptionAttribute)f.GetCustomAttribute(typeof(FeatureConfigOptionAttribute))))
-                    .OrderBy(a => a.Item2.Priority).ThenBy(a => a.Item2.Name);
+                    .Select(f => (f, f.GetCustomAttribute(typeof(FeatureConfigOptionAttribute)) as FeatureConfigOptionAttribute))
+                    .OrderBy(a => a.Item2?.Priority).ThenBy(a => a.Item2?.Name);
+
+                if (fields is null) return;
 
                 var configOptionIndex = 0;
                 foreach (var (f, attr) in fields)
                 {
-                    if (attr.ConditionalDisplay)
+                    if (attr!.ConditionalDisplay)
                     {
                         var conditionalMethod = configObj.GetType().GetMethod($"ShouldShow{f.Name}", BindingFlags.Public | BindingFlags.Instance);
                         if (conditionalMethod != null)
@@ -298,7 +300,7 @@ namespace PandorasBox.Features
         }
 
         protected delegate void DrawConfigDelegate(ref bool hasChanged);
-        protected virtual DrawConfigDelegate DrawConfigTree => null;
+        protected virtual DrawConfigDelegate? DrawConfigTree => null;
 
         protected virtual void ConfigChanged()
         {
@@ -451,12 +453,12 @@ namespace PandorasBox.Features
             return null;
         }
 
-        internal static bool TrySelectSpecificEntry(string text, Func<bool> Throttler = null)
+        internal static bool TrySelectSpecificEntry(string text, Func<bool>? Throttler = null)
         {
             return TrySelectSpecificEntry(new string[] { text }, Throttler);
         }
 
-        internal static unsafe bool TrySelectSpecificEntry(IEnumerable<string> text, Func<bool> Throttler = null)
+        internal static unsafe bool TrySelectSpecificEntry(IEnumerable<string> text, Func<bool>? Throttler = null)
         {
             if (GenericHelpers.TryGetAddonByName<AddonSelectString>("SelectString", out var addon) && GenericHelpers.IsAddonReady(&addon->AtkUnitBase))
             {

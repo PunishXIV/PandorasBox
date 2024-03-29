@@ -29,8 +29,8 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Configs = LoadConfig<Config>() ?? new Config();
-            Svc.AddonLifeCycle.RegisterListener(AddonEvent.PostUpdate, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckNumerics);
-            Svc.AddonLifeCycle.RegisterListener(AddonEvent.PostSetup, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckThrottle);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckNumerics);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckThrottle);
             base.Enable();
         }
 
@@ -150,8 +150,8 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             SaveConfig(Configs);
-            Svc.AddonLifeCycle.UnregisterListener(CheckNumerics);
-            Svc.AddonLifeCycle.UnregisterListener(CheckThrottle);
+            Svc.AddonLifecycle.UnregisterListener(CheckNumerics);
+            Svc.AddonLifecycle.UnregisterListener(CheckThrottle);
             base.Disable();
         }
 

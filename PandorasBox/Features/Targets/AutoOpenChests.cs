@@ -54,6 +54,7 @@ namespace PandorasBox.Features.Targets
                 return;
 
             var player = Player.Object;
+            if (player == null) return; 
             var treasure = Svc.Objects.FirstOrDefault(o =>
             {
                 if (o == null) return false;

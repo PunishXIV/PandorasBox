@@ -17,7 +17,7 @@ namespace PandorasBox.Features.Other
             public bool UpdateGearset = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs? Config { get; private set; }
         public override FeatureType FeatureType => FeatureType.Other;
 
         public override bool UseAutoConfig => true;
@@ -35,11 +35,11 @@ namespace PandorasBox.Features.Other
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
             var mod = RecommendEquipModule.Instance();
             //TaskManager.Abort();
-            TaskManager.DelayNext("EquipMod", 500);
-            TaskManager.Enqueue(() => mod->SetupRecommendedGear(), 500);
+            TaskManager!.DelayNext("EquipMod", 500);
+            TaskManager.Enqueue(() => mod->SetupFromPlayerState(), 500);
             TaskManager.Enqueue(() => mod->EquipRecommendedGear(), 500);
 
-            if (Config.UpdateGearset)
+            if (Config!.UpdateGearset)
             {
                 var id = RaptureGearsetModule.Instance()->CurrentGearsetIndex;
                 TaskManager.DelayNext("UpdatingGS", 1000);

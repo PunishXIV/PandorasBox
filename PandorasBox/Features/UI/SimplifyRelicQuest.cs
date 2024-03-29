@@ -19,7 +19,7 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Svc.AddonLifeCycle.RegisterListener(AddonEvent.PreUpdate, ["SelectIconString", "SelectString"], AddonSetup);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreUpdate, ["SelectIconString", "SelectString"], AddonSetup);
             base.Enable();
         }
 
@@ -129,7 +129,7 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            Svc.AddonLifeCycle.UnregisterListener(AddonSetup);
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
             base.Disable();
         }
     }

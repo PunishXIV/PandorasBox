@@ -40,7 +40,7 @@ public class PandorasBox : IDalamudPlugin
 
     private void Initialize()
     {
-        ECommonsMain.Init(pi, P, ECommons.Module.DalamudReflector);
+        ECommonsMain.Init(pi, P, ECommons.Module.All);
         PunishLibMain.Init(pi, "Pandora's Box", new AboutPlugin() { Sponsor = "https://ko-fi.com/taurenkey" });
 
         Ws = new();

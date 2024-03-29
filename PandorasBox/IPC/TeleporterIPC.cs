@@ -12,7 +12,7 @@ namespace PandorasBox.IPC
     {
         public static bool IsEnabled()
         {
-            if (DalamudReflector.TryGetDalamudPlugin("Teleporter", out var plugin, true, true))
+            if (DalamudReflector.TryGetDalamudPlugin("TeleporterPlugin", out var plugin, true, true))
             {
                 return true;
             }

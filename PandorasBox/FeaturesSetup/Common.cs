@@ -20,19 +20,19 @@ public static unsafe class Common
     public delegate void NoReturnAddonOnUpdate(AtkUnitBase* atkUnitBase, NumberArrayData** numberArrayData, StringArrayData** stringArrayData);
 
     private delegate void* AddonSetupDelegate(AtkUnitBase* addon);
-    private static Hook<AddonSetupDelegate> AddonSetupHook;
+    private static Hook<AddonSetupDelegate>? AddonSetupHook;
 
     private delegate void FinalizeAddonDelegate(AtkUnitManager* unitManager, AtkUnitBase** atkUnitBase);
-    private static Hook<FinalizeAddonDelegate> FinalizeAddonHook;
+    private static Hook<FinalizeAddonDelegate>? FinalizeAddonHook;
 
     private static IntPtr LastCommandAddress;
 
     public static Utf8String* LastCommand { get; private set; }
     public static void* ThrowawayOut { get; private set; } = (void*)Marshal.AllocHGlobal(1024);
 
-    public static event Action<SetupAddonArgs> OnAddonSetup;
-    public static event Action<SetupAddonArgs> OnAddonPreSetup;
-    public static event Action<SetupAddonArgs> OnAddonFinalize;
+    public static event Action<SetupAddonArgs>? OnAddonSetup;
+    public static event Action<SetupAddonArgs>? OnAddonPreSetup;
+    public static event Action<SetupAddonArgs>? OnAddonFinalize;
 
     public static void Setup()
     {

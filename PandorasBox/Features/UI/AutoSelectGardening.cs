@@ -97,9 +97,15 @@ namespace PandorasBox.Features.UI
                                     ag->OpenForItemSlot(cont->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID());
                                     var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1);
                                     if (contextMenu == null) return;
-                                    Callback.Fire(contextMenu, true, 0, 0, 0, 0, 0);
-                                    Fertilized = true;
-                                    return;
+                                    for (int p = 0; p <= contextMenu->AtkValuesCount; p++)
+                                    {
+                                        if (ag->EventIdSpan[p] == 7)
+                                        {
+                                            Callback.Fire(contextMenu, true, 0, p - 7, 0, 0, 0);
+                                            Fertilized = true;
+                                            return;
+                                        }
+                                    }
                                 }
                             }
                         }

@@ -33,6 +33,9 @@ namespace PandorasBox.Features.UI
             if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
             {
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);
+                if (addon == null)
+                    return;
+
                 var node = addon->UldManager.NodeList[5];
 
                 if (node == null)

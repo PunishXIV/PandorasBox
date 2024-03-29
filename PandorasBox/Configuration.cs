@@ -15,7 +15,7 @@ namespace PandorasBox
         public bool DisabledTheme = false;
 
         [NonSerialized]
-        private DalamudPluginInterface pluginInterface;
+        private DalamudPluginInterface? pluginInterface;
 
         public void Initialize(DalamudPluginInterface pluginInterface)
         {

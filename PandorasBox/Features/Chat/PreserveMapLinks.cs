@@ -25,7 +25,7 @@ namespace PandorasBox.Features
 
         [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
         private delegate nint ParseMessageDelegate(nint a, nint b);
-        private Hook<ParseMessageDelegate> parseMessageHook;
+        private Hook<ParseMessageDelegate>? parseMessageHook;
 
         private readonly Dictionary<string, (uint, uint)> maps = new();
         private readonly Dictionary<string, string> unmaskedMapNames = new()
@@ -48,16 +48,14 @@ namespace PandorasBox.Features
         private static partial Regex MapLinkRegex();
         private readonly Regex mapLinkPattern = MapLinkRegex();
 
-        private readonly FieldInfo territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId",
-            BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly FieldInfo mapIdField = typeof(MapLinkPayload).GetField("mapId",
-            BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly FieldInfo? territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId", BindingFlags.NonPublic | BindingFlags.Instance);
+        private readonly FieldInfo? mapIdField = typeof(MapLinkPayload).GetField("mapId", BindingFlags.NonPublic | BindingFlags.Instance);
 
         private readonly Dictionary<string, (uint, uint, int, int)> historyCoordinates = new();
 
         private nint HandleParseMessageDetour(nint a, nint b)
         {
-            var ret = parseMessageHook.Original(a, b);
+            var ret = parseMessageHook!.Original(a, b);
             try
             {
                 var pMessage = Marshal.ReadIntPtr(ret);
@@ -71,7 +69,7 @@ namespace PandorasBox.Features
                 {
                     if (payload is AutoTranslatePayload p && p.Encode()[3] == 0xC9 && p.Encode()[4] == 0x04)
                     {
-                        if (Pi.IsDebugging) Svc.Log.Debug($"<- {BitConverter.ToString(message)}");
+                        if (Pi!.IsDebugging) Svc.Log.Debug($"<- {BitConverter.ToString(message)}");
                         return ret;
                     }
                 }
@@ -103,9 +101,9 @@ namespace PandorasBox.Features
                             continue;
                         }
                         (territoryId, mapId) = mapInfo;
-                        var map = Svc.Data.GetExcelSheet<Map>().GetRow(mapId);
-                        rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value), map.OffsetX, map.SizeFactor);
-                        rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value), map.OffsetY, map.SizeFactor);
+                        var map = Svc.Data.GetExcelSheet<Map>()!.GetRow(mapId);
+                        rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value), map!.OffsetX, map!.SizeFactor);
+                        rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value), map!.OffsetY, map!.SizeFactor);
                         if (match.Groups["instance"].Value != "")
                         {
                             mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;

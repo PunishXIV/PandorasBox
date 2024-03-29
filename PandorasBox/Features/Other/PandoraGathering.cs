@@ -219,8 +219,11 @@ namespace PandorasBox.Features.Other
             if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
             {
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
-                if (addon == null || !addon->IsVisible) return;
-
+                if (addon == null) return;
+                if (!addon->IsVisible) return;
+               
+                if (addon->UldManager.NodeListCount < 5 ) return;
+                if (addon->UldManager.NodeList[2] is null) return;
                 if (addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10] is null) return;
                 if (!addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10]->IsVisible) return;
 

@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
+using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using PandorasBox.FeaturesSetup;
@@ -42,7 +43,7 @@ namespace PandorasBox.Features.Actions
             public bool ActivateInFate = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs? Config { get; private set; }
 
         public override bool UseAutoConfig => true;
 
@@ -60,8 +61,7 @@ namespace PandorasBox.Features.Actions
         private void CheckParty(IFramework framework)
         {
             if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
-
-            if (Config.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer?.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
+            if (Config!.ActivateOnDeath && Svc.Party.Any(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer?.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
             {
                 MainTank = Svc.Party.First(x => x != null && x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).ObjectId;
             }
@@ -72,10 +72,10 @@ namespace PandorasBox.Features.Actions
 
             if (Svc.Party.Any(x => x.ObjectId == MainTank))
             {
-                if (MainTank != 0 && Svc.Party.First(x => x.ObjectId == MainTank).GameObject.IsDead && !Svc.ClientState.LocalPlayer.StatusList.Any(x => Stances.Any(y => x.StatusId == y)))
+                if (MainTank != 0 && Svc.Party.First(x => x.ObjectId == MainTank).GameObject!.IsDead && !Svc.ClientState.LocalPlayer.StatusList.Any(x => Stances.Any(y => x.StatusId == y)))
                 {
                     EnableStance();
-                    TaskManager.Enqueue(() => TaskManager.Abort());
+                    TaskManager!.Enqueue(() => TaskManager.Abort());
                 }
             }
         }
@@ -83,49 +83,47 @@ namespace PandorasBox.Features.Actions
         private void CheckIfDungeon(ushort e)
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
-            TaskManager.Enqueue(() => Svc.ClientState.LocalPlayer != null);
-            TaskManager.DelayNext("TankWaitForConditions", 2000);
-            TaskManager.Enqueue(() => Svc.DutyState.IsDutyStarted);
-            TaskManager.Enqueue(() => EnableStance(), "TankStanceDungeonEnabled");
+            TaskManager!.Enqueue(() => Svc.ClientState.LocalPlayer != null);
+            TaskManager!.DelayNext("TankWaitForConditions", 2000);
+            TaskManager!.Enqueue(() => Svc.DutyState.IsDutyStarted);
+            TaskManager!.Enqueue(() => EnableStance(), "TankStanceDungeonEnabled");
 
         }
 
         private void CheckForFateSync(IFramework framework)
         {
             var ps = PlayerState.Instance();
-            if (Config.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
+            if (Config!.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
             {
-                TaskManager.Enqueue(() => EnableStance());
+                TaskManager!.Enqueue(() => EnableStance());
             }
         }
 
         private void RunFeature(uint? jobId)
         {
-            if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role == 1)
-            {
-                EnableStance();
-            }
+            EnableStance();
         }
 
         private bool EnableStance()
         {
-            if (Svc.ClientState.LocalPlayer.ClassJob.GameData.Role != 1) return true;
-            if (Config.OnlyInDuty && !IsInDuty()) return true;
+            if (Svc.ClientState.LocalPlayer?.GetRole() is not CombatRole.Tank) return true;
+            if (Config!.OnlyInDuty && !IsInDuty()) return true;
 
             var am = ActionManager.Instance();
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
-            TaskManager.DelayNext("TankStance", (int)(Config.Throttle * 1000));
+            TaskManager!.DelayNext("TankStance", (int)(Config.Throttle * 1000));
             TaskManager.Enqueue(() =>
             {
                 if (Svc.Party.Length > Config.MaxParty) return true;
-                if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
+                if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer!.ObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
 
-                uint action = Svc.ClientState.LocalPlayer.ClassJob.Id switch
+                uint action = Svc.ClientState.LocalPlayer!.ClassJob.Id switch
                 {
                     1 or 19 => 28,
                     3 or 21 => 48,
                     32 => 3629,
-                    37 => 16142
+                    37 => 16142,
+                    _ => throw new System.NotImplementedException()
                 };
 
                 ushort stance = Svc.ClientState.LocalPlayer.ClassJob.Id switch
@@ -133,7 +131,8 @@ namespace PandorasBox.Features.Actions
                     1 or 19 => 79,
                     3 or 21 => 91,
                     32 => 743,
-                    37 => 1833
+                    37 => 1833,
+                    _ => throw new System.NotImplementedException()
                 };
 
                 if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == stance)) return true;
