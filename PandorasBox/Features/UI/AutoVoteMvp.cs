@@ -1,7 +1,6 @@
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons;
 using ECommons.DalamudServices;
@@ -12,7 +11,6 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
-using Reloaded.Memory;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -101,7 +99,7 @@ public class AutoVoteMvp : Feature
 
         var bannerWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("BannerMIP", 1);
         if (bannerWindow == null) return;
- 
+
         try
         {
             VoteBanner(bannerWindow, ChoosePlayer(bannerWindow));
@@ -167,7 +165,7 @@ public class AutoVoteMvp : Feature
             .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
             .ToList();
 
-        if (!list.Any()) throw new Exception("No party members, skipping commend.");
+        if (!list.Any()) return -1;
 
         if (Config.ExcludeDeaths)
         {
@@ -211,36 +209,36 @@ public class AutoVoteMvp : Feature
                 break;
         }
 
-        if (voteTarget.member == null) throw new Exception("No members! Can't vote!");
-
-        if (!Config.HideChat)
-        {
-            var payload = PandoraPayload.Payloads.ToList();
-            payload.AddRange(new List<Payload>()
-            {
-                new TextPayload("Commend given to "),
-                voteTarget.member.ClassJob.GameData!.Role switch
-                {
-                    1 => new IconPayload(BitmapFontIcon.Tank),
-                    4 => new IconPayload(BitmapFontIcon.Healer),
-                    _ => new IconPayload(BitmapFontIcon.DPS),
-                },
-                new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.GameData!.RowId),
-            });
-            Svc.Chat.Print(new SeString(payload));
-        }
+        if (voteTarget.member == null) return -1;
 
         for (int i = 22; i <= 22 + 7; i++)
         {
             var name = MemoryHelper.ReadSeStringNullTerminated(new nint(bannerWindow->AtkValues[i].String)).ToString();
             if (name == voteTarget.member.Name.TextValue)
             {
+                if (!Config.HideChat)
+                {
+                    var payload = PandoraPayload.Payloads.ToList();
+                    payload.AddRange(new List<Payload>()
+                    {
+                        new TextPayload("Commend given to "),
+                        voteTarget.member.ClassJob.GameData!.Role switch
+                        {
+                            1 => new IconPayload(BitmapFontIcon.Tank),
+                            4 => new IconPayload(BitmapFontIcon.Healer),
+                            _ => new IconPayload(BitmapFontIcon.DPS),
+                        },
+                        new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.GameData!.RowId),
+                    });
+                    Svc.Chat.Print(new SeString(payload));
+                }
+
                 Svc.Log.Debug($"Commed {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
                 return (int)bannerWindow->AtkValues[i - 14].UInt;
             }
         }
 
-        return voteTarget.index;
+        return -1;
     }
 
     private static unsafe int GetPartySlotIndex(uint objectId, AgentHUD* hud)
@@ -262,6 +260,7 @@ public class AutoVoteMvp : Feature
 
     private static unsafe void VoteBanner(AtkUnitBase* bannerWindow, int index)
     {
+        if (index == -1) return;
         var atkValues = (AtkValue*)Marshal.AllocHGlobal(2 * sizeof(AtkValue));
         atkValues[0].Type = atkValues[1].Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int;
         atkValues[0].Int = 12;

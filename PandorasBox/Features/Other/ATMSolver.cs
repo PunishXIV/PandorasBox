@@ -32,7 +32,7 @@ namespace PandorasBox.Features.Other
 
         private unsafe void RunFeature(IFramework framework)
         {
-            if (TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible)
+            if ((TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible) || TryGetAddonByName<AtkUnitBase>("QTE", 2, out var addon2) && addon2->IsVisible)
             {
                 DisableDirectChatIfNeeded();
 
