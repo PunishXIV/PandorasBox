@@ -28,11 +28,6 @@
           "NAudio.WinMM": "2.1.0"
         }
       },
-      "ILRepack": {
-        "type": "Transitive",
-        "resolved": "2.0.18",
-        "contentHash": "sR5Aj3JLDbA8JwESfWYfigSz5k1oNSHPN434W1LX8sboWJYEOSQP/KkvZGmJKPgajzSUKkl2jDar3LPZiMFU4Q=="
-      },
       "Microsoft.NETCore.Platforms": {
         "type": "Transitive",
         "resolved": "3.1.0",
@@ -116,7 +111,7 @@
       "clicklib": {
         "type": "Project",
         "dependencies": {
-          "ILRepack": "[2.0.18, )",
+          "ECommons": "[2.1.0.7, )",
           "Reloaded.Memory": "[7.1.0, )"
         }
       },
@@ -124,10 +119,7 @@
         "type": "Project"
       },
       "punishlib": {
-        "type": "Project",
-        "dependencies": {
-          "ECommons": "[2.1.0.7, )"
-        }
+        "type": "Project"
       }
     }
   }
