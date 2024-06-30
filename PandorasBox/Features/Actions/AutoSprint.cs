@@ -1,4 +1,3 @@
-using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -43,7 +42,7 @@ namespace PandorasBox.Features
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
-            if (!TerritoryInfo.Instance()->IsInSanctuary() || MJIManager.Instance()->IsPlayerInSanctuary == 1)
+            if (!TerritoryInfo.Instance()->InSanctuary || MJIManager.Instance()->IsPlayerInSanctuary == 1)
                 return;
 
             var r = new Regex("/hou/|/ind/");

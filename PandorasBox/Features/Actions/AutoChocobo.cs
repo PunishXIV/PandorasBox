@@ -41,10 +41,10 @@ namespace PandorasBox.Features.Actions
             if (AFKTimer.Stopwatch.Elapsed.TotalMinutes >= 5 && Config.AfkCheck) return;
 
             var am = ActionManager.Instance();
-            if (UIState.Instance()->Buddy.TimeLeft <= Config.RemainingTimeLimit)
+            if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft <= Config.RemainingTimeLimit)
             {
                 if (am->GetActionStatus(ActionType.Item, 4868) != 0) return;
-                am->UseAction(ActionType.Item, 4868, a4: 65535);
+                am->UseAction(ActionType.Item, 4868, extraParam: 65535);
             }
         }
 

@@ -3,7 +3,6 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 using Dalamud.Hooking;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.System.String;
@@ -36,14 +35,14 @@ public static unsafe class Common
 
     public static void Setup()
     {
-        LastCommandAddress = Svc.SigScanner.GetStaticAddressFromSig("4C 8D 05 ?? ?? ?? ?? 41 B1 01 49 8B D4 E8 ?? ?? ?? ?? 83 EB 06");
-        LastCommand = (Utf8String*)(LastCommandAddress);
+        //LastCommandAddress = Svc.SigScanner.GetStaticAddressFromSig("4C 8D 05 ?? ?? ?? ?? 41 B1 01 49 8B D4 E8 ?? ?? ?? ?? 83 EB 06");
+        //LastCommand = (Utf8String*)(LastCommandAddress);
 
-        AddonSetupHook = Svc.Hook.HookFromSignature<AddonSetupDelegate>("E8 ?? ?? ?? ?? 8B 83 ?? ?? ?? ?? C1 E8 14", AddonSetupDetour);
-        AddonSetupHook?.Enable();
+        //AddonSetupHook = Svc.Hook.HookFromSignature<AddonSetupDelegate>("E8 ?? ?? ?? ?? 41 B1 1E", AddonSetupDetour);
+        //AddonSetupHook?.Enable();
 
-        FinalizeAddonHook = Svc.Hook.HookFromSignature<FinalizeAddonDelegate>("E8 ?? ?? ?? ?? 48 8B 7C 24 ?? 41 8B C6", FinalizeAddonDetour);
-        FinalizeAddonHook?.Enable();
+        //FinalizeAddonHook = Svc.Hook.HookFromSignature<FinalizeAddonDelegate>("E8 ?? ?? ?? ?? 48 8B 7C 24 ?? 41 8B C6", FinalizeAddonDetour);
+        //FinalizeAddonHook?.Enable();
     }
 
     private static void* AddonSetupDetour(AtkUnitBase* addon)
@@ -166,14 +165,14 @@ public static unsafe class Common
     public const int UnitListCount = 18;
     public static AtkUnitBase* GetAddonByID(uint id)
     {
-        var unitManagers = &AtkStage.GetSingleton()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
+        var unitManagers = &AtkStage.Instance()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
         for (var i = 0; i < UnitListCount; i++)
         {
             var unitManager = &unitManagers[i];
-            foreach (var j in Enumerable.Range(0, Math.Min(unitManager->Count, unitManager->EntriesSpan.Length)))
+            foreach (var j in Enumerable.Range(0, Math.Min(unitManager->Count, unitManager->Entries.Length)))
             {
-                var unitBase = unitManager->EntriesSpan[j].Value;
-                if (unitBase != null && unitBase->ID == id)
+                var unitBase = unitManager->Entries[j].Value;
+                if (unitBase != null && unitBase->Id == id)
                 {
                     return unitBase;
                 }
@@ -188,5 +187,5 @@ public unsafe class SetupAddonArgs
 {
     public AtkUnitBase* Addon { get; init; }
     private string addonName;
-    public string AddonName => addonName ??= MemoryHelper.ReadString(new IntPtr(Addon->Name), 0x20).Split('\0')[0];
+    public string AddonName => addonName ??=Addon->NameString.Split('\0')[0];
 }

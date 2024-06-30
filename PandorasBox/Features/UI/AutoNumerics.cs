@@ -131,7 +131,7 @@ namespace PandorasBox.Features.UI
             if (minOrMax == -1)
             {
                 var currentAmt = numericTextNode->NodeText.ToString();
-                if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible)
+                if (int.TryParse(currentAmt, out var num) && num > 0 && !numericResNode->IsVisible())
                     TaskManager.Enqueue(() => Callback.Fire(numeric, true, int.Parse(currentAmt)));
             }
         }

@@ -112,7 +112,7 @@ namespace PandorasBox.Features.Targets
 
                         if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj) || !TargetSystem.Instance()->IsObjectOnScreen(baseObj)) return;
 
-                        TaskManager.DelayNext($"InteractDung{baseObj->DataID}", (int)(Config.ThrottleF * 1000));
+                        TaskManager.DelayNext($"InteractDung{baseObj->BaseId}", (int)(Config.ThrottleF * 1000));
                         TaskManager.Enqueue(() => TryInteract(baseObj));
                         return;
                     }
@@ -122,10 +122,10 @@ namespace PandorasBox.Features.Targets
                 {
                     var baseObj = (GameObject*)nearestNode.Address;
                     if (baseObj->RenderFlags != 0) continue;
-                    if (*baseObj->Name == 0) continue;
+                    if (string.IsNullOrEmpty(baseObj->NameString)) continue;
                     if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj)) continue;
 
-                    var sheetItem = Svc.Data.GetExcelSheet<EObj>().FirstOrDefault(x => x.RowId == baseObj->DataID);
+                    var sheetItem = Svc.Data.GetExcelSheet<EObj>().FirstOrDefault(x => x.RowId == baseObj->BaseId);
                     if (sheetItem != default)
                     {
                         if (sheetItem.SgbPath.Value != null)
@@ -138,7 +138,7 @@ namespace PandorasBox.Features.Targets
                     if (!TaskManager.IsBusy)
                     {
                         if (Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) continue;
-                        TaskManager.DelayNext($"InteractDung{baseObj->DataID}", (int)(Config.ThrottleF * 1000));
+                        TaskManager.DelayNext($"InteractDung{baseObj->BaseId}", (int)(Config.ThrottleF * 1000));
                         TaskManager.Enqueue(() => TryInteract(baseObj));
                     }
 

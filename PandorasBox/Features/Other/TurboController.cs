@@ -6,7 +6,6 @@ using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
-using System.Windows.Forms.Design;
 
 namespace PandorasBox.Features.Other
 {

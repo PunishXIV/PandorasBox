@@ -1,4 +1,3 @@
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons.Automation;
 using ECommons.DalamudServices;

@@ -6,7 +6,6 @@ using Dalamud.Game.Text;
 using System;
 using Dalamud.Game.Text.SeStringHandling;
 using Lumina.Excel.GeneratedSheets;
-using Dalamud.Logging;
 using System.Collections.Generic;
 using ImGuiNET;
 using PandorasBox.IPC;
@@ -57,7 +56,7 @@ namespace PandorasBox.Features.ChatFeature
             XivChatType.RetainerSale
         };
 
-        private void OnChatMessage(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+        private void OnChatMessage(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled)
         {
             var hasMapLink = false;
             float coordX = 0;

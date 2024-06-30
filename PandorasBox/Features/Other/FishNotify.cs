@@ -19,7 +19,6 @@
 using Dalamud.Game;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using ImGuiNET;
@@ -122,7 +121,7 @@ namespace PandorasBox.Features.Other
             try
             {
                 var framework = Framework.Instance();
-                var configBase = framework->SystemConfig.CommonSystemConfig.ConfigBase;
+                var configBase = framework->SystemConfig.SystemConfigBase.ConfigBase;
 
                 var seEnabled = false;
                 var masterEnabled = false;

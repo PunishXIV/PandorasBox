@@ -42,7 +42,7 @@ namespace PandorasBox.Features.Targets
         }
 
         private static DateTime NextOpenTime = DateTime.Now;
-        private static uint LastChestId = 0;
+        private static ulong LastChestId = 0;
 
         private void RunFeature(IFramework framework)
         { 
@@ -66,18 +66,18 @@ namespace PandorasBox.Features.Targets
                 if ((ObjectKind)obj->ObjectKind != ObjectKind.Treasure) return false;
 
                 // Opened
-                foreach (var item in Loot.Instance()->ItemArraySpan)
-                    if (item.ChestObjectId == o.ObjectId) return false;
+                foreach (var item in Loot.Instance()->Items)
+                    if (item.ChestObjectId == o.GameObjectId) return false;
 
                 return true;
             });
 
             if (treasure == null) return;
             if (DateTime.Now < NextOpenTime) return;
-            if (treasure.ObjectId == LastChestId && DateTime.Now - NextOpenTime < TimeSpan.FromSeconds(10)) return;
+            if (treasure.GameObjectId == LastChestId && DateTime.Now - NextOpenTime < TimeSpan.FromSeconds(10)) return;
 
             NextOpenTime = DateTime.Now.AddSeconds(new Random().NextDouble() + 0.2);
-            LastChestId = treasure.ObjectId;
+            LastChestId = treasure.GameObjectId;
 
             try
             {

@@ -44,7 +44,7 @@ namespace PandorasBox.Features.UI
                         Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
                         Int = 0
                     };
-                    obj.Addon->FireCallback(1, values, (void*)1);
+                    obj.Addon->FireCallback(1, values, true);
                 }
             }
         }

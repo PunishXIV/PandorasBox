@@ -1,14 +1,8 @@
 using ECommons.DalamudServices;
 using ECommons.GameFunctions;
-using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using ECommons.GameHelpers;
 using ECommons;
 
 namespace PandorasBox.Features.Targets
@@ -28,10 +22,10 @@ namespace PandorasBox.Features.Targets
         private unsafe void Framework_Update(IFramework framework)
         {
             var fate = FateManager.Instance();
-            if (fate != null && fate->CurrentFate != null && fate->SyncedFateId > 0)
+            if (fate != null && fate->CurrentFate != null && Svc.ClientState.LocalPlayer?.Level < fate->FateDirector->FateLevel + 6)
             {
                 var tar = Svc.Targets.Target;
-                if (tar == null || (tar.Struct()->FateId == 0 && tar.IsHostile()))
+                if (tar == null || tar.IsDead || (tar.Struct()->FateId == 0 && tar.IsHostile()))
                 {
                     if (Svc.Objects.OrderBy(x => x.GetTargetDistance()).TryGetFirst(x => x.Struct()->FateId == fate->CurrentFate->FateId && x.IsHostile(), out var newTar))
                     {

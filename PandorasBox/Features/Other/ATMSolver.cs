@@ -3,14 +3,7 @@ using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using PandorasBox.Helpers;
 using static ECommons.GenericHelpers;
-using Dalamud.Game.Config;
-using System.Runtime.InteropServices;
 
 namespace PandorasBox.Features.Other
 {
@@ -53,14 +46,14 @@ namespace PandorasBox.Features.Other
 
         private unsafe bool ChatLogIsFocused()
         {
-            var stage = AtkStage.GetSingleton();
+            var stage = AtkStage.Instance();
             var unitManagers = &stage->RaptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
 
-            foreach (var i in unitManagers->EntriesSpan)
+            foreach (var i in unitManagers->Entries)
             {
                 if (i.Value != null)
                 {
-                    var addonName = Marshal.PtrToStringAnsi(new IntPtr(i.Value->Name));
+                    var addonName = i.Value->NameString;
                     if (addonName == "ChatLog")
                         return true;
                 }

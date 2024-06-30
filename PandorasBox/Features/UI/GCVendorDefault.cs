@@ -1,13 +1,11 @@
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
-using PandorasBox.Helpers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using static ECommons.GenericHelpers;
+using ECommons.Automation.UIInput;
 
 namespace PandorasBox.Features.UI
 {

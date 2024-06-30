@@ -1,17 +1,12 @@
-using ClickLib.Bases;
-using ClickLib.Structures;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
-using Dalamud.Logging;
 using ECommons;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -23,8 +18,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using Action = Lumina.Excel.GeneratedSheets.Action;
+using ECommons.Automation.UIInput;
 
 namespace PandorasBox.Features.Other
 {
@@ -214,6 +209,11 @@ namespace PandorasBox.Features.Other
         private ulong lastGatheredIndex = 10;
         private uint lastGatheredItem = 0;
 
+        public override bool DrawConditions()
+        {
+            return Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
+        }
+
         public unsafe override void Draw()
         {
             if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
@@ -225,11 +225,11 @@ namespace PandorasBox.Features.Other
                 if (addon->UldManager.NodeListCount < 5 ) return;
                 if (addon->UldManager.NodeList[2] is null) return;
                 if (addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10] is null) return;
-                if (!addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10]->IsVisible) return;
+                if (!addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10]->IsVisible()) return;
 
                 var node = addon->UldManager.NodeList[10];
 
-                if (node->IsVisible)
+                if (node->IsVisible())
                     node->ToggleVisibility(false);
 
                 var position = AtkResNodeHelper.GetNodePosition(node);
@@ -278,7 +278,7 @@ namespace PandorasBox.Features.Other
                 ImGuiHelpers.ForceNextWindowMainViewport();
                 ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
                 ImGui.SetNextWindowSize(size);
-                ImGui.Begin($"###PandoraGathering{node->NodeID}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
+                ImGui.Begin($"###PandoraGathering{node->NodeId}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
                     | ImGuiWindowFlags.NoResize);
 
                 ImGui.Dummy(new Vector2(2f));
@@ -416,10 +416,10 @@ namespace PandorasBox.Features.Other
         {
             Overlay = new Overlays(this);
             Config = LoadConfig<Configs>() ?? new Configs();
-            gatherEventHook ??= Svc.Hook.HookFromSignature<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
-            gatherEventHook.Enable();
+            //gatherEventHook ??= Svc.Hook.HookFromSignature<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
+            //gatherEventHook.Enable();
 
-            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
+            //quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
 
             Common.OnAddonSetup += CheckLastItem;
             Svc.Condition.ConditionChange += ResetCounter;
@@ -680,19 +680,21 @@ namespace PandorasBox.Features.Other
                                 QuickGatherToggle(addon);
                             }
 
-                            var receiveEventAddress = new nint(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
-                            var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
-
-                            var target = AtkStage.GetSingleton();
-                            var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
-                            var inputData = InputData.Empty();
-
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                            TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)lastGatheredIndex, eventData.Data, inputData.Data));
+                            ClickGather(addon);
                         }
                     }
                 });
             }
+        }
+
+        private void ClickGather(AddonGathering* addon)
+        {
+            var target = AtkStage.Instance();
+            var eventData = ECommons.Automation.UIInput.EventData.ForNormalTarget(target, &addon->AtkUnitBase);
+            var inputData = ECommons.Automation.UIInput.InputData.Empty();
+
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+            TaskManager.Enqueue(() => ClickHelper.InvokeReceiveEvent(&addon->AtkUnitBase.AtkEventListener, EventType.CHANGE, (uint)lastGatheredIndex, eventData, inputData));
         }
 
         private void UseLuck()
@@ -724,8 +726,8 @@ namespace PandorasBox.Features.Other
 
             }
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
-            var nodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
-            var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == nodeId).First().GatheringPointBase.Value;
+            var NodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
+            var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
             Svc.Log.Debug($"{baseNode.RowId}");
             if (Items.Any(x => x.NodeId == baseNode.RowId)) return true;
             if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode.RowId))) return true;
@@ -950,20 +952,12 @@ namespace PandorasBox.Features.Other
 
                     if (item != 0)
                     {
-                        if ((Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
+                        if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
                         {
-                            var receiveEventAddress = new nint(addon->AtkUnitBase.AtkEventListener.vfunc[2]);
-                            var eventDelegate = Marshal.GetDelegateForFunctionPointer<ReceiveEventDelegate>(receiveEventAddress)!;
-
-                            var target = AtkStage.GetSingleton();
-                            var eventData = EventData.ForNormalTarget(target, &addon->AtkUnitBase);
-                            var inputData = InputData.Empty();
-
-
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() =>
                             {
-                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
+                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
                                 {
                                     TaskManager.EnqueueImmediate(() => UseIntegrityAction());
                                     TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
@@ -972,13 +966,13 @@ namespace PandorasBox.Features.Other
                             });
                             TaskManager.Enqueue(() =>
                             {
-                                if (Config.GP100Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
+                                if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
                                 {
                                     TaskManager.EnqueueImmediate(() => Use100GPSkill());
                                 }
                             });
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                            TaskManager.Enqueue(() => eventDelegate.Invoke(&addon->AtkUnitBase.AtkEventListener, ClickLib.Enums.EventType.CHANGE, (uint)index, eventData.Data, inputData.Data));
+
+                            ClickGather(addon);
                         }
                     }
 

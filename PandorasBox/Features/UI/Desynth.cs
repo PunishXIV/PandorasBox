@@ -84,9 +84,9 @@ namespace PandorasBox.Features.UI
                     return retval;
                 }
 
-                var salvageItem = addon->ItemsSpan[(int)index];
+                var salvageItem = addon->Items[(int)index];
                 var item = InventoryManager.Instance()->GetInventoryContainer(salvageItem.Inventory)->GetInventorySlot(salvageItem.Slot);
-                var itemData = Svc.Data.Excel.GetSheet<Item>().GetRow(item->ItemID);
+                var itemData = Svc.Data.Excel.GetSheet<Item>().GetRow(item->ItemId);
 
                 if (ListItems.ContainsKey(index))
                 {
@@ -100,6 +100,10 @@ namespace PandorasBox.Features.UI
             return retval;
         }
 
+        public override bool DrawConditions()
+        {
+            return Svc.GameGui.GetAddonByName("SalvageItemSelector", 1) != nint.Zero;
+        }
         public override void Draw()
         {
             try
@@ -130,7 +134,7 @@ namespace PandorasBox.Features.UI
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                    ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                    ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                         | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
                     if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted])

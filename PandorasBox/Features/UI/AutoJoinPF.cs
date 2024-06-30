@@ -1,6 +1,6 @@
-using ClickLib.Clicks;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
@@ -42,7 +42,7 @@ namespace PandorasBox.Features.UI
         private bool IsPrivatePF(AddonLookingForGroupDetail* addon)
         {
             // 111 is the lock icon
-            return addon->AtkUnitBase.UldManager.NodeList[111]->IsVisible;
+            return addon->AtkUnitBase.UldManager.NodeList[111]->IsVisible();
         }
 
         private bool IsSelfParty(AddonLookingForGroupDetail* addon)
@@ -59,9 +59,9 @@ namespace PandorasBox.Features.UI
                 r->AtkUnitBase.IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
             {
-                new ClickSelectYesNo((IntPtr)addon).Yes();
+                new SelectYesnoMaster((IntPtr)addon).Yes();
                 return true;
             }
 

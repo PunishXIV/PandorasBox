@@ -2,7 +2,7 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
 using ECommons;
-using ECommons.Automation;
+using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
 using PandorasBox.Features;
 using PandorasBox.FeaturesSetup;
@@ -23,7 +23,7 @@ public class PandorasBox : IDalamudPlugin
     internal MainWindow MainWindow;
 
     internal static PandorasBox P;
-    internal static DalamudPluginInterface pi;
+    internal static IDalamudPluginInterface pi;
     internal static Configuration Config;
 
     public List<FeatureProvider> FeatureProviders = new();
@@ -31,7 +31,7 @@ public class PandorasBox : IDalamudPlugin
     public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
     internal TaskManager TaskManager;
 
-    public PandorasBox(DalamudPluginInterface pluginInterface)
+    public PandorasBox(IDalamudPluginInterface pluginInterface)
     {
         P = this;
         pi = pluginInterface;

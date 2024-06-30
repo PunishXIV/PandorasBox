@@ -1,22 +1,18 @@
-using ClickLib.Clicks;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
-using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
-using PandorasBox.TemporaryFixes;
 using PandorasBox.UI;
 using System;
 using System.Linq;
 using System.Numerics;
-using PandorasBox.Helpers;
 using static ECommons.GenericHelpers;
-using ClickLib.Enums;
+using ECommons.Automation.UIInput;
+using ECommons.UIHelpers.AddonMasterImplementations;
 
 namespace PandorasBox.Features
 {
@@ -38,11 +34,16 @@ namespace PandorasBox.Features
             base.Enable();
         }
 
+        public override bool DrawConditions()
+        {
+            return TryGetAddonByName<AddonRepair>("Repair", out var _);
+        }
+
         public override void Draw()
         {
             try
             {
-                if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon))
+                if (TryGetAddonByName<AddonRepair>("Repair", out var addon))
                 {
                     var node = addon->RepairAllButton->AtkComponentBase.AtkResNode->ParentNode;
 
@@ -67,7 +68,7 @@ namespace PandorasBox.Features
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                    ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                    ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                         | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
 
@@ -109,9 +110,9 @@ namespace PandorasBox.Features
             for (var i = 1; i <= 7; i++)
             {
                 var val = i;
-                P.TaskManager.Enqueue(() => SwitchSection());
                 P.TaskManager.Enqueue(() => Repair(), 300, false);
                 P.TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
+                P.TaskManager.Enqueue(() => SwitchSection());
             }
             P.TaskManager.Enqueue(() => { Repairing = false; return true; });
         }
@@ -119,7 +120,7 @@ namespace PandorasBox.Features
         private bool SwitchSection()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
+            if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
             {
                 var fwdBtn = addon->AtkUnitBase.GetNodeById(14)->GetAsAtkComponentButton();
                 fwdBtn->ClickAddonButton((AtkComponentBase*)addon, 2, EventType.CHANGE);
@@ -153,10 +154,10 @@ namespace PandorasBox.Features
         internal static bool Repair()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            if (TryGetAddonByName<AddonRepairFixed>("Repair", out var addon) && addon->AtkUnitBase.IsVisible && addon->RepairAllButton->IsEnabled)
+            if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible && addon->RepairAllButton->IsEnabled)
             {
                 Svc.Log.Debug($"{addon->RepairAllButton->AtkComponentBase.OwnerNode is null}");
-                new ClickRepairFixed((IntPtr)addon).RepairAll();
+                new RepairMaster((IntPtr)addon).RepairAll();
 
                 return true;
             }
@@ -167,14 +168,14 @@ namespace PandorasBox.Features
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
 
-            if (TryGetAddonByName<AddonRepairFixed>("Repair", out var r) &&
+            if (TryGetAddonByName<AddonRepair>("Repair", out var r) &&
                 r->AtkUnitBase.IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
             {
                 try
                 {
-                    new ClickSelectYesNo((IntPtr)addon).Yes();
+                    new SelectYesnoMaster((IntPtr)addon).Yes();
                     return true;
                 }
                 catch (Exception ex)

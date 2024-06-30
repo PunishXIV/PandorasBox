@@ -8,7 +8,7 @@ namespace PandorasBox.UI
     internal class Overlays : Window
     {
         private Feature Feature { get; set; }
-        public Overlays(Feature t) : base($"###Overlay{t.Name}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.AlwaysAutoResize, true)
+        public Overlays(Feature t) : base($"###Overlay{t.Name}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.AlwaysAutoResize, true)
         {
             this.Position = new System.Numerics.Vector2(0, 0);
             Feature = t;
@@ -29,6 +29,6 @@ namespace PandorasBox.UI
 
         public override void Draw() => Feature.Draw();
 
-        public override bool DrawConditions() => Feature.Enabled;
+        public override bool DrawConditions() => Feature.Enabled && Feature.DrawConditions();
     }
 }

@@ -1,12 +1,11 @@
 using ECommons.DalamudServices;
-using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using Character = Dalamud.Game.ClientState.Objects.Types.Character;
+using Character = Dalamud.Game.ClientState.Objects.Types.ICharacter;
 
 namespace PandorasBox.Features.Commands
 {
@@ -37,23 +36,23 @@ namespace PandorasBox.Features.Commands
         private delegate long ExecuteCommandDelegate(uint id, int a1, int a2, int a3, int a4);
         private ExecuteCommandDelegate ExecuteCommand;
 
-        private void Reset(int objectId)
+        private void Reset(int GameObjectId)
         {
             // Reset enmity at target sig. This doesn't change often, but it does sometimes.
             nint scanText = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 43 0A");
             ExecuteCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
 
             Svc.Log.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");
-            Svc.Log.Information($"Resetting enmity {objectId}");
+            Svc.Log.Information($"Resetting enmity {GameObjectId}");
 
-            long success = ExecuteCommand(0x13f, objectId, 0, 0, 0);
-            Svc.Log.Debug($"Reset enmity of {objectId} returned: {success}");
+            long success = ExecuteCommand(0x13f, GameObjectId, 0, 0, 0);
+            Svc.Log.Debug($"Reset enmity of {GameObjectId} returned: {success}");
         }
 
         private void ResetTarget()
         {
             var target = Svc.Targets.Target;
-            if (target is Character { NameId: 541 }) Reset((int)target.ObjectId);
+            if (target is Character { NameId: 541 }) Reset((int)target.GameObjectId);
         }
 
         private void ResetAll()
@@ -63,14 +62,14 @@ namespace PandorasBox.Features.Commands
             {
                 var addon = (AddonEnemyList*)addonByName;
                 // the 21 works now, but if this doesn't in the future, check this. It used to be 19.
-                var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[21];
+                var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUIModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[21];
 
                 for (var i = 0; i < addon->EnemyCount; i++)
                 {
                     var enemyObjectId = numArray->IntArray[8 + i * 6];
-                    var enemyChara = CharacterManager.Instance()->LookupBattleCharaByObjectId((uint)enemyObjectId);
+                    var enemyChara = CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)enemyObjectId);
                     if (enemyChara is null) continue;
-                    if (enemyChara->Character.NameID == 541) Reset(enemyObjectId);
+                    if (enemyChara->Character.NameId == 541) Reset(enemyObjectId);
                 }
             }
         }

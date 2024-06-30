@@ -1,6 +1,5 @@
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
-using Dalamud.Logging;
 using Dalamud.Utility;
 using ECommons;
 using ECommons.DalamudServices;

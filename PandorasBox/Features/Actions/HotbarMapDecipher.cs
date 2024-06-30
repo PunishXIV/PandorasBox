@@ -1,7 +1,7 @@
-using ClickLib.Clicks;
 using Dalamud.Hooking;
 using Dalamud.Memory;
 using ECommons.DalamudServices;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -68,9 +68,9 @@ namespace PandorasBox.Features.Actions
             return UseActionHook.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
         }
 
-        private unsafe bool? OpenItem(uint itemId)
+        private unsafe bool? OpenItem(uint ItemId)
         {
-            var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID();
+            var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId();
 
             if (IsMoving())
             {
@@ -82,7 +82,7 @@ namespace PandorasBox.Features.Actions
                 return null;
             }
 
-            if (InventoryManager.Instance()->GetInventoryItemCount(itemId) == 0)
+            if (InventoryManager.Instance()->GetInventoryItemCount(ItemId) == 0)
             {
                 return true;
             }
@@ -102,10 +102,10 @@ namespace PandorasBox.Features.Actions
                 {
                     var item = container->GetInventorySlot(i);
 
-                    if (item->ItemID == itemId)
+                    if (item->ItemId == ItemId)
                     {
                         var ag = AgentInventoryContext.Instance();
-                        ag->OpenForItemSlot(container->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID());
+                        ag->OpenForItemSlot(container->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
                         var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1);
                         if (contextMenu != null)
                         {
@@ -113,7 +113,7 @@ namespace PandorasBox.Features.Actions
                             var indexDecipher = -1;
 
                             var loops = 0;
-                            foreach (var contextObj in contextAgent->EventParamsSpan)
+                            foreach (var contextObj in contextAgent->EventParams)
                             {
                                 if (contextObj.Type == ValueType.String)
                                 {
@@ -153,7 +153,7 @@ namespace PandorasBox.Features.Actions
                                     Type = ValueType.Int,
                                     UInt = 0
                                 };
-                                contextMenu->FireCallback(5, values, (void*)1);
+                                contextMenu->FireCallback(5, values, true);
                             }
 
                             return true;
@@ -170,9 +170,9 @@ namespace PandorasBox.Features.Actions
             if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
             {
-                new ClickSelectYesNo((IntPtr)addon).Yes();
+                new SelectYesnoMaster((IntPtr)addon).Yes();
                 return true;
             }
 

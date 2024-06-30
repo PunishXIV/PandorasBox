@@ -1,21 +1,20 @@
-using ClickLib.Clicks;
-using Dalamud.Game.ClientState.Objects.Types;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using Dalamud.Plugin;
 using ECommons;
-using ECommons.Automation;
+using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using Newtonsoft.Json;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -30,7 +29,7 @@ namespace PandorasBox.Features
     public abstract class BaseFeature
     {
         protected PandorasBox? P;
-        protected DalamudPluginInterface? Pi;
+        protected IDalamudPluginInterface? Pi;
         protected Configuration? config;
         protected TaskManager? TaskManager;
         public FeatureProvider Provider { get; private set; } = null!;
@@ -45,12 +44,13 @@ namespace PandorasBox.Features
         
         public static readonly SeString PandoraPayload = new SeString(new UIForegroundPayload(32)).Append($"{SeIconChar.BoxedLetterP.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()}{SeIconChar.BoxedLetterN.ToIconString()}{SeIconChar.BoxedLetterD.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterR.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()} ").Append(new UIForegroundPayload(0));
         public virtual void Draw() { }
+        public virtual bool DrawConditions() { return false; }
 
         public virtual bool Ready { get; protected set; }
 
         public abstract FeatureType FeatureType { get; }
 
-        public void InterfaceSetup(PandorasBox plugin, DalamudPluginInterface pluginInterface, Configuration config, FeatureProvider fp)
+        public void InterfaceSetup(PandorasBox plugin, IDalamudPluginInterface pluginInterface, Configuration config, FeatureProvider fp)
         {
             this.P = plugin;
             this.Pi = pluginInterface;
@@ -332,7 +332,7 @@ namespace PandorasBox.Features
 
             try
             {
-                var isVisible = addon->GetNodeById(10)->IsVisible;
+                var isVisible = addon->GetNodeById(10)->IsVisible();
                 return isVisible;
             }
             catch (Exception ex)
@@ -352,7 +352,7 @@ namespace PandorasBox.Features
                 var inv = c->GetInventoryContainer(x);
                 for (var i = 0; i < inv->Size; i++)
                 {
-                    if (inv->Items[i].ItemID == 0)
+                    if (inv->Items[i].ItemId == 0)
                     {
                         slots++;
                     }
@@ -468,7 +468,7 @@ namespace PandorasBox.Features
                     var index = GetEntries(addon).IndexOf(entry);
                     if (index >= 0 && IsSelectItemEnabled(addon, index) && (Throttler?.Invoke() ?? GenericThrottle))
                     {
-                        ClickSelectString.Using((nint)addon).SelectItem((ushort)index);
+                        new SelectStringMaster((nint)addon).Entries[index].Select();
                         Svc.Log.Debug($"TrySelectSpecificEntry: selecting {entry}/{index} as requested by {text.Print()}");
                         return true;
                     }
@@ -507,5 +507,12 @@ namespace PandorasBox.Features
         internal static unsafe bool IsLoading() => (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeBack", out var fb) && fb->IsVisible) || (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var fm) && fm->IsVisible);
 
         public unsafe bool IsInDuty() => GameMain.Instance()->CurrentContentFinderConditionId > 0;
+
+        public unsafe bool ZoneHasFlight()
+        {
+            if (Svc.ClientState.LocalPlayer is null) return false;
+            var territory = Svc.Data.Excel.GetSheet<TerritoryType>()?.GetRow(Svc.ClientState.TerritoryType);
+            return territory?.TerritoryIntendedUse is 1 or 47 or 49;
+        }
     }
 }

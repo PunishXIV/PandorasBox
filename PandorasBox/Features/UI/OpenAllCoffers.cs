@@ -1,7 +1,6 @@
-using Dalamud.ContextMenu;
+using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -22,39 +21,46 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private DalamudContextMenu contextMenu;
+        private IContextMenu contextMenu;
 
         private static readonly SeString OpenString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Open All"));
 
         public override void Enable()
         {
-            contextMenu = new(Svc.PluginInterface);
-            contextMenu.OnOpenInventoryContextMenu += AddInventoryItem;
+            contextMenu = Svc.ContextMenu;
+            contextMenu.OnMenuOpened += AddInventoryItem;
             base.Enable();
         }
 
-        private void AddInventoryItem(InventoryContextMenuOpenArgs args)
+        private void AddInventoryItem(IMenuOpenedArgs args)
         {
-            var item = CheckInventoryItem(args.ItemId);
+            if (args.MenuType != ContextMenuType.Inventory) return;
+            var argItem = ((MenuTargetInventory)args.Target).TargetItem!.Value;
+            var item = CheckInventoryItem(argItem.ItemId);
             if (item != null)
-                args.AddCustomItem(item);
+                args.AddMenuItem(item);
         }
 
-        private InventoryContextMenuItem CheckInventoryItem(uint itemId)
+        private MenuItem CheckInventoryItem(uint ItemId)
         {
-            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == itemId, out var sheetItem))
+            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == ItemId, out var sheetItem))
             {
                 if (sheetItem.StackSize <= 1) return null;
                 if (sheetItem.ItemAction.Row is 388 or 367 or 2462)
-                    return new InventoryContextMenuItem(OpenString, _ => TaskManager.Enqueue(() => OpenItem(itemId), true), false);
+                {
+                    var menuItem = new MenuItem();
+                    menuItem.Name = OpenString;
+                    menuItem.OnClicked += _ => TaskManager.Enqueue(() => OpenItem(ItemId));
+                    return menuItem;
+                }
             }
 
             return null;
         }
 
-        private unsafe bool? OpenItem(uint itemId)
+        private unsafe bool? OpenItem(uint ItemId)
         {
-            var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID();
+            var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId();
 
             if (IsMoving())
             {
@@ -66,7 +72,7 @@ namespace PandorasBox.Features.UI
                 return null;
             }
 
-            if (InventoryManager.Instance()->GetInventoryItemCount(itemId) == 0)
+            if (InventoryManager.Instance()->GetInventoryItemCount(ItemId) == 0)
             {
                 return true;
             }
@@ -90,10 +96,10 @@ namespace PandorasBox.Features.UI
                 {
                     var item = container->GetInventorySlot(i);
 
-                    if (item->ItemID == itemId)
+                    if (item->ItemId == ItemId)
                     {
                         var ag = AgentInventoryContext.Instance();
-                        ag->OpenForItemSlot(container->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID());
+                        ag->OpenForItemSlot(container->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
                         var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1);
                         if (contextMenu != null)
                         {
@@ -123,12 +129,12 @@ namespace PandorasBox.Features.UI
                                 Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
                                 UInt = 0
                             };
-                            contextMenu->FireCallback(5, values, (void*)1);
+                            contextMenu->FireCallback(5, values, true);
 
                             TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, itemId, Svc.ClientState.LocalPlayer.ObjectId) == 0);
+                            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.ClientState.LocalPlayer.GameObjectId) == 0);
                             TaskManager.DelayNext("OpeningItem", 2200);
-                            TaskManager.Enqueue(() => OpenItem(itemId));
+                            TaskManager.Enqueue(() => OpenItem(ItemId));
 
                             return true;
                         }
@@ -141,8 +147,7 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            contextMenu.OnOpenInventoryContextMenu -= AddInventoryItem;
-            contextMenu?.Dispose();
+            contextMenu.OnMenuOpened -= AddInventoryItem;
             base.Disable();
         }
     }

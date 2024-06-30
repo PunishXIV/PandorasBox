@@ -28,6 +28,11 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
+        public override bool DrawConditions()
+        {
+            return Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero;
+        }
+
         public override void Draw()
         {
             if (Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero)
@@ -37,7 +42,7 @@ namespace PandorasBox.Features.UI
 
                 var tradeButton = addon->UldManager.NodeList[2];
 
-                if (tradeButton->IsVisible)
+                if (tradeButton->IsVisible())
                     tradeButton->ToggleVisibility(false);
 
                 var position = AtkResNodeHelper.GetNodePosition(tradeButton);
@@ -56,7 +61,7 @@ namespace PandorasBox.Features.UI
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                ImGui.Begin($"###RepairAll{tradeButton->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                ImGui.Begin($"###RepairAll{tradeButton->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                     | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
 
@@ -133,7 +138,7 @@ namespace PandorasBox.Features.UI
 
                 var tradeButton = addon->UldManager.NodeList[2];
 
-                if (!tradeButton->IsVisible)
+                if (!tradeButton->IsVisible())
                     tradeButton->ToggleVisibility(true);
 
 

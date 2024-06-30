@@ -38,7 +38,7 @@ internal static class IslandSanctuaryHelper
         {
             for (var i = 0; i < NumEntries; ++i)
             {
-                var p = Entries.Span[i].Value->Value;
+                var p = Entries[i].Value->Value;
                 if (p->Type != ScheduleListEntryType.Category && p->Value == rowId - 1)
                     return i;
             }

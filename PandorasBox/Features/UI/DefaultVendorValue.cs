@@ -70,23 +70,23 @@ namespace PandorasBox.Features.UI
                                 {
                                     var subNode = renderNode->Component->UldManager.NodeList[p];
 
-                                    if (!subNode->IsVisible)
+                                    if (!subNode->IsVisible())
                                         continue;
 
                                     if (subNode->Type is (NodeType)1012 or (NodeType)1011)
                                     {
-                                        uint nodeIdSearch = 5;
+                                        uint NodeIdSearch = 5;
                                         if (args.AddonName == "ShopExchangeCurrency")
-                                            nodeIdSearch = 3;
+                                            NodeIdSearch = 3;
                                         if (args.AddonName == "ShopExchangeItem")
-                                            nodeIdSearch = 7;
+                                            NodeIdSearch = 7;
 
-                                        AtkTextNode* textNode = renderNode->Component->UldManager.SearchNodeById(nodeIdSearch)->GetAsAtkTextNode();
+                                        AtkTextNode* textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
 
                                         if (string.IsNullOrEmpty(textNode->NodeText.ExtractText()))
                                             continue;
 
-                                        var uniqueVal = $"{textNode->NodeText.ExtractText()}{renderNode->AtkResNode.NodeID}";
+                                        var uniqueVal = $"{textNode->NodeText.ExtractText()}{renderNode->AtkResNode.NodeId}";
                                         if (SetNodes.Contains(uniqueVal))
                                         {
                                             continue;
@@ -104,14 +104,14 @@ namespace PandorasBox.Features.UI
 
                                     if (subNode->Type is (NodeType)1007)
                                     {
-                                        uint nodeIdSearch = 3;
+                                        uint NodeIdSearch = 3;
 
-                                        var textNode = renderNode->Component->UldManager.SearchNodeById(nodeIdSearch)->GetAsAtkTextNode();
+                                        var textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
 
                                         if (string.IsNullOrEmpty(textNode->NodeText.ExtractText()))
                                             continue;
 
-                                        var uniqueVal = $"{textNode->NodeText.ExtractText()}{renderNode->AtkResNode.NodeID}";
+                                        var uniqueVal = $"{textNode->NodeText.ExtractText()}{renderNode->AtkResNode.NodeId}";
                                         if (SetNodes.Contains(uniqueVal))
                                         {
                                             continue;

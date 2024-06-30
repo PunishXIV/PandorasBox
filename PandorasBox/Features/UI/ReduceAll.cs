@@ -28,6 +28,11 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
+        public override bool DrawConditions()
+        {
+            return Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero;
+        }
+
         public override void Draw()
         {
             if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
@@ -41,7 +46,7 @@ namespace PandorasBox.Features.UI
                 if (node == null)
                     return;
 
-                if (node->IsVisible)
+                if (node->IsVisible())
                     node->ToggleVisibility(false);
 
                 var position = AtkResNodeHelper.GetNodePosition(node);
@@ -60,7 +65,7 @@ namespace PandorasBox.Features.UI
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                 ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                     | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted])

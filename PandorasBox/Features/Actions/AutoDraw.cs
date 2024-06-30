@@ -3,7 +3,6 @@ using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
-using System;
 
 namespace PandorasBox.Features.Actions
 {
@@ -112,7 +111,7 @@ namespace PandorasBox.Features.Actions
             {
                 var am = ActionManager.Instance();
                 if (am->GetActionStatus(ActionType.Action, 3590) != 0) return false;
-                am->UseAction(ActionType.Action, 3590, Svc.ClientState.LocalPlayer.ObjectId);
+                am->UseAction(ActionType.Action, 3590, Svc.ClientState.LocalPlayer.GameObjectId);
                 return true;
             }
             return false;

@@ -1,8 +1,7 @@
-using ClickLib.Clicks;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Throttlers;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -31,6 +30,11 @@ namespace PandorasBox.Features.UI
             base.Enable();
         }
 
+        public override bool DrawConditions()
+        {
+            return Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero;
+        }
+
         public override void Draw()
         {
             try
@@ -46,7 +50,7 @@ namespace PandorasBox.Features.UI
                     if (node == null)
                         return;
 
-                    if (node->IsVisible)
+                    if (node->IsVisible())
                         node->ToggleVisibility(false);
 
                     var position = AtkResNodeHelper.GetNodePosition(node);
@@ -65,7 +69,7 @@ namespace PandorasBox.Features.UI
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                    ImGui.Begin($"###RepairAll{node->NodeID}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                    ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                         | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
 
@@ -404,7 +408,7 @@ namespace PandorasBox.Features.UI
                 if (materalizeWindow == null)
                     return true;
 
-                ClickMaterializeDialog.Using(materializePTR).Materialize();
+                new MaterializeDialogMaster(materializePTR).Materialize();
 
                 TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 100));
                 TaskManager.EnqueueImmediate(() => EzThrottler.Check("Extracting"));

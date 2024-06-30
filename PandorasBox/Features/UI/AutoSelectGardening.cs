@@ -1,9 +1,8 @@
-using ClickLib.Clicks;
-using Dalamud.Logging;
 using Dalamud.Memory;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -89,17 +88,17 @@ namespace PandorasBox.Features.UI
                         {
                             for (var i = 0; i < cont->Size; i++)
                             {
-                                if (cont->GetInventorySlot(i)->ItemID == Config.SelectedFertilizer)
+                                if (cont->GetInventorySlot(i)->ItemId == Config.SelectedFertilizer)
                                 {
                                     var item = cont->GetInventorySlot(i);
 
                                     var ag = AgentInventoryContext.Instance();
-                                    ag->OpenForItemSlot(cont->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonID());
+                                    ag->OpenForItemSlot(cont->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
                                     var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1);
                                     if (contextMenu == null) return;
                                     for (int p = 0; p <= contextMenu->AtkValuesCount; p++)
                                     {
-                                        if (ag->EventIdSpan[p] == 7)
+                                        if (ag->EventIds[p] == 7)
                                         {
                                             Callback.Fire(contextMenu, true, 0, p - 7, 0, 0, 0);
                                             Fertilized = true;
@@ -147,10 +146,10 @@ namespace PandorasBox.Features.UI
                 {
                     for (var i = 0; i < cont->Size; i++)
                     {
-                        if (invSoil.Any(x => cont->GetInventorySlot(i)->ItemID == x))
+                        if (invSoil.Any(x => cont->GetInventorySlot(i)->ItemId == x))
                         {
                             var item = cont->GetInventorySlot(i);
-                            if (item->ItemID == Config.SelectedSoil)
+                            if (item->ItemId == Config.SelectedSoil)
                                 goto SetSeed;
                             else
                                 soilIndex++;
@@ -164,10 +163,10 @@ namespace PandorasBox.Features.UI
                 {
                     for (var i = 0; i < cont->Size; i++)
                     {
-                        if (invSeeds.Any(x => cont->GetInventorySlot(i)->ItemID == x))
+                        if (invSeeds.Any(x => cont->GetInventorySlot(i)->ItemId == x))
                         {
                             var item = cont->GetInventorySlot(i);
-                            if (item->ItemID == Config.SelectedSeed)
+                            if (item->ItemId == Config.SelectedSeed)
                                 goto ClickItem;
                             else
                                 seedIndex++;
@@ -286,7 +285,7 @@ namespace PandorasBox.Features.UI
                 };
 
 
-                contextMenu->FireCallback(5, values, (void*)2476827163393);
+                contextMenu->FireCallback(5, values, true);
                 Svc.Log.Debug($"Filled slot {i}");
                 SlotsFilled.Add(i);
                 return true;
@@ -318,9 +317,9 @@ namespace PandorasBox.Features.UI
             if (hg->IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible)
+                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
             {
-                new ClickSelectYesNo((IntPtr)addon).Yes();
+                new SelectYesnoMaster((IntPtr)addon).Yes();
                 return true;
             }
 

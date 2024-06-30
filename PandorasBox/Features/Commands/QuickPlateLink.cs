@@ -157,20 +157,20 @@ namespace PandorasBox.Features.Commands
                 for (var i = 0; i < 100; i++)
                 {
                     var gs = gearsetModule->GetGearset(i);
-                    if (gs == null || !gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists) || gs->ID != i)
+                    if (gs == null || !gs->Flags.HasFlag(RaptureGearsetModule.GearsetFlag.Exists) || gs->Id != i)
                         continue;
 
-                    var name = MemoryHelper.ReadString(new IntPtr(gs->Name), 47);
+                    var name = gs->NameString;
                     var jobAbbrMatch = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Abbreviation.RawString.Equals(arg, StringComparison.CurrentCultureIgnoreCase)).ToList();
                     
                     if (arg.Equals(name, StringComparison.CurrentCultureIgnoreCase)
                         || (jobAbbrMatch.Count > 0 && jobAbbrMatch[0].RowId.Equals(gs->ClassJob))
-                        || arg.Equals(gs->ID.ToString(), StringComparison.CurrentCultureIgnoreCase)
+                        || arg.Equals(gs->Id.ToString(), StringComparison.CurrentCultureIgnoreCase)
                         || arg.Equals(gs->ClassJob.ToString(), StringComparison.CurrentCultureIgnoreCase))
                     {
                         gearsets.Add(new Gearset
                         {
-                            ID = gs->ID,
+                            ID = gs->Id,
                             Slot = i + 1,
                             ClassJob = gs->ClassJob,
                             Name = name,

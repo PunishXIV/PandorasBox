@@ -57,7 +57,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() =>
                 {
                     Svc.GameConfig.TryGet(Dalamud.Game.Config.UiControlOption.FlyingControlType, out uint type);
-                    if (Config.JumpAfterMount && Svc.ClientState.LocalPlayer!.ClassJob.Id != 18)
+                    if (Config.JumpAfterMount && Svc.ClientState.LocalPlayer!.ClassJob.Id != 18 && ZoneHasFlight())
                     {
                         TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
                         TaskManager.DelayNext(50);

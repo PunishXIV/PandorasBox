@@ -1,7 +1,6 @@
-using ClickLib.Clicks;
-using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
@@ -93,7 +92,7 @@ namespace PandorasBox.Features.UI
             {
                 if (addon->HandOverButton != null && addon->HandOverButton->IsEnabled)
                 {
-                    ClickRequest.Using((IntPtr)addon).HandOver();
+                    new RequestMaster((IntPtr)addon).HandOver();
                     return true;
                 }
                 return false;

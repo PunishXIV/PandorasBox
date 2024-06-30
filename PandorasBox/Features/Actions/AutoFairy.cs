@@ -1,9 +1,7 @@
 using Dalamud.Game.ClientState.Conditions;
-using Dalamud.Game.ClientState.JobGauge.Types;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
-using System;
 
 namespace PandorasBox.Features.Actions
 {

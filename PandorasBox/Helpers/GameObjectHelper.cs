@@ -7,12 +7,12 @@ namespace PandorasBox.Helpers
 {
     internal static class GameObjectHelper
     {
-        public static float GetTargetDistance(GameObject target)
+        public static float GetTargetDistance(IGameObject target)
         {
             if (target is null || Svc.ClientState.LocalPlayer is null)
                 return 0;
 
-            if (target.ObjectId == Svc.ClientState.LocalPlayer.ObjectId)
+            if (target.GameObjectId == Svc.ClientState.LocalPlayer.GameObjectId)
                 return 0;
 
             Vector2 position = new(target.Position.X, target.Position.Z);
@@ -21,7 +21,7 @@ namespace PandorasBox.Helpers
             return Math.Max(0, Vector2.Distance(position, selfPosition) - target.HitboxRadius - Svc.ClientState.LocalPlayer.HitboxRadius);
         }
 
-        public static float GetHeightDifference(GameObject target)
+        public static float GetHeightDifference(IGameObject target)
         {
             var dist = Svc.ClientState.LocalPlayer.Position.Y - target.Position.Y;
             if (dist < 0)

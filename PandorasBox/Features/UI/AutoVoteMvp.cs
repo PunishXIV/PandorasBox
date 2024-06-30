@@ -122,7 +122,7 @@ public class AutoVoteMvp : Feature
             foreach (var pm in Svc.Party)
             {
                 if (pm.GameObject == null) continue;
-                if (pm.ObjectId == Svc.ClientState.LocalPlayer.ObjectId) continue;
+                if (pm.ObjectId == Svc.ClientState.LocalPlayer.GameObjectId) continue;
                 if (pm.GameObject.IsDead)
                 {
                     if (DeadPlayers.Contains(pm.ObjectId)) continue;
@@ -149,19 +149,19 @@ public class AutoVoteMvp : Feature
     private unsafe int ChoosePlayer(AtkUnitBase* bannerWindow)
     {
         var hud = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()
-            ->GetUiModule()->GetAgentModule()->GetAgentHUD();
+            ->GetUIModule()->GetAgentModule()->GetAgentHUD();
 
         if (hud == null) throw new Exception("HUD is empty!");
 
-        foreach (var member in Svc.Party.Cast<PartyMember>())
+        foreach (var member in Svc.Party.Cast<IPartyMember>())
         {
             var m2 = (FFXIVClientStructs.FFXIV.Client.Game.Group.PartyMember*)member.Address;
-            var name = MemoryHelper.ReadSeString((IntPtr)m2->Name, 0x40);
+            var name = m2->NameString;
             Svc.Log.Debug($"{name} {m2->Flags.ToString("g")}");
         }
 
         var list = Svc.Party.Where(i =>
-        i.ObjectId != Player.Object.ObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.ExtractText()))
+        i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.ExtractText()))
             .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
             .ToList();
 
@@ -182,7 +182,7 @@ public class AutoVoteMvp : Feature
         var healer = list.Where(i => i.PartyMember.ClassJob.GameData!.Role == 4);
         var dps = list.Where(i => i.PartyMember.ClassJob.GameData!.Role is 2 or 3);
 
-        (int index, PartyMember member) voteTarget = new();
+        (int index, IPartyMember member) voteTarget = new();
         switch (Config.Priority)
         {
             //tank
@@ -241,12 +241,12 @@ public class AutoVoteMvp : Feature
         return -1;
     }
 
-    private static unsafe int GetPartySlotIndex(uint objectId, AgentHUD* hud)
+    private static unsafe int GetPartySlotIndex(uint GameObjectId, AgentHUD* hud)
     {
-        var list = (HudPartyMember*)hud->PartyMemberList;
+        var list = hud->PartyMembers;
         for (var i = 0; i < hud->PartyMemberCount; i++)
         {
-            if (list[i].ObjectId == objectId)
+            if (list[i].Object->GetGameObjectId() == GameObjectId)
             {
                 return i;
             }

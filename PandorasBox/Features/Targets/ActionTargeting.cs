@@ -49,9 +49,9 @@ namespace PandorasBox.Features.Targets
         {
             if (NearestConeTarget() != null)
                 Svc.Targets.Target = NearestConeTarget();
-            else if (Config.UnsetTargetRange && Svc.Targets.Target != null && Svc.Targets.Target is BattleNpc)
+            else if (Config.UnsetTargetRange && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
                 Svc.Targets.Target = null;
-            else if (Config.UnsetTargetCombat && Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Svc.Targets.Target != null && Svc.Targets.Target is BattleNpc)
+            else if (Config.UnsetTargetCombat && Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
                 Svc.Targets.Target = null;
         }
 
@@ -65,7 +65,7 @@ namespace PandorasBox.Features.Targets
                                     PointInCircle(o.Position - playerPos, Config.MaxDistance + o.HitboxRadius));
         }
 
-        public GameObject NearestConeTarget()
+        public IGameObject NearestConeTarget()
         {
             if (CanConeAoe())
             {
@@ -82,21 +82,21 @@ namespace PandorasBox.Features.Targets
             return null;
         }
 
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(GameObject obj)
+        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(IGameObject obj)
         {
             return (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)obj?.Address;
         }
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(BattleChara chara)
+        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(IBattleChara chara)
         {
             return (FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)chara?.Address;
         }
 
-        public static unsafe bool GameObjectIsTargetable(GameObject obj)
+        public static unsafe bool GameObjectIsTargetable(IGameObject obj)
         {
             return GameObjectInternal(obj)->GetIsTargetable();
         }
 
-        public static unsafe bool GameObjectIsDead(GameObject obj)
+        public static unsafe bool GameObjectIsDead(IGameObject obj)
         {
             return GameObjectInternal(obj)->IsDead();
         }

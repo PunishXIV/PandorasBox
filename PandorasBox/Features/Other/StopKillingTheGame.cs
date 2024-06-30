@@ -1,7 +1,6 @@
 // Credit entirely to Bluefissure: https://github.com/Bluefissure/NoKillPlugin
 
 using Dalamud.Hooking;
-using Dalamud.Logging;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;

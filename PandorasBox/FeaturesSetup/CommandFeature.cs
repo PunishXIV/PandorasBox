@@ -1,6 +1,5 @@
 using Dalamud.Game.Command;
 using ECommons.DalamudServices;
-using ECommons.Logging;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;

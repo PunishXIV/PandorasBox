@@ -50,7 +50,7 @@ namespace PandorasBox.Features.Actions
                     TaskManager.Enqueue(TryMount, 3000);
                     TaskManager.Enqueue(() =>
                     {
-                        if (Config.JumpAfterMount)
+                        if (Config.JumpAfterMount && ZoneHasFlight())
                         {
                             TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
                             TaskManager.DelayNext(50);

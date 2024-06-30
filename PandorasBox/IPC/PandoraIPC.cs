@@ -1,14 +1,8 @@
-using ECommons.Automation;
+using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
 using ECommons.Reflection;
 using PandorasBox.Features;
-using PandorasBox.Helpers;
-using System;
-using System.CodeDom;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace PandorasBox.IPC
 {

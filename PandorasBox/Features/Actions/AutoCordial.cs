@@ -67,13 +67,13 @@ namespace PandorasBox.Features.Actions
                 {
                     for (var j = 0; j < cont->Size; j++)
                     {
-                        if (cont->GetInventorySlot(j)->ItemID == (cordial.Id >= 1000000 ? cordial.Id - 1_000_000 : cordial.Id))
+                        if (cont->GetInventorySlot(j)->ItemId == (cordial.Id >= 1000000 ? cordial.Id - 1_000_000 : cordial.Id))
                         {
                             if (am->GetActionStatus(ActionType.Item, cordial.Id) == 0)
                             {
                                 if (!Config.PreventOvercap || (Config.PreventOvercap && !WillOvercap(cordial.GP)))
                                 {
-                                    am->UseAction(ActionType.Item, cordial.Id, a4: 65535);
+                                    am->UseAction(ActionType.Item, cordial.Id, extraParam: 65535);
                                     return;
                                 }
                             }
