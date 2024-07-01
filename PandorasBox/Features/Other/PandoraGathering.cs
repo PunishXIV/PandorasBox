@@ -1,15 +1,20 @@
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using ECommons;
+using ECommons.Automation.UIInput;
 using ECommons.DalamudServices;
 using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
+using FFXIVClientStructs.Attributes;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using InteropGenerator.Runtime.Attributes;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -18,8 +23,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
+using System.Runtime.InteropServices;
 using Action = Lumina.Excel.GeneratedSheets.Action;
-using ECommons.Automation.UIInput;
 
 namespace PandorasBox.Features.Other
 {
@@ -133,9 +138,6 @@ namespace PandorasBox.Features.Other
             (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
          };
 
-        private delegate void GatherEventDelegate(nint a1, ulong a2, nint a3, ulong a4);
-        private Hook<GatherEventDelegate> gatherEventHook;
-
         private delegate void QuickGatherToggleDelegate(AddonGathering* a1);
         private Hook<QuickGatherToggleDelegate> quickGatherToggle;
 
@@ -221,8 +223,8 @@ namespace PandorasBox.Features.Other
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
                 if (addon == null) return;
                 if (!addon->IsVisible) return;
-               
-                if (addon->UldManager.NodeListCount < 5 ) return;
+
+                if (addon->UldManager.NodeListCount < 5) return;
                 if (addon->UldManager.NodeList[2] is null) return;
                 if (addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10] is null) return;
                 if (!addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10]->IsVisible()) return;
@@ -416,15 +418,205 @@ namespace PandorasBox.Features.Other
         {
             Overlay = new Overlays(this);
             Config = LoadConfig<Configs>() ?? new Configs();
-            //gatherEventHook ??= Svc.Hook.HookFromSignature<GatherEventDelegate>("E8 ?? ?? ?? ?? 84 C0 74 ?? EB ?? 48 8B 89", GatherDetour);
-            //gatherEventHook.Enable();
 
-            //quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("e8 ?? ?? ?? ?? eb 3f 4c 8b 4c 24 50", QuickGatherToggle);
+            //quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
 
-            Common.OnAddonSetup += CheckLastItem;
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreReceiveEvent, "Gathering", OnEvent);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
             Svc.Condition.ConditionChange += ResetCounter;
 
             base.Enable();
+        }
+
+        private void OnEvent(AddonEvent type, AddonArgs args)
+        {
+            if (args is AddonReceiveEventArgs a)
+            {
+                if (a.AtkEventType is 25)
+                {
+                    var index = a.EventParam;
+
+                    try
+                    {
+                        SwingCount++;
+                        var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                        var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
+                        if (quickGathering)
+                        {
+                            QuickGatherToggle(addon);
+                        }
+
+                        if (addon != null && Config.Gathering)
+                        {
+                            var ids = new List<uint>();
+                            for (int i = 7; i <= (11 * 8) + 7; i += 11)
+                            {
+                                ids.Add(addon->AtkValues[i].UInt);
+                            }
+                            
+                            if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
+                            {
+                                Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
+                                Disable();
+                                return;
+                            }
+
+                            var item = ids[index];
+
+                            Svc.Log.Debug($"{item}");
+                            if (item != lastGatheredItem && item != 0)
+                            {
+                                TaskManager.Abort();
+                                lastGatheredIndex = (byte)index;
+                                lastGatheredItem = item;
+                            }
+
+                            if (item != 0)
+                            {
+                                if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
+                                {
+                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                    TaskManager.Enqueue(() =>
+                                    {
+                                        if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
+                                        {
+                                            TaskManager.EnqueueImmediate(() => UseIntegrityAction());
+                                            TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                            TaskManager.EnqueueImmediate(() => UseWisdom());
+                                        }
+                                    });
+                                    TaskManager.Enqueue(() =>
+                                    {
+                                        if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
+                                        {
+                                            TaskManager.EnqueueImmediate(() => Use100GPSkill());
+                                        }
+                                    });
+
+                                    ClickGather(addon);
+                                }
+                            }
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ex.Log();
+                    }
+                }
+            }
+        }
+
+        private void AddonSetup(AddonEvent type, AddonArgs args)
+        {
+            if (Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
+            {
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                TaskManager.Enqueue(() =>
+                {
+                    var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+
+                    var ids = new List<uint>();
+                    for (int i = 7; i <= (11 * 8) + 7; i += 11)
+                    {
+                        ids.Add(addon->AtkValues[i].UInt);
+                    }
+
+                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
+                    {
+                        Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
+                        Disable();
+                        return;
+                    }
+
+                    var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
+                    if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
+                    {
+                        Dictionary<int, int> boonChances = new();
+
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[25]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n1b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[24]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n2b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[23]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n3b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n4b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[21]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n5b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[20]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n6b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[19]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n7b);
+                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[18]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n8b);
+
+                        boonChances.Add(0, n1b);
+                        boonChances.Add(1, n2b);
+                        boonChances.Add(2, n3b);
+                        boonChances.Add(3, n4b);
+                        boonChances.Add(4, n5b);
+                        boonChances.Add(5, n6b);
+                        boonChances.Add(6, n7b);
+                        boonChances.Add(7, n8b);
+
+                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck && !HiddenRevealed)
+                        {
+                            TaskManager.Enqueue(() => UseLuck(), "UseLuck");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => AddonSetup(type, args));
+                            HiddenRevealed = true;
+                            return;
+                        }
+
+                        HiddenRevealed = false;
+
+                        if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && (boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
+                        {
+                            TaskManager.Enqueue(() => UseTidings(), "UseTidings");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        }
+
+                        if (Config.GP500Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use500GPYield)
+                        {
+                            TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        }
+
+                        if (Config.GP100Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
+                        {
+                            TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        }
+
+                        if (Config.GPGivingLand <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseGivingLand)
+                        {
+                            TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        }
+
+                        if (Config.GPTwelvesBounty <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTwelvesBounty)
+                        {
+                            TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        }
+
+                    }
+                    if (Config.RememberLastNode)
+                    {
+                        if (lastGatheredIndex > 7)
+                            return;
+
+                        if (ids.Any(x => x == lastGatheredItem))
+                        {
+                            lastGatheredIndex = (ulong)ids.IndexOf(lastGatheredItem);
+                        }
+
+                        if (ids[(int)lastGatheredIndex] == lastGatheredItem || InDiadem)
+                        {
+                            var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
+                            if (quickGathering)
+                            {
+                                QuickGatherToggle(addon);
+                            }
+
+                            ClickGather(addon);
+                        }
+                    }
+                });
+            }
         }
 
         private void ResetCounter(ConditionFlag flag, bool value)
@@ -568,124 +760,6 @@ namespace PandorasBox.Features.Other
             }
 
         };
-
-        private void CheckLastItem(SetupAddonArgs obj)
-        {
-            if (obj.AddonName == "Gathering" && Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
-            {
-                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                TaskManager.Enqueue(() =>
-                {
-                    var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
-
-                    var ids = new List<uint>()
-                    {
-                    addon->GatheredItemId1,
-                    addon->GatheredItemId2,
-                    addon->GatheredItemId3,
-                    addon->GatheredItemId4,
-                    addon->GatheredItemId5,
-                    addon->GatheredItemId6,
-                    addon->GatheredItemId7,
-                    addon->GatheredItemId8
-                    };
-
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
-                    {
-                        Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
-                        Disable();
-                        return;
-                    }
-
-                    var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
-                    if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
-                    {
-                        Dictionary<int, int> boonChances = new();
-
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[25]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n1b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[24]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n2b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[23]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n3b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n4b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[21]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n5b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[20]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n6b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[19]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n7b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[18]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n8b);
-
-                        boonChances.Add(0, n1b);
-                        boonChances.Add(1, n2b);
-                        boonChances.Add(2, n3b);
-                        boonChances.Add(3, n4b);
-                        boonChances.Add(4, n5b);
-                        boonChances.Add(5, n6b);
-                        boonChances.Add(6, n7b);
-                        boonChances.Add(7, n8b);
-
-                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck && !HiddenRevealed)
-                        {
-                            TaskManager.Enqueue(() => UseLuck(), "UseLuck");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                            TaskManager.Enqueue(() => CheckLastItem(obj));
-                            HiddenRevealed = true;
-                            return;
-                        }
-
-                        HiddenRevealed = false;
-
-                        if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && (boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
-                        {
-                            TaskManager.Enqueue(() => UseTidings(), "UseTidings");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                        }
-
-                        if (Config.GP500Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use500GPYield)
-                        {
-                            TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                        }
-
-                        if (Config.GP100Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
-                        {
-                            TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                        }
-
-                        if (Config.GPGivingLand <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseGivingLand)
-                        {
-                            TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                        }
-
-                        if (Config.GPTwelvesBounty <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTwelvesBounty)
-                        {
-                            TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                        }
-
-                    }
-                    if (Config.RememberLastNode)
-                    {
-                        if (lastGatheredIndex > 7)
-                            return;
-
-                        if (ids.Any(x => x == lastGatheredItem))
-                        {
-                            lastGatheredIndex = (ulong)ids.IndexOf(lastGatheredItem);
-                        }
-
-                        if (ids[(int)lastGatheredIndex] == lastGatheredItem || InDiadem)
-                        {
-                            var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
-                            if (quickGathering)
-                            {
-                                QuickGatherToggle(addon);
-                            }
-
-                            ClickGather(addon);
-                        }
-                    }
-                });
-            }
-        }
 
         private void ClickGather(AddonGathering* addon)
         {
@@ -895,96 +969,7 @@ namespace PandorasBox.Features.Other
                 a1 = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
 
             a1->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
-            quickGatherToggle.Original(a1);
-        }
-
-        private void GatherDetour(nint a1, ulong index, nint a3, ulong a4)
-        {
-            try
-            {
-                SwingCount++;
-                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
-                var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
-                if (quickGathering)
-                {
-                    QuickGatherToggle(addon);
-                }
-
-                if (addon != null && Config.Gathering)
-                {
-                    var ids = new List<uint>()
-                {
-                    addon->GatheredItemId1,
-                    addon->GatheredItemId2,
-                    addon->GatheredItemId3,
-                    addon->GatheredItemId4,
-                    addon->GatheredItemId5,
-                    addon->GatheredItemId6,
-                    addon->GatheredItemId7,
-                    addon->GatheredItemId8
-                };
-
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
-                    {
-                        Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
-                        Disable();
-                        return;
-                    }
-
-                    var item = index switch
-                    {
-                        0 => addon->GatheredItemId1,
-                        1 => addon->GatheredItemId2,
-                        2 => addon->GatheredItemId3,
-                        3 => addon->GatheredItemId4,
-                        4 => addon->GatheredItemId5,
-                        5 => addon->GatheredItemId6,
-                        6 => addon->GatheredItemId7,
-                        7 => addon->GatheredItemId8
-                    };
-
-                    if (item != lastGatheredItem && item != 0)
-                    {
-                        TaskManager.Abort();
-                        lastGatheredIndex = index;
-                        lastGatheredItem = item;
-                    }
-
-                    if (item != 0)
-                    {
-                        if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
-                        {
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                            TaskManager.Enqueue(() =>
-                            {
-                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
-                                {
-                                    TaskManager.EnqueueImmediate(() => UseIntegrityAction());
-                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                                    TaskManager.EnqueueImmediate(() => UseWisdom());
-                                }
-                            });
-                            TaskManager.Enqueue(() =>
-                            {
-                                if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
-                                {
-                                    TaskManager.EnqueueImmediate(() => Use100GPSkill());
-                                }
-                            });
-
-                            ClickGather(addon);
-                        }
-                    }
-
-                }
-            }
-            catch(Exception ex)
-            {
-                ex.Log();
-            }
-
-            gatherEventHook.Original(a1, index, a3, a4);
-
+            quickGatherToggle?.Original(a1);
         }
 
         private bool? UseWisdom()
@@ -1014,9 +999,9 @@ namespace PandorasBox.Features.Other
         {
             P.Ws.RemoveWindow(Overlay);
             SaveConfig(Config);
-            gatherEventHook?.Disable();
             quickGatherToggle?.Disable();
-            Common.OnAddonSetup -= CheckLastItem;
+            Svc.AddonLifecycle.UnregisterListener(OnEvent);
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
 
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
             if (addon != null)
@@ -1034,7 +1019,6 @@ namespace PandorasBox.Features.Other
 
         public override void Dispose()
         {
-            gatherEventHook?.Dispose();
             quickGatherToggle?.Dispose();
             base.Dispose();
         }
