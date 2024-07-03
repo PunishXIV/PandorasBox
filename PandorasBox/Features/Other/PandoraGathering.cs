@@ -5,16 +5,14 @@ using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using ECommons;
-using ECommons.Automation.UIInput;
 using ECommons.DalamudServices;
 using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
-using FFXIVClientStructs.Attributes;
+using ECommons.Automation.UIInput;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using InteropGenerator.Runtime.Attributes;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -23,8 +21,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using Action = Lumina.Excel.GeneratedSheets.Action;
+using ECommons.Reflection;
 
 namespace PandorasBox.Features.Other
 {
@@ -153,8 +151,8 @@ namespace PandorasBox.Features.Other
 
         public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
-        private string LocationEffect;
-        private string LocationEffect2;
+        private string? LocationEffect;
+        private string? LocationEffect2;
 
         private bool HiddenRevealed = false;
 
@@ -202,7 +200,7 @@ namespace PandorasBox.Features.Other
         public Configs Config { get; private set; }
 
 
-        public override FeatureType FeatureType => FeatureType.Other;
+        public override FeatureType FeatureType => FeatureType.Disabled;
 
         private Overlays Overlay;
 
@@ -287,6 +285,10 @@ namespace PandorasBox.Features.Other
 
                 ImGui.Columns(3, null, false);
 
+                if (ImGui.Button($"Debug Click"))
+                {
+                    ClickGather(5);
+                }
 
                 if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
                 {
@@ -397,7 +399,7 @@ namespace PandorasBox.Features.Other
 
                 if (LocationEffect.Length > 0)
                 {
-                    ImGuiEx.ImGuiLineCentered("###LocationEffect", () =>
+                    ImGuiEx.LineCentered("###LocationEffect", () =>
                     {
                         ImGui.Text($"{LocationEffect}");
                     });
@@ -419,9 +421,9 @@ namespace PandorasBox.Features.Other
             Overlay = new Overlays(this);
             Config = LoadConfig<Configs>() ?? new Configs();
 
-            //quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
+            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
 
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreReceiveEvent, "Gathering", OnEvent);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
             Svc.Condition.ConditionChange += ResetCounter;
 
@@ -432,19 +434,12 @@ namespace PandorasBox.Features.Other
         {
             if (args is AddonReceiveEventArgs a)
             {
-                if (a.AtkEventType is 25)
+                if ((AtkEventType)a.AtkEventType is AtkEventType.ButtonClick)
                 {
                     var index = a.EventParam;
-
                     try
                     {
-                        SwingCount++;
                         var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
-                        var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
-                        if (quickGathering)
-                        {
-                            QuickGatherToggle(addon);
-                        }
 
                         if (addon != null && Config.Gathering)
                         {
@@ -453,7 +448,7 @@ namespace PandorasBox.Features.Other
                             {
                                 ids.Add(addon->AtkValues[i].UInt);
                             }
-                            
+
                             if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
                             {
                                 Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
@@ -463,7 +458,6 @@ namespace PandorasBox.Features.Other
 
                             var item = ids[index];
 
-                            Svc.Log.Debug($"{item}");
                             if (item != lastGatheredItem && item != 0)
                             {
                                 TaskManager.Abort();
@@ -493,7 +487,8 @@ namespace PandorasBox.Features.Other
                                         }
                                     });
 
-                                    ClickGather(addon);
+                                    ClickGather(lastGatheredIndex);
+
                                 }
                             }
 
@@ -612,7 +607,9 @@ namespace PandorasBox.Features.Other
                                 QuickGatherToggle(addon);
                             }
 
-                            ClickGather(addon);
+                            var integrityLeft = addon->AtkValues[110].UInt;
+                            if (integrityLeft > 1)
+                                ClickGather(lastGatheredIndex);
                         }
                     }
                 });
@@ -624,7 +621,6 @@ namespace PandorasBox.Features.Other
             if (flag == ConditionFlag.Gathering && !value)
             {
                 TaskManager.Abort();
-                TaskManager.Enqueue(() => SwingCount = 0);
             }
         }
 
@@ -761,19 +757,25 @@ namespace PandorasBox.Features.Other
 
         };
 
-        private void ClickGather(AddonGathering* addon)
+        private void ClickGather(ulong index)
         {
-            var target = AtkStage.Instance();
-            var eventData = ECommons.Automation.UIInput.EventData.ForNormalTarget(target, &addon->AtkUnitBase);
-            var inputData = ECommons.Automation.UIInput.InputData.Empty();
+            TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+            TaskManager.Enqueue(() =>
+            {
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
+                if (addon is null) return;
 
-            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-            TaskManager.Enqueue(() => ClickHelper.InvokeReceiveEvent(&addon->AtkUnitBase.AtkEventListener, EventType.CHANGE, (uint)lastGatheredIndex, eventData, inputData));
+                if (addon is null) return;
+                var checkBox = addon->GetNodeById(17 + (uint)index)->GetAsAtkComponentCheckBox();
+                if (checkBox is null) return;
+                checkBox->AtkComponentButton.IsChecked = true;
+                checkBox->ClickCheckboxButton((AtkComponentBase*)addon, (uint)index);
+            });
         }
 
         private void UseLuck()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
             {
                 case 17: //BTN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0)
