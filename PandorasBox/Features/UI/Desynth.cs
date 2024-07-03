@@ -29,13 +29,6 @@ namespace PandorasBox.Features.UI
 
         private Hook<UpdateItemDelegate> updateItemHook;
 
-        private delegate void* SetupDropDownList(AtkComponentList* a1, ushort a2, byte** a3, byte a4);
-        private Hook<SetupDropDownList> setupDropDownList;
-
-        private delegate byte PopulateItemList(AgentSalvage* agentSalvage);
-
-        private Hook<PopulateItemList> populateHook;
-
         private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
         public override FeatureType FeatureType => FeatureType.UI;
 
@@ -48,28 +41,12 @@ namespace PandorasBox.Features.UI
             updateItemHook ??= Svc.Hook.HookFromSignature<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
             updateItemHook?.Enable();
 
-            setupDropDownList ??= Svc.Hook.HookFromSignature<SetupDropDownList>("E8 ?? ?? ?? ?? 8D 4F 55", SetupDropDownListDetour);
-            setupDropDownList?.Enable();
-
-            populateHook ??= Svc.Hook.HookFromSignature<PopulateItemList>("E8 ?? ?? ?? ?? 84 C0 0F 84 ?? ?? ?? ?? 48 8B CE E8 ?? ?? ?? ?? 83 66 2C FE", PopulateDetour);
-            populateHook?.Enable();
-
             base.Enable();
         }
 
         public override void Setup()
         {
             base.Setup();
-        }
-
-        private byte PopulateDetour(AgentSalvage* agentSalvage)
-        {
-            return populateHook.Original(agentSalvage);
-        }
-
-        private void* SetupDropDownListDetour(AtkComponentList* a1, ushort a2, byte** a3, byte a4)
-        {
-            return setupDropDownList.Original(a1, a2, a3, a4);
         }
 
 
@@ -111,7 +88,7 @@ namespace PandorasBox.Features.UI
                 var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1);
                 if (addon != null && addon->AtkUnitBase.IsVisible)
                 {
-                    var node = addon->AtkUnitBase.UldManager.NodeList[12];
+                    var node = addon->AtkUnitBase.UldManager.NodeList[10];
 
                     if (node == null)
                         return;
@@ -227,16 +204,12 @@ namespace PandorasBox.Features.UI
             P.Ws.RemoveWindow(Overlay);
             Overlay = null;
             updateItemHook?.Disable();
-            setupDropDownList?.Disable();
-            populateHook?.Disable();
             base.Disable();
         }
 
         public override void Dispose()
         {
             updateItemHook?.Dispose();
-            setupDropDownList?.Dispose();
-            populateHook?.Dispose();
         }
     }
 }
