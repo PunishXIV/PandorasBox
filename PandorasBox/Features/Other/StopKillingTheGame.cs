@@ -112,7 +112,7 @@ namespace PandorasBox.Features.Other
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
             }
             this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
-            this.LoginHandler = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 0F B6 81 ?? ?? ?? ?? 40 32 FF");
+            this.LoginHandler = Svc.SigScanner.ScanText("40 55 53 56 57 41 54 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 8B B1");
             this.loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
 
             this.lobbyErrorHandlerHook.Enable();

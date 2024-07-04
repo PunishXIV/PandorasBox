@@ -36,7 +36,7 @@ namespace PandorasBox.Features.Other
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            gamepadPoll ??= Svc.Hook.HookFromSignature<ControllerPoll>("40 ?? 57 41 ?? 48 81 EC ?? ?? ?? ?? 44 0F ?? ?? ?? ?? ?? ?? ?? 48 8B", GamepadPollDetour);
+            gamepadPoll ??= Svc.Hook.HookFromSignature<ControllerPoll>("40 55 53 57 41 54 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24", GamepadPollDetour);
             gamepadPoll?.Enable();
             base.Enable();
         }
