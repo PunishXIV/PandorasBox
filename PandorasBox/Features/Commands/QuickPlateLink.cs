@@ -1,5 +1,4 @@
 using Dalamud.Game.Text.SeStringHandling;
-using Dalamud.Memory;
 using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;

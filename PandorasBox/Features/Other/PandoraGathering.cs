@@ -22,7 +22,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Action = Lumina.Excel.GeneratedSheets.Action;
-using ECommons.Reflection;
+using ECommons.Automation;
 
 namespace PandorasBox.Features.Other
 {
@@ -200,13 +200,13 @@ namespace PandorasBox.Features.Other
         public Configs Config { get; private set; }
 
 
-        public override FeatureType FeatureType => FeatureType.Disabled;
+        public override FeatureType FeatureType => FeatureType.Other;
 
         private Overlays Overlay;
 
         public override bool UseAutoConfig => false;
 
-        private ulong lastGatheredIndex = 10;
+        private int lastGatheredIndex = 10;
         private uint lastGatheredItem = 0;
 
         public override bool DrawConditions()
@@ -284,11 +284,6 @@ namespace PandorasBox.Features.Other
                 ImGui.Dummy(new Vector2(2f));
 
                 ImGui.Columns(3, null, false);
-
-                if (ImGui.Button($"Debug Click"))
-                {
-                    ClickGather(5);
-                }
 
                 if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
                 {
@@ -437,68 +432,73 @@ namespace PandorasBox.Features.Other
                 if ((AtkEventType)a.AtkEventType is AtkEventType.ButtonClick)
                 {
                     var index = a.EventParam;
-                    try
+                    CheckNodeAndClick(index);
+                }
+            }
+        }
+
+        private void CheckNodeAndClick(int index)
+        {
+            try
+            {
+                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+
+                if (addon != null && Config.Gathering)
+                {
+                    var ids = new List<uint>();
+                    for (int i = 7; i <= (11 * 8) + 7; i += 11)
                     {
-                        var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                        ids.Add(addon->AtkValues[i].UInt);
+                    }
 
-                        if (addon != null && Config.Gathering)
+                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
+                    {
+                        Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
+                        Disable();
+                        return;
+                    }
+
+                    var item = ids[index];
+
+                    if (item != lastGatheredItem && item != 0)
+                    {
+                        TaskManager.Abort();
+                        lastGatheredIndex = (byte)index;
+                        lastGatheredItem = item;
+                    }
+
+                    if (item != 0)
+                    {
+                        if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
                         {
-                            var ids = new List<uint>();
-                            for (int i = 7; i <= (11 * 8) + 7; i += 11)
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() =>
                             {
-                                ids.Add(addon->AtkValues[i].UInt);
-                            }
-
-                            if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
-                            {
-                                Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
-                                Disable();
-                                return;
-                            }
-
-                            var item = ids[index];
-
-                            if (item != lastGatheredItem && item != 0)
-                            {
-                                TaskManager.Abort();
-                                lastGatheredIndex = (byte)index;
-                                lastGatheredItem = item;
-                            }
-
-                            if (item != 0)
-                            {
-                                if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
+                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
                                 {
-                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                                    TaskManager.Enqueue(() =>
-                                    {
-                                        if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
-                                        {
-                                            TaskManager.EnqueueImmediate(() => UseIntegrityAction());
-                                            TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                                            TaskManager.EnqueueImmediate(() => UseWisdom());
-                                        }
-                                    });
-                                    TaskManager.Enqueue(() =>
-                                    {
-                                        if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
-                                        {
-                                            TaskManager.EnqueueImmediate(() => Use100GPSkill());
-                                        }
-                                    });
-
-                                    ClickGather(lastGatheredIndex);
-
+                                    TaskManager.EnqueueImmediate(() => UseIntegrityAction());
+                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                    TaskManager.EnqueueImmediate(() => UseWisdom());
                                 }
-                            }
+                            });
+                            TaskManager.Enqueue(() =>
+                            {
+                                if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
+                                {
+                                    TaskManager.EnqueueImmediate(() => Use100GPSkill());
+                                }
+                            });
+
+                            ClickGather(lastGatheredIndex);
 
                         }
                     }
-                    catch (Exception ex)
-                    {
-                        ex.Log();
-                    }
+
                 }
+            }
+            catch (Exception ex)
+            {
+                ex.Log();
             }
         }
 
@@ -558,7 +558,7 @@ namespace PandorasBox.Features.Other
 
                         HiddenRevealed = false;
 
-                        if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && (boonChances.TryGetValue((int)lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
+                        if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                         {
                             TaskManager.Enqueue(() => UseTidings(), "UseTidings");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
@@ -596,10 +596,10 @@ namespace PandorasBox.Features.Other
 
                         if (ids.Any(x => x == lastGatheredItem))
                         {
-                            lastGatheredIndex = (ulong)ids.IndexOf(lastGatheredItem);
+                            lastGatheredIndex = ids.IndexOf(lastGatheredItem);
                         }
 
-                        if (ids[(int)lastGatheredIndex] == lastGatheredItem || InDiadem)
+                        if (ids[lastGatheredIndex] == lastGatheredItem || InDiadem)
                         {
                             var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
                             if (quickGathering)
@@ -757,7 +757,7 @@ namespace PandorasBox.Features.Other
 
         };
 
-        private void ClickGather(ulong index)
+        private void ClickGather(int index)
         {
             TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
             TaskManager.Enqueue(() =>
@@ -769,7 +769,8 @@ namespace PandorasBox.Features.Other
                 var checkBox = addon->GetNodeById(17 + (uint)index)->GetAsAtkComponentCheckBox();
                 if (checkBox is null) return;
                 checkBox->AtkComponentButton.IsChecked = true;
-                checkBox->ClickCheckboxButton((AtkComponentBase*)addon, (uint)index);
+                Callback.Fire(addon, true, index);
+                CheckNodeAndClick(index);
             });
         }
 

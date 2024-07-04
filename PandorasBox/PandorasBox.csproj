@@ -74,6 +74,10 @@
             <HintPath>$(DalamudLibPath)InteropGenerator.Runtime.dll</HintPath>
             <Private>False</Private>
         </Reference>
+        <Reference Include="JetBrains.Annotations">
+            <Private>false</Private>
+            <HintPath>$(DalamudLibPath)\JetBrains.Annotations.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
     <ItemGroup>
