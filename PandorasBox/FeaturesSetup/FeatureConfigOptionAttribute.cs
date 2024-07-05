@@ -11,6 +11,8 @@ namespace PandorasBox.FeaturesSetup
 
         public string LocalizeKey { get; }
 
+        public bool Disabled { get; set; } = false;
+
         public int Priority { get; } = 0;
         public int EditorSize { get; set; } = -1;
 

@@ -1,6 +1,7 @@
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using Dalamud.Interface.Components;
 using Dalamud.Memory;
 using Dalamud.Plugin;
 using ECommons;
@@ -139,6 +140,9 @@ namespace PandorasBox.Features
                 var configOptionIndex = 0;
                 foreach (var (f, attr) in fields)
                 {
+                    if (attr.Disabled)
+                        ImGui.BeginDisabled();
+
                     if (attr!.ConditionalDisplay)
                     {
                         var conditionalMethod = configObj.GetType().GetMethod($"ShouldShow{f.Name}", BindingFlags.Public | BindingFlags.Instance);
@@ -246,6 +250,12 @@ namespace PandorasBox.Features
                     else
                     {
                         ImGui.Text($"Invalid Auto Field Type: {f.Name}");
+                    }
+
+                    if (attr.Disabled)
+                    {
+                        ImGui.EndDisabled();
+                        ImGuiComponents.HelpMarker("Currently Disabled");
                     }
 
                 }

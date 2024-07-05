@@ -23,7 +23,7 @@ namespace PandorasBox.Features.Other
             [FeatureConfigOption("Skip Authentication Errors")]
             public bool SkipAuthError = true;
 
-            [FeatureConfigOption("Queue Mode: Use for lobby errors in queues")]
+            [FeatureConfigOption(name: "Queue Mode: Use for lobby errors in queues", Disabled = true)]
             public bool QueueMode = false;
 
             [FeatureConfigOption("Safer Mode: Filters invalid messages that may crash the client")]
@@ -51,14 +51,14 @@ namespace PandorasBox.Features.Other
 
         private Int64 StartHandlerDetour(Int64 a1, Int64 a2)
         {
-            var a1_88 = (UInt16)Marshal.ReadInt16(new IntPtr(a1 + 88));
-            var a1_456 = Marshal.ReadInt32(new IntPtr(a1 + 456));
-            Svc.Log.Debug($"Start a1_456:{a1_456}");
-            if (a1_456 != 0 && Config.QueueMode)
-            {
-                Marshal.WriteInt32(new IntPtr(a1 + 456), 0);
-                Svc.Log.Debug($"a1_456: {a1_456} => 0");
-            }
+            //var a1_88 = (UInt16)Marshal.ReadInt16(new IntPtr(a1 + 88));
+            //var a1_456 = Marshal.ReadInt32(new IntPtr(a1 + 456));
+            //Svc.Log.Debug($"Start a1_456:{a1_456}");
+            //if (a1_456 != 0 && Config.QueueMode)
+            //{
+            //    Marshal.WriteInt32(new IntPtr(a1 + 456), 0);
+            //    Svc.Log.Debug($"a1_456: {a1_456} => 0");
+            //}
             return this.startHandlerHook.Original(a1, a2);
         }
         private Int64 LoginHandlerDetour(Int64 a1, Int64 a2)
@@ -106,10 +106,12 @@ namespace PandorasBox.Features.Other
             try
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
+                Svc.Log.Debug($"Sig 1");
             }
             catch (Exception)
             {
                 this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
+                Svc.Log.Debug($"Sig 2");
             }
             this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
             this.LoginHandler = Svc.SigScanner.ScanText("40 55 53 56 57 41 54 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 8B B1");
