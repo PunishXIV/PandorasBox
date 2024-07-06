@@ -144,7 +144,6 @@ namespace PandorasBox.Features.Other
         internal Vector4 ClassicFFTheme = new Vector4(0.21f, 0f, 0.68f, 1f);
         internal Vector4 LightBlueTheme = new Vector4(0.21f, 0.36f, 0.59f, 0.25f);
 
-        internal int SwingCount = 0;
         public override string Name => "Pandora Quick Gather";
 
         public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
@@ -195,6 +194,10 @@ namespace PandorasBox.Features.Other
             public bool UseLuck = false;
 
             public int GPLuck = 200;
+
+            public bool GatherChanceUp = false;
+
+            public int GPGatherChanceUp = 100;
         }
 
         public Configs Config { get; private set; }
@@ -474,7 +477,7 @@ namespace PandorasBox.Features.Other
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() =>
                             {
-                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && SwingCount >= 2)
+                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction())
                                 {
                                     TaskManager.EnqueueImmediate(() => UseIntegrityAction());
                                     TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
@@ -500,6 +503,19 @@ namespace PandorasBox.Features.Other
             {
                 ex.Log();
             }
+        }
+
+        private bool CanUseIntegrityAction()
+        {
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            {
+                case 17:
+                    return ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0;
+                case 16:
+                    return ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0;
+            }
+
+            return true;
         }
 
         private void AddonSetup(AddonEvent type, AddonArgs args)
@@ -528,6 +544,7 @@ namespace PandorasBox.Features.Other
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
                         Dictionary<int, int> boonChances = new();
+                        Dictionary<int, int> gatherChances = new();
 
                         int.TryParse(addon->AtkUnitBase.UldManager.NodeList[25]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n1b);
                         int.TryParse(addon->AtkUnitBase.UldManager.NodeList[24]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n2b);
@@ -574,6 +591,11 @@ namespace PandorasBox.Features.Other
                         {
                             TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                        }
+
+                        if (Config.GPGatherChanceUp <= Svc.ClientState.LocalPlayer.CurrentGp && Config.GatherChanceUp)
+                        {
+
                         }
 
                         if (Config.GPGivingLand <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseGivingLand)
@@ -813,21 +835,39 @@ namespace PandorasBox.Features.Other
             return false;
         }
 
+        private bool? UseGatherChanceUp()
+        {
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            {
+                case 17:
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 220) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Action, 220);
+                    }
+                    break;
+                case 16:
+                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 237) == 0)
+                    {
+                        ActionManager.Instance()->UseAction(ActionType.Action, 237);
+                    }
+                    break;
+            }
+
+            return true;
+        }
         private bool? UseIntegrityAction()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0)
                     {
-                        SwingCount--;
                         ActionManager.Instance()->UseAction(ActionType.Action, 215);
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0)
                     {
-                        SwingCount--;
                         ActionManager.Instance()->UseAction(ActionType.Action, 232);
                     }
                     break;
@@ -982,14 +1022,12 @@ namespace PandorasBox.Features.Other
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0)
                     {
-                        SwingCount--;
                         ActionManager.Instance()->UseAction(ActionType.Action, 26522);
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26521) == 0)
                     {
-                        SwingCount--;
                         ActionManager.Instance()->UseAction(ActionType.Action, 26521);
                     }
                     break;

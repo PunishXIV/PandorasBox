@@ -34,7 +34,7 @@ namespace PandorasBox.Features.Actions
 
         public override bool UseAutoConfig => true;
 
-        public override FeatureType FeatureType => FeatureType.Actions;
+        public override FeatureType FeatureType => FeatureType.Disabled;
 
         public override void Enable()
         {
@@ -54,7 +54,7 @@ namespace PandorasBox.Features.Actions
                 if (Svc.ClientState.LocalPlayer.ClassJob.Id != 33) return;
                 var am = ActionManager.Instance();
                 if (am->GetActionStatus(ActionType.Action, 3590) != 0) return;
-                if (Svc.Gauges.Get<ASTGauge>().DrawnCard != Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE) return;
+                //if (Svc.Gauges.Get<ASTGauge>().DrawnCard != Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE) return;
 
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas]);
                 TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
@@ -96,7 +96,7 @@ namespace PandorasBox.Features.Actions
 
             if (jobId == 33)
             {
-                if (Svc.Gauges.Get<ASTGauge>().DrawnCard != Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE) return;
+                //if (Svc.Gauges.Get<ASTGauge>().DrawnCard != Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE) return;
 
                 if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.UsingParasol]) return;
 
@@ -107,13 +107,13 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryDrawCard()
         {
-            if (Svc.Gauges.Get<ASTGauge>().DrawnCard == Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE)
-            {
-                var am = ActionManager.Instance();
-                if (am->GetActionStatus(ActionType.Action, 3590) != 0) return false;
-                am->UseAction(ActionType.Action, 3590, Svc.ClientState.LocalPlayer.GameObjectId);
-                return true;
-            }
+            //if (Svc.Gauges.Get<ASTGauge>().DrawnCard == Dalamud.Game.ClientState.JobGauge.Enums.CardType.NONE)
+            //{
+            //    var am = ActionManager.Instance();
+            //    if (am->GetActionStatus(ActionType.Action, 3590) != 0) return false;
+            //    am->UseAction(ActionType.Action, 3590, Svc.ClientState.LocalPlayer.GameObjectId);
+            //    return true;
+            //}
             return false;
         }
 

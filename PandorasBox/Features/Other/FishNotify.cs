@@ -34,7 +34,7 @@ namespace PandorasBox.Features.Other
 
         public override string Description => "Play a sound or send a chat message when a fish is hooked.";
 
-        public override FeatureType FeatureType => FeatureType.Other;
+        public override FeatureType FeatureType => FeatureType.Disabled;
 
         public class Configs : FeatureConfig
         {
