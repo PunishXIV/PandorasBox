@@ -477,10 +477,10 @@ namespace PandorasBox.Features.Other
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() =>
                             {
-                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction())
+                                if ((Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp || CanUseWisdomAction()) && Config.UseSolidReason && (CanUseIntegrityAction() || CanUseWisdomAction()))
                                 {
                                     TaskManager.EnqueueImmediate(() => UseWisdom()); // Use Wisdom if available (solves Solid Reason being Prioritized over WttW)
-                                    TaskManager.EnqueueImmediate(() => UseIntegrityAction()); // Use Solid Reason if Wisdom not available. (Shouldn't do anything if 
+                                    TaskManager.EnqueueImmediate(() => UseIntegrityAction()); // Use Solid Reason if Wisdom not available. (Shouldn't do anything if already used Wisdom)
                                     TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]); // Wait till after gathering once 
                                     TaskManager.EnqueueImmediate(() => UseWisdom()); // Use Wisdom if available (solves for when under 300GP but w/ WttW proc)
                                 }
@@ -504,6 +504,19 @@ namespace PandorasBox.Features.Other
             {
                 ex.Log();
             }
+        }
+
+        private bool CanUseWisdomAction()
+        {
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            {
+                case 17:
+                    return ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0;
+                case 16:
+                    return ActionManager.Instance()->GetActionStatus(ActionType.Action, 26521) == 0;
+            }
+
+            return true;
         }
 
         private bool CanUseIntegrityAction()
