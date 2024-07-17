@@ -1,5 +1,7 @@
+using ECommons.Automation.UIInput;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
+using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
@@ -11,8 +13,6 @@ using System;
 using System.Linq;
 using System.Numerics;
 using static ECommons.GenericHelpers;
-using ECommons.Automation.UIInput;
-using ECommons.UIHelpers.AddonMasterImplementations;
 
 namespace PandorasBox.Features
 {
@@ -123,15 +123,17 @@ namespace PandorasBox.Features
             if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible)
             {
                 var fwdBtn = addon->AtkUnitBase.GetNodeById(14)->GetAsAtkComponentButton();
-                fwdBtn->ClickAddonButton((AtkComponentBase*)addon, 2, EventType.CHANGE);
+                if (fwdBtn == null) return false;
+                if (fwdBtn->IsEnabled)
+                {
+                    fwdBtn->ClickAddonButton((AtkComponentBase*)addon, 2);
 
-                return true;
+                    return true;
+                }
 
             }
-            else
-            {
-                return false;
-            }
+
+            return false;
         }
 
         private AtkValue* GenerateDropdownCallback(int one, int two)
@@ -157,7 +159,7 @@ namespace PandorasBox.Features
             if (TryGetAddonByName<AddonRepair>("Repair", out var addon) && addon->AtkUnitBase.IsVisible && addon->RepairAllButton->IsEnabled)
             {
                 Svc.Log.Debug($"{addon->RepairAllButton->AtkComponentBase.OwnerNode is null}");
-                new RepairMaster((IntPtr)addon).RepairAll();
+                new AddonMaster.Repair((IntPtr)addon).RepairAll();
 
                 return true;
             }

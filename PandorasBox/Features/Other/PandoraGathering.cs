@@ -1,14 +1,16 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.Text;
+using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
 using ECommons;
+using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
-using ECommons.Automation.UIInput;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -22,7 +24,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Action = Lumina.Excel.GeneratedSheets.Action;
-using ECommons.Automation;
 
 namespace PandorasBox.Features.Other
 {
@@ -215,6 +216,60 @@ namespace PandorasBox.Features.Other
         public override bool DrawConditions()
         {
             return Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
+        }
+
+        public override void Enable()
+        {
+            Overlay = new Overlays(this);
+            Config = LoadConfig<Configs>() ?? new Configs();
+
+            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
+
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
+            Svc.Condition.ConditionChange += ResetCounter;
+            Svc.Chat.ChatMessage += CheckRevisit;
+
+            base.Enable();
+        }
+
+        private void CheckRevisit(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+        {
+            if (type is (XivChatType)2107)
+            {
+                TaskManager.Abort();
+                TaskManager.DelayNext(1000);
+                AddonSetup(AddonEvent.PostSetup, null);
+            }
+        }
+
+        public override void Disable()
+        {
+            P.Ws.RemoveWindow(Overlay);
+            SaveConfig(Config);
+            quickGatherToggle?.Disable();
+            Svc.AddonLifecycle.UnregisterListener(OnEvent);
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
+            Svc.Chat.ChatMessage -= CheckRevisit;
+
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
+            if (addon != null)
+            {
+                addon->UldManager.NodeList[5]->ToggleVisibility(true);
+                addon->UldManager.NodeList[6]->ToggleVisibility(true);
+                addon->UldManager.NodeList[8]->ToggleVisibility(true);
+                addon->UldManager.NodeList[9]->ToggleVisibility(true);
+                addon->UldManager.NodeList[10]->ToggleVisibility(true);
+            }
+            Svc.Condition.ConditionChange -= ResetCounter;
+
+            base.Disable();
+        }
+
+        public override void Dispose()
+        {
+            quickGatherToggle?.Dispose();
+            base.Dispose();
         }
 
         public unsafe override void Draw()
@@ -414,20 +469,6 @@ namespace PandorasBox.Features.Other
             }
         }
 
-        public override void Enable()
-        {
-            Overlay = new Overlays(this);
-            Config = LoadConfig<Configs>() ?? new Configs();
-
-            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
-
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
-            Svc.Condition.ConditionChange += ResetCounter;
-
-            base.Enable();
-        }
-
         private void OnEvent(AddonEvent type, AddonArgs args)
         {
             if (args is AddonReceiveEventArgs a)
@@ -477,18 +518,27 @@ namespace PandorasBox.Features.Other
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() =>
                             {
-                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction())
+                                var integrityLeft = addon->AtkValues[110].UInt;
+                                var maxIntegrity = addon->AtkValues[111].UInt;
+                                var diffIntegrity = maxIntegrity - integrityLeft;
+
+                                if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction() && diffIntegrity >= 2)
                                 {
                                     TaskManager.EnqueueImmediate(() => UseIntegrityAction());
                                     TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                                    TaskManager.EnqueueImmediate(() => UseWisdom());
                                 }
+                            });
+                            TaskManager.Enqueue(() =>
+                            {
+                                TaskManager.EnqueueImmediate(() => UseWisdom());
+                                TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             });
                             TaskManager.Enqueue(() =>
                             {
                                 if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
                                 {
                                     TaskManager.EnqueueImmediate(() => Use100GPSkill());
+                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
                                 }
                             });
 
@@ -546,23 +596,13 @@ namespace PandorasBox.Features.Other
                         Dictionary<int, int> boonChances = new();
                         Dictionary<int, int> gatherChances = new();
 
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[25]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n1b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[24]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n2b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[23]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n3b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n4b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[21]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n5b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[20]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n6b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[19]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n7b);
-                        int.TryParse(addon->AtkUnitBase.UldManager.NodeList[18]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var n8b);
+                        for (int i = 0; i <= 7; i++)
+                        {
+                            int.TryParse(addon->AtkUnitBase.UldManager.NodeList[25 - i]->GetAsAtkComponentNode()->Component->UldManager.NodeList[21]->GetAsAtkTextNode()->NodeText.ToString(), out var boonChance);
+                            boonChances.Add(i, boonChance);
+                        }
 
-                        boonChances.Add(0, n1b);
-                        boonChances.Add(1, n2b);
-                        boonChances.Add(2, n3b);
-                        boonChances.Add(3, n4b);
-                        boonChances.Add(4, n5b);
-                        boonChances.Add(5, n6b);
-                        boonChances.Add(6, n7b);
-                        boonChances.Add(7, n8b);
+                        Svc.Log.Debug($"{string.Join(", ", boonChances)}");
 
                         if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck && !HiddenRevealed)
                         {
@@ -1036,32 +1076,6 @@ namespace PandorasBox.Features.Other
             return true;
         }
 
-        public override void Disable()
-        {
-            P.Ws.RemoveWindow(Overlay);
-            SaveConfig(Config);
-            quickGatherToggle?.Disable();
-            Svc.AddonLifecycle.UnregisterListener(OnEvent);
-            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
 
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
-            if (addon != null)
-            {
-                addon->UldManager.NodeList[5]->ToggleVisibility(true);
-                addon->UldManager.NodeList[6]->ToggleVisibility(true);
-                addon->UldManager.NodeList[8]->ToggleVisibility(true);
-                addon->UldManager.NodeList[9]->ToggleVisibility(true);
-                addon->UldManager.NodeList[10]->ToggleVisibility(true);
-            }
-            Svc.Condition.ConditionChange -= ResetCounter;
-
-            base.Disable();
-        }
-
-        public override void Dispose()
-        {
-            quickGatherToggle?.Dispose();
-            base.Dispose();
-        }
     }
 }

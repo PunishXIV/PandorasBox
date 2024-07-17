@@ -32,7 +32,7 @@ namespace PandorasBox.Features
         protected PandorasBox? P;
         protected IDalamudPluginInterface? Pi;
         protected Configuration? config;
-        protected TaskManager? TaskManager;
+        protected TaskManager TaskManager = null!;
         public FeatureProvider Provider { get; private set; } = null!;
 
         public virtual bool Enabled { get; protected set; }

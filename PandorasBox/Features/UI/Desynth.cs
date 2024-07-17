@@ -87,7 +87,7 @@ namespace PandorasBox.Features.UI
                 var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1);
                 if (addon != null && addon->AtkUnitBase.IsVisible)
                 {
-                    var node = addon->AtkUnitBase.UldManager.NodeList[10];
+                    var node = addon->AtkUnitBase.UldManager.NodeList[12];
 
                     if (node == null)
                         return;
@@ -110,7 +110,7 @@ namespace PandorasBox.Features.UI
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
                     ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                    ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                    ImGui.Begin($"###DesynthAll{node->NodeId}", ImGuiWindowFlags.AlwaysAutoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
                         | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
                     if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Mounted])
