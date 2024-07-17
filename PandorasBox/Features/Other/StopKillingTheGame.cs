@@ -16,7 +16,7 @@ namespace PandorasBox.Features.Other
 
         public override string Description => "Prevents the game from closing itself when it gets a lobby error";
 
-        public override FeatureType FeatureType => FeatureType.Disabled;
+        public override FeatureType FeatureType => FeatureType.Other;
 
         public class Configs : FeatureConfig
         {
@@ -103,18 +103,9 @@ namespace PandorasBox.Features.Other
         {
             Config = LoadConfig<Configs>() ?? new Configs();
             lobbyErrorHandlerHook ??= Svc.Hook.HookFromSignature<LobbyErrorHandlerDelegate>("40 53 48 83 EC 30 48 8B D9 49 8B C8 E8 ?? ?? ?? ?? 8B D0", LobbyErrorHandlerDetour);
-            try
-            {
-                this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CC");
-                Svc.Log.Debug($"Sig 1");
-            }
-            catch (Exception)
-            {
-                this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? B2 01 49 8B CD");
-                Svc.Log.Debug($"Sig 2");
-            }
+            this.StartHandler = this.StartHandler = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 49 8B CD E8 ?? ?? ?? ?? 45 88 66 08");
             this.startHandlerHook = Svc.Hook.HookFromAddress<StartHandlerDelegate>(StartHandler, new StartHandlerDelegate(StartHandlerDetour));
-            this.LoginHandler = Svc.SigScanner.ScanText("40 55 53 56 57 41 54 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 8B B1");
+            this.LoginHandler = Svc.SigScanner.ScanText("40 55 53 56 57 41 54 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 85 ?? ?? ?? ?? 8B B1 ?? ?? ?? ??");
             this.loginHandlerHook = Svc.Hook.HookFromAddress<LoginHandlerDelegate>(LoginHandler, new LoginHandlerDelegate(LoginHandlerDetour));
 
             this.lobbyErrorHandlerHook.Enable();
@@ -134,7 +125,7 @@ namespace PandorasBox.Features.Other
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Dialogue");
                 if (!addon->IsVisible) return;
 
-                WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.NumPad0);
+                WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.NumPad0);
             }
         }
 
