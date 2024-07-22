@@ -3,6 +3,7 @@ using ECommons.DalamudServices;
 using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
+using FFXIVClientStructs.STD;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
@@ -82,6 +83,7 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfDungeon(ushort e)
         {
+            if (HasStance()) return;
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
             TaskManager!.Enqueue(() => Svc.ClientState.LocalPlayer != null);
             TaskManager!.DelayNext("TankWaitForConditions", 2000);
@@ -92,18 +94,34 @@ namespace PandorasBox.Features.Actions
 
         private void CheckForFateSync(IFramework framework)
         {
+            if (HasStance()) return;
             var ps = PlayerState.Instance();
-            if (Config!.ActivateInFate && FateManager.Instance()->CurrentFate != null && ps->IsLevelSynced == 1)
+            if (Config!.ActivateInFate && FateManager.Instance()->CurrentFate != null)
             {
-                TaskManager!.Enqueue(() => EnableStance());
+                TaskManager!.Enqueue(() => EnableStance(), "FateSync");
             }
         }
 
         private void RunFeature(uint? jobId)
         {
+            if (HasStance()) return;
             EnableStance();
         }
 
+        private bool HasStance()
+        {
+            ushort stance = Svc.ClientState.LocalPlayer?.ClassJob.Id switch
+            {
+                1 or 19 => 79,
+                3 or 21 => 91,
+                32 => 743,
+                37 => 1833,
+                _ => throw new System.NotImplementedException()
+            };
+
+            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == stance)) return true;
+            return false;
+        }
         private bool EnableStance()
         {
             if (Svc.ClientState.LocalPlayer?.GetRole() is not CombatRole.Tank) return true;
@@ -126,16 +144,8 @@ namespace PandorasBox.Features.Actions
                     _ => throw new System.NotImplementedException()
                 };
 
-                ushort stance = Svc.ClientState.LocalPlayer.ClassJob.Id switch
-                {
-                    1 or 19 => 79,
-                    3 or 21 => 91,
-                    32 => 743,
-                    37 => 1833,
-                    _ => throw new System.NotImplementedException()
-                };
+                if (HasStance()) return true;
 
-                if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == stance)) return true;
                 if (am->GetActionStatus(ActionType.Action, action) == 0)
                 {
                     am->UseAction(ActionType.Action, action);

@@ -212,6 +212,8 @@ namespace PandorasBox.Features.Other
 
         private int lastGatheredIndex = 10;
         private uint lastGatheredItem = 0;
+        private uint CurrentIntegrity { get; set; } = 0;
+        private uint MaxIntegrity { get; set; } = 0;
 
         public override bool DrawConditions()
         {
@@ -229,13 +231,24 @@ namespace PandorasBox.Features.Other
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
             Svc.Condition.ConditionChange += ResetCounter;
             Svc.Chat.ChatMessage += CheckRevisit;
+            Svc.Framework.Update += UpdateIntegrity;
 
             base.Enable();
         }
 
+        private void UpdateIntegrity(IFramework framework)
+        {
+            var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering");
+            if (addon != null)
+            {
+                CurrentIntegrity = addon->AtkValues[110].UInt;
+                MaxIntegrity = addon->AtkValues[111].UInt;
+            }
+        }
+
         private void CheckRevisit(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
         {
-            if (type is (XivChatType)2107)
+            if (type is (XivChatType)2107 && CurrentIntegrity == 0)
             {
                 TaskManager.Abort();
                 TaskManager.DelayNext(1000);
@@ -251,6 +264,7 @@ namespace PandorasBox.Features.Other
             Svc.AddonLifecycle.UnregisterListener(OnEvent);
             Svc.AddonLifecycle.UnregisterListener(AddonSetup);
             Svc.Chat.ChatMessage -= CheckRevisit;
+            Svc.Framework.Update -= UpdateIntegrity;
 
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
             if (addon != null)
@@ -518,20 +532,15 @@ namespace PandorasBox.Features.Other
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() =>
                             {
-                                var integrityLeft = addon->AtkValues[110].UInt;
-                                var maxIntegrity = addon->AtkValues[111].UInt;
-                                var diffIntegrity = maxIntegrity - integrityLeft;
+                                var diffIntegrity = MaxIntegrity - CurrentIntegrity;
 
                                 if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction() && diffIntegrity >= 2)
                                 {
                                     TaskManager.EnqueueImmediate(() => UseIntegrityAction());
                                     TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                    TaskManager.EnqueueImmediate(() => UseWisdom());
+                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
                                 }
-                            });
-                            TaskManager.Enqueue(() =>
-                            {
-                                TaskManager.EnqueueImmediate(() => UseWisdom());
-                                TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             });
                             TaskManager.Enqueue(() =>
                             {

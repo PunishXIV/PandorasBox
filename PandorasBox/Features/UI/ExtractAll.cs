@@ -98,6 +98,12 @@ namespace PandorasBox.Features.UI
                     ImGui.PopStyleColor();
 
                 }
+                else
+                {
+                    Extracting = false;
+                    TaskManager.Abort();
+                    TaskManager.Enqueue(() => YesAlready.Unlock());
+                }
             }
             catch (Exception e)
             {

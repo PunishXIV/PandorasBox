@@ -145,6 +145,12 @@ namespace PandorasBox.Features.UI
                     ImGui.PopFont();
                     ImGui.PopStyleColor();
                 }
+                else
+                {
+                    Desynthing = false;
+                    TaskManager.Abort();
+                    TaskManager.Enqueue(() => YesAlready.Unlock());
+                }
             }
             catch
             {

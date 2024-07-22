@@ -19,9 +19,15 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Svc.Framework.Update += CheckMotifs;
+            Events.OnJobChanged += DelayStart;
             SendActionHook ??= Svc.Hook.HookFromSignature<SendActionDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B E9 41 0F B7 D9", SendActionDetour);
             SendActionHook?.Enable();
             base.Enable();
+        }
+
+        private void DelayStart(uint? jobId)
+        {
+            EzThrottler.Throttle("PCTMotifs", 3000);
         }
 
         private void SendActionDetour(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9)
@@ -57,6 +63,7 @@ namespace PandorasBox.Features.Actions
         public override void Disable()
         {
             Svc.Framework.Update -= CheckMotifs;
+            Events.OnJobChanged -= DelayStart;
             SendActionHook?.Disable();
             SendActionHook?.Dispose();
             base.Disable();

@@ -127,7 +127,7 @@ namespace PandorasBox.Features.ChatFeature
 
             try
             {
-                foreach (var mapLink in MapLinkMessageList)
+                foreach (var mapLink in MapLinkMessageList.ToList())
                     if (mapLink.RecordTime.Add(new TimeSpan(0, filterDupeTimeout, 0)) < DateTime.Now)
                         MapLinkMessageList.Remove(mapLink);
             }
