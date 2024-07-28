@@ -1,3 +1,5 @@
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
 using ECommons.DalamudServices;
@@ -19,39 +21,37 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Common.OnAddonSetup += Common_AddonSetup;
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "SelectYesno", PostSetup);
             base.Enable();
         }
 
-        private void Common_AddonSetup(SetupAddonArgs obj)
+        private void PostSetup(AddonEvent type, AddonArgs args)
         {
-            if (obj.AddonName == "SelectYesno")
+            var addon = (AtkUnitBase*)args.Addon;
+            var seString = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(addon->AtkValues[0].String));
+            if (seString.Payloads.Count < 3 || seString.Payloads[2] is not TextPayload payload2)
             {
-                var seString = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(obj.Addon->AtkValues[0].String));
-                if (seString.Payloads.Count < 3 || seString.Payloads[2] is not TextPayload)
-                {
-                    return;
-                }
-                var sheetText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 155).First().Text.Payloads[2].RawString.Trim();
-                var rawText = ((TextPayload)seString.Payloads[2]).Text.Trim();
-                var trimmedText = rawText.Remove(rawText.LastIndexOf(' ')).TrimEnd();
+                return;
+            }
+            var rawText = payload2.Text!.Trim();
+            var trimmedText = rawText.Remove(rawText.LastIndexOf(' ')).TrimEnd();
+            var sheetText = Svc.Data.GetExcelSheet<Addon>()!.First(x => x.RowId == 155).Text.Payloads[2].RawString.Trim();
 
-                if (sheetText == trimmedText)
+            if (sheetText == trimmedText)
+            {
+                var values = stackalloc AtkValue[5];
+                values[0] = new AtkValue
                 {
-                    var values = stackalloc AtkValue[5];
-                    values[0] = new AtkValue()
-                    {
-                        Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
-                        Int = 0
-                    };
-                    obj.Addon->FireCallback(1, values, true);
-                }
+                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                    Int = 0
+                };
+                addon->FireCallback(1, values, true);
             }
         }
 
         public override void Disable()
         {
-            Common.OnAddonSetup -= Common_AddonSetup;
+            Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostSetup, "SelectYesno", PostSetup);
             base.Disable();
         }
     }
