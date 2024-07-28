@@ -1,11 +1,13 @@
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using ECommons.Automation.UIInput;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.GeneratedSheets;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
-using FFXIVClientStructs.FFXIV.Component.GUI;
-using ECommons.Automation.UIInput;
 
 namespace PandorasBox.Features.UI
 {
@@ -37,48 +39,52 @@ namespace PandorasBox.Features.UI
         private List<string> Categories { get; set; } = Svc.Data.GetExcelSheet<GCShopItemCategory>()
             .Where(x => !string.IsNullOrEmpty(x.Name.RawString))
             .Select(x => x.Name.RawString)
-            .Append(Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 518).First().Text.RawString)
+            .Append(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 518).Text.RawString)
             .ToList();
 
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            Common.OnAddonSetup += Common_AddonSetup;
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "GrandCompanyExchange", PostSetup);
             base.Enable();
         }
 
-
-        private void Common_AddonSetup(SetupAddonArgs obj)
+        private void PostSetup(AddonEvent type, AddonArgs args)
         {
-            if (obj.AddonName == "GrandCompanyExchange")
+            var addon = (AtkUnitBase*)args.Addon;
+            TaskManager.DelayNext(50);
+            TaskManager.Enqueue(() => SelectRank(addon, Config.DefaultRank));
+            TaskManager.DelayNext(50);
+            TaskManager.Enqueue(() => SelectTab(addon, Config.DefaultTab));
+        }
+
+        private static void SelectRank(AtkUnitBase* addon, int defaultRank)
+        {
+            var rankButton = defaultRank switch
             {
-                var rankButton = Config.DefaultRank switch
-                {
-                    0 => obj.Addon->GetNodeById(37)->GetAsAtkComponentRadioButton(),
-                    1 => obj.Addon->GetNodeById(38)->GetAsAtkComponentRadioButton(),
-                    2 => obj.Addon->GetNodeById(39)->GetAsAtkComponentRadioButton()
-                };
+                0 => addon->GetNodeById(37)->GetAsAtkComponentRadioButton(),
+                1 => addon->GetNodeById(38)->GetAsAtkComponentRadioButton(),
+                2 => addon->GetNodeById(39)->GetAsAtkComponentRadioButton()
+            };
+            rankButton->ClickRadioButton((AtkComponentBase*)addon, (uint)defaultRank);
+        }
 
-                var tabButton = Config.DefaultTab switch
+        private static void SelectTab(AtkUnitBase* addon, int defaultTab)
+        {
+            foreach (var tabIndex in Enumerable.Range(0, 4))
+            {
+                var tabButton = tabIndex switch
                 {
-                    0 => obj.Addon->GetNodeById(46)->GetAsAtkComponentRadioButton(),
-                    1 => obj.Addon->GetNodeById(44)->GetAsAtkComponentRadioButton(),
-                    2 => obj.Addon->GetNodeById(45)->GetAsAtkComponentRadioButton(),
-                    3 => obj.Addon->GetNodeById(47)->GetAsAtkComponentRadioButton(),
+                    0 => addon->GetNodeById(46)->GetAsAtkComponentRadioButton(),
+                    1 => addon->GetNodeById(44)->GetAsAtkComponentRadioButton(),
+                    2 => addon->GetNodeById(45)->GetAsAtkComponentRadioButton(),
+                    3 => addon->GetNodeById(47)->GetAsAtkComponentRadioButton()
                 };
-
-                TaskManager.DelayNext(50);
-                TaskManager.Enqueue(() => rankButton->ClickRadioButton((AtkComponentBase*)obj.Addon, (uint)Config.DefaultRank));
-                TaskManager.DelayNext(50);
-                uint param = Config.DefaultTab switch
-                {
-                    0 => 501,
-                    1 => 502,
-                    2 => 503,
-                    3 => 505
-                };
-
-                TaskManager.Enqueue(() => tabButton->ClickRadioButton(obj.Addon));
+                var state = tabIndex == defaultTab;
+                tabButton->IsSelected = state;
+                tabButton->IsChecked = state;
+                if (state)
+                    tabButton->ClickRadioButton(addon);
             }
         }
 
@@ -120,7 +126,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             SaveConfig(Config);
-            Common.OnAddonSetup -= Common_AddonSetup;
+            Svc.AddonLifecycle.UnregisterListener(AddonEvent.PostSetup, "GrandCompanyExchange", PostSetup);
             base.Disable();
         }
     }
