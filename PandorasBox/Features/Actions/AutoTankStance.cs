@@ -116,9 +116,10 @@ namespace PandorasBox.Features.Actions
                 3 or 21 => 91,
                 32 => 743,
                 37 => 1833,
-                _ => throw new System.NotImplementedException()
+                _ => 0
             };
 
+            if (stance == 0) return true;
             if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == stance)) return true;
             return false;
         }

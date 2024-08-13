@@ -2,6 +2,7 @@ using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
 using ECommons.Reflection;
 using PandorasBox.Features;
+using System;
 using System.Linq;
 
 namespace PandorasBox.IPC
@@ -11,6 +12,7 @@ namespace PandorasBox.IPC
         private static TaskManager TM = new();
         internal static void Init()
         {
+            TM.TimeLimitMS = int.MaxValue;
             Svc.PluginInterface.GetIpcProvider<string, bool?>("PandorasBox.GetFeatureEnabled").RegisterFunc(GetFeatureEnabled);
             Svc.PluginInterface.GetIpcProvider<string, bool, object>("PandorasBox.SetFeatureEnabled").RegisterAction(SetFeatureEnabled);
 
@@ -37,7 +39,7 @@ namespace PandorasBox.IPC
             {
                 if (feature.Name == featureName)
                 {
-                    var config = feature.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig))).GetValue(feature);
+                    var config = feature.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig)))?.GetValue(feature);
 
                     if (config == null) return;
 
@@ -56,7 +58,7 @@ namespace PandorasBox.IPC
             {
                 if (feature.Name == featureName)
                 {
-                    var config = feature.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig))).GetValue(feature);
+                    var config = feature.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig)))?.GetValue(feature);
 
                     if (config == null) return null;
 

@@ -7,6 +7,7 @@ using Dalamud.Plugin;
 using ECommons;
 using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
+using ECommons.EzHookManager;
 using ECommons.Throttlers;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -24,6 +25,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using static FFXIVClientStructs.FFXIV.Client.Game.ActionManager;
 
 namespace PandorasBox.Features
 {
@@ -42,7 +44,7 @@ namespace PandorasBox.Features
         public virtual string Key => GetType().Name;
 
         public abstract string Description { get; }
-        
+
         public static readonly SeString PandoraPayload = new SeString(new UIForegroundPayload(32)).Append($"{SeIconChar.BoxedLetterP.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()}{SeIconChar.BoxedLetterN.ToIconString()}{SeIconChar.BoxedLetterD.ToIconString()}{SeIconChar.BoxedLetterO.ToIconString()}{SeIconChar.BoxedLetterR.ToIconString()}{SeIconChar.BoxedLetterA.ToIconString()} ").Append(new UIForegroundPayload(0));
         public virtual void Draw() { }
         public virtual bool DrawConditions() { return false; }
@@ -524,5 +526,32 @@ namespace PandorasBox.Features
             var territory = Svc.Data.Excel.GetSheet<TerritoryType>()?.GetRow(Svc.ClientState.TerritoryType);
             return territory?.TerritoryIntendedUse is 1 or 47 or 49;
         }
+
+        public unsafe bool UseAction(uint id)
+        {
+            var am = ActionManager.Instance();
+            if (am->GetActionStatus(ActionType.Action, id) != 0) return false;
+            return am->UseAction(ActionType.Action, id);
+        }
+
+        public delegate void SendActionDelegate(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9);
+        [EzHook("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B E9 41 0F B7 D9", detourName: nameof(SendActionDetour), false)]
+        public EzHook<SendActionDelegate>? SendActionHook;
+
+        public virtual void SendActionDetour(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9)
+        {
+            SendActionHook?.Original(targetObjectId, actionType, actionId, sequence, a5, a6, a7, a8, a9);
+        }
+
+        public unsafe delegate bool UseActionDelegate(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted);
+        [EzHook("E8 ?? ?? ?? ?? B0 01 EB B6", detourName: "UseActionDetour")]
+        public EzHook<UseActionDelegate> UseActionHook;
+
+        public unsafe virtual bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
+        {
+           return UseActionHook.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+        }
+
+        
     }
 }

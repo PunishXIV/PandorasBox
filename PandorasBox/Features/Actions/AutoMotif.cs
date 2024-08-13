@@ -1,7 +1,10 @@
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
+using ECommons.EzHookManager;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.Game.MJI;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using PandorasBox.FeaturesSetup;
 using System;
 
@@ -10,18 +13,14 @@ namespace PandorasBox.Features.Actions
     internal class AutoMotif : Feature
     {
         public override string Name => "Auto-Motif (Out of Combat)";
-        public override string Description => "Automatically draws motifs outside of combat if not already drawn.";
+        public override string Description => "Automatically draws motifs when outside of combat and not in a sanctuary.";
         public override FeatureType FeatureType => FeatureType.Actions;
-
-        private delegate void SendActionDelegate(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9);
-        private static Hook<SendActionDelegate>? SendActionHook;
 
         public override void Enable()
         {
             Svc.Framework.Update += CheckMotifs;
             Events.OnJobChanged += DelayStart;
-            SendActionHook ??= Svc.Hook.HookFromSignature<SendActionDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 48 8B E9 41 0F B7 D9", SendActionDetour);
-            SendActionHook?.Enable();
+            EzSignatureHelper.Initialize(this);
             base.Enable();
         }
 
@@ -30,10 +29,10 @@ namespace PandorasBox.Features.Actions
             EzThrottler.Throttle("PCTMotifs", 3000);
         }
 
-        private void SendActionDetour(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9)
+        public override void SendActionDetour(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9)
         {
             EzThrottler.Reset("PCTMotifs");
-            SendActionHook?.Original(targetObjectId, actionType, actionId, sequence, a5, a6, a7, a8, a9);   
+            base.SendActionDetour(targetObjectId, actionType, actionId, sequence, a5, a6, a7, a8, a9);
         }
 
         private unsafe void CheckMotifs(IFramework framework)
@@ -41,6 +40,7 @@ namespace PandorasBox.Features.Actions
             if (Svc.ClientState.LocalPlayer is null) return;
             if (Svc.ClientState.LocalPlayer.ClassJob.Id != 42) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
+            if (TerritoryInfo.Instance()->InSanctuary) return;
 
             if (EzThrottler.Throttle("PCTMotifs", 1500))
             {
@@ -65,7 +65,6 @@ namespace PandorasBox.Features.Actions
             Svc.Framework.Update -= CheckMotifs;
             Events.OnJobChanged -= DelayStart;
             SendActionHook?.Disable();
-            SendActionHook?.Dispose();
             base.Disable();
         }
     }

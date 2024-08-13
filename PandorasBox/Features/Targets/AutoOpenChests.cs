@@ -45,7 +45,9 @@ namespace PandorasBox.Features.Targets
         private static ulong LastChestId = 0;
 
         private void RunFeature(IFramework framework)
-        { 
+        {
+            CloseWindow();
+
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
                 return;
 
@@ -83,16 +85,14 @@ namespace PandorasBox.Features.Targets
             {
                 Svc.Targets.Target = treasure;
                 TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)treasure.Address);
+                if (Config.CloseLootWindow)
+                {
+                    CloseWindowTime = DateTime.Now.AddSeconds(0.5);
+                }
             }
             catch (Exception ex)
             {
                 Svc.Log.Error(ex, "Failed to open the chest!");
-            }
-
-            if (Config.CloseLootWindow)
-            {
-                CloseWindowTime = DateTime.Now.AddSeconds(0.5);
-                CloseWindow();
             }
         }
 
