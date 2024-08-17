@@ -1,4 +1,9 @@
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
+using System;
 
 namespace PandorasBox.Features.UI
 {
@@ -10,21 +15,24 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private void AddonSetup(SetupAddonArgs obj)
-        {
-            if (obj.AddonName != "ItemSearch") return;
-            obj.Addon->SetFocusNode(obj.Addon->CollisionNodeList[11]);
-        }
-
         public override void Enable()
         {
-            Common.OnAddonSetup += AddonSetup;
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "ItemSearch", AddonSetup);
             base.Enable();
+        }
+
+        private void AddonSetup(AddonEvent type, AddonArgs args)
+        {
+            var addon = (AtkUnitBase*)args.Addon;
+            if (args.AddonName != "ItemSearch" || addon == null) return;
+            if (addon->CollisionNodeList == null) addon->UpdateCollisionNodeList(false);
+            if (addon->CollisionNodeList == null) return;
+            addon->SetFocusNode(addon->CollisionNodeList[11]);
         }
 
         public override void Disable()
         {
-            Common.OnAddonSetup -= AddonSetup;
+            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
             base.Disable();
         }
     }
