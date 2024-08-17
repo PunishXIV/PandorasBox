@@ -41,6 +41,13 @@ namespace PandorasBox.Features.UI
                 if (addon == null)
                     return;
 
+                if (!addon->IsVisible)
+                {
+                    Reducing = false;
+                    TaskManager.Abort();
+                    TaskManager.Enqueue(() => YesAlready.Unlock());
+                }
+
                 var node = addon->UldManager.NodeList[5];
 
                 if (node == null)
@@ -79,7 +86,9 @@ namespace PandorasBox.Features.UI
                         if (ImGui.Button($"Reduce All###StartReduce", size))
                         {
                             Reducing = true;
-                            TryReduceAll();
+                            TaskManager.Enqueue(() => YesAlready.Lock());
+                            TaskManager.Enqueue(() => TryReduceAll());
+                            TaskManager.Enqueue(() => YesAlready.Unlock());
                         }
                     }
                     else
@@ -87,7 +96,8 @@ namespace PandorasBox.Features.UI
                         if (ImGui.Button($"Reducing. Click to abort.###AbortReduce", size))
                         {
                             Reducing = false;
-                            P.TaskManager.Abort();
+                            TaskManager.Abort();
+                            TaskManager.Enqueue(() => YesAlready.Unlock());
                         }
                     }
                 }
@@ -97,6 +107,12 @@ namespace PandorasBox.Features.UI
                 ImGui.PopFont();
                 ImGui.PopStyleColor();
 
+            }
+            else
+            {
+                Reducing = false;
+                TaskManager.Abort();
+                TaskManager.Enqueue(() => YesAlready.Unlock());
             }
         }
 
@@ -109,10 +125,10 @@ namespace PandorasBox.Features.UI
 
                 for (var i = 1; i <= length; i++)
                 {
-                    P.TaskManager.Enqueue(() => SelectFirstItem(addon));
-                    P.TaskManager.Enqueue(() => ConfirmDialog());
+                    TaskManager.EnqueueImmediate(() => SelectFirstItem(addon));
+                    TaskManager.EnqueueImmediate(() => ConfirmDialog());
                 }
-                P.TaskManager.Enqueue(() => { Reducing = false; return true; });
+                TaskManager.EnqueueImmediate(() => { Reducing = false; return true; });
             }
         }
 
