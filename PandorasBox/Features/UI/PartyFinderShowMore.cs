@@ -19,7 +19,7 @@ namespace PandorasBox.Features.UI
 
         private char PartyFinderDetour(long a1, int a2)
         {
-            Marshal.WriteInt16(new nint(a1 + 904), 100);
+            Marshal.WriteInt16(new nint(a1 + 1128), 100);
             return partyFinderHook.Original(a1, a2);
         }
 
