@@ -586,6 +586,8 @@ namespace PandorasBox.Features.Other
                 {
                     var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
 
+                    if (addon == null) return;
+
                     var ids = new List<uint>();
                     for (int i = 7; i <= (11 * 8) + 7; i += 11)
                     {
