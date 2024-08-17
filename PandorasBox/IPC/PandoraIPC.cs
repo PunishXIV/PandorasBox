@@ -12,7 +12,7 @@ namespace PandorasBox.IPC
         private static TaskManager TM = new();
         internal static void Init()
         {
-            TM.TimeLimitMS = int.MaxValue;
+            TM.TimeLimitMS = 1000 * 60 * 60 * 24;
             Svc.PluginInterface.GetIpcProvider<string, bool?>("PandorasBox.GetFeatureEnabled").RegisterFunc(GetFeatureEnabled);
             Svc.PluginInterface.GetIpcProvider<string, bool, object>("PandorasBox.SetFeatureEnabled").RegisterAction(SetFeatureEnabled);
 
