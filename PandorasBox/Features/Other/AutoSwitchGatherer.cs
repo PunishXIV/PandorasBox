@@ -37,7 +37,7 @@ namespace PandorasBox.Features.Other
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
-            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) < 5).ToList();
+            var nearbyNodes = Svc.Objects.Where(x => x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint && GameObjectHelper.GetTargetDistance(x) <= 10).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 

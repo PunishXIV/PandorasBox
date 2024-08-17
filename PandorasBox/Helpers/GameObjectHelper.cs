@@ -1,5 +1,6 @@
 using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using System;
 using System.Numerics;
 
@@ -15,10 +16,10 @@ namespace PandorasBox.Helpers
             if (target.GameObjectId == Svc.ClientState.LocalPlayer.GameObjectId)
                 return 0;
 
-            Vector2 position = new(target.Position.X, target.Position.Z);
-            Vector2 selfPosition = new(Svc.ClientState.LocalPlayer.Position.X, Svc.ClientState.LocalPlayer.Position.Z);
+            Vector3 position = new(target.Position.X, target.Position.Z, target.Position.Y);
+            Vector3 selfPosition = new(Player.Position.X, Player.Position.Z, Player.Position.Y);
 
-            return Math.Max(0, Vector2.Distance(position, selfPosition) - target.HitboxRadius - Svc.ClientState.LocalPlayer.HitboxRadius);
+            return Math.Max(0, Vector3.Distance(position, selfPosition) - target.HitboxRadius - Svc.ClientState.LocalPlayer.HitboxRadius);
         }
 
         public static float GetHeightDifference(IGameObject target)
