@@ -46,6 +46,7 @@ namespace PandorasBox.Features.UI
                     Reducing = false;
                     TaskManager.Abort();
                     TaskManager.Enqueue(() => YesAlready.Unlock());
+                    return;
                 }
 
                 var node = addon->UldManager.NodeList[5];
@@ -148,8 +149,8 @@ namespace PandorasBox.Features.UI
         private bool? SelectFirstItem(AtkUnitBase* addon)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 1000));
-            P.TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 1000));
+            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
 
             var values = stackalloc AtkValue[2];
             values[0] = new()
