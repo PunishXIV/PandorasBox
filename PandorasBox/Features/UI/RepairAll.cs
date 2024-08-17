@@ -45,6 +45,14 @@ namespace PandorasBox.Features
             {
                 if (TryGetAddonByName<AddonRepair>("Repair", out var addon))
                 {
+                    if (!addon->IsVisible)
+                    {
+                        Repairing = false;
+                        TaskManager.Abort();
+                        TaskManager.Enqueue(() => YesAlready.Unlock());
+                        return;
+                    }
+
                     var node = addon->RepairAllButton->AtkComponentBase.AtkResNode->ParentNode;
 
                     if (node == null)
@@ -77,7 +85,9 @@ namespace PandorasBox.Features
                         if (ImGui.Button($"Repair All###StartRepair", size))
                         {
                             Repairing = true;
-                            TryRepairAll();
+                            TaskManager.Enqueue(() => YesAlready.Lock());
+                            TaskManager.Enqueue(() => TryRepairAll());
+                            TaskManager.Enqueue(() => YesAlready.Unlock());
                         }
 
                         addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkTextNode()->SetText(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text);
@@ -87,9 +97,10 @@ namespace PandorasBox.Features
                         if (ImGui.Button($"Repairing. Click to abort.###AbortRepair", size))
                         {
                             Repairing = false;
-                            P.TaskManager.Abort();
+                            TaskManager.Abort();
+                            TaskManager.Enqueue(() => YesAlready.Unlock());
                         }
-                        addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {P.TaskManager.NumQueuedTasks} tasks");
+                        addon->AtkUnitBase.UldManager.NodeList[22]->GetAsAtkTextNode()->SetText($"{Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 856).Text} - Processing {TaskManager.NumQueuedTasks} tasks");
                     }
 
                     ImGui.End();
@@ -97,6 +108,12 @@ namespace PandorasBox.Features
                     ImGui.GetFont().Scale = oldSize;
                     ImGui.PopFont();
                     ImGui.PopStyleColor();
+                }
+                else
+                {
+                    Repairing = false;
+                    TaskManager.Abort();
+                    TaskManager.Enqueue(() => YesAlready.Unlock());
                 }
             }
             catch
@@ -110,11 +127,11 @@ namespace PandorasBox.Features
             for (var i = 1; i <= 7; i++)
             {
                 var val = i;
-                P.TaskManager.Enqueue(() => Repair(), 300, false);
-                P.TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
-                P.TaskManager.Enqueue(() => SwitchSection());
+                TaskManager.EnqueueImmediate(() => Repair(), 300, false);
+                TaskManager.EnqueueImmediate(() => ConfirmYesNo(), 300, false);
+                TaskManager.EnqueueImmediate(() => SwitchSection());
             }
-            P.TaskManager.Enqueue(() => { Repairing = false; return true; });
+            TaskManager.EnqueueImmediate(() => { Repairing = false; return true; });
         }
 
         private bool SwitchSection()

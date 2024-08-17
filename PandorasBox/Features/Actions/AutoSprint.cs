@@ -10,7 +10,7 @@ using PandorasBox.FeaturesSetup;
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace PandorasBox.Features
+namespace PandorasBox.Features.Actions
 {
     public unsafe class AutoSprint : Feature
     {
@@ -56,11 +56,11 @@ namespace PandorasBox.Features
             var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
             var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
-            if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !P.TaskManager.IsBusy)
+            if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
             {
-                P.TaskManager.Enqueue(() => EzThrottler.Throttle("Sprinting", (int)(Config.ThrottleF * 1000)));
-                P.TaskManager.Enqueue(() => EzThrottler.Check("Sprinting"));
-                P.TaskManager.Enqueue(UseSprint);
+                TaskManager.Enqueue(() => EzThrottler.Throttle("Sprinting", (int)(Config.ThrottleF * 1000)));
+                TaskManager.Enqueue(() => EzThrottler.Check("Sprinting"));
+                TaskManager.Enqueue(UseSprint);
             }
         }
 

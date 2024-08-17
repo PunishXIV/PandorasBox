@@ -52,7 +52,6 @@ namespace PandorasBox.Features.Actions
 
         public override void Enable()
         {
-            TaskManager.ShowDebug = true;
             Config = LoadConfig<Configs>() ?? new Configs();
             Events.OnJobChanged += RunFeature;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;

@@ -29,8 +29,6 @@ public class PandorasBox : IDalamudPlugin
     public List<FeatureProvider> FeatureProviders = new();
     private FeatureProvider provider;
     public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
-    internal TaskManager TaskManager;
-
     public PandorasBox(IDalamudPluginInterface pluginInterface)
     {
         P = this;
@@ -46,7 +44,6 @@ public class PandorasBox : IDalamudPlugin
         Ws = new();
         MainWindow = new();
         Ws.AddWindow(MainWindow);
-        TaskManager = new();
         Config = pi.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(Svc.PluginInterface);
 
