@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using ECommons.GameFunctions;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using FFXIVClientStructs.STD;
@@ -51,6 +52,7 @@ namespace PandorasBox.Features.Actions
 
         public override void Enable()
         {
+            TaskManager.ShowDebug = true;
             Config = LoadConfig<Configs>() ?? new Configs();
             Events.OnJobChanged += RunFeature;
             Svc.ClientState.TerritoryChanged += CheckIfDungeon;
@@ -83,10 +85,12 @@ namespace PandorasBox.Features.Actions
 
         private void CheckIfDungeon(ushort e)
         {
-            if (HasStance()) return;
-            if (GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
-            TaskManager!.Enqueue(() => Svc.ClientState.LocalPlayer != null);
-            TaskManager!.DelayNext("TankWaitForConditions", 2000);
+            if (GameMain.Instance()->CurrentContentFinderConditionId == 0)
+            {
+                TaskManager!.Abort();
+                return;
+            }
+            TaskManager!.Enqueue(() => Player.Available);
             TaskManager!.Enqueue(() => Svc.DutyState.IsDutyStarted);
             TaskManager!.Enqueue(() => EnableStance(), "TankStanceDungeonEnabled");
 
@@ -110,6 +114,7 @@ namespace PandorasBox.Features.Actions
 
         private bool HasStance()
         {
+            if (!Player.Available) return false;
             ushort stance = Svc.ClientState.LocalPlayer?.ClassJob.Id switch
             {
                 1 or 19 => 79,
