@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>1.6.0.10</Version>
+        <Version>1.6.1.0</Version>
     </PropertyGroup>
 
     <PropertyGroup>

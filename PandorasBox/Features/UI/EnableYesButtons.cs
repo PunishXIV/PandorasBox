@@ -1,5 +1,9 @@
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using PandorasBox.FeaturesSetup;
+using System;
 using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
@@ -14,11 +18,11 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Common.OnAddonSetup += EnableButton;
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, EnableButton);
             base.Enable();
         }
 
-        private void EnableButton(SetupAddonArgs args)
+        private void EnableButton(AddonEvent type, AddonArgs args)
         {
             if (args.AddonName == "SelectYesno")
             {
@@ -49,7 +53,7 @@ namespace PandorasBox.Features.UI
 
         public override void Disable()
         {
-            Common.OnAddonSetup -= EnableButton;
+            Svc.AddonLifecycle.UnregisterListener(EnableButton);
             base.Disable();
         }
 

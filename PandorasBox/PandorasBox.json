@@ -12,5 +12,6 @@
     "Tags": [
         "punish",
         "plugin"
-    ]
+    ],
+    "ChangeLog":  "- Bug fixes for multiple features, including Auto-Tank stance, Reduce All, Repair All, Party Finder View More and Quick Lower Quality.\n- IPC were broken? Probably fixed now."
 }
