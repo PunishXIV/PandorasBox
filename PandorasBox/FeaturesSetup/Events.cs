@@ -19,7 +19,7 @@ namespace PandorasBox.FeaturesSetup
         private static void UpdateEvents(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer is null) return;
-            JobID = Svc.ClientState.LocalPlayer.ClassJob.Id;
+            JobID = Svc.ClientState.LocalPlayer.ClassJob.RowId;
         }
 
         public static uint? JobID

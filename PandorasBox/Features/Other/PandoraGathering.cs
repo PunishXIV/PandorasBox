@@ -15,7 +15,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
@@ -23,7 +23,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Action = Lumina.Excel.GeneratedSheets.Action;
+using Action = Lumina.Excel.Sheets.Action;
 
 namespace PandorasBox.Features.Other
 {
@@ -380,60 +380,60 @@ namespace PandorasBox.Features.Other
                     ImGui.EndTooltip();
                 }
                 var language = Svc.ClientState.ClientLanguage;
-                switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+                switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
                 {
                     case 17:
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString}", ref Config.Use100GPYield))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.ToString()}", ref Config.Use100GPYield))
                         {
                             Config.UseGivingLand = false;
                             Config.UseTwelvesBounty = false;
                             SaveConfig(Config);
                         }
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString}", ref Config.Use500GPYield))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.ToString()}", ref Config.Use500GPYield))
                         {
                             Config.UseGivingLand = false;
                             Config.UseTwelvesBounty = false;
                             SaveConfig(Config);
                         }
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.RawString}", ref Config.UseTidings))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.ToString()}", ref Config.UseTidings))
                         {
                             Config.UseGivingLand = false;
                             Config.UseTwelvesBounty = false;
                             SaveConfig(Config);
                         }
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.RawString}", ref Config.UseSolidReason))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.ToString()}", ref Config.UseSolidReason))
                         {
                             SaveConfig(Config);
                         }
                         break;
                     case 16:
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.ToString()}", ref Config.Use100GPYield))
                         {
                             Config.UseGivingLand = false;
                             Config.UseTwelvesBounty = false;
                             SaveConfig(Config);
                         }
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.ToString()}", ref Config.Use500GPYield))
                         {
                             Config.UseGivingLand = false;
                             Config.UseTwelvesBounty = false;
                             SaveConfig(Config);
                         }
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.RawString}", ref Config.UseTidings))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.ToString()}", ref Config.UseTidings))
                         {
                             Config.UseGivingLand = false;
                             Config.UseTwelvesBounty = false;
                             SaveConfig(Config);
                         }
                         ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.RawString}", ref Config.UseSolidReason))
+                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.ToString()}", ref Config.UseSolidReason))
                         {
                             SaveConfig(Config);
                         }
@@ -441,7 +441,7 @@ namespace PandorasBox.Features.Other
                 }
 
                 ImGui.NextColumn();
-                if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.RawString}", ref Config.UseGivingLand))
+                if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.ToString()}", ref Config.UseGivingLand))
                 {
                     Config.Use100GPYield = false;
                     Config.Use500GPYield = false;
@@ -450,7 +450,7 @@ namespace PandorasBox.Features.Other
                 }
 
                 ImGui.NextColumn();
-                if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.RawString.ToTitleCase()}", ref Config.UseTwelvesBounty))
+                if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.ToString().ToTitleCase()}", ref Config.UseTwelvesBounty))
                 {
                     Config.Use100GPYield = false;
                     Config.Use500GPYield = false;
@@ -509,7 +509,7 @@ namespace PandorasBox.Features.Other
                         ids.Add(addon->AtkValues[i].UInt);
                     }
 
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
+                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
                         Disable();
@@ -527,7 +527,7 @@ namespace PandorasBox.Features.Other
 
                     if (item != 0)
                     {
-                        if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.Row == 0))
+                        if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.RowId == 0))
                         {
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
                             TaskManager.Enqueue(() =>
@@ -566,7 +566,7 @@ namespace PandorasBox.Features.Other
 
         private bool CanUseIntegrityAction()
         {
-            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.RowId)
             {
                 case 17:
                     return ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0;
@@ -594,7 +594,7 @@ namespace PandorasBox.Features.Other
                         ids.Add(addon->AtkValues[i].UInt);
                     }
 
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.Row > 0)))
+                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
                         Disable();
@@ -727,7 +727,7 @@ namespace PandorasBox.Features.Other
             }
             var language = Svc.ClientState.ClientLanguage;
 
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.RawString}", ref Config.Use100GPYield))
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.ToString()}", ref Config.Use100GPYield))
             {
                 Config.UseGivingLand = false;
                 Config.UseTwelvesBounty = false;
@@ -741,7 +741,7 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.RawString}", ref Config.Use500GPYield))
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.ToString()}", ref Config.Use500GPYield))
             {
                 Config.UseGivingLand = false;
                 Config.UseTwelvesBounty = false;
@@ -755,7 +755,7 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.RawString}", ref Config.UseTidings))
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.ToString()}", ref Config.UseTidings))
             {
                 Config.UseGivingLand = false;
                 Config.UseTwelvesBounty = false;
@@ -776,7 +776,7 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.RawString} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.RawString}", ref Config.UseSolidReason))
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.ToString()}", ref Config.UseSolidReason))
             {
                 SaveConfig(Config);
             }
@@ -788,7 +788,7 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.RawString}", ref Config.UseGivingLand))
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.ToString()}", ref Config.UseGivingLand))
             {
                 Config.Use100GPYield = false;
                 Config.Use500GPYield = false;
@@ -803,7 +803,7 @@ namespace PandorasBox.Features.Other
                     SaveConfig(Config);
             }
 
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.RawString.ToTitleCase()}", ref Config.UseTwelvesBounty))
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.ToString().ToTitleCase()}", ref Config.UseTwelvesBounty))
             {
                 Config.Use100GPYield = false;
                 Config.Use500GPYield = false;
@@ -849,7 +849,7 @@ namespace PandorasBox.Features.Other
 
         private void UseLuck()
         {
-            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.RowId)
             {
                 case 17: //BTN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0)
@@ -870,7 +870,7 @@ namespace PandorasBox.Features.Other
         {
             foreach (var id in ids.Where(x => x != 0))
             {
-                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
+                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
                 if (Maps.Any(x => x.MapId == id)) return false;
                 if (Items.Any(x => x.ItemId == id)) return false;
 
@@ -878,9 +878,9 @@ namespace PandorasBox.Features.Other
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
             var NodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
             var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
-            Svc.Log.Debug($"{baseNode.RowId}");
-            if (Items.Any(x => x.NodeId == baseNode.RowId)) return true;
-            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode.RowId))) return true;
+            Svc.Log.Debug($"{baseNode.Value.RowId}");
+            if (Items.Any(x => x.NodeId == baseNode.Value.RowId)) return true;
+            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode.Value.RowId))) return true;
 
 
             return false;
@@ -888,7 +888,7 @@ namespace PandorasBox.Features.Other
 
         private bool? UseGatherChanceUp()
         {
-            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 220) == 0)
@@ -908,7 +908,7 @@ namespace PandorasBox.Features.Other
         }
         private bool? UseIntegrityAction()
         {
-            switch (Svc.ClientState.LocalPlayer!.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer!.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0)
@@ -929,7 +929,7 @@ namespace PandorasBox.Features.Other
 
         private bool? UseGivingLand()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4590) == 0)
@@ -952,7 +952,7 @@ namespace PandorasBox.Features.Other
 
         private bool? UseTwelvesBounty()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 282) == 0)
@@ -978,7 +978,7 @@ namespace PandorasBox.Features.Other
             if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286 || x.StatusId == 756))
                 return;
 
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
@@ -1012,7 +1012,7 @@ namespace PandorasBox.Features.Other
             if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219))
                 return;
 
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 224) == 0)
@@ -1037,7 +1037,7 @@ namespace PandorasBox.Features.Other
             if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667))
                 return;
 
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
             {
                 case 17: //BTN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
@@ -1068,7 +1068,7 @@ namespace PandorasBox.Features.Other
 
         private bool? UseWisdom()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.Id)
+            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0)

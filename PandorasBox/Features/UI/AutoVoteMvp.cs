@@ -178,9 +178,9 @@ public class AutoVoteMvp : Feature
             }
         }
 
-        var tanks = list.Where(i => i.PartyMember.ClassJob.GameData!.Role == 1);
-        var healer = list.Where(i => i.PartyMember.ClassJob.GameData!.Role == 4);
-        var dps = list.Where(i => i.PartyMember.ClassJob.GameData!.Role is 2 or 3);
+        var tanks = list.Where(i => i.PartyMember.ClassJob.Value.Role == 1);
+        var healer = list.Where(i => i.PartyMember.ClassJob.Value.Role == 4);
+        var dps = list.Where(i => i.PartyMember.ClassJob.Value.Role is 2 or 3);
 
         (int index, IPartyMember member) voteTarget = new();
         switch (Config.Priority)
@@ -222,13 +222,13 @@ public class AutoVoteMvp : Feature
                     payload.AddRange(new List<Payload>()
                     {
                         new TextPayload("Commend given to "),
-                        voteTarget.member.ClassJob.GameData!.Role switch
+                        voteTarget.member.ClassJob.Value!.Role switch
                         {
                             1 => new IconPayload(BitmapFontIcon.Tank),
                             4 => new IconPayload(BitmapFontIcon.Healer),
                             _ => new IconPayload(BitmapFontIcon.DPS),
                         },
-                        new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.GameData!.RowId),
+                        new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.Value!.RowId),
                     });
                     Svc.Chat.Print(new SeString(payload));
                 }

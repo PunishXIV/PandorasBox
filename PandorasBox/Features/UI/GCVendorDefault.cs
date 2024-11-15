@@ -4,7 +4,7 @@ using ECommons.Automation.UIInput;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,9 +37,9 @@ namespace PandorasBox.Features.UI
         };
 
         private List<string> Categories { get; set; } = Svc.Data.GetExcelSheet<GCShopItemCategory>()
-            .Where(x => !string.IsNullOrEmpty(x.Name.RawString))
-            .Select(x => x.Name.RawString)
-            .Append(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 518).Text.RawString)
+            .Where(x => !string.IsNullOrEmpty(x.Name.ToString()))
+            .Select(x => x.Name.ToString())
+            .Append(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 518).Text.ToString())
             .ToList();
 
         public override void Enable()

@@ -50,7 +50,7 @@ namespace PandorasBox.Features.Actions
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas]);
             TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
             TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
-            TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
+            TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.RowId), 5000);
         }
 
         private void RunFeature(uint? jobId)
@@ -76,7 +76,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
                 TaskManager.DelayNext("WaitForActionReady", 2500);
                 TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.Id), 5000);
+                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.RowId), 5000);
             }
         }
 

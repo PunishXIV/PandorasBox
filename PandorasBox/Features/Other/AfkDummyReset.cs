@@ -49,7 +49,7 @@ namespace PandorasBox.Features.Other
                         TaskManager.Abort();
                     }
 
-                    var delay = (Config.InactivityTimer * 1000) + (Svc.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.Action>().GetRow(am->GetAdjustedActionId(acId)).Cast100ms * 100);
+                    var delay = (Config.InactivityTimer * 1000) + (Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Action>().GetRow(am->GetAdjustedActionId(acId)).Cast100ms * 100);
                     TaskManager.DelayNext($"AfkDummyTimerDelay{delay}", delay);
                     TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/presetenmity"); });
                 }

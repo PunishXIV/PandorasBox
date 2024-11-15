@@ -1,14 +1,15 @@
-using PandorasBox.FeaturesSetup;
-using ECommons.DalamudServices;
-using System.Linq;
-using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Game.Text;
-using System;
 using Dalamud.Game.Text.SeStringHandling;
-using Lumina.Excel.GeneratedSheets;
-using System.Collections.Generic;
+using Dalamud.Game.Text.SeStringHandling.Payloads;
+using ECommons;
+using ECommons.DalamudServices;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
+using PandorasBox.FeaturesSetup;
 using PandorasBox.IPC;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PandorasBox.Features.ChatFeature
 {
@@ -42,7 +43,7 @@ namespace PandorasBox.Features.ChatFeature
         private readonly int filterDupeTimeout = 5;
 
         public Lumina.Excel.ExcelSheet<Aetheryte> Aetherytes = null;
-        public Lumina.Excel.ExcelSheet<MapMarker> AetherytesMap = null;
+        public Lumina.Excel.SubrowExcelSheet<MapMarker> AetherytesMap = null;
 
         public List<XivChatType> HiddenChatType = new()
         {
@@ -70,7 +71,7 @@ namespace PandorasBox.Features.ChatFeature
                     maplinkPayload = mapLinkload;
                     hasMapLink = true;
                     // float fudge = 0.05f;
-                    scale = mapLinkload.TerritoryType.Map.Value.SizeFactor;
+                    scale = mapLinkload.TerritoryType.Value.Map.Value.SizeFactor;
                     // coordX = ConvertRawPositionToMapCoordinate(mapLinkload.RawX, scale) - fudge;
                     // coordY = ConvertRawPositionToMapCoordinate(mapLinkload.RawY, scale) - fudge;
                     coordX = mapLinkload.XCoord;
@@ -99,7 +100,8 @@ namespace PandorasBox.Features.ChatFeature
                 if (sender.TextValue.ToLower() == "sonar" && !Config.IncludeSonar)
                     filteredOut = true;
 
-                var alreadyInList = MapLinkMessageList.Any(w => {
+                var alreadyInList = MapLinkMessageList.Any(w =>
+                {
                     var sameText = w.Text == newMapLinkMessage.Text;
                     var timeoutMin = new TimeSpan(0, filterDupeTimeout, 0);
                     if (newMapLinkMessage.RecordTime < w.RecordTime + timeoutMin)
@@ -153,13 +155,12 @@ namespace PandorasBox.Features.ChatFeature
             foreach (var data in Aetherytes)
             {
                 if (!data.IsAetheryte) continue;
-                if (data.Territory.Value == null) continue;
-                if (data.PlaceName.Value == null) continue;
+                if (data.Territory.ValueNullable == null) continue;
+                if (data.PlaceName.ValueNullable == null) continue;
                 var scale = maplinkMessage.Scale;
                 if (data.Territory.Value.RowId == maplinkMessage.TerritoryId)
                 {
-                    var mapMarker = AetherytesMap.FirstOrDefault(m => (m.DataType == 3 && m.DataKey == data.RowId));
-                    if (mapMarker == null)
+                    if (AetherytesMap.SelectMany(x => x).TryGetFirst(m => (m.DataType == 3 && m.DataKey.RowId == data.RowId), out var mapMarker))
                     {
                         Svc.Log.Error($"Cannot find aetherytes position for {maplinkMessage.PlaceName}#{data.PlaceName.Value.Name}");
                         continue;
@@ -171,7 +172,7 @@ namespace PandorasBox.Features.ChatFeature
                     if (aetheryteName == "" || temp_distance < distance)
                     {
                         distance = temp_distance;
-                        aetheryteName = data.PlaceName.Value.Name;
+                        aetheryteName = data.PlaceName.Value.Name.ToString();
                     }
                 }
             }
@@ -196,8 +197,8 @@ namespace PandorasBox.Features.ChatFeature
             Config = LoadConfig<Configs>() ?? new Configs();
             Svc.Framework.Update += CheckForTeleporter;
             Svc.Chat.ChatMessage += OnChatMessage;
-            Aetherytes = Svc.Data.GetExcelSheet<Aetheryte>(Svc.ClientState.ClientLanguage);
-            AetherytesMap = Svc.Data.GetExcelSheet<MapMarker>(Svc.ClientState.ClientLanguage);
+            Aetherytes = Svc.Data.GetExcelSheet<Aetheryte>();
+            AetherytesMap = Svc.Data.GetSubrowExcelSheet<MapMarker>();
             base.Enable();
         }
 
@@ -253,5 +254,5 @@ namespace PandorasBox.Features.ChatFeature
         };
     }
 
-    
+
 }

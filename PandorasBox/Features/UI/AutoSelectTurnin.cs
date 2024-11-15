@@ -92,7 +92,7 @@ namespace PandorasBox.Features.UI
             {
                 if (addon->HandOverButton != null && addon->HandOverButton->IsEnabled)
                 {
-                    new RequestMaster((IntPtr)addon).HandOver();
+                    new AddonMaster.Request((IntPtr)addon).HandOver();
                     return true;
                 }
                 return false;

@@ -2,9 +2,10 @@ using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
+using Dalamud.Utility;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Linq;
@@ -35,7 +36,7 @@ namespace PandorasBox.Features.UI
             }
             var rawText = payload2.Text!.Trim();
             var trimmedText = rawText.Remove(rawText.LastIndexOf(' ')).TrimEnd();
-            var sheetText = Svc.Data.GetExcelSheet<Addon>()!.First(x => x.RowId == 155).Text.Payloads[2].RawString.Trim();
+            var sheetText = Svc.Data.GetExcelSheet<Addon>()!.First(x => x.RowId == 155).Text.ToDalamudString().Payloads[2].ToString().Trim();
 
             if (sheetText == trimmedText)
             {

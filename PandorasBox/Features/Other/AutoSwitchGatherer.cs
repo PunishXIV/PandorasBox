@@ -1,7 +1,7 @@
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Linq;
@@ -53,17 +53,17 @@ namespace PandorasBox.Features.Other
             if (Svc.ClientState.LocalPlayer.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() != 2 && (job is 0 or 1 or 2 or 3))
                 return;
 
-            if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id != 16 && !TaskManager.IsBusy)
+            if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.RowId != 16 && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => SwitchJobGearset(16));
             }
-            if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id != 17 && !TaskManager.IsBusy)
+            if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.RowId != 17 && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => SwitchJobGearset(17));
             }
-            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id != 18 && !TaskManager.IsBusy)
+            if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.RowId != 18 && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => SwitchJobGearset(18));
@@ -72,7 +72,7 @@ namespace PandorasBox.Features.Other
 
         private static unsafe bool SwitchJobGearset(uint cjID)
         {
-            if (Svc.ClientState.LocalPlayer.ClassJob.Id == cjID) return true;
+            if (Svc.ClientState.LocalPlayer.ClassJob.RowId == cjID) return true;
             var gs = GetGearsetForClassJob(cjID);
             if (gs is null) return true;
 

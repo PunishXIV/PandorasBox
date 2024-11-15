@@ -35,7 +35,7 @@ namespace PandorasBox.Features.Other
             var mod = RecommendEquipModule.Instance();
             //TaskManager.Abort();
             TaskManager!.DelayNext("EquipMod", 500);
-            TaskManager.Enqueue(() => mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.Id), 500);
+            TaskManager.Enqueue(() => mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.RowId), 500);
             TaskManager.Enqueue(() => mod->EquipRecommendedGear(), 500);
 
             if (Config!.UpdateGearset)

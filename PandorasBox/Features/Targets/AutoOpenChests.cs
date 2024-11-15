@@ -5,8 +5,9 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System;
 using System.Linq;
 using System.Numerics;
@@ -51,8 +52,7 @@ namespace PandorasBox.Features.Targets
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
                 return;
 
-            var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()!.GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-            if (!Config.OpenInHighEndDuty && contentFinderInfo is not null && contentFinderInfo.HighEndDuty)
+            if (!Config.OpenInHighEndDuty && Svc.Data.GetExcelSheet<ContentFinderCondition>().FindFirst(x => x.RowId == GameMain.Instance()->CurrentContentFinderConditionId, out var contentFinderInfo) && contentFinderInfo.HighEndDuty)
                 return;
 
             var player = Player.Object;

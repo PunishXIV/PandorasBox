@@ -7,7 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Linq;
@@ -57,7 +57,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() =>
                 {
                     Svc.GameConfig.TryGet(Dalamud.Game.Config.UiControlOption.FlyingControlType, out uint type);
-                    if (Config.JumpAfterMount && Svc.ClientState.LocalPlayer!.ClassJob.Id != 18 && ZoneHasFlight())
+                    if (Config.JumpAfterMount && Svc.ClientState.LocalPlayer!.ClassJob.RowId != 18 && ZoneHasFlight())
                     {
                         TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
                         TaskManager.DelayNext(50);

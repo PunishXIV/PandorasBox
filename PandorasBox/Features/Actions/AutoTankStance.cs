@@ -114,7 +114,7 @@ namespace PandorasBox.Features.Actions
         private bool HasStance()
         {
             if (!Player.Available) return false;
-            ushort stance = Svc.ClientState.LocalPlayer?.ClassJob.Id switch
+            ushort stance = Svc.ClientState.LocalPlayer?.ClassJob.RowId switch
             {
                 1 or 19 => 79,
                 3 or 21 => 91,
@@ -140,7 +140,7 @@ namespace PandorasBox.Features.Actions
                 if (Svc.Party.Length > Config.MaxParty) return true;
                 if (Config.NoOtherTanks && Svc.Party.Any(x => x.ObjectId != Svc.ClientState.LocalPlayer!.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
 
-                uint action = Svc.ClientState.LocalPlayer!.ClassJob.Id switch
+                uint action = Svc.ClientState.LocalPlayer!.ClassJob.RowId switch
                 {
                     1 or 19 => 28,
                     3 or 21 => 48,

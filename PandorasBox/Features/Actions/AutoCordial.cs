@@ -3,7 +3,7 @@ using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using System.Linq;
 using System.Collections.Generic;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 
 namespace PandorasBox.Features.Actions
 {
@@ -47,8 +47,8 @@ namespace PandorasBox.Features.Actions
         private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer is null) return;
-            if (!(Svc.ClientState.LocalPlayer.ClassJob.Id == 16 || Svc.ClientState.LocalPlayer.ClassJob.Id == 17 || Svc.ClientState.LocalPlayer.ClassJob.Id == 18)) return;
-            if (Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && !Config.UseOnFisher) return;
+            if (!(Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 16 || Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 17 || Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 18)) return;
+            if (Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 18 && !Config.UseOnFisher) return;
             if (Svc.ClientState.LocalPlayer.CurrentGp >= Config.Threshold) return;
 
             var im = InventoryManager.Instance();
@@ -90,7 +90,7 @@ namespace PandorasBox.Features.Actions
             rawCordialsData = Svc.Data.GetExcelSheet<Item>()
                 .Where(row => cordialRowIDs.Any(num => num == row.RowId))
                 .Select(row => (
-                    Name: row.Name.RawString,
+                    Name: row.Name.ToString(),
                     Id: row.RowId,
                     CanBeHQ: row.CanBeHq,
                     NQGP: row.ItemAction.Value.Data[0],

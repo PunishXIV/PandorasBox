@@ -5,7 +5,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -46,7 +46,7 @@ namespace PandorasBox.Features.Actions
                 return;
 
             var r = new Regex("/hou/|/ind/");
-            var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.RawString;
+            var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString();
             if (r.IsMatch(loc) && Config.ExcludeHousing) return;
 
             if (IsRpWalking() && !Config.RPWalk)

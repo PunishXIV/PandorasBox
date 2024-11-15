@@ -1,10 +1,11 @@
 using Dalamud.Game.ClientState.Conditions;
+using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.Object;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Collections.Generic;
@@ -125,15 +126,9 @@ namespace PandorasBox.Features.Targets
                     if (string.IsNullOrEmpty(baseObj->NameString)) continue;
                     if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj)) continue;
 
-                    var sheetItem = Svc.Data.GetExcelSheet<EObj>().FirstOrDefault(x => x.RowId == baseObj->BaseId);
-                    if (sheetItem != default)
-                    {
-                        if (sheetItem.SgbPath.Value != null)
-                        {
-                            if ((sheetItem.SgbPath.Value.SgbPath.RawString.Contains("bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0005.sgb") || Exits.Contains(sheetItem.RowId)) && Config.ExcludeExit)
-                                continue;
-                        }
-                    }
+                    if (Svc.Data.GetExcelSheet<EObj>().TryGetFirst(x => x.RowId == baseObj->BaseId, out var sheetItem))
+                        if ((sheetItem.SgbPath.Value.SgbPath.ToString().Contains("bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0005.sgb") || Exits.Contains(sheetItem.RowId)) && Config.ExcludeExit)
+                            continue;
 
                     if (!TaskManager.IsBusy)
                     {

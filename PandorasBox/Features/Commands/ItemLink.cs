@@ -4,8 +4,9 @@ using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
+using ECommons;
 
 namespace PandorasBox.Features.Commands
 {
@@ -26,15 +27,14 @@ namespace PandorasBox.Features.Commands
             if (uint.TryParse(args[0].Trim(), out var id))
                 item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(id);
             else
-                item = Svc.Data.GetExcelSheet<Item>().FirstOrDefault(x => x.Name.RawString.Contains(argName, StringComparison.CurrentCultureIgnoreCase));
+                item = Svc.Data.GetExcelSheet<Item>().FirstOrDefault(x => x.Name.ToString().Contains(argName, StringComparison.CurrentCultureIgnoreCase));
 
             PrintModuleMessage(GetItemLink(item.RowId));
         }
 
         public static SeString GetItemLink(uint id)
         {
-            var item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(id);
-            if (item == null)
+            if (!Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).TryGetFirst(x => x.RowId == id, out var item))
                 return new SeString(new TextPayload($"Item#{id}"));
 
 

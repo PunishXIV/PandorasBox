@@ -414,7 +414,7 @@ namespace PandorasBox.Features.UI
                 if (materalizeWindow == null)
                     return true;
 
-                new MaterializeDialogMaster(materializePTR).Materialize();
+                new AddonMaster.MaterializeDialog(materializePTR).Materialize();
 
                 TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 100));
                 TaskManager.EnqueueImmediate(() => EzThrottler.Check("Extracting"));

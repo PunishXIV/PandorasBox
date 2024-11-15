@@ -8,7 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -50,9 +50,9 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            Seeds = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.Row == 82 && x.FilterGroup == 20).ToDictionary(x => x.RowId, x => x);
-            Soils = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.Row == 82 && x.FilterGroup == 21).ToDictionary(x => x.RowId, x => x);
-            Fertilizers = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.Row == 82 && x.FilterGroup == 22).ToDictionary(x => x.RowId, x => x);
+            Seeds = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.RowId == 82 && x.FilterGroup == 20).ToDictionary(x => x.RowId, x => x);
+            Soils = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.RowId == 82 && x.FilterGroup == 21).ToDictionary(x => x.RowId, x => x);
+            Fertilizers = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.RowId == 82 && x.FilterGroup == 22).ToDictionary(x => x.RowId, x => x);
             AddonText = Svc.Data.GetExcelSheet<Addon>().ToDictionary(x => x.RowId, x => x);
             Svc.Framework.Update += RunFeature;
             base.Enable();

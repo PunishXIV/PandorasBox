@@ -3,7 +3,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -199,10 +199,10 @@ namespace PandorasBox.Features
 
             foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
             {
-                var name = territoryType.PlaceName.Value.Name.RawString;
+                var name = territoryType.PlaceName.Value.Name.ToString();
                 if (name != "" && !maps.ContainsKey(name))
                 {
-                    maps.Add(name, (territoryType.RowId, territoryType.Map.Row));
+                    maps.Add(name, (territoryType.RowId, territoryType.Map.RowId));
                 }
             }
 

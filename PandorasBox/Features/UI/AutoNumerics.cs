@@ -7,7 +7,7 @@ using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 
 namespace PandorasBox.Features.UI
@@ -22,7 +22,7 @@ namespace PandorasBox.Features.UI
 
         public Configs Config { get; private set; }
 
-        private readonly string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.RawString;
+        private readonly string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.ToString();
 
         private bool hasDisabled;
 

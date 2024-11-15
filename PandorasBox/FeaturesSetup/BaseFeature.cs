@@ -16,7 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -524,7 +524,7 @@ namespace PandorasBox.Features
         {
             if (Svc.ClientState.LocalPlayer is null) return false;
             var territory = Svc.Data.Excel.GetSheet<TerritoryType>()?.GetRow(Svc.ClientState.TerritoryType);
-            return territory?.TerritoryIntendedUse is 1 or 47 or 49;
+            return territory?.TerritoryIntendedUse.RowId is 1 or 47 or 49;
         }
 
         public unsafe bool UseAction(uint id)

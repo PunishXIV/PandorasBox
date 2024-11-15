@@ -2,7 +2,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -128,7 +128,7 @@ namespace PandorasBox.Features.Commands
                                     jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(20)).ToList();
                                     break;
                             }
-                            ParseGearset(jobsList.Select(job => job.Name.RawString).ToList(), plate);
+                            ParseGearset(jobsList.Select(job => job.Name.ToString()).ToList(), plate);
                             LinkPlateToGearset(plate);
                         }
                         else
@@ -160,7 +160,7 @@ namespace PandorasBox.Features.Commands
                         continue;
 
                     var name = gs->NameString;
-                    var jobAbbrMatch = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Abbreviation.RawString.Equals(arg, StringComparison.CurrentCultureIgnoreCase)).ToList();
+                    var jobAbbrMatch = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Abbreviation.ToString().Equals(arg, StringComparison.CurrentCultureIgnoreCase)).ToList();
                     
                     if (arg.Equals(name, StringComparison.CurrentCultureIgnoreCase)
                         || (jobAbbrMatch.Count > 0 && jobAbbrMatch[0].RowId.Equals(gs->ClassJob))

@@ -6,7 +6,7 @@ using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
@@ -125,31 +125,31 @@ namespace PandorasBox.Features.Targets
 
             string Folklore = "";
 
-            if (gatheringPoint.GatheringSubCategory.IsValueCreated && gatheringPoint.GatheringSubCategory.Value.FolkloreBook != null)
-                Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.RawString;
+            if (gatheringPoint.GatheringSubCategory.IsValid && !gatheringPoint.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
+                Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.ToString();
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row == 0) && Config.ExcludeTimedUnspoiled)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0) && Config.ExcludeTimedUnspoiled)
                 return;
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
                 return;
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value?.Item.Row != 0) && Config.ExcludeTimedLegendary)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
                 return;
 
-            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.Id == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.Id == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
                 TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.Id == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });

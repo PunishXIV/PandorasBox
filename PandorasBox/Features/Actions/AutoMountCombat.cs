@@ -4,7 +4,7 @@ using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Linq;
@@ -71,7 +71,7 @@ namespace PandorasBox.Features.Actions
             if (Svc.Condition[ConditionFlag.Mounted]) return true;
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Mount) return false;
 
-            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing)
+            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType).Bg.ToString().Contains("/hou/") && Config.ExcludeHousing)
             {
                 TaskManager.Abort();
                 return false;

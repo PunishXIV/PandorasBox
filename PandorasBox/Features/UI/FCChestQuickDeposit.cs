@@ -8,7 +8,7 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
@@ -76,7 +76,7 @@ namespace PandorasBox.Features.UI
             return AgentFreeCompanyChest_MoveFCItem.Original(AgentFreeCompanyChest, SourceInventory, SourceSlot, TargetInventory, TargetSlot);
         }
 
-        private unsafe MenuItem CheckInventoryItem(uint ItemId, bool itemHq, uint itemAmount)
+        private unsafe MenuItem CheckInventoryItem(uint ItemId, bool itemHq, int itemAmount)
         {
             if (Svc.GameGui.GetAddonByName("FreeCompanyChest").GetAtkUnitBase(out var addon))
             {
@@ -97,7 +97,7 @@ namespace PandorasBox.Features.UI
             return null;
         }
 
-        private unsafe void DepositItem(uint ItemId, AtkUnitBase* addon, bool itemHq, uint itemAmount)
+        private unsafe void DepositItem(uint ItemId, AtkUnitBase* addon, bool itemHq, int itemAmount)
         {
             uint FCPage = (uint)InventoryType.FreeCompanyPage1;
 
@@ -129,7 +129,7 @@ namespace PandorasBox.Features.UI
 
         }
 
-        private unsafe short CheckFCChestSlots(uint fCPage, uint ItemId, uint stack, bool itemHq)
+        private unsafe short CheckFCChestSlots(uint fCPage, uint ItemId, int stack, bool itemHq)
         {
             var invManager = InventoryManager.Instance();
             InventoryType fcPage = (InventoryType)fCPage;
@@ -163,7 +163,7 @@ namespace PandorasBox.Features.UI
             return -1;
         }
 
-        private unsafe InventoryType? GetInventoryItemPage(uint ItemId, bool itemHq, uint itemAmount, out short slot)
+        private unsafe InventoryType? GetInventoryItemPage(uint ItemId, bool itemHq, int itemAmount, out short slot)
         {
             var invManager = InventoryManager.Instance();
 

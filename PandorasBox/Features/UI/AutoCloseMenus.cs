@@ -5,7 +5,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
 using static ECommons.GenericHelpers;
-using Addon = Lumina.Excel.GeneratedSheets.Addon;
+using Addon = Lumina.Excel.Sheets.Addon;
 
 namespace PandorasBox.Features.UI
 {

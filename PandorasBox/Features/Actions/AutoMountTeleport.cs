@@ -3,7 +3,7 @@ using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Linq;
@@ -43,7 +43,7 @@ namespace PandorasBox.Features.Actions
         {
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Mount) return;
 
-            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Bg.RawString.Contains("/hou/") && Config.ExcludeHousing) 
+            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Bg.ToString().Contains("/hou/") && Config.ExcludeHousing) 
             {
                 TaskManager.Abort();
                 return;

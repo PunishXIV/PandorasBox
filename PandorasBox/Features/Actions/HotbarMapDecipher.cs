@@ -6,8 +6,9 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System;
 using System.Collections.Generic;
 using static ECommons.GenericHelpers;
@@ -52,8 +53,7 @@ namespace PandorasBox.Features.Actions
                     return UseActionHook.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
                 }
 
-                var item = Svc.Data.GetExcelSheet<Item>().GetRow(actionID);
-                if (item != null && item.FilterGroup == 18)
+                if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == actionID, out var item) && item.FilterGroup == 18)
                 {
                     TaskManager.Enqueue(() => OpenItem(actionID));
 

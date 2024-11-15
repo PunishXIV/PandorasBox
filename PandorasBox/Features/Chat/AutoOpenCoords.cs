@@ -5,7 +5,7 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Game.Text;
 using System;
 using Dalamud.Game.Text.SeStringHandling;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using System.Collections.Generic;
 using ImGuiNET;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -73,7 +73,7 @@ namespace PandorasBox.Features.ChatFeature
                     maplinkPayload = mapLinkload;
                     hasMapLink = true;
                     // float fudge = 0.05f;
-                    scale = mapLinkload.TerritoryType.Map.Value.SizeFactor;
+                    scale = mapLinkload.TerritoryType.Value.Map.Value.SizeFactor;
                     // coordX = ConvertRawPositionToMapCoordinate(mapLinkload.RawX, scale) - fudge;
                     // coordY = ConvertRawPositionToMapCoordinate(mapLinkload.RawY, scale) - fudge;
                     coordX = mapLinkload.XCoord;
@@ -138,12 +138,12 @@ namespace PandorasBox.Features.ChatFeature
         {
             Svc.Log.Debug($"Viewing {maplinkMessage.Text}");
             var map = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(maplinkMessage.TerritoryId).Map;
-            var maplink = new MapLinkPayload(maplinkMessage.TerritoryId, map.Row, maplinkMessage.X, maplinkMessage.Y);
+            var maplink = new MapLinkPayload(maplinkMessage.TerritoryId, map.RowId, maplinkMessage.X, maplinkMessage.Y);
 
             if (Config.DontOpenMap)
             {
                 var agent = AgentMap.Instance();
-                GI.SetFlagMarker(agent, maplinkMessage.TerritoryId, map.Row, maplink.RawX, maplink.RawY, 60561);
+                GI.SetFlagMarker(agent, maplinkMessage.TerritoryId, map.RowId, maplink.RawX, maplink.RawY, 60561);
             }
             else
                 Svc.GameGui.OpenMapWithMapLink(maplink);

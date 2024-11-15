@@ -3,7 +3,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Lumina.Excel.GeneratedSheets;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Linq;
@@ -33,16 +33,16 @@ namespace PandorasBox.Features.UI
            ([69637, 70340, 67915], "Step 6"),
            ([67932], "Step 7"),
            ([67940], "Step 8"),
-           ([66655], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(22)!.Name),
-           ([66656], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(20)!.Name),
-           ([66657], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(21)!.Name),
-           ([66658], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(23)!.Name),
-           ([66659], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(26)!.Name),
-           ([66660], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(25)!.Name),
-           ([66661], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(24)!.Name),
-           ([66662], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(28)!.Name),
-           ([66663], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(29)!.Name),
-           ([67115], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(92)!.Name),
+           ([66655], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(22)!.Name.ToString()),
+           ([66656], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(20)!.Name.ToString()),
+           ([66657], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(21)!.Name.ToString()),
+           ([66658], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(23)!.Name.ToString()),
+           ([66659], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(26)!.Name.ToString()),
+           ([66660], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(25)!.Name.ToString()),
+           ([66661], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(24)!.Name.ToString()),
+           ([66662], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(28)!.Name.ToString()),
+           ([66663], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(29)!.Name.ToString()),
+           ([67115], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(92)!.Name.ToString()),
         };
 
         private unsafe void AddonSetup(AddonEvent type, AddonArgs args)
@@ -115,7 +115,7 @@ namespace PandorasBox.Features.UI
                 foreach (var questID in simpleRelic.RelicQuestId)
                 {
                     var quest = Svc.Data.GetExcelSheet<Quest>().GetRow(questID);
-                    if (text.Contains(quest.Name.RawString))
+                    if (text.Contains(quest.Name.ToString()))
                     {
                         text = $"{simpleRelic.RelicStep}: {quest.Name}";
                         buttonTextNode->SetText(text);
