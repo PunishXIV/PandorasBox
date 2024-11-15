@@ -133,7 +133,7 @@ namespace PandorasBox.Features.UI
 
                             TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
                             TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.ClientState.LocalPlayer.GameObjectId) == 0);
-                            TaskManager.DelayNext("OpeningItem", 2200);
+                            TaskManager.Enqueue(() => ActionManager.Instance()->AnimationLock == 0);
                             TaskManager.Enqueue(() => OpenItem(ItemId));
 
                             return true;
