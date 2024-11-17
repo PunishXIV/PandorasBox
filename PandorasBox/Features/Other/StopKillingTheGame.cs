@@ -16,7 +16,11 @@ namespace PandorasBox.Features.Other
 
         public override string Description => "Prevents the game from closing itself when it gets a lobby error";
 
-        public override FeatureType FeatureType => FeatureType.Disabled;
+        public override FeatureType FeatureType => FeatureType.Other;
+
+        public override bool FeatureDisabled => true;
+
+        public override string DisabledReason => "Feature not working, requires update.";
 
         public class Configs : FeatureConfig
         {

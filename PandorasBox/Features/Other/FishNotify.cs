@@ -34,7 +34,11 @@ namespace PandorasBox.Features.Other
 
         public override string Description => "Play a sound or send a chat message when a fish is hooked.";
 
-        public override FeatureType FeatureType => FeatureType.Disabled;
+        public override FeatureType FeatureType => FeatureType.Other;
+
+        public override bool FeatureDisabled => true;
+
+        public override string DisabledReason => "Use Fish Notify plugin from https://plugins.carvel.li/.";
 
         public class Configs : FeatureConfig
         {

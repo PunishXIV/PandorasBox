@@ -2,6 +2,7 @@ using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Hooking;
+using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
@@ -22,6 +23,10 @@ namespace PandorasBox.Features.UI
         internal Hook<AgentFreeCompanyChest_MoveFCItemDelegate> AgentFreeCompanyChest_MoveFCItem;
 
         public override string Name => "FC Chest Quick Deposit";
+
+        public override bool FeatureDisabled => true;
+
+        public override string DisabledReason => "Issues with crashing";
 
         public override string Description => "Adds a context menu to items whilst the FC chest is open to quickly deposit them.";
 
@@ -124,7 +129,14 @@ namespace PandorasBox.Features.UI
             short destSlot = CheckFCChestSlots(FCPage, ItemId, itemAmount, itemHq);
             if (sourceInventory != null && destSlot != -1)
             {
-                AgentFreeCompanyChest_MoveFCItem.Original(UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.FreeCompanyChest), (InventoryType)sourceInventory, (uint)slot, (InventoryType)FCPage, (uint)destSlot);
+                try
+                {
+                    AgentFreeCompanyChest_MoveFCItem.Original(UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.FreeCompanyChest), (InventoryType)sourceInventory, (uint)slot, (InventoryType)FCPage, (uint)destSlot);
+                }
+                catch (Exception ex)
+                {
+                    ex.Log();
+                }
             }
 
         }

@@ -31,7 +31,7 @@ namespace PandorasBox.Features
                     feature.Setup();
                     if ((feature.Ready && Config.EnabledFeatures.Contains(t.Name)) || feature.FeatureType == FeatureType.Commands)
                     {
-                        if (feature.FeatureType != FeatureType.Disabled)
+                        if (!feature.FeatureDisabled)
                             feature.Enable();
                     }
 

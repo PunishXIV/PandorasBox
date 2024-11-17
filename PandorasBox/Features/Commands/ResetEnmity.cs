@@ -16,7 +16,7 @@ namespace PandorasBox.Features.Commands
         public override string[] Alias => new string[] { "/pre" };
 
         public override List<string> Parameters => new() { "t", "a" };
-        public override string Description => "Resets the enmity of all enemies targeting you. Useful for target dummies. Accepts arguments for t(arget) or a(ll). Defaults to all.";
+        public override string Description => "Resets combat with target dummies. Accepts arguments for t(arget) or a(ll). Defaults to all.";
         protected override void OnCommand(List<string> args)
         {
             foreach (var p in Parameters)
@@ -39,7 +39,7 @@ namespace PandorasBox.Features.Commands
         private void Reset(int GameObjectId)
         {
             // Reset enmity at target sig. This doesn't change often, but it does sometimes.
-            nint scanText = Svc.SigScanner.ScanText("E8 ?? ?? ?? ?? 8D 43 0A");
+            nint scanText = Svc.SigScanner.ScanText("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 81 EC ?? ?? ?? ?? 48 8B 05 ?? ?? ?? ?? 48 33 C4 48 89 84 24 ?? ?? ?? ?? 8B E9 41 8B D9 48 8B 0D ?? ?? ?? ?? 41 8B F8 8B F2");
             ExecuteCommand = Marshal.GetDelegateForFunctionPointer<ExecuteCommandDelegate>(scanText);
 
             Svc.Log.Debug($"{nameof(ExecuteCommand)} +{scanText - Process.GetCurrentProcess().MainModule!.BaseAddress:X}");

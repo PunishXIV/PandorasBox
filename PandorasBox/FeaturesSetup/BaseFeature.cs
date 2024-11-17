@@ -39,6 +39,10 @@ namespace PandorasBox.Features
 
         public virtual bool Enabled { get; protected set; }
 
+        public virtual bool FeatureDisabled { get; protected set; } //This is to disable features that don't work
+
+        public virtual string DisabledReason { get; set; } = "";
+
         public abstract string Name { get; }
 
         public virtual string Key => GetType().Name;
@@ -549,9 +553,9 @@ namespace PandorasBox.Features
 
         public unsafe virtual bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
         {
-           return UseActionHook.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+            return UseActionHook.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
         }
 
-        
+
     }
 }

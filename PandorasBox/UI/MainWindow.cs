@@ -1,4 +1,6 @@
+using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
+using Dalamud.Interface.Utility.Raii;
 using Dalamud.Interface.Windowing;
 using Dalamud.Utility;
 using ECommons;
@@ -195,7 +197,7 @@ internal class MainWindow : Window
                         {
                             foreach (var feature in P.Features)
                             {
-                                if (feature.FeatureType == FeatureType.Commands || feature.FeatureType == FeatureType.Disabled) continue;
+                                if (feature.FeatureType == FeatureType.Commands) continue;
 
                                 if (feature.Description.Contains(searchString, StringComparison.CurrentCultureIgnoreCase) ||
                                     feature.Name.Contains(searchString, StringComparison.CurrentCultureIgnoreCase))
@@ -270,6 +272,8 @@ internal class MainWindow : Window
             ImGui.TableHeadersRow();
             foreach (var feature in features.Cast<CommandFeature>())
             {
+                if (feature.Disabled) continue;
+
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 ImGui.TextWrapped(feature.Name);
@@ -292,7 +296,7 @@ internal class MainWindow : Window
     {
         if (features == null || !features.Any() || !features.Any()) return;
 
-        ImGuiEx.ImGuiLineCentered($"featureHeader{features.First().FeatureType}", () =>
+        ImGuiEx.LineCentered($"featureHeader{features.First().FeatureType}", () =>
         {
             if (FilteredFeatures.Count > 0)
             {
@@ -305,51 +309,50 @@ internal class MainWindow : Window
 
         foreach (var feature in features)
         {
-            if (feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled())
-                ImGui.BeginDisabled();
-
-            var enabled = feature.Enabled;
-            if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
+            using (ImRaii.Disabled(feature.FeatureDisabled || feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled()))
             {
-                if (enabled)
+                var enabled = feature.Enabled;
+                if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
                 {
-                    try
+                    if (enabled)
                     {
-                        feature.Enable();
-                        if (feature.Enabled)
+                        try
                         {
-                            Config.EnabledFeatures.Add(feature.GetType().Name);
+                            feature.Enable();
+                            if (feature.Enabled)
+                            {
+                                Config.EnabledFeatures.Add(feature.GetType().Name);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                         }
                     }
-                    catch (Exception ex)
+                    else
                     {
-                        Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
-                    }
-                }
-                else
-                {
-                    try
-                    {
-                        feature.Disable();
-                        Config.EnabledFeatures.RemoveAll(x => x == feature.GetType().Name);
+                        try
+                        {
+                            feature.Disable();
+                            Config.EnabledFeatures.RemoveAll(x => x == feature.GetType().Name);
 
+                        }
+                        catch (Exception ex)
+                        {
+                            Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
-                    }
+                    Config.Save();
                 }
-                Config.Save();
+                ImGui.SameLine();
+                feature.DrawConfig(ref enabled);
+                ImGui.Spacing();
+                ImGui.TextWrapped($"{feature.Description}");
             }
-            ImGui.SameLine();
-            feature.DrawConfig(ref enabled);
-            ImGui.Spacing();
-            ImGui.TextWrapped($"{feature.Description}");
+                if (feature.FeatureDisabled)
+                    ImGuiEx.Text(ImGuiColors.DalamudRed, $"Disabled Reason: {feature.DisabledReason}");
 
-            ImGui.Separator();
-
-            if (feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled())
-                ImGui.EndDisabled();
+                ImGui.Separator();
         }
     }
 }

@@ -11,6 +11,7 @@ namespace PandorasBox.Features;
 public abstract partial class CommandFeature : Feature
 {
     public abstract string Command { get; set; }
+    public virtual bool Disabled { get; set; } = false;
     public virtual string[] Alias => Array.Empty<string>();
     public virtual string HelpMessage => $"[{P?.Name} {Name}]";
     public virtual bool ShowInHelp => false;
@@ -29,6 +30,8 @@ public abstract partial class CommandFeature : Feature
 
     public override void Enable()
     {
+        if (Disabled) return;
+
         if (Svc.Commands.Commands.ContainsKey(Command))
         {
             Svc.Log.Error($"Command '{Command}' is already registered.");
