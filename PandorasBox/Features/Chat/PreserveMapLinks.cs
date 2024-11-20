@@ -12,265 +12,246 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 
-namespace PandorasBox.Features
+namespace PandorasBox.Features;
+
+public unsafe partial class CoordsToMapLink : Feature
 {
-    public unsafe partial class CoordsToMapLink : Feature
+    public override string Name => "Preserve Map Links in Clipboard";
+
+    public override string Description => "Preserves the formatting for map links so they can be interacted with after pasting.";
+
+    public override FeatureType FeatureType => FeatureType.ChatFeature;
+
+    [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
+    private delegate nint ParseMessageDelegate(nint a, nint b);
+    private Hook<ParseMessageDelegate>? parseMessageHook;
+
+    private readonly Dictionary<string, (uint, uint)> maps = [];
+    private readonly Dictionary<string, string> unmaskedMapNames = new()
+{
+    { "狼狱演*场", "狼狱演习场" },
+    { "魔**阿济兹拉", "魔大陆阿济兹拉" },
+    { "玛托雅的洞*", "玛托雅的洞穴" },
+    { "魔**中枢", "魔大陆中枢" },
+    { "双蛇*军营", "双蛇党军营" },
+    { "地衣宫演*场", "地衣宫演习场" },
+    { "水晶塔演*场", "水晶塔演习场" },
+    { "*泉神社", "醴泉神社" },
+    { "*泉神社神道", "醴泉神社神道" },
+    { "格**火山", "格鲁格火山" },
+    { "**亚马乌罗提", "末日亚马乌罗提" },
+    { "游末邦**", "游末邦监狱" },
+};
+
+    [GeneratedRegex("\\uE0BB(?<map>.+?)(?<instance>[\\ue0b1-\\ue0b9])? \\( (?<x>\\d{1,2}[\\,|\\.]\\d)  , (?<y>\\d{1,2}[\\,|\\.]\\d) \\)", RegexOptions.Compiled)]
+    private static partial Regex MapLinkRegex();
+    private readonly Regex mapLinkPattern = MapLinkRegex();
+
+    private readonly FieldInfo? territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId", BindingFlags.NonPublic | BindingFlags.Instance);
+    private readonly FieldInfo? mapIdField = typeof(MapLinkPayload).GetField("mapId", BindingFlags.NonPublic | BindingFlags.Instance);
+
+    private readonly Dictionary<string, (uint, uint, int, int)> historyCoordinates = [];
+
+    private nint HandleParseMessageDetour(nint a, nint b)
     {
-        public override string Name => "Preserve Map Links in Clipboard";
-
-        public override string Description => "Preserves the formatting for map links so they can be interacted with after pasting.";
-
-        public override FeatureType FeatureType => FeatureType.ChatFeature;
-
-        [UnmanagedFunctionPointer(CallingConvention.ThisCall)]
-        private delegate nint ParseMessageDelegate(nint a, nint b);
-        private Hook<ParseMessageDelegate>? parseMessageHook;
-
-        private readonly Dictionary<string, (uint, uint)> maps = new();
-        private readonly Dictionary<string, string> unmaskedMapNames = new()
+        var ret = parseMessageHook!.Original(a, b);
+        try
         {
-            { "狼狱演*场", "狼狱演习场" },
-            { "魔**阿济兹拉", "魔大陆阿济兹拉" },
-            { "玛托雅的洞*", "玛托雅的洞穴" },
-            { "魔**中枢", "魔大陆中枢" },
-            { "双蛇*军营", "双蛇党军营" },
-            { "地衣宫演*场", "地衣宫演习场" },
-            { "水晶塔演*场", "水晶塔演习场" },
-            { "*泉神社", "醴泉神社" },
-            { "*泉神社神道", "醴泉神社神道" },
-            { "格**火山", "格鲁格火山" },
-            { "**亚马乌罗提", "末日亚马乌罗提" },
-            { "游末邦**", "游末邦监狱" },
-        };
+            var pMessage = Marshal.ReadIntPtr(ret);
+            var length = 0;
+            while (Marshal.ReadByte(pMessage, length) != 0) length++;
+            var message = new byte[length];
+            Marshal.Copy(pMessage, message, 0, length);
 
-        [GeneratedRegex("\\uE0BB(?<map>.+?)(?<instance>[\\ue0b1-\\ue0b9])? \\( (?<x>\\d{1,2}[\\,|\\.]\\d)  , (?<y>\\d{1,2}[\\,|\\.]\\d) \\)", RegexOptions.Compiled)]
-        private static partial Regex MapLinkRegex();
-        private readonly Regex mapLinkPattern = MapLinkRegex();
-
-        private readonly FieldInfo? territoryTypeIdField = typeof(MapLinkPayload).GetField("territoryTypeId", BindingFlags.NonPublic | BindingFlags.Instance);
-        private readonly FieldInfo? mapIdField = typeof(MapLinkPayload).GetField("mapId", BindingFlags.NonPublic | BindingFlags.Instance);
-
-        private readonly Dictionary<string, (uint, uint, int, int)> historyCoordinates = new();
-
-        private nint HandleParseMessageDetour(nint a, nint b)
-        {
-            var ret = parseMessageHook!.Original(a, b);
-            try
+            var parsed = SeString.Parse(message);
+            foreach (var payload in parsed.Payloads)
             {
-                var pMessage = Marshal.ReadIntPtr(ret);
-                var length = 0;
-                while (Marshal.ReadByte(pMessage, length) != 0) length++;
-                var message = new byte[length];
-                Marshal.Copy(pMessage, message, 0, length);
-
-                var parsed = SeString.Parse(message);
-                foreach (var payload in parsed.Payloads)
+                if (payload is AutoTranslatePayload p && p.Encode()[3] == 0xC9 && p.Encode()[4] == 0x04)
                 {
-                    if (payload is AutoTranslatePayload p && p.Encode()[3] == 0xC9 && p.Encode()[4] == 0x04)
-                    {
-                        if (Pi!.IsDebugging) Svc.Log.Debug($"<- {BitConverter.ToString(message)}");
-                        return ret;
-                    }
-                }
-                for (var i = 0; i < parsed.Payloads.Count; i++)
-                {
-                    if (parsed.Payloads[i] is not TextPayload payload) continue;
-                    var match = mapLinkPattern.Match(payload.Text);
-                    if (!match.Success) continue;
-
-                    var mapName = match.Groups["map"].Value;
-                    if (unmaskedMapNames.ContainsKey(mapName))
-                    {
-                        mapName = unmaskedMapNames[mapName];
-                    }
-                    var historyKey = string.Concat(mapName, match.Value.AsSpan(mapName.Length + 1));
-
-                    uint territoryId, mapId;
-                    int rawX, rawY;
-                    if (historyCoordinates.TryGetValue(historyKey, out var history))
-                    {
-                        (territoryId, mapId, rawX, rawY) = history;
-                        Svc.Log.Debug($"recall {historyKey} => {history}");
-                    }
-                    else
-                    {
-                        if (!maps.TryGetValue(mapName, out var mapInfo))
-                        {
-                            Svc.Log.Warning($"Can't find map {mapName}");
-                            continue;
-                        }
-                        (territoryId, mapId) = mapInfo;
-                        var map = Svc.Data.GetExcelSheet<Map>()!.GetRow(mapId);
-                        rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value), map!.OffsetX, map!.SizeFactor);
-                        rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value), map!.OffsetY, map!.SizeFactor);
-                        if (match.Groups["instance"].Value != "")
-                        {
-                            mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;
-                        }
-                        history = (territoryId, mapId, rawX, rawY);
-                        historyCoordinates[historyKey] = history;
-                        Svc.Log.Debug($"generate {historyKey} => {history}");
-                    }
-
-                    var newPayloads = new List<Payload>();
-                    if (match.Index > 0)
-                    {
-                        newPayloads.Add(new TextPayload(payload.Text[..match.Index]));
-                    }
-                    newPayloads.Add(new PreMapLinkPayload(territoryId, mapId, rawX, rawY));
-                    if (match.Index + match.Length < payload.Text.Length)
-                    {
-                        newPayloads.Add(new TextPayload(payload.Text[(match.Index + match.Length)..]));
-                    }
-                    parsed.Payloads.RemoveAt(i);
-                    parsed.Payloads.InsertRange(i, newPayloads);
-
-                    var newMessage = parsed.Encode();
-                    if (Pi.IsDebugging) Svc.Log.Debug($"-> {BitConverter.ToString(newMessage)}");
-                    var messageCapacity = Marshal.ReadInt64(ret + 8);
-                    if (newMessage.Length + 1 > messageCapacity)
-                    {
-                        // FIXME: should call std::string#resize(or maybe _Reallocate_grow_by) here, but haven't found the signature yet
-                        Svc.Log.Error($"Reached message capacity. Aborting conversion for {historyKey}");
-                        return ret;
-                    }
-                    Marshal.WriteInt64(ret + 16, newMessage.Length + 1);
-                    Marshal.Copy(newMessage, 0, pMessage, newMessage.Length);
-                    Marshal.WriteByte(pMessage, newMessage.Length, 0x00);
-
-                    break;
+                    Svc.Log.Verbose($"<- {BitConverter.ToString(message)}");
+                    return ret;
                 }
             }
-            catch (Exception ex)
+            for (var i = 0; i < parsed.Payloads.Count; i++)
             {
-                Svc.Log.Error($"Exception on HandleParseMessageDetour. {ex}");
-            }
-            return ret;
-        }
+                if (parsed.Payloads[i] is not TextPayload payload || payload.Text is null) continue;
+                var match = mapLinkPattern.Match(payload.Text);
+                if (!match.Success) continue;
 
-        private void HandleChatMessage(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled)
-        {
-            try
-            {
-                for (var i = 0; i < message.Payloads.Count; i++)
+                var mapName = match.Groups["map"].Value;
+                if (unmaskedMapNames.TryGetValue(mapName, out var value))
+                    mapName = value;
+                var historyKey = string.Concat(mapName, match.Value.AsSpan(mapName.Length + 1));
+
+                uint territoryId, mapId;
+                int rawX, rawY;
+                if (historyCoordinates.TryGetValue(historyKey, out var history))
                 {
-                    if (message.Payloads[i] is not MapLinkPayload payload) continue;
-                    if (message.Payloads[i + 6] is not TextPayload payloadText) continue;
-
-                    var territoryId = (uint)territoryTypeIdField.GetValue(payload);
-                    var mapId = (uint)mapIdField.GetValue(payload);
-                    var historyKey = payloadText.Text[..(payloadText.Text.LastIndexOf(")") + 1)];
-                    var mapName = historyKey[..(historyKey.LastIndexOf("(") - 1)];
-                    if ('\ue0b1' <= mapName[^1] && mapName[^1] <= '\ue0b9')
+                    (territoryId, mapId, rawX, rawY) = history;
+                    Svc.Log.Verbose($"recall {historyKey} => {history}");
+                }
+                else
+                {
+                    if (!maps.TryGetValue(mapName, out var mapInfo))
                     {
-                        maps[mapName[0..^1]] = (territoryId, mapId);
-                        mapId |= (mapName[^1] - 0xe0b0u) << 16;
+                        Svc.Log.Warning($"Can't find map {mapName}");
+                        continue;
                     }
-                    else
+                    (territoryId, mapId) = mapInfo;
+                    var map = Svc.Data.GetExcelSheet<Map>()!.GetRow(mapId);
+                    rawX = GenerateRawPosition(float.Parse(match.Groups["x"].Value), map!.OffsetX, map!.SizeFactor);
+                    rawY = GenerateRawPosition(float.Parse(match.Groups["y"].Value), map!.OffsetY, map!.SizeFactor);
+                    if (match.Groups["instance"].Value != "")
                     {
-                        maps[mapName] = (territoryId, mapId);
+                        mapId |= (match.Groups["instance"].Value[0] - 0xe0b0u) << 16;
                     }
-                    var history = (territoryId, mapId, payload.RawX, payload.RawY);
+                    history = (territoryId, mapId, rawX, rawY);
                     historyCoordinates[historyKey] = history;
-                    Svc.Log.Debug($"memorize {historyKey} => {history}");
-                    //Svc.Log.Log(BitConverter.ToString(payload.Encode()));
-                    //Svc.Log.Log(BitConverter.ToString(payload.Encode(true)));
+                    Svc.Log.Verbose($"generate {historyKey} => {history}");
                 }
-            }
-            catch (Exception ex)
-            {
-                Svc.Log.Debug($"Exception on HandleChatMessage. {ex}");
-            }
-        }
 
-        private readonly Random random = new();
-        public int GenerateRawPosition(float visibleCoordinate, short offset, ushort factor)
-        {
-            visibleCoordinate += (float)random.NextDouble() * 0.07f;
-            var scale = factor / 100.0f;
-            var scaledPos = (((visibleCoordinate - 1.0f) * scale / 41.0f * 2048.0f) - 1024.0f) / scale;
-            return (int)Math.Ceiling(scaledPos - offset) * 1000;
-        }
-
-        public override void Enable()
-        {
-            parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 30 E8 ?? ?? ?? ?? 48 8B 44 24 30 80 38 00 0F 84", new(HandleParseMessageDetour));
-            parseMessageHook?.Enable();
-
-            foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
-            {
-                var name = territoryType.PlaceName.Value.Name.ToString();
-                if (name != "" && !maps.ContainsKey(name))
+                var newPayloads = new List<Payload>();
+                if (match.Index > 0)
                 {
-                    maps.Add(name, (territoryType.RowId, territoryType.Map.RowId));
+                    newPayloads.Add(new TextPayload(payload.Text[..match.Index]));
                 }
+                newPayloads.Add(new PreMapLinkPayload(territoryId, mapId, rawX, rawY));
+                if (match.Index + match.Length < payload.Text.Length)
+                {
+                    newPayloads.Add(new TextPayload(payload.Text[(match.Index + match.Length)..]));
+                }
+                parsed.Payloads.RemoveAt(i);
+                parsed.Payloads.InsertRange(i, newPayloads);
+
+                var newMessage = parsed.Encode();
+                Svc.Log.Verbose($"-> {BitConverter.ToString(newMessage)}");
+                var messageCapacity = Marshal.ReadInt64(ret + 8);
+                if (newMessage.Length + 1 > messageCapacity)
+                {
+                    // FIXME: should call std::string#resize(or maybe _Reallocate_grow_by) here, but haven't found the signature yet
+                    Svc.Log.Info($"Reached message capacity. Aborting conversion for {historyKey}");
+                    return ret;
+                }
+                Marshal.WriteInt64(ret + 16, newMessage.Length + 1);
+                Marshal.Copy(newMessage, 0, pMessage, newMessage.Length);
+                Marshal.WriteByte(pMessage, newMessage.Length, 0x00);
+
+                break;
             }
-
-            Svc.Chat.ChatMessage += HandleChatMessage;
-            base.Enable();
         }
-
-        public override void Disable()
+        catch (Exception ex)
         {
-            parseMessageHook?.Disable();
-            Svc.Chat.ChatMessage -= HandleChatMessage;
-            base.Disable();
+            Svc.Log.Error($"Exception on HandleParseMessageDetour. {ex}");
         }
+        return ret;
+    }
 
-        public override void Dispose()
+    private void HandleChatMessage(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    {
+        try
         {
-            parseMessageHook?.Dispose();
-            base.Dispose();
+            for (var i = 0; i < message.Payloads.Count; i++)
+            {
+                if (message.Payloads[i] is not MapLinkPayload payload) continue;
+                if (message.Payloads[i + 6] is not TextPayload payloadText) continue;
+
+                var territoryId = (uint)territoryTypeIdField.GetValue(payload);
+                var mapId = (uint)mapIdField.GetValue(payload);
+                var historyKey = payloadText.Text[..(payloadText.Text.LastIndexOf(')') + 1)];
+                var mapName = historyKey[..(historyKey.LastIndexOf('(') - 1)];
+                if (mapName.Length == 0) continue;
+                if (mapName[^1] is >= '\ue0b1' and <= '\ue0b9')
+                {
+                    maps[mapName[0..^1]] = (territoryId, mapId);
+                    mapId |= (mapName[^1] - 0xe0b0u) << 16;
+                }
+                else
+                {
+                    maps[mapName] = (territoryId, mapId);
+                }
+                var history = (territoryId, mapId, payload.RawX, payload.RawY);
+                historyCoordinates[historyKey] = history;
+                Svc.Log.Verbose($"{nameof(MapLinkPayload)}: hKey:{historyKey} => h:{history}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Svc.Log.Error($"Exception on HandleChatMessage. {ex}");
         }
     }
 
-    public class PreMapLinkPayload : Payload
+    private readonly Random random = new();
+    public int GenerateRawPosition(float visibleCoordinate, short offset, ushort factor)
     {
-        public override PayloadType Type => PayloadType.AutoTranslateText;
+        visibleCoordinate += (float)random.NextDouble() * 0.07f;
+        var scale = factor / 100.0f;
+        var scaledPos = (((visibleCoordinate - 1.0f) * scale / 41.0f * 2048.0f) - 1024.0f) / scale;
+        return (int)Math.Ceiling(scaledPos - offset) * 1000;
+    }
 
-        private readonly uint territoryTypeId;
-        private readonly uint mapId;
-        private readonly int rawX;
-        private readonly int rawY;
-        private readonly int rawZ;
+    public override void Enable()
+    {
+        parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 30 E8 ?? ?? ?? ?? 48 8B 44 24 30 80 38 00 0F 84", new(HandleParseMessageDetour));
+        parseMessageHook?.Enable();
 
-        public PreMapLinkPayload(uint territoryTypeId, uint mapId, int rawX, int rawY)
+        foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())
         {
-            this.territoryTypeId = territoryTypeId;
-            this.mapId = mapId;
-            this.rawX = rawX;
-            this.rawY = rawY;
-            this.rawZ = -30000;
-        }
-
-        protected override byte[] EncodeImpl()
-        {
-            var territoryBytes = MakeInteger(this.territoryTypeId);
-            var mapBytes = MakeInteger(this.mapId);
-            var xBytes = MakeInteger(unchecked((uint)this.rawX));
-            var yBytes = MakeInteger(unchecked((uint)this.rawY));
-            var zBytes = MakeInteger(unchecked((uint)this.rawZ));
-
-            var chunkLen = 3 + territoryBytes.Length + mapBytes.Length + xBytes.Length + yBytes.Length + zBytes.Length;
-
-            var bytes = new List<byte>()
+            var name = territoryType.PlaceName.Value.Name.ToString();
+            if (name != "" && !maps.ContainsKey(name))
             {
-                START_BYTE,
-                (byte)SeStringChunkType.AutoTranslateKey, (byte)chunkLen, 0xC9, 0x04
-            };
-            bytes.AddRange(territoryBytes);
-            bytes.AddRange(mapBytes);
-            bytes.AddRange(xBytes);
-            bytes.AddRange(yBytes);
-            bytes.AddRange(zBytes);
-            bytes.Add(END_BYTE);
-
-            return bytes.ToArray();
+                maps.Add(name, (territoryType.RowId, territoryType.Map.RowId));
+            }
         }
 
-        protected override void DecodeImpl(BinaryReader reader, long endOfStream)
-        {
-            throw new NotImplementedException();
-        }
+        Svc.Chat.ChatMessage += HandleChatMessage;
+        base.Enable();
+    }
+
+    public override void Disable()
+    {
+        parseMessageHook?.Disable();
+        Svc.Chat.ChatMessage -= HandleChatMessage;
+        base.Disable();
+    }
+
+    public override void Dispose()
+    {
+        parseMessageHook?.Dispose();
+        base.Dispose();
+    }
+}
+
+public class PreMapLinkPayload(uint territoryTypeId, uint mapId, int rawX, int rawY) : Payload
+{
+    public override PayloadType Type => PayloadType.AutoTranslateText;
+
+    private readonly uint territoryTypeId = territoryTypeId;
+    private readonly uint mapId = mapId;
+    private readonly int rawX = rawX;
+    private readonly int rawY = rawY;
+    private readonly int rawZ = -30000;
+    private readonly int placeNameOverride = 0;
+
+    protected override byte[] EncodeImpl()
+    {
+        Svc.Log.Info($"{200} {3} {territoryTypeId} {mapId} {rawX} {rawY} {rawZ} {placeNameOverride}");
+        var sb = new Lumina.Text.SeStringBuilder();
+        sb.BeginMacro(Lumina.Text.Payloads.MacroCode.Fixed)
+            .AppendIntExpression(200)
+            .AppendIntExpression(3)
+            .AppendUIntExpression(territoryTypeId) // territory
+            .AppendUIntExpression(mapId) // map or (map | (instance << 16))
+            .AppendIntExpression(rawX) // x -> (int)(MathF.Round(posX, 3, MidpointRounding.AwayFromZero) * 1000)
+            .AppendIntExpression(rawY) // y
+            .AppendIntExpression(rawZ) // z or -30000 for no z
+            .AppendIntExpression(placeNameOverride) // 0 for no override
+        .EndMacro();
+
+        return sb.ToArray();
+    }
+
+    protected override void DecodeImpl(BinaryReader reader, long endOfStream)
+    {
+        throw new NotImplementedException();
     }
 }
