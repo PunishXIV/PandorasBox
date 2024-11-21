@@ -234,7 +234,6 @@ public class PreMapLinkPayload(uint territoryTypeId, uint mapId, int rawX, int r
 
     protected override byte[] EncodeImpl()
     {
-        Svc.Log.Info($"{200} {3} {territoryTypeId} {mapId} {rawX} {rawY} {rawZ} {placeNameOverride}");
         var sb = new Lumina.Text.SeStringBuilder();
         sb.BeginMacro(Lumina.Text.Payloads.MacroCode.Fixed)
             .AppendIntExpression(200)
