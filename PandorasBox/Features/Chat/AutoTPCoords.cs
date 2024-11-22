@@ -160,7 +160,7 @@ namespace PandorasBox.Features.ChatFeature
                 var scale = maplinkMessage.Scale;
                 if (data.Territory.Value.RowId == maplinkMessage.TerritoryId)
                 {
-                    if (AetherytesMap.SelectMany(x => x).TryGetFirst(m => (m.DataType == 3 && m.DataKey.RowId == data.RowId), out var mapMarker))
+                    if (!AetherytesMap.SelectMany(x => x).TryGetFirst(m => m.DataType == 3 && m.DataKey.RowId == data.RowId, out var mapMarker))
                     {
                         Svc.Log.Error($"Cannot find aetherytes position for {maplinkMessage.PlaceName}#{data.PlaceName.Value.Name}");
                         continue;
