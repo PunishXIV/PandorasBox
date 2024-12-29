@@ -11,7 +11,7 @@ using System;
 
 namespace PandorasBox.Features.Actions
 {
-    internal class AutoUmbralSoul : Feature
+    internal class AutoMeditation : Feature
     {
         public override string Name => "Auto-Meditation";
 
