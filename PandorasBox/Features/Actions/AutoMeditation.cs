@@ -8,6 +8,7 @@ using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace PandorasBox.Features.Actions
 {
@@ -31,7 +32,7 @@ namespace PandorasBox.Features.Actions
         private void DelayOutOfCombat(ConditionFlag flag, bool value)
         {
             if (Player.Object is null) return;
-            if (Player.Job != Job.MNK || Player.Job != Job.PGL) return;
+            if (Player.Job != Job.MNK && Player.Job != Job.PGL) return;
             if (Svc.Condition[ConditionFlag.InCombat]) return;
             if (flag == ConditionFlag.InCombat)
             {
@@ -45,13 +46,20 @@ namespace PandorasBox.Features.Actions
             TaskManager.Enqueue(() =>
             {
                 if (Player.Object is null) return;
-                if (Player.Job != Job.MNK || Player.Job != Job.PGL) return;
-                if (Svc.Condition[ConditionFlag.InCombat]) return;
+                var isMonk = Player.Job == Job.MNK;
+                var isPugilist = Player.Job == Job.PGL;
+                if (!isMonk && !isPugilist) return;
 
+                if (Svc.Condition[ConditionFlag.InCombat]) return;
                 var gauge = Svc.Gauges.Get<MNKGauge>();
-                if (gauge.Chakra != 5)
+                if (gauge.Chakra == 5) return;
+                if (Player.Level >= 54 && isMonk)
                 {
                     UseAction(36942);
+                }
+                else
+                {
+                    UseAction(36940);
                 }
             });
         }
