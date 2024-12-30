@@ -4,11 +4,7 @@ using ECommons.DalamudServices;
 using ECommons.ExcelServices;
 using ECommons.EzHookManager;
 using ECommons.GameHelpers;
-using ECommons.Throttlers;
-using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Runtime.CompilerServices;
 
 namespace PandorasBox.Features.Actions
 {
@@ -25,20 +21,7 @@ namespace PandorasBox.Features.Actions
             TaskManager.ShowDebug = false;
             Svc.Framework.Update += RunFeature;
             EzSignatureHelper.Initialize(this);
-            Svc.Condition.ConditionChange += DelayOutOfCombat;
             base.Enable();
-        }
-
-        private void DelayOutOfCombat(ConditionFlag flag, bool value)
-        {
-            if (Player.Object is null) return;
-            if (Player.Job != Job.MNK && Player.Job != Job.PGL) return;
-            if (Svc.Condition[ConditionFlag.InCombat]) return;
-            if (flag == ConditionFlag.InCombat)
-            {
-                var gauge = Svc.Gauges.Get<MNKGauge>();
-                TaskManager.Abort();
-            }
         }
 
         private void RunFeature(IFramework framework)
@@ -67,7 +50,6 @@ namespace PandorasBox.Features.Actions
         public override void Disable()
         {
             SendActionHook?.Disable();
-            Svc.Condition.ConditionChange -= DelayOutOfCombat;
             Svc.Framework.Update -= RunFeature;
             base.Disable();
         }
