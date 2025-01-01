@@ -5,8 +5,10 @@ using System.Text;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.System.String;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
+using Action = Lumina.Excel.Sheets.Action;
 
 namespace PandorasBox;
 
@@ -179,6 +181,13 @@ public static unsafe class Common
         }
 
         return null;
+    }
+
+    public static bool IsActionUnlocked(uint id)
+    {
+        var unlockLink = Svc.Data.GetExcelSheet<Action>().GetRow(id).UnlockLink.RowId;
+        if (unlockLink == 0) return true;
+        return UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(unlockLink);
     }
 }
 

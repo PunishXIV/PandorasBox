@@ -36,7 +36,7 @@ namespace PandorasBox.Features.Actions
                 if (Svc.Condition[ConditionFlag.InCombat]) return;
                 var gauge = Svc.Gauges.Get<MNKGauge>();
                 if (gauge.Chakra == 5) return;
-                if (Player.Level >= 54 && isMonk)
+                if (Player.Level >= 54 && isMonk && Common.IsActionUnlocked(36942))
                 {
                     UseAction(36942);
                 }
