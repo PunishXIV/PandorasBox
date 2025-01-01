@@ -32,9 +32,9 @@ namespace PandorasBox.Features.Other
                 if (Environment.TickCount64 >= Throttler)
                 {
                     if (ChatLogIsFocused())
-                        WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.Escape);
+                        WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.Escape);
 
-                    WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.A); //Mashes to try and resolve the QTE
+                    WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.A); //Mashes to try and resolve the QTE
                     Throttler = Environment.TickCount64 + random.Next(25, 50);
                 }
             }
