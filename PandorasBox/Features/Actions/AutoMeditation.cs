@@ -20,36 +20,38 @@ namespace PandorasBox.Features.Actions
         {
             TaskManager.ShowDebug = false;
             Svc.Framework.Update += RunFeature;
-            EzSignatureHelper.Initialize(this);
             base.Enable();
         }
 
         private void RunFeature(IFramework framework)
         {
-            TaskManager.Enqueue(() =>
-            {
-                if (Player.Object is null) return;
-                var isMonk = Player.Job == Job.MNK;
-                var isPugilist = Player.Job == Job.PGL;
-                if (!isMonk && !isPugilist) return;
+            if (Player.Object is null) return;
+            var isMonk = Player.Job == Job.MNK;
+            var isPugilist = Player.Job == Job.PGL;
+            if (!isMonk && !isPugilist) return;
+            var gauge = Svc.Gauges.Get<MNKGauge>();
+            if (gauge.Chakra == 5) return;
 
-                if (Svc.Condition[ConditionFlag.InCombat]) return;
-                var gauge = Svc.Gauges.Get<MNKGauge>();
-                if (gauge.Chakra == 5) return;
-                if (Player.Level >= 54 && isMonk && Common.IsActionUnlocked(36942))
+            if (!Svc.Condition[ConditionFlag.InCombat])
+            {
+                TaskManager.DelayNext(1000);
+                TaskManager.Enqueue(() =>
                 {
-                    UseAction(36942);
-                }
-                else
-                {
-                    UseAction(36940);
-                }
-            });
+                    if (Svc.Condition[ConditionFlag.InCombat]) return;
+                    if (Player.Level >= 54 && isMonk && Common.IsActionUnlocked(36942))
+                    {
+                        UseAction(36942);
+                    }
+                    else
+                    {
+                        UseAction(36940);
+                    }
+                });
+            }
         }
 
         public override void Disable()
         {
-            SendActionHook?.Disable();
             Svc.Framework.Update -= RunFeature;
             base.Disable();
         }
