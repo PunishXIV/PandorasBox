@@ -9,22 +9,25 @@ using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using InteropGenerator.Runtime;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 
 namespace PandorasBox.Features.UI
 {
     internal unsafe class FCChestQuickDeposit : Feature
     {
-        internal delegate nint AgentFreeCompanyChest_MoveFCItemDelegate(void* AgentFreeCompanyChest, InventoryType SourceInventory, uint SourceSlot, InventoryType TargetInventory, uint TargetSlot);
-        internal Hook<AgentFreeCompanyChest_MoveFCItemDelegate> AgentFreeCompanyChest_MoveFCItem;
+        public delegate nint MoveItemDelegate(void* agent, InventoryType srcInv, uint srcSlot, InventoryType dstInv, uint dstSlot);
+        public MoveItemDelegate? MoveItem;
+        internal nint address;
 
         public override string Name => "FC Chest Quick Deposit";
 
-        public override bool FeatureDisabled => true;
+        public override bool FeatureDisabled => false;
 
         public override string DisabledReason => "Issues with crashing";
 
@@ -47,11 +50,14 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            contextMenu = Svc.ContextMenu;
-            contextMenu.OnMenuOpened += AddInventoryItem;
-            AgentFreeCompanyChest_MoveFCItem ??= Svc.Hook.HookFromSignature<AgentFreeCompanyChest_MoveFCItemDelegate>("40 53 56 57 41 56 41 57 48 83 EC 30", MoveItem);
-            Config = LoadConfig<Configs>() ?? new Configs();
-            base.Enable();
+            if (Svc.SigScanner.TryScanText("40 53 55 56 57 41 57 48 83 EC ?? 45 33 FF", out address))
+            {
+                contextMenu = Svc.ContextMenu;
+                contextMenu.OnMenuOpened += AddInventoryItem;
+                MoveItem = Marshal.GetDelegateForFunctionPointer<MoveItemDelegate>(address);
+                Config = LoadConfig<Configs>() ?? new Configs();
+                base.Enable();
+            }
         }
 
         private void AddInventoryItem(IMenuOpenedArgs args)
@@ -74,11 +80,6 @@ namespace PandorasBox.Features.UI
                     }
                 }
             }
-        }
-
-        private nint MoveItem(void* AgentFreeCompanyChest, InventoryType SourceInventory, uint SourceSlot, InventoryType TargetInventory, uint TargetSlot)
-        {
-            return AgentFreeCompanyChest_MoveFCItem.Original(AgentFreeCompanyChest, SourceInventory, SourceSlot, TargetInventory, TargetSlot);
         }
 
         private unsafe MenuItem CheckInventoryItem(uint ItemId, bool itemHq, int itemAmount)
@@ -131,7 +132,7 @@ namespace PandorasBox.Features.UI
             {
                 try
                 {
-                    AgentFreeCompanyChest_MoveFCItem.Original(UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.FreeCompanyChest), (InventoryType)sourceInventory, (uint)slot, (InventoryType)FCPage, (uint)destSlot);
+                    MoveItem(UIModule.Instance()->GetAgentModule()->GetAgentByInternalId(AgentId.FreeCompanyChest), (InventoryType)sourceInventory, (uint)slot, (InventoryType)FCPage, (uint)destSlot);
                 }
                 catch (Exception ex)
                 {
@@ -218,7 +219,6 @@ namespace PandorasBox.Features.UI
 
         public override void Dispose()
         {
-            AgentFreeCompanyChest_MoveFCItem?.Dispose();
             base.Dispose();
         }
 
