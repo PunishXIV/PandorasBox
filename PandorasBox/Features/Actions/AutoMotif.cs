@@ -20,7 +20,8 @@ namespace PandorasBox.Features.Actions
         {
             Svc.Framework.Update += CheckMotifs;
             Events.OnJobChanged += DelayStart;
-            EzSignatureHelper.Initialize(this);
+            if (SendActionHook is null) EzSignatureHelper.Initialize(this);
+            else SendActionHook?.Enable();
             base.Enable();
         }
 
