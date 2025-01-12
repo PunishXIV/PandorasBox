@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog":  "- Patch Update."
+    "ChangeLog":  "- Re-enable some disabled features (FC Chest Deposit, Merge Items, MSQ Countdown)."
 }
