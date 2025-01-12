@@ -10,7 +10,7 @@ namespace PandorasBox.Features.Commands
     {
         public override string Name => "MSQ Countdown";
 
-        public override bool Disabled => true;  
+        public override bool Disabled => false;  
 
         public override string Description => "Prints a message in chat with how many main scenario quests left in the current expansion you have to complete.";
 
