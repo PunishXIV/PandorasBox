@@ -61,10 +61,14 @@ namespace PandorasBox.Features.UI
         private void RunFeature(IFramework framework)
         {
             if (Svc.ClientState.LocalPlayer == null) return;
-            if (Config.IncludeFertilzing && Svc.GameGui.GetAddonByName("InventoryExpansion") != IntPtr.Zero && !Fertilized)
+            if (Config.IncludeFertilzing && (Svc.GameGui.GetAddonByName("InventoryExpansion") != IntPtr.Zero || Svc.GameGui.GetAddonByName("Inventory") != IntPtr.Zero || Svc.GameGui.GetAddonByName("InventoryLarge") != IntPtr.Zero) && !Fertilized)
             {
                 if (Config.SelectedFertilizer == 0) goto SoilSeeds;
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InventoryExpansion");
+                var addon1 = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InventoryExpansion");
+                var addon2 = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Inventory");
+                var addon3 = (AtkUnitBase*)Svc.GameGui.GetAddonByName("InventoryLarge");
+
+                var addon = addon1->IsVisible ? addon1 : addon2->IsVisible ? addon2 : addon3;
 
                 if (addon->IsVisible)
                 {
@@ -111,12 +115,12 @@ namespace PandorasBox.Features.UI
 
                         return;
                     }
+                    else
+                    {
+                        goto SoilSeeds;
+                    }
+                }
 
-                }
-                else
-                {
-                    goto SoilSeeds;
-                }
             }
             else
             {
