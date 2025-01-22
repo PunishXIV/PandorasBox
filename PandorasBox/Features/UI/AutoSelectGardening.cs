@@ -1,3 +1,4 @@
+using Dalamud.Interface.Components;
 using Dalamud.Memory;
 using ECommons;
 using ECommons.Automation;
@@ -40,6 +41,7 @@ namespace PandorasBox.Features.UI
             public uint SelectedFertilizer = 0;
 
             public bool AutoConfirm = false;
+            public bool Fallback = false;
             public bool OnlyShowInventoryItems = false;
         }
 
@@ -161,6 +163,25 @@ namespace PandorasBox.Features.UI
                     }
                 }
 
+                if (Config.Fallback)
+                {
+                    soilIndex = 0;
+                    foreach (var cont in container)
+                    {
+                        for (var i = 0; i < cont->Size; i++)
+                        {
+                            if (invSoil.Any(x => cont->GetInventorySlot(i)->ItemId == x))
+                            {
+                                var item = cont->GetInventorySlot(i);
+                                if (item->ItemId == invSoil[0])
+                                    goto SetSeed;
+                                else
+                                    soilIndex++;
+                            }
+                        }
+                    }
+                }
+
             SetSeed:
                 var seedIndex = 0;
                 foreach (var cont in container)
@@ -174,6 +195,26 @@ namespace PandorasBox.Features.UI
                                 goto ClickItem;
                             else
                                 seedIndex++;
+                        }
+                    }
+                }
+
+                if (Config.Fallback)
+                {
+                    seedIndex = 0;
+                    foreach (var cont in container)
+                    {
+                        for (var i = 0; i < cont->Size; i++)
+                        {
+                            if (invSeeds.Any(x => cont->GetInventorySlot(i)->ItemId == x))
+                            {
+                                var item = cont->GetInventorySlot(i);
+
+                                if (item->ItemId == invSeeds[0])
+                                    goto ClickItem;
+                                else
+                                    seedIndex++;
+                            }
                         }
                     }
                 }
@@ -423,6 +464,10 @@ namespace PandorasBox.Features.UI
                     ImGui.EndCombo();
                 }
             }
+
+            if (ImGui.Checkbox("Soil/Seed Fallback", ref Config.Fallback))
+                hasChanged = true;
+            ImGuiComponents.HelpMarker("When enabled, this will select the first soil/seed found in your inventory if the\nprimary ones chosen are not found.");
 
             if (ImGui.Checkbox("Auto Confirm", ref Config.AutoConfirm))
                 hasChanged = true;
