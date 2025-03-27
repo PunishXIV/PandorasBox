@@ -8,10 +8,10 @@ namespace PandorasBox.Helpers;
 
 internal static class YesAlready
 {
-    internal static Version Version => Svc.PluginInterface.InstalledPlugins.FirstOrDefault(x => x.IsLoaded && x.InternalName == "YesAlready")?.Version;
+    internal static Version? Version => Svc.PluginInterface.InstalledPlugins.FirstOrDefault(x => x.IsLoaded && x.InternalName == "YesAlready")?.Version;
     internal static readonly Version NewVersion = new("1.4.0.0");
     internal static bool Reenable = false;
-    internal static HashSet<string> Data = null;
+    internal static HashSet<string> Data = null!;
 
     internal static void GetData()
     {

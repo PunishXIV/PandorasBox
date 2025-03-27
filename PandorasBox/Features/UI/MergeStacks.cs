@@ -65,7 +65,7 @@ namespace PandorasBox.Features.UI
                 return;
             }
             var id = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId();
-            var addon = Common.GetAddonByID(id);
+            var addon = GetAddonByID(id);
             if (addon == null) return;
             if (addon->IsVisible && !InventoryOpened)
             {

@@ -154,10 +154,10 @@ public unsafe partial class CoordsToMapLink : Feature
             {
                 if (message.Payloads[i] is not MapLinkPayload payload) continue;
                 if (message.Payloads[i + 6] is not TextPayload payloadText) continue;
+                if (territoryTypeIdField?.GetValue(payload) is not uint { } territoryId) continue;
+                if (mapIdField?.GetValue(payload) is not uint { } mapId) continue;
 
-                var territoryId = (uint)territoryTypeIdField.GetValue(payload);
-                var mapId = (uint)mapIdField.GetValue(payload);
-                var historyKey = payloadText.Text[..(payloadText.Text.LastIndexOf(')') + 1)];
+                var historyKey = payloadText.Text![..(payloadText.Text!.LastIndexOf(')') + 1)];
                 var mapName = historyKey[..(historyKey.LastIndexOf('(') - 1)];
                 if (mapName.Length == 0) continue;
                 if (mapName[^1] is >= '\ue0b1' and <= '\ue0b9')

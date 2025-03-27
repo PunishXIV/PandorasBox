@@ -206,7 +206,7 @@ namespace PandorasBox.Features.Other
 
         public override FeatureType FeatureType => FeatureType.Other;
 
-        private Overlays Overlay;
+        private Overlays? overlay;
 
         public override bool UseAutoConfig => false;
 
@@ -222,7 +222,7 @@ namespace PandorasBox.Features.Other
 
         public override void Enable()
         {
-            Overlay = new Overlays(this);
+            overlay = new Overlays(this);
             Config = LoadConfig<Configs>() ?? new Configs();
 
             quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
@@ -258,7 +258,7 @@ namespace PandorasBox.Features.Other
 
         public override void Disable()
         {
-            P.Ws.RemoveWindow(Overlay);
+            P.Ws.RemoveWindow(overlay!);
             SaveConfig(Config);
             quickGatherToggle?.Disable();
             Svc.AddonLifecycle.UnregisterListener(OnEvent);
@@ -315,7 +315,8 @@ namespace PandorasBox.Features.Other
                     0 => DarkTheme,
                     1 => LightTheme,
                     2 => ClassicFFTheme,
-                    3 => LightBlueTheme
+                    3 => LightBlueTheme,
+                    _ => throw new NotImplementedException()
                 };
 
                 if (color == 3)
@@ -326,7 +327,7 @@ namespace PandorasBox.Features.Other
                     addon->UldManager.NodeList[8]->ToggleVisibility(false);
                 }
 
-                LocationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.ExtractText();
+                LocationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.GetText();
                 if (color == 1)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
@@ -380,7 +381,7 @@ namespace PandorasBox.Features.Other
                     ImGui.EndTooltip();
                 }
                 var language = Svc.ClientState.ClientLanguage;
-                switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
+                switch (Svc.ClientState.LocalPlayer!.ClassJob.RowId)
                 {
                     case 17:
                         ImGui.NextColumn();
@@ -615,7 +616,7 @@ namespace PandorasBox.Features.Other
 
                         Svc.Log.Debug($"{string.Join(", ", boonChances)}");
 
-                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer.CurrentGp >= Config.GPLuck && !HiddenRevealed)
+                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed)
                         {
                             TaskManager.Enqueue(() => UseLuck(), "UseLuck");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
@@ -626,7 +627,7 @@ namespace PandorasBox.Features.Other
 
                         HiddenRevealed = false;
 
-                        if (Config.GPTidings <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
+                        if (Config.GPTidings <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                         {
                             TaskManager.Enqueue(() => UseTidings(), "UseTidings");
                             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);

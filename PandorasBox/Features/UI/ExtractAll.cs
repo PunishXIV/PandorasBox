@@ -185,7 +185,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems1, spiritBondedItems1.Length + 1);
                         spiritBondedItems1[^1] = *item;
@@ -210,7 +210,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems2, spiritBondedItems2.Length + 1);
                         spiritBondedItems2[^1] = *item;
@@ -236,7 +236,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems3, spiritBondedItems3.Length + 1);
                         spiritBondedItems3[^1] = *item;
@@ -262,7 +262,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems4, spiritBondedItems4.Length + 1);
                         spiritBondedItems4[^1] = *item;
@@ -287,7 +287,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems5, spiritBondedItems5.Length + 1);
                         spiritBondedItems5[^1] = *item;
@@ -312,7 +312,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems6, spiritBondedItems6.Length + 1);
                         spiritBondedItems6[^1] = *item;
@@ -337,7 +337,7 @@ namespace PandorasBox.Features.UI
                 for (var i = 1; i <= container->Size; i++)
                 {
                     var item = container->GetInventorySlot(i - 1);
-                    if (item->Spiritbond == 10000)
+                    if (item->SpiritbondOrCollectability == 10000)
                     {
                         Array.Resize(ref spiritBondedItems7, spiritBondedItems7.Length + 1);
                         spiritBondedItems7[^1] = *item;

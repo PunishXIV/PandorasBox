@@ -52,7 +52,7 @@ namespace PandorasBox.Helpers
 
             if (f != null)
             {
-                var config = f.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig))).GetValue(f);
+                var config = f.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig)))?.GetValue(f);
 
                 if (config != null)
                 {
@@ -60,7 +60,7 @@ namespace PandorasBox.Helpers
                 }
             }
 
-            return null;
+            return null!;
         }
 
         public static bool? IsEnabled(this FeatureConfig config, string propname)

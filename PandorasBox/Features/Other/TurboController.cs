@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.GamePad;
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using ECommons.Gamepad;
+using FFXIVClientStructs.FFXIV.Client.System.Input;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using System;
@@ -30,23 +31,23 @@ namespace PandorasBox.Features.Other
             public bool CombatOnly = false;
         }
 
-        public Configs Config { get; set; }
+        public Configs Config { get; set; } = null!;
 
         public override bool UseAutoConfig => false;
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            gamepadPoll ??= Svc.Hook.HookFromSignature<ControllerPoll>("40 55 53 57 41 54 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24", GamepadPollDetour);
+            gamepadPoll ??= Svc.Hook.HookFromSignature<ControllerPoll>("40 55 53 57 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24 ?? ?? ?? ??", GamepadPollDetour);
             gamepadPoll?.Enable();
             base.Enable();
         }
 
         private unsafe int GamepadPollDetour(IntPtr gamepadInput)
         {
-            var input = (GamepadInput*)gamepadInput;
+            var input = (PadDevice*)gamepadInput;
 
             if (Config.CombatOnly && !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
-                return gamepadPoll.Original(gamepadInput);
+                return gamepadPoll!.Original(gamepadInput);
 
             foreach (var btn in GamePad.ControllerButtons)
             {
@@ -58,12 +59,12 @@ namespace PandorasBox.Features.Other
                     if (Environment.TickCount64 >= ThrottleTime)
                     {
                         ThrottleTime = Environment.TickCount64 + Config.Throttle;
-                        input->ButtonsRaw -= (ushort)btn.Key;
+                        input->GamepadInputData.Buttons -= (ushort)btn.Key;
                     }
                 }
             }
 
-            return gamepadPoll.Original((IntPtr)input);
+            return gamepadPoll!.Original((IntPtr)input);
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>

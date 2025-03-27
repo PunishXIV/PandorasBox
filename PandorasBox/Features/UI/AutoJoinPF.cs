@@ -61,7 +61,7 @@ namespace PandorasBox.Features.UI
                 addon->YesButton->IsEnabled &&
                 addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
             {
-                new SelectYesnoMaster((IntPtr)addon).Yes();
+                new AddonMaster.SelectYesno((IntPtr)addon).Yes();
                 return true;
             }
 

@@ -3,7 +3,6 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using PandorasBox.FeaturesSetup;
-using System;
 
 namespace PandorasBox.Features.UI
 {
@@ -14,6 +13,8 @@ namespace PandorasBox.Features.UI
         public override string Description => "Automatically focuses the search bar for the marketboard.";
 
         public override FeatureType FeatureType => FeatureType.UI;
+        public override bool FeatureDisabled => true;
+        public override string DisabledReason => "Feature moved to Simple Tweaks";
 
         public override void Enable()
         {

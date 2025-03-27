@@ -9,7 +9,7 @@ namespace PandorasBox.FeaturesSetup
 
         public string Name { get; }
 
-        public string LocalizeKey { get; }
+        public string? LocalizeKey { get; }
 
         public bool Disabled { get; set; } = false;
 
@@ -40,7 +40,7 @@ namespace PandorasBox.FeaturesSetup
 
         public delegate bool ConfigOptionEditor(string name, ref object configOption);
 
-        public MethodInfo Editor { get; set; }
+        public MethodInfo? Editor { get; set; }
 
         public enum NumberEditType
         {
@@ -56,7 +56,7 @@ namespace PandorasBox.FeaturesSetup
             Name = name;
         }
 
-        public FeatureConfigOptionAttribute(string name, string editorType, int priority = 0, string localizeKey = null)
+        public FeatureConfigOptionAttribute(string name, string editorType, int priority = 0, string? localizeKey = null)
         {
             Name = name;
             Priority = priority;

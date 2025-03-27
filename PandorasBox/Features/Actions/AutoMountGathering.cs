@@ -32,7 +32,7 @@ namespace PandorasBox.Features.Actions
             public bool MoveAfterMount = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => false;
         public override void Enable()

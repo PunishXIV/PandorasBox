@@ -6,6 +6,7 @@ using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Linq;
 
 namespace PandorasBox.Features.Commands
@@ -197,7 +198,7 @@ namespace PandorasBox.Features.Commands
             }
         }
 
-        private bool IsRoleMatch(string input, out string matchedRole)
+        private bool IsRoleMatch(string input, [NotNullWhen(true)] out string? matchedRole)
         {
             var inputSplit = input.ToLower().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             matchedRole = roles.FirstOrDefault(role =>

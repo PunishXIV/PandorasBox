@@ -1,5 +1,5 @@
 using ECommons.DalamudServices;
-using FFXIVClientStructs.FFXIV.Client.UI.Agent;
+using ECommons.GameHelpers;
 using System.Diagnostics;
 
 namespace PandorasBox.FeaturesSetup
@@ -13,9 +13,9 @@ namespace PandorasBox.FeaturesSetup
             Svc.Framework.Update += UpdateTimer;
         }
 
-        private unsafe static void UpdateTimer(IFramework framework)
+        private static unsafe void UpdateTimer(IFramework framework)
         {
-            if (AgentMap.Instance()->IsPlayerMoving == 0 || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
+            if (Player.IsMoving || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
             {
                 if (!Stopwatch.IsRunning)
                     Stopwatch.Restart();

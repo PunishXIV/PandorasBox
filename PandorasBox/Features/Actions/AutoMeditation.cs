@@ -38,7 +38,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() =>
                 {
                     if (Svc.Condition[ConditionFlag.InCombat]) return;
-                    if (Player.Level >= 54 && isMonk && Common.IsActionUnlocked(36942))
+                    if (Player.Level >= 54 && isMonk && IsActionUnlocked(36942))
                     {
                         UseAction(36942);
                     }
