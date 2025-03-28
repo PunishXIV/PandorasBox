@@ -4,6 +4,7 @@ using ECommons.DalamudServices;
 using ECommons.ExcelServices;
 using ECommons.EzHookManager;
 using ECommons.GameHelpers;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using PandorasBox.FeaturesSetup;
 
 namespace PandorasBox.Features.Actions
@@ -23,7 +24,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void RunFeature(IFramework framework)
+        private unsafe void RunFeature(IFramework framework)
         {
             if (Player.Object is null) return;
             var isMonk = Player.Job == Job.MNK;
@@ -38,7 +39,10 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() =>
                 {
                     if (Svc.Condition[ConditionFlag.InCombat]) return;
-                    if (Player.Level >= 54 && isMonk && IsActionUnlocked(36942))
+
+                    if (TerritoryInfo.Instance()->InSanctuary) return;
+                    if (Player.Level >= 54 && isMonk && Common.IsActionUnlocked(36942))
+
                     {
                         UseAction(36942);
                     }
