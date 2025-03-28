@@ -41,7 +41,7 @@ namespace PandorasBox.Features.Actions
                     if (Svc.Condition[ConditionFlag.InCombat]) return;
 
                     if (TerritoryInfo.Instance()->InSanctuary) return;
-                    if (Player.Level >= 54 && isMonk && Common.IsActionUnlocked(36942))
+                    if (Player.Level >= 54 && isMonk && IsActionUnlocked(36942))
 
                     {
                         UseAction(36942);
