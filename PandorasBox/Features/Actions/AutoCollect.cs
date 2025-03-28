@@ -21,7 +21,7 @@ namespace PandorasBox.Features.Actions
             public float ThrottleF = 0.1f;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         
         private void ActivateBuff(uint? jobValue)

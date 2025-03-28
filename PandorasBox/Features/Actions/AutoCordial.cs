@@ -1,9 +1,9 @@
-using PandorasBox.FeaturesSetup;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using System.Linq;
-using System.Collections.Generic;
 using Lumina.Excel.Sheets;
+using PandorasBox.FeaturesSetup;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace PandorasBox.Features.Actions
 {
@@ -15,14 +15,14 @@ namespace PandorasBox.Features.Actions
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => true;
 
         internal static readonly List<uint> cordialRowIDs = new() { 12669, 6141, 16911 };
 
-        internal static (string Name, uint Id, bool CanBeHQ, ushort NQGP, ushort HQGP)[] rawCordialsData;
-        internal static (string Name, uint Id, ushort GP)[] cordials;
+        internal static (string Name, uint Id, bool CanBeHQ, ushort NQGP, ushort HQGP)[] rawCordialsData = [];
+        internal static (string Name, uint Id, ushort GP)[] cordials = [];
 
         public class Configs : FeatureConfig
         {
@@ -41,7 +41,7 @@ namespace PandorasBox.Features.Actions
 
         private static bool WillOvercap(int gp_recovery)
         {
-            return ((int)Svc.ClientState.LocalPlayer.CurrentGp + gp_recovery) > (int)Svc.ClientState.LocalPlayer.MaxGp;
+            return ((int)Svc.ClientState.LocalPlayer!.CurrentGp + gp_recovery) > (int)Svc.ClientState.LocalPlayer.MaxGp;
         }
 
         private void RunFeature(IFramework framework)

@@ -8,10 +8,12 @@ using ECommons;
 using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
 using ECommons.EzHookManager;
+using ECommons.GameHelpers;
 using ECommons.Throttlers;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -31,8 +33,6 @@ namespace PandorasBox.Features
 {
     public abstract class BaseFeature
     {
-        protected PandorasBox? P;
-        protected IDalamudPluginInterface? Pi;
         protected Configuration? config;
         protected TaskManager TaskManager = null!;
         public FeatureProvider Provider { get; private set; } = null!;
@@ -59,8 +59,6 @@ namespace PandorasBox.Features
 
         public void InterfaceSetup(PandorasBox plugin, IDalamudPluginInterface pluginInterface, Configuration config, FeatureProvider fp)
         {
-            this.P = plugin;
-            this.Pi = pluginInterface;
             this.config = config;
             this.Provider = fp;
             this.TaskManager = new();
@@ -96,7 +94,7 @@ namespace PandorasBox.Features
         {
             try
             {
-                var configDirectory = pi.GetPluginConfigDirectory();
+                var configDirectory = Svc.PluginInterface.GetPluginConfigDirectory();
                 var configFile = Path.Combine(configDirectory, key + ".json");
                 if (!File.Exists(configFile)) return default;
                 var jsonString = File.ReadAllText(configFile);
@@ -115,7 +113,7 @@ namespace PandorasBox.Features
         {
             try
             {
-                var configDirectory = pi.GetPluginConfigDirectory();
+                var configDirectory = Svc.PluginInterface.GetPluginConfigDirectory();
                 var configFile = Path.Combine(configDirectory, key + ".json");
                 var jsonString = JsonConvert.SerializeObject(config, Formatting.Indented);
 
@@ -146,12 +144,13 @@ namespace PandorasBox.Features
                 var configOptionIndex = 0;
                 foreach (var (f, attr) in fields)
                 {
+                    if (attr is null) continue;
                     if (attr.Disabled)
                         ImGui.BeginDisabled();
 
-                    if (attr!.ConditionalDisplay)
+                    if (attr.ConditionalDisplay)
                     {
-                        var conditionalMethod = configObj.GetType().GetMethod($"ShouldShow{f.Name}", BindingFlags.Public | BindingFlags.Instance);
+                        var conditionalMethod = configObj?.GetType().GetMethod($"ShouldShow{f.Name}", BindingFlags.Public | BindingFlags.Instance);
                         if (conditionalMethod != null)
                         {
                             var shouldShow = (bool)(conditionalMethod.Invoke(configObj, Array.Empty<object>()) ?? true);
@@ -165,7 +164,7 @@ namespace PandorasBox.Features
                     {
                         var v = f.GetValue(configObj);
                         var arr = new[] { $"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", v };
-                        var o = (bool)attr.Editor.Invoke(null, arr);
+                        var o = (bool)attr.Editor.Invoke(null, arr)!;
                         if (o)
                         {
                             configChanged = true;
@@ -174,7 +173,7 @@ namespace PandorasBox.Features
                     }
                     else if (f.FieldType == typeof(bool))
                     {
-                        var v = (bool)f.GetValue(configObj);
+                        var v = (bool)f.GetValue(configObj)!;
                         if (ImGui.Checkbox($"{attr.Name}##{f.Name}_{this.GetType().Name}_{configOptionIndex++}", ref v))
                         {
                             configChanged = true;
@@ -183,7 +182,7 @@ namespace PandorasBox.Features
                     }
                     else if (f.FieldType == typeof(int))
                     {
-                        var v = (int)f.GetValue(configObj);
+                        var v = (int)f.GetValue(configObj)!;
                         ImGui.SetNextItemWidth(attr.EditorSize == -1 ? -1 : attr.EditorSize * ImGui.GetIO().FontGlobalScale);
                         var e = attr.IntType switch
                         {
@@ -219,7 +218,7 @@ namespace PandorasBox.Features
                     }
                     else if (f.FieldType == typeof(float))
                     {
-                        var v = (float)f.GetValue(configObj);
+                        var v = (float)f.GetValue(configObj)!;
                         ImGui.SetNextItemWidth(attr.EditorSize == -1 ? -1 : attr.EditorSize * ImGui.GetIO().FontGlobalScale);
                         var e = attr.IntType switch
                         {
@@ -268,7 +267,7 @@ namespace PandorasBox.Features
 
                 if (configChanged)
                 {
-                    SaveConfig((FeatureConfig)configObj);
+                    SaveConfig((FeatureConfig)configObj!);
                 }
 
             }
@@ -297,7 +296,7 @@ namespace PandorasBox.Features
                     if (UseAutoConfig)
                         DrawAutoConfig();
                     else
-                        DrawConfigTree(ref hasChanged);
+                        DrawConfigTree!(ref hasChanged);
                     ImGui.EndGroup();
                     ImGui.TreePop();
                 }
@@ -383,9 +382,9 @@ namespace PandorasBox.Features
             return GetInventoryFreeSlotCount() >= 1;
         }
 
-        public unsafe bool IsMoving() => AgentMap.Instance()->IsPlayerMoving == 1;
+        public unsafe bool IsMoving() => Player.IsMoving;
 
-        public void PrintModuleMessage(String msg)
+        public void PrintModuleMessage(string msg)
         {
             var message = new XivChatEntry
             {
@@ -413,6 +412,33 @@ namespace PandorasBox.Features
             Svc.Chat.Print(message);
         }
 
+        private const int UnitListCount = 18;
+        public unsafe AtkUnitBase* GetAddonByID(uint id)
+        {
+            var unitManagers = &AtkStage.Instance()->RaptureAtkUnitManager->AtkUnitManager.DepthLayerOneList;
+            for (var i = 0; i < UnitListCount; i++)
+            {
+                var unitManager = &unitManagers[i];
+                foreach (var j in Enumerable.Range(0, Math.Min(unitManager->Count, unitManager->Entries.Length)))
+                {
+                    var unitBase = unitManager->Entries[j].Value;
+                    if (unitBase != null && unitBase->Id == id)
+                    {
+                        return unitBase;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        public unsafe bool IsActionUnlocked(uint id)
+        {
+            var unlockLink = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Action>().GetRow(id).UnlockLink.RowId;
+            if (unlockLink == 0) return true;
+            return UIState.Instance()->IsUnlockLinkUnlockedOrQuestCompleted(unlockLink);
+        }
+
         internal static unsafe AtkUnitBase* GetSpecificYesno(Predicate<string> compare)
         {
             for (var i = 1; i < 100; i++)
@@ -424,7 +450,7 @@ namespace PandorasBox.Features
                     if (GenericHelpers.IsAddonReady(addon))
                     {
                         var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText();
+                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).GetText();
                         if (compare(text))
                         {
                             Svc.Log.Verbose($"SelectYesno {text} addon {i} by predicate");
@@ -452,7 +478,7 @@ namespace PandorasBox.Features
                     if (GenericHelpers.IsAddonReady(addon))
                     {
                         var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).ExtractText().Replace(" ", "");
+                        var text = MemoryHelper.ReadSeString(&textNode->NodeText).GetText().Replace(" ", "");
                         if (text.EqualsAny(s.Select(x => x.Replace(" ", ""))))
                         {
                             Svc.Log.Verbose($"SelectYesno {s.Print()} addon {i}");
@@ -484,7 +510,7 @@ namespace PandorasBox.Features
                     var index = GetEntries(addon).IndexOf(entry);
                     if (index >= 0 && IsSelectItemEnabled(addon, index) && (Throttler?.Invoke() ?? GenericThrottle))
                     {
-                        new SelectStringMaster((nint)addon).Entries[index].Select();
+                        new AddonMaster.SelectString((nint)addon).Entries[index].Select();
                         Svc.Log.Debug($"TrySelectSpecificEntry: selecting {entry}/{index} as requested by {text.Print()}");
                         return true;
                     }
@@ -511,7 +537,7 @@ namespace PandorasBox.Features
             var list = new List<string>();
             for (var i = 0; i < addon->PopupMenu.PopupMenu.EntryCount; i++)
             {
-                list.Add(MemoryHelper.ReadSeStringNullTerminated((nint)addon->PopupMenu.PopupMenu.EntryNames[i]).ExtractText());
+                list.Add(MemoryHelper.ReadSeStringNullTerminated((nint)addon->PopupMenu.PopupMenu.EntryNames[i].Value).GetText());
             }
             return list;
         }
@@ -549,11 +575,11 @@ namespace PandorasBox.Features
 
         public unsafe delegate bool UseActionDelegate(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted);
         [EzHook("E8 ?? ?? ?? ?? B0 01 EB B6", detourName: "UseActionDetour")]
-        public EzHook<UseActionDelegate> UseActionHook;
+        public EzHook<UseActionDelegate>? UseActionHook;
 
-        public unsafe virtual bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
+        public virtual unsafe bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
         {
-            return UseActionHook.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+            return UseActionHook!.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
         }
 
 

@@ -76,7 +76,7 @@ namespace PandorasBox.Features.UI
             {
                 return true;
             }
-            if (!Common.GetAddonByID(invId)->IsVisible)
+            if (!GetAddonByID(invId)->IsVisible)
             {
                 return null;
             }

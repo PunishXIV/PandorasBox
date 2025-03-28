@@ -72,7 +72,7 @@ namespace PandorasBox.Features.Targets
 
         private void CheckIfLanding(ref SeString message, ref bool isHandled)
         {
-            if (message.ExtractText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
+            if (message.GetText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
             {
                 TaskManager.Abort();
                 TaskManager.DelayNext("ErrorMessage", 2000);

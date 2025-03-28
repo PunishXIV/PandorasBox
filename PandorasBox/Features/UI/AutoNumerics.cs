@@ -19,8 +19,10 @@ namespace PandorasBox.Features.UI
         public override string Description => "Automatically fills any numeric input dialog boxes. Works on a whitelist system. Hold shift when opening a numeric dialog to disable.";
 
         public override FeatureType FeatureType => FeatureType.UI;
+        public override bool FeatureDisabled => true;
+        public override string DisabledReason => "Use YesAlready";
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         private readonly string splitText = Svc.Data.GetExcelSheet<Addon>().Where(x => x.RowId == 533).First().Text.ToString();
 

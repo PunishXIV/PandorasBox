@@ -24,7 +24,7 @@ namespace PandorasBox.Helpers
 
         public static float GetHeightDifference(IGameObject target)
         {
-            var dist = Svc.ClientState.LocalPlayer.Position.Y - target.Position.Y;
+            var dist = Svc.ClientState.LocalPlayer!.Position.Y - target.Position.Y;
             if (dist < 0)
                 dist *= -1;
 

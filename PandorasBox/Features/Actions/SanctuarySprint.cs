@@ -1,4 +1,5 @@
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
@@ -15,7 +16,7 @@ namespace PandorasBox.Features
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
         public override bool UseAutoConfig => true;
 
         public class Configs : FeatureConfig
@@ -48,9 +49,9 @@ namespace PandorasBox.Features
 
             var am = ActionManager.Instance();
             var isSprintReady = am->GetActionStatus(ActionType.Action, 31314) == 0;
-            var hasBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
+            var hasBuff = Svc.ClientState.LocalPlayer!.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
 
-            if (isSprintReady && !hasBuff && AgentMap.Instance()->IsPlayerMoving == 1)
+            if (isSprintReady && !hasBuff && IsMoving())
                 am->UseAction(ActionType.Action, 31314);
 
         }

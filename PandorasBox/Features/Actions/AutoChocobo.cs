@@ -14,7 +14,7 @@ namespace PandorasBox.Features.Actions
 
         public override FeatureType FeatureType => FeatureType.Actions;
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => true;
 

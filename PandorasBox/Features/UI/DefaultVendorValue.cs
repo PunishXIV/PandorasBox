@@ -24,7 +24,7 @@ namespace PandorasBox.Features.UI
 
         public override bool UseAutoConfig => true;
 
-        public Config Configs { get; private set; }
+        public Config Configs { get; private set; } = null!;
 
         public override void Enable()
         {
@@ -36,10 +36,10 @@ namespace PandorasBox.Features.UI
 
         private void CheckThrottle(AddonEvent type, AddonArgs args)
         {
-            SetNodes.Clear();
+            setNodes.Clear();
         }
 
-        private HashSet<string> SetNodes = new();
+        private HashSet<string> setNodes = [];
 
         private unsafe void CheckNumerics(AddonEvent type, AddonArgs args)
         {
@@ -83,16 +83,16 @@ namespace PandorasBox.Features.UI
 
                                         AtkTextNode* textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
 
-                                        if (string.IsNullOrEmpty(textNode->NodeText.ExtractText()))
+                                        if (string.IsNullOrEmpty(textNode->NodeText.GetText()))
                                             continue;
 
-                                        var uniqueVal = $"{textNode->NodeText.ExtractText()}{renderNode->AtkResNode.NodeId}";
-                                        if (SetNodes.Contains(uniqueVal))
+                                        var uniqueVal = $"{textNode->NodeText.GetText()}{renderNode->AtkResNode.NodeId}";
+                                        if (setNodes.Contains(uniqueVal))
                                         {
                                             continue;
                                         }
 
-                                        SetNodes.Add(uniqueVal);
+                                        setNodes.Add(uniqueVal);
 
                                         var component = (AtkComponentNode*)subNode;
                                         var numeric = (AtkComponentNumericInput*)component->Component;
@@ -108,16 +108,16 @@ namespace PandorasBox.Features.UI
 
                                         var textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
 
-                                        if (string.IsNullOrEmpty(textNode->NodeText.ExtractText()))
+                                        if (string.IsNullOrEmpty(textNode->NodeText.GetText()))
                                             continue;
 
-                                        var uniqueVal = $"{textNode->NodeText.ExtractText()}{renderNode->AtkResNode.NodeId}";
-                                        if (SetNodes.Contains(uniqueVal))
+                                        var uniqueVal = $"{textNode->NodeText.GetText()}{renderNode->AtkResNode.NodeId}";
+                                        if (setNodes.Contains(uniqueVal))
                                         {
                                             continue;
                                         }
 
-                                        SetNodes.Add(uniqueVal);
+                                        setNodes.Add(uniqueVal);
 
                                         var component = (AtkComponentNode*)subNode;
                                         var numeric = (AtkComponentNumericInput*)component->Component;
@@ -130,7 +130,7 @@ namespace PandorasBox.Features.UI
                                 }
 
                             }
-                            catch (Exception ex)
+                            catch (Exception)
                             {
                                 //ex.Log();
                             }

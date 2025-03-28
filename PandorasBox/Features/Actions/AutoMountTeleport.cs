@@ -28,7 +28,7 @@ namespace PandorasBox.Features.Actions
             public bool JumpAfterMount = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => false;
 

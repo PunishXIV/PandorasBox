@@ -71,8 +71,8 @@ public class AutoVoteMvp : Feature
             {
                 foreach (var partyMember in Svc.Party)
                 {
-                    Svc.Log.Debug($"Adding {partyMember.Name.ExtractText()} {partyMember.ObjectId} to premade list");
-                    PremadePartyID.Add(partyMember.Name.ExtractText());
+                    Svc.Log.Debug($"Adding {partyMember.Name.GetText()} {partyMember.ObjectId} to premade list");
+                    PremadePartyID.Add(partyMember.Name.GetText());
                 }
             }
 
@@ -310,7 +310,7 @@ public class AutoVoteMvp : Feature
 
         if (Config.ExcludeDeaths)
         {
-            if (ImGuiEx.InputIntBounded("How Many Times?", ref Config.HowManyDeaths, 1, 100)) hasChanged = true;
+            if (ImGui.DragInt("How Many Times?", ref Config.HowManyDeaths, 0.01f, 1, 100)) hasChanged = true;
             if (ImGui.Checkbox("Reset Death Tracker on Wipe", ref Config.ResetOnWipe)) hasChanged = true;
         }
 

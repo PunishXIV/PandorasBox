@@ -24,9 +24,9 @@ namespace PandorasBox.Features.Actions
             public bool AddTruth = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
-        
+
         private void ActivateBuff(uint? jobValue)
         {
             if (jobValue is null) return;

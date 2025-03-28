@@ -1,4 +1,5 @@
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
@@ -29,7 +30,7 @@ namespace PandorasBox.Features.Actions
             public bool ExcludeHousing = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override void Enable()
         {
@@ -56,7 +57,7 @@ namespace PandorasBox.Features.Actions
             var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
             var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
-            if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1 && !TaskManager.IsBusy)
+            if (isSprintReady && IsMoving() && !TaskManager.IsBusy)
             {
                 TaskManager.Enqueue(() => EzThrottler.Throttle("Sprinting", (int)(Config.ThrottleF * 1000)));
                 TaskManager.Enqueue(() => EzThrottler.Check("Sprinting"));
@@ -70,7 +71,7 @@ namespace PandorasBox.Features.Actions
             var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
             var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
-            if (isSprintReady && AgentMap.Instance()->IsPlayerMoving == 1)
+            if (isSprintReady && IsMoving())
             {
                 am->UseAction(ActionType.GeneralAction, 4);
             }

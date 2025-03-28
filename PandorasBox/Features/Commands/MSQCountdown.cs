@@ -16,8 +16,6 @@ namespace PandorasBox.Features.Commands
 
         public override string Command { get; set; } = "/pmsq";
 
-        private ExVersion CurrentExpansion;
-
         protected override void OnCommand(List<string> args)
         {
             string debug = "";
@@ -30,7 +28,7 @@ namespace PandorasBox.Features.Commands
             var uim = UIState.Instance();
 
             var filteredList = questsheet.Where(x => x.JournalGenre.Value.Icon == 61412 && !string.IsNullOrEmpty(x.Name.ToString()));
-            CurrentExpansion = Svc.Data.GetExcelSheet<ExVersion>().GetRow(0);
+            var CurrentExpansion = Svc.Data.GetExcelSheet<ExVersion>().GetRow(0);
 
             if (debug == "")
             {
@@ -51,7 +49,9 @@ namespace PandorasBox.Features.Commands
                     "hw" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(1),
                     "stb" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(2),
                     "shb" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(3),
-                    "ew" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(4)
+                    "ew" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(4),
+                    "dt" => Svc.Data.GetExcelSheet<ExVersion>().GetRow(5),
+                    _ => throw new System.NotImplementedException()
                 };
             }
 

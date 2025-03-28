@@ -194,7 +194,7 @@ namespace PandorasBox.Features
             {
                 try
                 {
-                    new SelectYesnoMaster((IntPtr)addon).Yes();
+                    new AddonMaster.SelectYesno((IntPtr)addon).Yes();
                     return true;
                 }
                 catch (Exception ex)

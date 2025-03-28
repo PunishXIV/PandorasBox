@@ -25,16 +25,16 @@ namespace PandorasBox.Features.Other
 
         private unsafe void RunFeature(IFramework framework)
         {
-            if ((TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible) || TryGetAddonByName<AtkUnitBase>("QTE", 2, out var addon2) && addon2->IsVisible)
+            if ((TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible) || (TryGetAddonByName<AtkUnitBase>("QTE", out var addon2) && addon2->IsVisible))
             {
                 DisableDirectChatIfNeeded();
 
                 if (Environment.TickCount64 >= Throttler)
                 {
                     if (ChatLogIsFocused())
-                        WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.Escape);
+                        WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.Escape);
 
-                    WindowsKeypress.SendKeypress(System.Windows.Forms.Keys.A); //Mashes to try and resolve the QTE
+                    WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.A); //Mashes to try and resolve the QTE
                     Throttler = Environment.TickCount64 + random.Next(25, 50);
                 }
             }

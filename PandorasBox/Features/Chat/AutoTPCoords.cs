@@ -21,7 +21,7 @@ namespace PandorasBox.Features.ChatFeature
 
         public override FeatureType FeatureType => FeatureType.ChatFeature;
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => false;
 
@@ -42,8 +42,8 @@ namespace PandorasBox.Features.ChatFeature
         public List<MapLinkMessage> MapLinkMessageList = new();
         private readonly int filterDupeTimeout = 5;
 
-        public Lumina.Excel.ExcelSheet<Aetheryte> Aetherytes = null;
-        public Lumina.Excel.SubrowExcelSheet<MapMarker> AetherytesMap = null;
+        public Lumina.Excel.ExcelSheet<Aetheryte> Aetherytes = null!;
+        public Lumina.Excel.SubrowExcelSheet<MapMarker> AetherytesMap = null!;
 
         public List<XivChatType> HiddenChatType = new()
         {
@@ -63,7 +63,7 @@ namespace PandorasBox.Features.ChatFeature
             float coordX = 0;
             float coordY = 0;
             float scale = 100;
-            MapLinkPayload maplinkPayload = null;
+            MapLinkPayload maplinkPayload = null!;
             foreach (var payload in message.Payloads)
             {
                 if (payload is MapLinkPayload mapLinkload)

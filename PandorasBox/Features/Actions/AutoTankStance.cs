@@ -124,7 +124,7 @@ namespace PandorasBox.Features.Actions
             };
 
             if (stance == 0) return true;
-            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == stance)) return true;
+            if (Svc.ClientState.LocalPlayer!.StatusList.Any(x => x.StatusId == stance)) return true;
             return false;
         }
         private bool EnableStance()
