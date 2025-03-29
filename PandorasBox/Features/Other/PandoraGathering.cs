@@ -328,6 +328,7 @@ namespace PandorasBox.Features.Other
                 }
 
                 LocationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.GetText();
+                LocationEffect2 = addon->UldManager.NodeList[7]->GetAsAtkTextNode()->NodeText.GetText();
                 if (color == 1)
                 {
                     ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
@@ -472,6 +473,14 @@ namespace PandorasBox.Features.Other
                         ImGui.Text($"{LocationEffect}");
                     });
                 }
+                if (LocationEffect2.Length > 0)
+                {
+                    ImGuiEx.LineCentered("###LocationEffect2", () =>
+                    {
+                        ImGui.Text($"{LocationEffect2}");
+                    });
+                }
+
                 ImGui.End();
 
                 ImGui.GetFont().Scale = 1;
