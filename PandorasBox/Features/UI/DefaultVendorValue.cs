@@ -16,6 +16,10 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
+        public override bool FeatureDisabled => true;
+
+        public override string DisabledReason => "Crashing.";
+
         public class Config : FeatureConfig
         {
             [FeatureConfigOption("Default Value", IntMin = 1, IntMax = 99, EditorSize = 300)]

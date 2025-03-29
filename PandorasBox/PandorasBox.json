@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog":  "- Re-enable some disabled features (FC Chest Deposit, Merge Items, MSQ Countdown)."
+    "ChangeLog":  "- Disable Default Vendor Buy Amount temporarily."
 }
