@@ -34,6 +34,7 @@ internal class MainWindow : Window
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
+        Flags = ImGuiWindowFlags.NoScrollbar;
         RespectCloseHotkey = false;
     }
 
@@ -210,7 +211,7 @@ internal class MainWindow : Window
                 ImGui.EndChild();
                 ImGui.PopStyleVar();
                 ImGui.TableNextColumn();
-                if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (false ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
+                if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (OpenWindow != OpenWindow.None ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
                 {
                     if (filteredFeatures.Count() > 0)
                     {
