@@ -16,10 +16,6 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        public override bool FeatureDisabled => true;
-
-        public override string DisabledReason => "Crashing.";
-
         public class Config : FeatureConfig
         {
             [FeatureConfigOption("Default Value", IntMin = 1, IntMax = 99, EditorSize = 300)]
@@ -53,21 +49,28 @@ namespace PandorasBox.Features.UI
                 try
                 {
                     var node = addon->UldManager.NodeList[i];
-                    var compNode = (AtkComponentNode*)node;
+                    if (node == null)
+                        continue;
+
+                    var compNode = node->GetAsAtkComponentNode();
+                    if (compNode->Component is null)
+                        continue;
+
                     var componentInfo = compNode->Component->UldManager;
                     var objectInfo = (AtkUldComponentInfo*)componentInfo.Objects;
 
                     if (objectInfo == null)
                         continue;
 
-                    if (objectInfo->ComponentType is ComponentType.TreeList or ComponentType.List)
+                    try
                     {
-                        var tree = (AtkComponentNode*)node;
-
-                        for (int y = 0; y < tree->Component->UldManager.NodeListCount; y++)
+                        if (objectInfo->ComponentType is ComponentType.TreeList or ComponentType.List)
                         {
-                            try
+                            var tree = compNode;
+
+                            for (int y = 0; y < tree->Component->UldManager.NodeListCount; y++)
                             {
+
                                 var renderNode = (AtkComponentNode*)tree->Component->UldManager.NodeList[y];
 
                                 for (int p = 0; p < renderNode->Component->UldManager.NodeListCount; p++)
@@ -103,7 +106,7 @@ namespace PandorasBox.Features.UI
 
                                         Svc.Log.Debug($"Setting {uniqueVal}");
                                         if (Configs.Value > 1)
-                                        numeric->SetValue(Configs.Value);
+                                            numeric->SetValue(Configs.Value);
                                     }
 
                                     if (subNode->Type is (NodeType)1007)
@@ -134,19 +137,18 @@ namespace PandorasBox.Features.UI
                                 }
 
                             }
-                            catch (Exception)
-                            {
-                                //ex.Log();
-                            }
-
 
                         }
 
                     }
+                    catch (Exception ex)
+                    {
+                        ex.Log();
+                    }
                 }
-                catch
+                catch (Exception ex)
                 {
-
+                    ex.Log();
                 }
             }
         }
