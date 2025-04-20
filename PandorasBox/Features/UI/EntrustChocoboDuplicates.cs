@@ -98,8 +98,11 @@ namespace PandorasBox.Features.UI
                                     if (saddleItem->ItemId == 0)
                                         continue;
 
-                                    var luminaItem = Svc.Data.GetExcelSheet<Item>().GetRow(saddleItem->ItemId);
-                                    if (saddleItem->ItemId == item->ItemId && !luminaItem.IsUnique)
+                                    var saddleItemData = Svc.Data.GetExcelSheet<Item>().GetRow(saddleItem->ItemId);
+                                    if (saddleItemData.IsUnique)
+                                        continue;
+                                    
+                                    if (saddleItem->ItemId == item->ItemId)
                                     {
                                         uint total = (uint)(saddleItem->Quantity + item->Quantity);
                                         TaskManager.DelayNext(200);
@@ -119,7 +122,6 @@ namespace PandorasBox.Features.UI
                 ImGui.GetFont().Scale = oldSize;
                 ImGui.PopFont();
                 ImGui.PopStyleColor();
-
             }
         }
 
