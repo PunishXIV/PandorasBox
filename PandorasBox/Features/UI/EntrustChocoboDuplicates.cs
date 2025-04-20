@@ -38,7 +38,7 @@ namespace PandorasBox.Features.UI
 
         public override void Enable()
         {
-            Overlay ??= new(this);
+            Overlay = new(this);
             base.Enable();
         }
 
@@ -143,6 +143,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             P.Ws.RemoveWindow(Overlay);
+            Overlay = null;
             base.Disable();
         }
     }
