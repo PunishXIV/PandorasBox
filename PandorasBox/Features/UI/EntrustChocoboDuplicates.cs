@@ -19,6 +19,7 @@ using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
+using Lumina.Excel.Sheets;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 using static FFXIVClientStructs.FFXIV.Component.GUI.AtkEventDispatcher;
 
@@ -31,7 +32,7 @@ namespace PandorasBox.Features.UI
         public override FeatureType FeatureType => FeatureType.UI;
 
         private InventoryType[] playerInventory = [InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4];
-        private InventoryType[] saddlebag = [InventoryType.SaddleBag1, InventoryType.SaddleBag2];
+        private InventoryType[] saddlebag = [InventoryType.SaddleBag1, InventoryType.SaddleBag2, InventoryType.PremiumSaddleBag1, InventoryType.PremiumSaddleBag2];
 
         private Overlays Overlay { get; set; }
 
@@ -97,7 +98,8 @@ namespace PandorasBox.Features.UI
                                     if (saddleItem->ItemId == 0)
                                         continue;
 
-                                    if (saddleItem->ItemId == item->ItemId)
+                                    var luminaItem = Svc.Data.GetExcelSheet<Item>().GetRow(saddleItem->ItemId);
+                                    if (saddleItem->ItemId == item->ItemId && !luminaItem.IsUnique)
                                     {
                                         uint total = (uint)(saddleItem->Quantity + item->Quantity);
                                         TaskManager.DelayNext(200);
