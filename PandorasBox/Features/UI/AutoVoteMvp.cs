@@ -1,20 +1,29 @@
 using Dalamud.Game.ClientState.Party;
+using Dalamud.Game.Gui.ContextMenu;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
+using Dalamud.Utility;
 using ECommons;
+using ECommons.ChatMethods;
 using ECommons.DalamudServices;
+using ECommons.ExcelServices;
 using ECommons.GameHelpers;
 using ECommons.ImGuiMethods;
+using ECommons.Logging;
+using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Xml.Linq;
+using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 
 namespace PandorasBox.Features.UI;
 
@@ -34,6 +43,14 @@ public class AutoVoteMvp : Feature
 
     private Dictionary<uint, int> DeathTracker { get; set; } = new();
 
+    private IContextMenu contextMenu;
+    private static readonly SeString CommendString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Auto-Commend"));
+    private static readonly SeString CommendExclusionString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Exclude from Commendations"));
+    private static readonly SeString CommendInclusionString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Include for Commendations"));
+
+    private string ManualCommendName;
+    private List<string> CommendExclusions { get; set; } = new();
+
     public class Configs : FeatureConfig
     {
         public int Priority = 0;
@@ -45,6 +62,8 @@ public class AutoVoteMvp : Feature
         public int HowManyDeaths = 1;
 
         public bool ResetOnWipe = false;
+
+        public bool ShowContextMenu = true;
     }
 
     public Configs Config { get; private set; }
@@ -60,8 +79,82 @@ public class AutoVoteMvp : Feature
         Config = LoadConfig<Configs>() ?? new Configs();
         Svc.Framework.Update += FrameworkUpdate;
         Svc.Condition.ConditionChange += UpdatePartyCache;
+        contextMenu = Svc.ContextMenu;
+        contextMenu.OnMenuOpened += CommendContextMenu;
         base.Enable();
     }
+
+    private void CommendContextMenu(IMenuOpenedArgs args)
+    {
+        if (args.AddonName != "_PartyList") return;
+        if (Svc.ClientState.IsPvP) return;
+        if (!Svc.Condition.Any(Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty)) return;
+        var argItem = (MenuTargetDefault)args.Target;
+        if (PremadePartyID.Any(y => y == argItem.TargetName)) return;
+        var item = CommendPlayerMenuItem(argItem.TargetName);
+        var item2 = CommendExclusionMenuItem(argItem.TargetName);
+        if (argItem != null)
+        {
+            args.AddMenuItem(item);
+            args.AddMenuItem(item2);
+        }
+    }
+
+
+    private MenuItem CommendPlayerMenuItem(string name)
+    {
+        var menuItem = new MenuItem();
+        menuItem.Name = CommendString;
+        // Consider a menuItem.Prefix
+        //menuItem.Prefix = Dalamud.Game.Text.SeIconChar.BoxedLetterP;
+        menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendPlayerOverrideOnClick(name));
+        return menuItem;
+    }
+
+
+    private MenuItem CommendExclusionMenuItem(string name)
+    {
+        var menuItem = new MenuItem();
+        if (CommendExclusions != null && CommendExclusions.Contains(name))
+        {
+            menuItem.Name = CommendInclusionString;
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendInclusionOnClick(name));
+        }
+        else
+        {
+            menuItem.Name = CommendExclusionString;
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendExclusionOnClick(name));
+        }
+        return menuItem;
+    }
+
+
+    private unsafe void CommendPlayerOverrideOnClick(string name)
+    {
+        ManualCommendName = name;
+        var payload = PandoraPayload.Payloads.ToList();
+        payload.Add(new TextPayload($" {name} will be automatically commended at the end of your duty."));
+        Svc.Chat.Print(new SeString(payload));
+    }
+
+
+    private unsafe void CommendExclusionOnClick(string name)
+    {
+        CommendExclusions.Add(name);
+        var payload = PandoraPayload.Payloads.ToList();
+        payload.Add(new TextPayload($" {name} will not be commended at the end of your duty."));
+        Svc.Chat.Print(new SeString(payload));
+    }
+
+
+    private unsafe void CommendInclusionOnClick(string name)
+    {
+        CommendExclusions.Remove(name);
+        var payload = PandoraPayload.Payloads.ToList();
+        payload.Add(new TextPayload($" {name} removed from commendation exclusions."));
+        Svc.Chat.Print(new SeString(payload));
+    }
+
 
     private void UpdatePartyCache(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
     {
@@ -79,6 +172,8 @@ public class AutoVoteMvp : Feature
             if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty && !value)
             {
                 PremadePartyID.Clear();
+                ManualCommendName = "";
+                CommendExclusions.Clear();
             }
         }
     }
@@ -88,6 +183,7 @@ public class AutoVoteMvp : Feature
         SaveConfig(Config);
         Svc.Framework.Update -= FrameworkUpdate;
         Svc.Condition.ConditionChange -= UpdatePartyCache;
+        contextMenu.OnMenuOpened -= CommendContextMenu;
         base.Disable();
     }
 
@@ -173,8 +269,17 @@ public class AutoVoteMvp : Feature
             {
                 if (deadPlayers.Value >= Config.HowManyDeaths)
                 {
-                    list.RemoveAll(x => x.PartyMember.ObjectId == deadPlayers.Key);
+                    list.RemoveAll(x => x.PartyMember.ObjectId == deadPlayers.Key && x.PartyMember.Name.ExtractText() != ManualCommendName);
                 }
+            }
+        }
+
+        if ((bool)(CommendExclusions?.Any()))
+        {
+            foreach (var excludedPlayer in CommendExclusions)
+            {
+                Svc.Log.Debug($"Removing {excludedPlayer} from commendation list.");
+                list.RemoveAll(x => x.PartyMember.Name.ExtractText() == excludedPlayer);
             }
         }
 
@@ -183,7 +288,12 @@ public class AutoVoteMvp : Feature
         var dps = list.Where(i => i.PartyMember.ClassJob.Value.Role is 2 or 3);
 
         (int index, IPartyMember member) voteTarget = new();
-        switch (Config.Priority)
+        if (ManualCommendName != "")
+        {
+            voteTarget = list.First(i => i.PartyMember.Name.ExtractText() == ManualCommendName);
+            Svc.Log.Debug($"Manual Commendation set for {ManualCommendName}");
+        }
+        else switch (Config.Priority)
         {
             //tank
             case 0:
@@ -303,6 +413,9 @@ public class AutoVoteMvp : Feature
         }
 
         if (ImGui.Checkbox("Hide Chat Message", ref Config.HideChat))
+            hasChanged = true;
+
+        if (ImGui.Checkbox("Show Context Menu", ref Config.ShowContextMenu))
             hasChanged = true;
 
         if (ImGui.Checkbox("Exclude Party Members That Die", ref Config.ExcludeDeaths))
