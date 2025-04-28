@@ -11,11 +11,13 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
+using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using static FFXIVClientStructs.FFXIV.Client.UI.AddonRelicNoteBook;
 
 namespace PandorasBox.Features.UI;
 
@@ -77,15 +79,17 @@ public class AutoVoteMvp : Feature
         base.Enable();
     }
 
-    private void CommendContextMenu(IMenuOpenedArgs args)
+    private unsafe void CommendContextMenu(IMenuOpenedArgs args)
     {
         if (!Config.ShowContextMenu) return;
-        if (args.AddonName != "_PartyList") return;
+        if (!(args.AddonName == "_PartyList" || args.AddonName == "ChatLog")) return;
         if (Svc.ClientState.IsPvP) return;
         if (!Svc.Condition.Any(Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty)) return;
         var argItem = (MenuTargetDefault)args.Target;
         if (argItem == null) return;
         if (PremadePartyID.Any(y => y == argItem.TargetName)) return;
+        if (!Svc.Party.Cast<IPartyMember>()
+            .Any(m => ((FFXIVClientStructs.FFXIV.Client.Game.Group.PartyMember*)m.Address)->NameString == argItem.TargetName)) return;
         if (!(CommendExclusions?.Contains(argItem.TargetName) ?? false))
         {
             var item = CreateCommendPlayerMenuItem(argItem.TargetName);
