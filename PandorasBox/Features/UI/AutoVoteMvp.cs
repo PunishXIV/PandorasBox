@@ -5,25 +5,17 @@ using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Memory;
 using Dalamud.Utility;
 using ECommons;
-using ECommons.ChatMethods;
 using ECommons.DalamudServices;
-using ECommons.ExcelServices;
 using ECommons.GameHelpers;
-using ECommons.ImGuiMethods;
-using ECommons.Logging;
-using ECommons.SimpleGui;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
-using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using System.Xml.Linq;
-using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 
 namespace PandorasBox.Features.UI;
 
@@ -96,18 +88,18 @@ public class AutoVoteMvp : Feature
         if (PremadePartyID.Any(y => y == argItem.TargetName)) return;
         if (!(CommendExclusions?.Contains(argItem.TargetName) ?? false))
         {
-            var item = CommendPlayerMenuItem(argItem.TargetName);
+            var item = CreateCommendPlayerMenuItem(argItem.TargetName);
             args.AddMenuItem(item);
         }
         if (ManualCommendName != argItem.TargetName)
         {
-            var item2 = CommendExclusionMenuItem(argItem.TargetName);
+            var item2 = CreateCommendExclusionMenuItem(argItem.TargetName);
             args.AddMenuItem(item2);
         }
     }
 
 
-    private MenuItem CommendPlayerMenuItem(string name)
+    private MenuItem CreateCommendPlayerMenuItem(string name)
     {
         var menuItem = new MenuItem();
         // NOTE: Dalamud suggests setting menuItem.Prefix, but leaving unset for consistency with upstream.
@@ -115,35 +107,35 @@ public class AutoVoteMvp : Feature
         if (ManualCommendName != name)
         {
             menuItem.Name = CommendString;
-            menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendPlayerOverrideOnClick(name));
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => SetManualCommendTarget(name));
         }
         else
         {
             menuItem.Name = UncommendString;
-            menuItem.OnClicked += _ => TaskManager.Enqueue(() => UncommendPlayerOverrideOnClick(name));
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => ClearManualCommendTarget(name));
         }
         return menuItem;
     }
 
 
-    private MenuItem CommendExclusionMenuItem(string name)
+    private MenuItem CreateCommendExclusionMenuItem(string name)
     {
         var menuItem = new MenuItem();
         if (CommendExclusions != null && CommendExclusions.Contains(name))
         {
             menuItem.Name = CommendInclusionString;
-            menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendInclusionOnClick(name));
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => UndoCommendationExclusion(name));
         }
         else
         {
             menuItem.Name = CommendExclusionString;
-            menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendExclusionOnClick(name));
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => ExcludePlayerFromCommendations(name));
         }
         return menuItem;
     }
 
 
-    private unsafe void CommendPlayerOverrideOnClick(string name)
+    private unsafe void SetManualCommendTarget(string name)
     {
         ManualCommendName = name;
         var payload = PandoraPayload.Payloads.ToList();
@@ -151,7 +143,7 @@ public class AutoVoteMvp : Feature
         Svc.Chat.Print(new SeString(payload));
     }
 
-    private unsafe void UncommendPlayerOverrideOnClick(string name)
+    private unsafe void ClearManualCommendTarget(string name)
     {
         ManualCommendName = "";
         var payload = PandoraPayload.Payloads.ToList();
@@ -159,7 +151,7 @@ public class AutoVoteMvp : Feature
         Svc.Chat.Print(new SeString(payload));
     }
 
-    private unsafe void CommendExclusionOnClick(string name)
+    private unsafe void ExcludePlayerFromCommendations(string name)
     {
         CommendExclusions.Add(name);
         var payload = PandoraPayload.Payloads.ToList();
@@ -167,7 +159,7 @@ public class AutoVoteMvp : Feature
         Svc.Chat.Print(new SeString(payload));
     }
 
-    private unsafe void CommendInclusionOnClick(string name)
+    private unsafe void UndoCommendationExclusion(string name)
     {
         CommendExclusions.Remove(name);
         var payload = PandoraPayload.Payloads.ToList();
