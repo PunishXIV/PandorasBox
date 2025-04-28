@@ -45,8 +45,9 @@ public class AutoVoteMvp : Feature
 
     private IContextMenu contextMenu;
     private static readonly SeString CommendString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Auto-Commend"));
+    private static readonly SeString UncommendString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Undo Auto-Commend"));
     private static readonly SeString CommendExclusionString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Exclude from Commendations"));
-    private static readonly SeString CommendInclusionString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Include for Commendations"));
+    private static readonly SeString CommendInclusionString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Include in Commendations"));
 
     private string ManualCommendName;
     private List<string> CommendExclusions { get; set; } = new();
@@ -86,16 +87,21 @@ public class AutoVoteMvp : Feature
 
     private void CommendContextMenu(IMenuOpenedArgs args)
     {
+        if (!Config.ShowContextMenu) return;
         if (args.AddonName != "_PartyList") return;
         if (Svc.ClientState.IsPvP) return;
         if (!Svc.Condition.Any(Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty)) return;
         var argItem = (MenuTargetDefault)args.Target;
+        if (argItem == null) return;
         if (PremadePartyID.Any(y => y == argItem.TargetName)) return;
-        var item = CommendPlayerMenuItem(argItem.TargetName);
-        var item2 = CommendExclusionMenuItem(argItem.TargetName);
-        if (argItem != null)
+        if (!(CommendExclusions?.Contains(argItem.TargetName) ?? false))
         {
+            var item = CommendPlayerMenuItem(argItem.TargetName);
             args.AddMenuItem(item);
+        }
+        if (ManualCommendName != argItem.TargetName)
+        {
+            var item2 = CommendExclusionMenuItem(argItem.TargetName);
             args.AddMenuItem(item2);
         }
     }
@@ -104,10 +110,18 @@ public class AutoVoteMvp : Feature
     private MenuItem CommendPlayerMenuItem(string name)
     {
         var menuItem = new MenuItem();
-        menuItem.Name = CommendString;
-        // Consider a menuItem.Prefix
+        // NOTE: Dalamud suggests setting menuItem.Prefix, but leaving unset for consistency with upstream.
         //menuItem.Prefix = Dalamud.Game.Text.SeIconChar.BoxedLetterP;
-        menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendPlayerOverrideOnClick(name));
+        if (ManualCommendName != name)
+        {
+            menuItem.Name = CommendString;
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => CommendPlayerOverrideOnClick(name));
+        }
+        else
+        {
+            menuItem.Name = UncommendString;
+            menuItem.OnClicked += _ => TaskManager.Enqueue(() => UncommendPlayerOverrideOnClick(name));
+        }
         return menuItem;
     }
 
@@ -133,25 +147,31 @@ public class AutoVoteMvp : Feature
     {
         ManualCommendName = name;
         var payload = PandoraPayload.Payloads.ToList();
-        payload.Add(new TextPayload($" {name} will be automatically commended at the end of your duty."));
+        payload.Add(new TextPayload($"{name} will be automatically commended at the end of your duty."));
         Svc.Chat.Print(new SeString(payload));
     }
 
+    private unsafe void UncommendPlayerOverrideOnClick(string name)
+    {
+        ManualCommendName = "";
+        var payload = PandoraPayload.Payloads.ToList();
+        payload.Add(new TextPayload($"{name} is no longer selected for automatic commendation."));
+        Svc.Chat.Print(new SeString(payload));
+    }
 
     private unsafe void CommendExclusionOnClick(string name)
     {
         CommendExclusions.Add(name);
         var payload = PandoraPayload.Payloads.ToList();
-        payload.Add(new TextPayload($" {name} will not be commended at the end of your duty."));
+        payload.Add(new TextPayload($"{name} will be excluded from commendation at the end of your duty."));
         Svc.Chat.Print(new SeString(payload));
     }
-
 
     private unsafe void CommendInclusionOnClick(string name)
     {
         CommendExclusions.Remove(name);
         var payload = PandoraPayload.Payloads.ToList();
-        payload.Add(new TextPayload($" {name} removed from commendation exclusions."));
+        payload.Add(new TextPayload($"{name} has been removed from commendation exclusions."));
         Svc.Chat.Print(new SeString(payload));
     }
 
@@ -239,6 +259,8 @@ public class AutoVoteMvp : Feature
         {
             DeathTracker.Clear();
             DeadPlayers.Clear();
+            ManualCommendName = "";
+            CommendExclusions.Clear();
         }
     }
 
@@ -256,10 +278,11 @@ public class AutoVoteMvp : Feature
             Svc.Log.Debug($"{name} {m2->Flags.ToString("g")}");
         }
 
-        var list = Svc.Party.Where(i =>
+        var validPartyMembers = Svc.Party.Where(i =>
         i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.ExtractText()))
             .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
             .ToList();
+        var list = (validPartyMembers ?? new List<(int, IPartyMember)>()).ToList();
 
         if (!list.Any()) return -1;
 
@@ -287,6 +310,7 @@ public class AutoVoteMvp : Feature
         var healer = list.Where(i => i.PartyMember.ClassJob.Value.Role == 4);
         var dps = list.Where(i => i.PartyMember.ClassJob.Value.Role is 2 or 3);
 
+        if (!list.Any()) list = validPartyMembers; //In case list is empty, may as well start from scratch - will also help prevent ArgumentOutOfRangeException
         (int index, IPartyMember member) voteTarget = new();
         if (ManualCommendName != "")
         {
@@ -319,7 +343,8 @@ public class AutoVoteMvp : Feature
                 break;
         }
 
-        if (voteTarget.member == null) return -1;
+        if (voteTarget.member == null) voteTarget = RandomPick(validPartyMembers); //Make attempt to randomly pick a valid party member worst case scenario
+        if (voteTarget.member == null) return -1; //If attempt failed and value is still null, then return -1
 
         for (int i = 22; i <= 22 + 7; i++)
         {
