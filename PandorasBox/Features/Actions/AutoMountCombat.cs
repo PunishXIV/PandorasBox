@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Conditions;
-using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
@@ -24,7 +23,6 @@ namespace PandorasBox.Features.Actions
         {
             public float ThrottleF = 0.1f;
             public uint SelectedMount = 0;
-            public bool AbortIfMoving = false;
             public bool DisableInFates = true;
             public bool ExcludeHousing = false;
             public bool JumpAfterMount = false;
@@ -45,20 +43,20 @@ namespace PandorasBox.Features.Actions
         {
             if (flag == ConditionFlag.InCombat && !value)
             {
-                    TaskManager.Enqueue(() => NotInCombat);
-                    TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
-                    TaskManager.Enqueue(TryMount, 3000);
-                    TaskManager.Enqueue(() =>
+                TaskManager.Enqueue(() => NotInCombat);
+                TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
+                TaskManager.Enqueue(TryMount, 3000);
+                TaskManager.Enqueue(() =>
+                {
+                    if (Config.JumpAfterMount && ZoneHasFlight())
                     {
-                        if (Config.JumpAfterMount && ZoneHasFlight())
-                        {
-                            TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
-                            TaskManager.DelayNext(50);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
-                            TaskManager.DelayNext(50);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
-                        }
-                    });
+                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                        TaskManager.DelayNext(50);
+                        TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
+                    }
+                });
             }
         }
 
@@ -77,9 +75,6 @@ namespace PandorasBox.Features.Actions
                 return false;
             }
 
-            if (Config.AbortIfMoving && IsMoving()) return true;
-
-            if (IsMoving()) return false;
             var am = ActionManager.Instance();
 
             if (Config.SelectedMount > 0)
@@ -137,7 +132,6 @@ namespace PandorasBox.Features.Actions
                 ImGui.EndCombo();
             }
 
-            if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) haschanged = true;
             if (ImGui.Checkbox("Disable in fates", ref Config.DisableInFates)) haschanged = true;
             if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) haschanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) haschanged = true;

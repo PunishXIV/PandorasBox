@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Conditions;
-using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using ImGuiNET;
@@ -23,7 +22,6 @@ namespace PandorasBox.Features.Actions
         {
             public float ThrottleF = 0.1f;
             public uint SelectedMount = 0;
-            public bool AbortIfMoving = false;
             public bool ExcludeHousing = false;
             public bool JumpAfterMount = false;
         }
@@ -43,7 +41,7 @@ namespace PandorasBox.Features.Actions
         {
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Mount) return;
 
-            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Bg.ToString().Contains("/hou/") && Config.ExcludeHousing) 
+            if (Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Bg.ToString().Contains("/hou/") && Config.ExcludeHousing)
             {
                 TaskManager.Abort();
                 return;
@@ -71,9 +69,6 @@ namespace PandorasBox.Features.Actions
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.BetweenAreas51]) return false;
             if (Svc.Condition[ConditionFlag.Mounted]) return true;
 
-            if (Config.AbortIfMoving && IsMoving()) return true;
-
-            if (IsMoving()) return false;
             var am = ActionManager.Instance();
 
             if (Config.SelectedMount > 0)
@@ -131,7 +126,6 @@ namespace PandorasBox.Features.Actions
                 ImGui.EndCombo();
             }
 
-            if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
             if (ImGui.Checkbox("Exclude Housing Zones", ref Config.ExcludeHousing)) hasChanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
 

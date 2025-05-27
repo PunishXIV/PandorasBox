@@ -1,5 +1,4 @@
 using Dalamud.Game.ClientState.Conditions;
-using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Throttlers;
@@ -26,7 +25,6 @@ namespace PandorasBox.Features.Actions
         {
             public float ThrottleF = 0.1f;
             public uint SelectedMount = 0;
-            public bool AbortIfMoving = false;
             public bool UseOnIsland = false;
             public bool JumpAfterMount = false;
             public bool MoveAfterMount = false;
@@ -81,9 +79,6 @@ namespace PandorasBox.Features.Actions
 
         private bool? TryMount()
         {
-            if (Config.AbortIfMoving && IsMoving()) return true;
-
-            if (IsMoving()) return false;
             var am = ActionManager.Instance();
 
             if (Config.SelectedMount > 0)
@@ -140,7 +135,6 @@ namespace PandorasBox.Features.Actions
                 ImGui.EndCombo();
             }
 
-            if (ImGui.Checkbox("Abort if moving", ref Config.AbortIfMoving)) hasChanged = true;
             if (ImGui.Checkbox("Use on Island Sanctuary", ref Config.UseOnIsland)) hasChanged = true;
             if (ImGui.Checkbox("Jump after mounting", ref Config.JumpAfterMount)) hasChanged = true;
             hasChanged |= ImGui.Checkbox("Start moving after mounting", ref Config.MoveAfterMount);
