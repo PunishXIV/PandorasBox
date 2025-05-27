@@ -3,6 +3,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons;
 using ECommons.DalamudServices;
+using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
@@ -10,6 +11,7 @@ using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using static ECommons.ExcelServices.TerritoryIntendedUseEnum;
 
 namespace PandorasBox.Features.ChatFeature;
 
@@ -132,6 +134,11 @@ internal class AutoOpenCoords : Feature
 
     public unsafe void PlaceMapMarker(MapLinkMessage maplinkMessage)
     {
+        if (Player.TerritoryIntendedUse is not City_Area or Open_World or Inn or Starting_Area or Housing_Instances or Residential_Area or Chocobo_Square or Gold_Saucer or Diadem or Barracks)
+        {
+            Svc.Log.Debug($"Not in a city area, skipping map marker placement.");
+            return;
+        }
         Svc.Log.Debug($"Viewing {maplinkMessage.Text}");
         var map = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(maplinkMessage.TerritoryId).Map;
         var maplink = new MapLinkPayload(maplinkMessage.TerritoryId, map.RowId, maplinkMessage.X, maplinkMessage.Y);
