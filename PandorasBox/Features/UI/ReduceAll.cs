@@ -126,10 +126,9 @@ namespace PandorasBox.Features.UI
 
                 for (var i = 1; i <= length; i++)
                 {
-                    TaskManager.EnqueueImmediate(() => SelectFirstItem(addon));
-                    TaskManager.EnqueueImmediate(() => ConfirmDialog());
+                    TaskManager.InsertMulti([new(() => SelectFirstItem(addon)), new(ConfirmDialog)]);
                 }
-                TaskManager.EnqueueImmediate(() => { Reducing = false; return true; });
+                TaskManager.Insert(() => { Reducing = false; return true; });
             }
         }
 
@@ -149,8 +148,7 @@ namespace PandorasBox.Features.UI
         private bool? SelectFirstItem(AtkUnitBase* addon)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 1000));
-            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
+            TaskManager.InsertMulti([new(() => EzThrottler.Throttle("Generating", 1000)), new(() => EzThrottler.Check("Generating"))]);
 
             var values = stackalloc AtkValue[2];
             values[0] = new()
@@ -172,7 +170,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             P.Ws.RemoveWindow(Overlay);
-            Overlay = null;
+            Overlay = null!;
             if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
             {
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);

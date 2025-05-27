@@ -66,7 +66,7 @@ namespace PandorasBox.Features.Targets
             }
 
             if (Config.InteractMethod is 2 or 3)
-                TaskManager.Enqueue(() => { if (!Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) TargetSystem.Instance()->OpenObjectInteraction(baseObj); }, 100);
+                TaskManager.EnqueueWithTimeout(() => { if (!Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) TargetSystem.Instance()->OpenObjectInteraction(baseObj); }, 100);
         }
 
         public override void Enable()
@@ -80,7 +80,7 @@ namespace PandorasBox.Features.Targets
         private void TriggerCooldown(ConditionFlag flag, bool value)
         {
             if ((flag == ConditionFlag.OccupiedInQuestEvent) && !value)
-                TaskManager.DelayNext("InteractCooldown", (int)(Config.Cooldown * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Cooldown * 1000));
         }
 
         private void RunFeature(IFramework framework)
@@ -113,7 +113,7 @@ namespace PandorasBox.Features.Targets
 
                         if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj) || !TargetSystem.Instance()->IsObjectOnScreen(baseObj)) return;
 
-                        TaskManager.DelayNext($"InteractDung{baseObj->BaseId}", (int)(Config.ThrottleF * 1000));
+                        TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
                         TaskManager.Enqueue(() => TryInteract(baseObj));
                         return;
                     }
@@ -133,7 +133,7 @@ namespace PandorasBox.Features.Targets
                     if (!TaskManager.IsBusy)
                     {
                         if (Svc.Condition[ConditionFlag.OccupiedInQuestEvent]) continue;
-                        TaskManager.DelayNext($"InteractDung{baseObj->BaseId}", (int)(Config.ThrottleF * 1000));
+                        TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
                         TaskManager.Enqueue(() => TryInteract(baseObj));
                     }
 

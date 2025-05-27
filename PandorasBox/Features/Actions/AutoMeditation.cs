@@ -19,7 +19,6 @@ namespace PandorasBox.Features.Actions
 
         public override void Enable()
         {
-            TaskManager.ShowDebug = false;
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }
@@ -35,7 +34,7 @@ namespace PandorasBox.Features.Actions
 
             if (!Svc.Condition[ConditionFlag.InCombat])
             {
-                TaskManager.DelayNext(1000);
+                TaskManager.EnqueueDelay(1000);
                 TaskManager.Enqueue(() =>
                 {
                     if (Svc.Condition[ConditionFlag.InCombat]) return;

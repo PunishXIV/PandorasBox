@@ -5,7 +5,7 @@ using Dalamud.Interface.Components;
 using Dalamud.Memory;
 using Dalamud.Plugin;
 using ECommons;
-using ECommons.Automation.LegacyTaskManager;
+using ECommons.Automation.NeoTaskManager;
 using ECommons.DalamudServices;
 using ECommons.EzHookManager;
 using ECommons.GameHelpers;
@@ -61,13 +61,11 @@ namespace PandorasBox.Features
         {
             this.config = config;
             this.Provider = fp;
-            this.TaskManager = new();
+            this.TaskManager = new(new() { TimeoutSilently = true, ShowDebug = false });
         }
 
         public virtual void Setup()
         {
-            TaskManager!.TimeoutSilently = true;
-            TaskManager.ShowDebug = false;
             Ready = true;
         }
 
@@ -331,30 +329,11 @@ namespace PandorasBox.Features
             }
         }
 
+        protected void Log(string msg) => Svc.Log.Debug($"[{Name}] {msg}");
+
         public unsafe bool IsRpWalking()
         {
-            if (Svc.ClientState.LocalPlayer == null) return false;
-            //var atkArrayDataHolder = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUiModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder;
-            //if (atkArrayDataHolder.NumberArrays[72]->IntArray[6] == 1)
-            //    return true;
-            //else
-            //    return false;
-
-            if (Svc.GameGui.GetAddonByName("_DTR") == IntPtr.Zero) return false;
-
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("_DTR");
-            if (addon->UldManager.NodeListCount < 9) return false;
-
-            try
-            {
-                var isVisible = addon->GetNodeById(10)->IsVisible();
-                return isVisible;
-            }
-            catch (Exception ex)
-            {
-                ex.Log();
-                return false;
-            }
+            return Control.Instance()->IsWalking;
         }
 
         internal static unsafe int GetInventoryFreeSlotCount()

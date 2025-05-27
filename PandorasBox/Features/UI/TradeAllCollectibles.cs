@@ -116,7 +116,7 @@ namespace PandorasBox.Features.UI
                     }
                 });
                 TaskManager.Enqueue(() => Callback.Fire(addon, false, 15, (uint)0), $"Trading{i}");
-                TaskManager.DelayNext($"Trade{i}", 500);
+                TaskManager.EnqueueDelay(500);
             }
             TaskManager.Enqueue(() => { Trading = false; TaskManager.Abort(); });
         }
@@ -124,7 +124,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             P.Ws.RemoveWindow(overlay);
-            overlay = null;
+            overlay = null!;
             ReEnableButton();
             base.Disable();
         }

@@ -59,7 +59,7 @@ namespace PandorasBox.Features.Actions
 
                     if (Config.AutoDecipher)
                     {
-                        TaskManager.DelayNext(200);
+                        TaskManager.EnqueueDelay(200);
                         TaskManager.Enqueue(() => ConfirmYesNo());
                     }
                 }

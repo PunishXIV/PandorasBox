@@ -1,6 +1,7 @@
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 
 namespace PandorasBox.Features.Other
 {
@@ -34,14 +35,14 @@ namespace PandorasBox.Features.Other
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
             var mod = RecommendEquipModule.Instance();
             //TaskManager.Abort();
-            TaskManager!.DelayNext("EquipMod", 500);
-            TaskManager.Enqueue(() => mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.RowId), 500);
-            TaskManager.Enqueue(() => mod->EquipRecommendedGear(), 500);
+            TaskManager!.EnqueueDelay(500);
+            TaskManager.EnqueueWithTimeout(() => mod->SetupForClassJob((byte)Svc.ClientState.LocalPlayer!.ClassJob.RowId), 500);
+            TaskManager.EnqueueWithTimeout(() => mod->EquipRecommendedGear(), 500);
 
             if (Config!.UpdateGearset)
             {
                 var id = RaptureGearsetModule.Instance()->CurrentGearsetIndex;
-                TaskManager.DelayNext("UpdatingGS", 1000);
+                TaskManager.EnqueueDelay(1000);
                 TaskManager.Enqueue(() => RaptureGearsetModule.Instance()->UpdateGearset(id));
             }
         }

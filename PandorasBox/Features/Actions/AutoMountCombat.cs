@@ -1,4 +1,5 @@
 using Dalamud.Game.ClientState.Conditions;
+using ECommons.Automation.LegacyTaskManager;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
@@ -44,16 +45,16 @@ namespace PandorasBox.Features.Actions
             if (flag == ConditionFlag.InCombat && !value)
             {
                 TaskManager.Enqueue(() => NotInCombat);
-                TaskManager.DelayNext("CombatOverTryMount", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(TryMount, 3000);
+                TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
+                TaskManager.EnqueueWithTimeout(TryMount, 3000);
                 TaskManager.Enqueue(() =>
                 {
                     if (Config.JumpAfterMount && ZoneHasFlight())
                     {
-                        TaskManager.Enqueue(() => Svc.Condition[ConditionFlag.Mounted], 5000, true);
-                        TaskManager.DelayNext(50);
+                        TaskManager.EnqueueWithTimeout(() => Svc.Condition[ConditionFlag.Mounted], 5000);
+                        TaskManager.EnqueueDelay(50);
                         TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
-                        TaskManager.DelayNext(50);
+                        TaskManager.EnqueueDelay(50);
                         TaskManager.Enqueue(() => ActionManager.Instance()->UseAction(ActionType.GeneralAction, 2));
                     }
                 });

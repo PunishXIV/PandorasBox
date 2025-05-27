@@ -371,8 +371,7 @@ namespace PandorasBox.Features.UI
         public unsafe bool? SwitchTabs(int section)
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Switching", 300));
-            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Switching"));
+            TaskManager.InsertMulti([new(() => EzThrottler.Throttle("Switching", 300)), new(() => EzThrottler.Check("Switching"))]);
 
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
@@ -416,9 +415,7 @@ namespace PandorasBox.Features.UI
 
                 new AddonMaster.MaterializeDialog(materializePTR).Materialize();
 
-                TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Extracting", 100));
-                TaskManager.EnqueueImmediate(() => EzThrottler.Check("Extracting"));
-
+                TaskManager.InsertMulti([new(() => EzThrottler.Throttle("Extracting", 100)), new(() => EzThrottler.Check("Extracting"))]);
                 return true;
 
             }
@@ -433,8 +430,7 @@ namespace PandorasBox.Features.UI
         public bool? GenerateAndFireCallback()
         {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            TaskManager.EnqueueImmediate(() => EzThrottler.Throttle("Generating", 100));
-            TaskManager.EnqueueImmediate(() => EzThrottler.Check("Generating"));
+            TaskManager.InsertMulti([new(() => EzThrottler.Throttle("Generating", 100)), new(() => EzThrottler.Check("Generating"))]);
 
             var values = stackalloc AtkValue[2];
             values[0] = new()
@@ -458,7 +454,7 @@ namespace PandorasBox.Features.UI
         public override void Disable()
         {
             P.Ws.RemoveWindow(OverlayWindow);
-            OverlayWindow = null;
+            OverlayWindow = null!;
             if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
             {
                 var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1);

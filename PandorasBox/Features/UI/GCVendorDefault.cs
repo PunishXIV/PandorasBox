@@ -52,9 +52,9 @@ namespace PandorasBox.Features.UI
         private void PostSetup(AddonEvent type, AddonArgs args)
         {
             var addon = (AtkUnitBase*)args.Addon;
-            TaskManager.DelayNext(50);
+            TaskManager.EnqueueDelay(50);
             TaskManager.Enqueue(() => SelectRank(addon, Config.DefaultRank));
-            TaskManager.DelayNext(50);
+            TaskManager.EnqueueDelay(50);
             TaskManager.Enqueue(() => SelectTab(addon, Config.DefaultTab));
         }
 

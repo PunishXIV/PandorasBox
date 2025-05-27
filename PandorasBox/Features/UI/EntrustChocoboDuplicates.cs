@@ -100,7 +100,7 @@ namespace PandorasBox.Features.UI
                                     if (saddleItem->ItemId == item->ItemId)
                                     {
                                         uint total = (uint)(saddleItem->Quantity + item->Quantity);
-                                        TaskManager.DelayNext(200);
+                                        TaskManager.EnqueueDelay(200);
                                         TaskManager.Enqueue(() =>
                                         {
                                             FireInventoryMenu(inventory, item, 56);
