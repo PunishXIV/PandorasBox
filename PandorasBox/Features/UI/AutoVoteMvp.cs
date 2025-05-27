@@ -1,11 +1,9 @@
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
-using Dalamud.Memory;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
-using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -213,7 +211,8 @@ public class AutoVoteMvp : Feature
 
         for (int i = 22; i <= 22 + 7; i++)
         {
-            var name = MemoryHelper.ReadSeStringNullTerminated(new nint(bannerWindow->AtkValues[i].String)).ToString();
+            if (bannerWindow->AtkValues[i].Type != FFXIVClientStructs.FFXIV.Component.GUI.ValueType.String) continue;
+            var name = bannerWindow->AtkValues[i].String;
             if (name == voteTarget.member.Name.TextValue)
             {
                 if (!Config.HideChat)
