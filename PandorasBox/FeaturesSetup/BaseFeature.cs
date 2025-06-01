@@ -61,7 +61,7 @@ namespace PandorasBox.Features
         {
             this.config = config;
             this.Provider = fp;
-            this.TaskManager = new(new() { TimeoutSilently = true, ShowDebug = false });
+            this.TaskManager = new(new() { TimeoutSilently = true, ShowDebug = true });
         }
 
         public virtual void Setup()
