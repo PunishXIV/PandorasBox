@@ -55,24 +55,24 @@ namespace PandorasBox.Features.Other
 
             if (job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.RowId != 16 && !TaskManager.IsBusy)
             {
-                TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => SwitchJobGearset(16));
             }
             if (job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.RowId != 17 && !TaskManager.IsBusy)
             {
-                TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => SwitchJobGearset(17));
             }
             if (job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.RowId != 18 && !TaskManager.IsBusy)
             {
-                TaskManager.DelayNext("AutoSwitchGather", (int)(Config.Throttle * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => SwitchJobGearset(18));
             }
         }
 
         private static unsafe bool SwitchJobGearset(uint cjID)
         {
-            if (Svc.ClientState.LocalPlayer.ClassJob.RowId == cjID) return true;
+            if (Svc.ClientState.LocalPlayer?.ClassJob.RowId == cjID) return true;
             var gs = GetGearsetForClassJob(cjID);
             if (gs is null) return true;
 

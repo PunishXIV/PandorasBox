@@ -251,7 +251,7 @@ namespace PandorasBox.Features.Other
             if (type is (XivChatType)2107 && CurrentIntegrity == 0)
             {
                 TaskManager.Abort();
-                TaskManager.DelayNext(1000);
+                TaskManager.EnqueueDelay(1000);
                 AddonSetup(AddonEvent.PostSetup, null);
             }
         }
@@ -539,25 +539,26 @@ namespace PandorasBox.Features.Other
                     {
                         if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.RowId == 0))
                         {
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                             TaskManager.Enqueue(() =>
                             {
                                 var diffIntegrity = MaxIntegrity - CurrentIntegrity;
 
                                 if (Config.GPSolidReason <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction() && diffIntegrity >= 2)
                                 {
-                                    TaskManager.EnqueueImmediate(() => UseIntegrityAction());
-                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
-                                    TaskManager.EnqueueImmediate(() => UseWisdom());
-                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                    TaskManager.BeginStack();
+                                    TaskManager.Enqueue(() => UseIntegrityAction());
+                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                                    TaskManager.Enqueue(() => UseWisdom());
+                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                                    TaskManager.InsertStack();
                                 }
                             });
                             TaskManager.Enqueue(() =>
                             {
                                 if (Config.GP100Yield <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.Use100GPYield)
                                 {
-                                    TaskManager.EnqueueImmediate(() => Use100GPSkill());
-                                    TaskManager.EnqueueImmediate(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                                    TaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
                                 }
                             });
 
@@ -591,7 +592,7 @@ namespace PandorasBox.Features.Other
         {
             if (Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
             {
-                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                 TaskManager.Enqueue(() =>
                 {
                     var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
@@ -628,7 +629,7 @@ namespace PandorasBox.Features.Other
                         if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.ClientState.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed)
                         {
                             TaskManager.Enqueue(() => UseLuck(), "UseLuck");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                             TaskManager.Enqueue(() => AddonSetup(type, args));
                             HiddenRevealed = true;
                             return;
@@ -639,19 +640,19 @@ namespace PandorasBox.Features.Other
                         if (Config.GPTidings <= Svc.ClientState.LocalPlayer!.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
                         {
                             TaskManager.Enqueue(() => UseTidings(), "UseTidings");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GP500Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use500GPYield)
                         {
                             TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GP100Yield <= Svc.ClientState.LocalPlayer.CurrentGp && Config.Use100GPYield)
                         {
                             TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GPGatherChanceUp <= Svc.ClientState.LocalPlayer.CurrentGp && Config.GatherChanceUp)
@@ -662,13 +663,13 @@ namespace PandorasBox.Features.Other
                         if (Config.GPGivingLand <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseGivingLand)
                         {
                             TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                         if (Config.GPTwelvesBounty <= Svc.ClientState.LocalPlayer.CurrentGp && Config.UseTwelvesBounty)
                         {
                             TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                         }
 
                     }
@@ -939,20 +940,20 @@ namespace PandorasBox.Features.Other
 
         private bool? UseGivingLand()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
+            switch (Svc.ClientState.LocalPlayer?.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4590) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4590);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4589) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4589);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
                     }
                     break;
             }
@@ -962,20 +963,20 @@ namespace PandorasBox.Features.Other
 
         private bool? UseTwelvesBounty()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
+            switch (Svc.ClientState.LocalPlayer?.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 282) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 282);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 280) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 280);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
                     }
                     break;
             }
@@ -994,24 +995,24 @@ namespace PandorasBox.Features.Other
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 273);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
                     }
                     else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4087) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4087);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 272);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1286));
                     }
                     else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4073) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 4073);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 756));
                     }
                     break;
             }
@@ -1019,23 +1020,23 @@ namespace PandorasBox.Features.Other
 
         private void Use500GPSkill()
         {
-            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219))
+            if (Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 219) ?? false)
                 return;
 
-            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
+            switch (Svc.ClientState.LocalPlayer?.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 224) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 224);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
                     }
                     break;
                 case 16:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 241) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 241);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 219));
                     }
                     break;
             }
@@ -1044,23 +1045,23 @@ namespace PandorasBox.Features.Other
 
         private void UseTidings()
         {
-            if (Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667))
+            if (Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 2667) ?? false)
                 return;
 
-            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
+            switch (Svc.ClientState.LocalPlayer?.ClassJob.RowId)
             {
                 case 17: //BTN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21204);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
                 case 16: //MIN
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0)
                     {
                         ActionManager.Instance()->UseAction(ActionType.Action, 21203);
-                        TaskManager.EnqueueImmediate(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667));
+                        TaskManager.Insert(() => Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 2667));
                     }
                     break;
             }
@@ -1078,7 +1079,7 @@ namespace PandorasBox.Features.Other
 
         private bool? UseWisdom()
         {
-            switch (Svc.ClientState.LocalPlayer.ClassJob.RowId)
+            switch (Svc.ClientState.LocalPlayer?.ClassJob.RowId)
             {
                 case 17:
                     if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0)
