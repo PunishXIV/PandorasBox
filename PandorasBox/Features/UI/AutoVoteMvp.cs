@@ -180,7 +180,7 @@ public class AutoVoteMvp : Feature
             {
                 foreach (var partyMember in Svc.Party)
                 {
-                    Svc.Log.Debug($" [Auto-Commendation] Adding {partyMember.Name.GetText()} {partyMember.ObjectId} to premade list");
+                    Svc.Log.Debug($"[Auto-Commendation] Adding {partyMember.Name.GetText()} {partyMember.ObjectId} to premade list");
                     PremadePartyID.Add(partyMember.Name.GetText());
                 }
             }
@@ -218,7 +218,7 @@ public class AutoVoteMvp : Feature
         }
         catch (Exception e)
         {
-            Svc.Log.Error(e, " [Auto-Commendation] Failed to vote!");
+            Svc.Log.Error(e, "[Auto-Commendation] Failed to vote!");
         }
     }
 
@@ -296,7 +296,7 @@ public class AutoVoteMvp : Feature
         {
             foreach (var excludedPlayer in CommendExclusions)
             {
-                //Svc.Log.Debug($" [Auto-Commendation] Removing {excludedPlayer} from commendation list.");
+                //Svc.Log.Debug($"[Auto-Commendation] Removing {excludedPlayer} from commendation list.");
                 list.RemoveAll(x => x.PartyMember.Name.ExtractText() == excludedPlayer);
             }
         }
@@ -311,7 +311,7 @@ public class AutoVoteMvp : Feature
             if (ManualCommendName != "")
             {
                 voteTarget = list.First(i => i.PartyMember.Name.ExtractText() == ManualCommendName);
-                Svc.Log.Debug($" [Auto-Commendation] Manual Commendation set for {ManualCommendName}");
+                Svc.Log.Debug($"[Auto-Commendation] Manual Commendation set for {ManualCommendName}");
             }
             else switch (Config.Priority)
                 {
@@ -339,7 +339,7 @@ public class AutoVoteMvp : Feature
                         break;
                 }
         }
-        //else Svc.Log.Debug(" [Auto-Commendation] No valid member for commendation. Skipping.");
+        //else Svc.Log.Debug("[Auto-Commendation] No valid member for commendation. Skipping.");
         if (voteTarget.member == null) return -1; //If attempt failed and value is still null, then return -1
 
         for (int i = 22; i <= 22 + 7; i++)
@@ -364,7 +364,7 @@ public class AutoVoteMvp : Feature
                     });
                 }
 
-                Svc.Log.Debug($" [Auto-Commendation] Commended {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
+                Svc.Log.Debug($"[Auto-Commendation] Commended {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
                 return (int)bannerWindow->AtkValues[i - 14].UInt;
             }
         }
