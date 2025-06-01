@@ -10,6 +10,7 @@ using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 
@@ -57,6 +58,8 @@ namespace PandorasBox.Features.Targets
             [FeatureConfigOption("Exclude Spearfishing Nodes", "", 6)]
             public bool ExcludeFishing = false;
 
+            [FeatureConfigOption("Zone Whitelist", "TerritorySelection", 7)]
+            public List<uint> ZoneWhitelist = [];
         }
 
         public Configs Config { get; private set; }
@@ -75,14 +78,14 @@ namespace PandorasBox.Features.Targets
             if (message.GetText() == Svc.Data.GetExcelSheet<LogMessage>().First(x => x.RowId == 7777).Text.ExtractText())
             {
                 TaskManager.Abort();
-                TaskManager.DelayNext("ErrorMessage", 2000);
+                TaskManager.EnqueueDelay(2000);
             }
         }
 
         private void TriggerCooldown(ConditionFlag flag, bool value)
         {
             if (flag == ConditionFlag.Gathering && !value)
-                TaskManager.DelayNext("GatheringDelay", (int)(Config.Cooldown * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Cooldown * 1000));
         }
 
         private void RunFeature(IFramework framework)
@@ -93,6 +96,7 @@ namespace PandorasBox.Features.Targets
             if (Svc.ClientState.LocalPlayer is null) return;
             if (Svc.ClientState.LocalPlayer.IsCasting) return;
             if (Svc.Condition[ConditionFlag.Jumping]) return;
+            if (Config.ZoneWhitelist.Count > 0 && !Config.ZoneWhitelist.Contains(Player.Territory)) return;
 
             var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && Vector3.Distance(x.Position, Player.Object.Position) < 4 && GameObjectHelper.GetHeightDifference(x) <= 4 && x.IsTargetable).ToList();
             if (nearbyNodes.Count == 0)
@@ -113,8 +117,8 @@ namespace PandorasBox.Features.Targets
             {
                 if (!TaskManager.IsBusy)
                 {
-                    TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
-                    TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
+                    TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
+                    TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 }
                 return;
             }
@@ -137,23 +141,23 @@ namespace PandorasBox.Features.Targets
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
-                TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
-                TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
+                TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
-                TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
-                TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
+                TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
-                TaskManager.DelayNext("Gathering", (int)(Config.Throttle * 1000));
+                TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
-                TaskManager.Enqueue(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
+                TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
 

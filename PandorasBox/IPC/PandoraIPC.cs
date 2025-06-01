@@ -1,18 +1,16 @@
-using ECommons.Automation.LegacyTaskManager;
+using ECommons.Automation.NeoTaskManager;
 using ECommons.DalamudServices;
 using ECommons.Reflection;
 using PandorasBox.Features;
-using System;
 using System.Linq;
 
 namespace PandorasBox.IPC
 {
     internal static class PandoraIPC
     {
-        private static TaskManager TM = new();
+        private static TaskManager TM = new() { RemainingTimeMS = 1000 * 60 * 60 * 24 };
         internal static void Init()
         {
-            TM.TimeLimitMS = 1000 * 60 * 60 * 24;
             Svc.PluginInterface.GetIpcProvider<string, bool?>("PandorasBox.GetFeatureEnabled").RegisterFunc(GetFeatureEnabled);
             Svc.PluginInterface.GetIpcProvider<string, bool, object>("PandorasBox.SetFeatureEnabled").RegisterAction(SetFeatureEnabled);
 
@@ -106,7 +104,7 @@ namespace PandorasBox.IPC
             if (GetFeatureEnabled(featureName)!.Value)
             {
                 SetFeatureEnabled(featureName, false);
-                TM.DelayNext($"Pausing{featureName}", pauseMS);
+                TM.EnqueueDelay(pauseMS);
                 TM.Enqueue(() => SetFeatureEnabled(featureName, true), $"Resuming{featureName}");
             }
         }

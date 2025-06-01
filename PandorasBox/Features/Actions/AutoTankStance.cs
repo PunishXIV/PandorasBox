@@ -4,7 +4,6 @@ using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
-using FFXIVClientStructs.STD;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;
@@ -134,7 +133,7 @@ namespace PandorasBox.Features.Actions
 
             var am = ActionManager.Instance();
             if (Svc.Condition[ConditionFlag.BetweenAreas] || Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return false;
-            TaskManager!.DelayNext("TankStance", (int)(Config.Throttle * 1000));
+            TaskManager!.EnqueueDelay((int)(Config.Throttle * 1000));
             TaskManager.Enqueue(() =>
             {
                 if (Svc.Party.Length > Config.MaxParty) return true;

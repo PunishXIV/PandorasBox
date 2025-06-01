@@ -46,7 +46,7 @@ namespace PandorasBox.Features.UI
                     if (SlotsFilled.Contains(addon->EntryCount)) ConfirmOrAbort(addon);
                     if (SlotsFilled.Contains(i)) return;
                     var val = i;
-                    TaskManager.DelayNext($"ClickTurnin{val}", 10);
+                    TaskManager.EnqueueDelay(10);
                     TaskManager.Enqueue(() => TryClickItem(addon, val));
                 }
             }

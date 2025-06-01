@@ -127,11 +127,13 @@ namespace PandorasBox.Features
             for (var i = 1; i <= 7; i++)
             {
                 var val = i;
-                TaskManager.EnqueueImmediate(() => Repair(), 300, false);
-                TaskManager.EnqueueImmediate(() => ConfirmYesNo(), 300, false);
-                TaskManager.EnqueueImmediate(() => SwitchSection());
+                TaskManager.BeginStack();
+                TaskManager.EnqueueWithTimeout(() => Repair(), 300, false);
+                TaskManager.EnqueueWithTimeout(() => ConfirmYesNo(), 300, false);
+                TaskManager.Enqueue(SwitchSection);
+                TaskManager.InsertStack();
             }
-            TaskManager.EnqueueImmediate(() => { Repairing = false; return true; });
+            TaskManager.Insert(() => { Repairing = false; return true; });
         }
 
         private bool SwitchSection()

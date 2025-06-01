@@ -16,6 +16,9 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
+        public override bool FeatureDisabled => true;
+
+        public override string DisabledReason => "Crashing.";
         public class Config : FeatureConfig
         {
             [FeatureConfigOption("Default Value", IntMin = 1, IntMax = 99, EditorSize = 300)]
@@ -29,8 +32,8 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Configs = LoadConfig<Config>() ?? new Config();
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostUpdate, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckNumerics);
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckThrottle);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckNumerics);
+            Svc.AddonLifecycle.RegisterListener(AddonEvent.PreFinalize, ["InclusionShop", "Shop", "ShopExchangeItem", "ShopExchangeCurrency", "GrandCompanyExchange"], CheckThrottle);
             base.Enable();
         }
 
@@ -43,95 +46,122 @@ namespace PandorasBox.Features.UI
 
         private unsafe void CheckNumerics(AddonEvent type, AddonArgs args)
         {
-            var addon = (AtkUnitBase*)args.Addon;
-            for (var i = 0; i < addon->UldManager.NodeListCount; i++)
+            try
             {
-                try
+                var addon = (AtkUnitBase*)args.Addon;
+                if (addon == null)
+                    return;
+
+                for (var i = 0; i < addon->UldManager.NodeListCount; i++)
                 {
-                    var node = addon->UldManager.NodeList[i];
-                    if (node == null)
-                        continue;
-
-                    var compNode = node->GetAsAtkComponentNode();
-                    if (compNode->Component is null)
-                        continue;
-
-                    var componentInfo = compNode->Component->UldManager;
-                    var objectInfo = (AtkUldComponentInfo*)componentInfo.Objects;
-
-                    if (objectInfo == null)
-                        continue;
-
                     try
                     {
-                        if (objectInfo->ComponentType is ComponentType.TreeList or ComponentType.List)
+                        var node = addon->UldManager.NodeList[i];
+                        if (node == null)
+                            continue;
+
+                        var compNode = node->GetAsAtkComponentNode();
+                        if (compNode is null || compNode->Component is null)
+                            continue;
+
+                        var comp = compNode->Component;
+                        if (comp is null)
+                            continue;
+
+                        var componentInfo = comp->UldManager;
+                        if (componentInfo.Objects is null)
+                            continue;
+
+                        var objectInfo = (AtkUldComponentInfo*)componentInfo.Objects;
+                        if (objectInfo == null)
+                            continue;
+
+                        try
                         {
-                            var tree = compNode;
+                            ComponentType? t = objectInfo->ComponentType;
 
-                            for (int y = 0; y < tree->Component->UldManager.NodeListCount; y++)
+                            if (t is null)
+                                continue;
+
+                            if (t is ComponentType.TreeList or ComponentType.List)
                             {
-
-                                var renderNode = (AtkComponentNode*)tree->Component->UldManager.NodeList[y];
-
-                                for (int p = 0; p < renderNode->Component->UldManager.NodeListCount; p++)
+                                for (int y = 0; y < compNode->Component->UldManager.NodeListCount; y++)
                                 {
-                                    var subNode = renderNode->Component->UldManager.NodeList[p];
-
-                                    if (!subNode->IsVisible())
+                                    var renderNode = (AtkComponentNode*)compNode->Component->UldManager.NodeList[y];
+                                    if (renderNode is null || renderNode->Component is null)
                                         continue;
 
-                                    if (subNode->Type is (NodeType)1012 or (NodeType)1011)
+                                    for (int p = 0; p < renderNode->Component->UldManager.NodeListCount; p++)
                                     {
-                                        uint NodeIdSearch = 5;
-                                        if (args.AddonName == "ShopExchangeCurrency")
-                                            NodeIdSearch = 3;
-                                        if (args.AddonName == "ShopExchangeItem")
-                                            NodeIdSearch = 7;
+                                        var subNode = renderNode->Component->UldManager.NodeList[p];
 
-                                        AtkTextNode* textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
-
-                                        if (string.IsNullOrEmpty(textNode->NodeText.GetText()))
+                                        if (subNode is null || !subNode->IsVisible())
                                             continue;
 
-                                        var uniqueVal = $"{textNode->NodeText.GetText()}{renderNode->AtkResNode.NodeId}";
-                                        if (setNodes.Contains(uniqueVal))
+                                        NodeType? t2 = subNode->Type;
+                                        if (t2 is null)
+                                            continue;
+
+                                        if (t2 is (NodeType)1012 or (NodeType)1011)
                                         {
-                                            continue;
+                                            uint NodeIdSearch = 5;
+                                            if (args.AddonName == "ShopExchangeCurrency")
+                                                NodeIdSearch = 3;
+                                            if (args.AddonName == "ShopExchangeItem")
+                                                NodeIdSearch = 7;
+
+                                            AtkTextNode* textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
+
+                                            if (textNode is null || string.IsNullOrEmpty(textNode->NodeText.GetText()))
+                                                continue;
+
+                                            var uniqueVal = $"{textNode->NodeText.GetText()}{renderNode->AtkResNode.NodeId}";
+                                            if (setNodes.Contains(uniqueVal))
+                                            {
+                                                continue;
+                                            }
+
+                                            setNodes.Add(uniqueVal);
+
+                                            var component = (AtkComponentNode*)subNode;
+                                            var numeric = (AtkComponentNumericInput*)component->Component;
+
+                                            if (component is null || numeric is null)
+                                                continue;
+
+                                            Svc.Log.Debug($"Setting {uniqueVal}");
+                                            if (Configs.Value > 1)
+                                                numeric->SetValue(Configs.Value);
                                         }
 
-                                        setNodes.Add(uniqueVal);
-
-                                        var component = (AtkComponentNode*)subNode;
-                                        var numeric = (AtkComponentNumericInput*)component->Component;
-
-                                        Svc.Log.Debug($"Setting {uniqueVal}");
-                                        if (Configs.Value > 1)
-                                            numeric->SetValue(Configs.Value);
-                                    }
-
-                                    if (subNode->Type is (NodeType)1007)
-                                    {
-                                        uint NodeIdSearch = 3;
-
-                                        var textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
-
-                                        if (string.IsNullOrEmpty(textNode->NodeText.GetText()))
-                                            continue;
-
-                                        var uniqueVal = $"{textNode->NodeText.GetText()}{renderNode->AtkResNode.NodeId}";
-                                        if (setNodes.Contains(uniqueVal))
+                                        if (t2 is (NodeType)1007)
                                         {
-                                            continue;
+                                            uint NodeIdSearch = 3;
+
+                                            var textNode = renderNode->Component->UldManager.SearchNodeById(NodeIdSearch)->GetAsAtkTextNode();
+
+                                            if (textNode is null || string.IsNullOrEmpty(textNode->NodeText.GetText()))
+                                                continue;
+
+                                            var uniqueVal = $"{textNode->NodeText.GetText()}{renderNode->AtkResNode.NodeId}";
+                                            if (setNodes.Contains(uniqueVal))
+                                            {
+                                                continue;
+                                            }
+
+                                            setNodes.Add(uniqueVal);
+
+                                            var component = (AtkComponentNode*)subNode;
+                                            var numeric = (AtkComponentNumericInput*)component->Component;
+
+                                            if (component is null || numeric is null)
+                                                continue;
+
+                                            Svc.Log.Debug($"Setting {uniqueVal}");
+                                            if (Configs.Value > 1)
+                                                numeric->SetValue(Configs.Value);
                                         }
 
-                                        setNodes.Add(uniqueVal);
-
-                                        var component = (AtkComponentNode*)subNode;
-                                        var numeric = (AtkComponentNumericInput*)component->Component;
-
-                                        Svc.Log.Debug($"Setting {uniqueVal}");
-                                        if (Configs.Value > 1)
-                                            numeric->SetValue(Configs.Value);
                                     }
 
                                 }
@@ -139,17 +169,20 @@ namespace PandorasBox.Features.UI
                             }
 
                         }
-
+                        catch (Exception ex)
+                        {
+                            ex.Log();
+                        }
                     }
                     catch (Exception ex)
                     {
                         ex.Log();
                     }
                 }
-                catch (Exception ex)
-                {
-                    ex.Log();
-                }
+            }
+            catch(Exception ex)
+            {
+                ex.Log();
             }
         }
 

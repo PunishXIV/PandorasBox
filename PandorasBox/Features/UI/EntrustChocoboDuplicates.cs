@@ -1,21 +1,15 @@
-using Dalamud.Hooking;
 using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.Event;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using FFXIVClientStructs.STD;
 using ImGuiNET;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
@@ -105,7 +99,7 @@ namespace PandorasBox.Features.UI
                                     if (saddleItem->ItemId == item->ItemId)
                                     {
                                         uint total = (uint)(saddleItem->Quantity + item->Quantity);
-                                        TaskManager.DelayNext(200);
+                                        TaskManager.EnqueueDelay(200);
                                         TaskManager.Enqueue(() =>
                                         {
                                             FireInventoryMenu(inventory, item, 56);
