@@ -1,5 +1,5 @@
 using Dalamud.Game.ClientState.Conditions;
-using ECommons.Automation.LegacyTaskManager;
+using ECommons.Automation.NeoTaskManager;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;

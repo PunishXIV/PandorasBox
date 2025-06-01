@@ -1,12 +1,9 @@
-using Dalamud.Hooking;
 using ECommons.DalamudServices;
 using ECommons.EzHookManager;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
-using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using PandorasBox.FeaturesSetup;
-using System;
 
 namespace PandorasBox.Features.Actions
 {

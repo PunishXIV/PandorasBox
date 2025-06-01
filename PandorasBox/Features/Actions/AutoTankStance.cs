@@ -4,7 +4,6 @@ using ECommons.GameFunctions;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Fate;
-using FFXIVClientStructs.STD;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
 using System.Linq;

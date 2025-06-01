@@ -3,7 +3,6 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using PandorasBox.FeaturesSetup;
-using System;
 using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
