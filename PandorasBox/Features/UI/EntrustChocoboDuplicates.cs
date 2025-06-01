@@ -11,6 +11,11 @@ using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
 using System.Numerics;
+using System.Text;
+using System.Threading.Tasks;
+using Lumina.Excel.Sheets;
+using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
+using static FFXIVClientStructs.FFXIV.Component.GUI.AtkEventDispatcher;
 
 namespace PandorasBox.Features.UI
 {
@@ -87,6 +92,10 @@ namespace PandorasBox.Features.UI
                                     if (saddleItem->ItemId == 0)
                                         continue;
 
+                                    var saddleItemData = Svc.Data.GetExcelSheet<Item>().GetRow(saddleItem->ItemId);
+                                    if (saddleItemData.IsUnique)
+                                        continue;
+                                    
                                     if (saddleItem->ItemId == item->ItemId)
                                     {
                                         uint total = (uint)(saddleItem->Quantity + item->Quantity);
@@ -107,7 +116,6 @@ namespace PandorasBox.Features.UI
                 ImGui.GetFont().Scale = oldSize;
                 ImGui.PopFont();
                 ImGui.PopStyleColor();
-
             }
         }
 
