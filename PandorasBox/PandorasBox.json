@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog":  "- Disable Default Vendor Buy Amount temporarily."
+    "ChangeLog":  "- New command /puseitem."
 }

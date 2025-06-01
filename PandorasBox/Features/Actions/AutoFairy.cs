@@ -2,6 +2,7 @@ using Dalamud.Game.ClientState.Conditions;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 
 namespace PandorasBox.Features.Actions
 {
@@ -49,8 +50,8 @@ namespace PandorasBox.Features.Actions
 
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas]);
             TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
-            TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
-            TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.RowId), 5000);
+            TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
+            TaskManager.EnqueueWithTimeout(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.RowId), 5000);
         }
 
         private void RunFeature(uint? jobId)
@@ -60,8 +61,8 @@ namespace PandorasBox.Features.Actions
             if (Svc.Condition[ConditionFlag.BetweenAreas]) return;
             if (jobId is 26 or 27 or 28)
             {
-                TaskManager.DelayNext("Summoning", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => TrySummon(jobId), 5000);
+                TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
+                TaskManager.EnqueueWithTimeout(() => TrySummon(jobId), 5000);
             }
         }
 
@@ -74,9 +75,9 @@ namespace PandorasBox.Features.Actions
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.Unconscious], "CheckConditionUnconscious");
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.BetweenAreas], "CheckConditionBetweenAreas");
                 TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Action, 7) == 0);
-                TaskManager.DelayNext("WaitForActionReady", 2500);
-                TaskManager.DelayNext("WaitForConditions", (int)(Config.ThrottleF * 1000));
-                TaskManager.Enqueue(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.RowId), 5000);
+                TaskManager.EnqueueDelay(2500);
+                TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
+                TaskManager.EnqueueWithTimeout(() => TrySummon(Svc.ClientState.LocalPlayer?.ClassJob.RowId), 5000);
             }
         }
 

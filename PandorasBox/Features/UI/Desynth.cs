@@ -124,9 +124,9 @@ namespace PandorasBox.Features.UI
                             if (ImGui.Button($"Desynth All"))
                             {
                                 Desynthing = true;
-                                TaskManager.Enqueue(() => YesAlready.Lock());
-                                TaskManager.Enqueue(() => TryDesynthAll());
-                                TaskManager.Enqueue(() => YesAlready.Unlock());
+                                TaskManager.Enqueue(YesAlready.Lock);
+                                TaskManager.Enqueue(TryDesynthAll);
+                                TaskManager.Enqueue(YesAlready.Unlock);
                             }
                         }
                         else
@@ -135,7 +135,7 @@ namespace PandorasBox.Features.UI
                             {
                                 Desynthing = false;
                                 TaskManager.Abort();
-                                TaskManager.Enqueue(() => YesAlready.Unlock());
+                                TaskManager.Enqueue(YesAlready.Unlock);
                             }
                         }
                     }
@@ -149,7 +149,7 @@ namespace PandorasBox.Features.UI
                 {
                     Desynthing = false;
                     TaskManager.Abort();
-                    TaskManager.Enqueue(() => YesAlready.Unlock());
+                    TaskManager.Enqueue(YesAlready.Unlock);
                 }
             }
             catch
@@ -164,11 +164,11 @@ namespace PandorasBox.Features.UI
             {
                 if (addon->ItemCount > 0)
                 {
-                    TaskManager.Enqueue(() => DesynthFirst(), "Desynthing");
-                    TaskManager.Enqueue(() => ConfirmDesynth(), 200, "Confirm Desynth");
-                    TaskManager.Enqueue(() => CloseResults(), 3000, "Close Results");
-                    TaskManager.DelayNext("WaitForDelay", 400);
-                    TaskManager.Enqueue(() => TryDesynthAll(), "Repeat Loop");
+                    TaskManager.Enqueue(DesynthFirst, "Desynthing");
+                    TaskManager.EnqueueWithTimeout(ConfirmDesynth, 200, "Confirm Desynth");
+                    TaskManager.EnqueueWithTimeout(CloseResults, 3000, "Close Results");
+                    TaskManager.EnqueueDelay(400);
+                    TaskManager.Enqueue(TryDesynthAll, "Repeat Loop");
                 }
                 else
                 {

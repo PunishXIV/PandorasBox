@@ -274,8 +274,8 @@ public class AutoVoteMvp : Feature
             Svc.Log.Debug($"{name} {m2->Flags.ToString("g")}");
         }
 
-        var validPartyMembers = Svc.Party.Where(i =>
-        i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.ExtractText()))
+        var list = Svc.Party.Where(i =>
+        i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.GetText()))
             .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
             .ToList();
         var list = (validPartyMembers ?? new List<(int, IPartyMember)>()).ToList();
@@ -344,7 +344,8 @@ public class AutoVoteMvp : Feature
 
         for (int i = 22; i <= 22 + 7; i++)
         {
-            var name = MemoryHelper.ReadSeStringNullTerminated(new nint(bannerWindow->AtkValues[i].String)).ToString();
+            if (bannerWindow->AtkValues[i].Type != FFXIVClientStructs.FFXIV.Component.GUI.ValueType.String) continue;
+            var name = bannerWindow->AtkValues[i].String;
             if (name == voteTarget.member.Name.TextValue)
             {
                 if (!Config.HideChat)

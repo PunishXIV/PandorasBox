@@ -11,6 +11,7 @@ using FFXIVClientStructs.FFXIV.Component.GUI;
 using ImGuiNET;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
+using PandorasBox.Helpers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -77,7 +78,7 @@ namespace PandorasBox.Features.UI
                     if (addon->AtkValuesCount <= 5) return;
                     var fertilizeText = addon->AtkValues[5];
                     var text = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(fertilizeText.String));
-                    if (text.ExtractText() == AddonText[6417].Text.ExtractText())
+                    if (text.GetText() == AddonText[6417].Text.ExtractText())
                     {
                         var im = InventoryManager.Instance();
                         var inv1 = im->GetInventoryContainer(InventoryType.Inventory1);
@@ -228,7 +229,7 @@ namespace PandorasBox.Features.UI
                     {
                         if (SlotsFilled.Contains(1)) TaskManager.Abort();
                         if (SlotsFilled.Contains(1)) return;
-                        TaskManager.DelayNext($"Gardening1", 100);
+                        TaskManager.EnqueueDelay(100);
                         TaskManager.Enqueue(() => TryClickItem(addon, 1, soilIndex));
                     }
 
@@ -236,15 +237,15 @@ namespace PandorasBox.Features.UI
                     {
                         if (SlotsFilled.Contains(2)) TaskManager.Abort();
                         if (SlotsFilled.Contains(2)) return;
-                        TaskManager.DelayNext($"Gardening2", 100);
+                        TaskManager.EnqueueDelay(100);
                         TaskManager.Enqueue(() => TryClickItem(addon, 2, seedIndex));
                     }
 
                     if (Config.AutoConfirm)
                     {
-                        TaskManager.DelayNext($"Confirming", 100);
-                        TaskManager.Enqueue(() => Callback.Fire(addon, false, 0, 0, 0, 0, 0), 300, false);
-                        TaskManager.Enqueue(() => ConfirmYesNo(), 300, false);
+                        TaskManager.EnqueueDelay(100);
+                        TaskManager.EnqueueWithTimeout(() => Callback.Fire(addon, false, 0, 0, 0, 0, 0), 300, false);
+                        TaskManager.EnqueueWithTimeout(() => ConfirmYesNo(), 300, false);
                     }
                 }
 
