@@ -180,7 +180,7 @@ public class AutoVoteMvp : Feature
             {
                 foreach (var partyMember in Svc.Party)
                 {
-                    Svc.Log.Debug($"Adding {partyMember.Name.GetText()} {partyMember.ObjectId} to premade list");
+                    Svc.Log.Debug($" [Auto-Commendation] Adding {partyMember.Name.GetText()} {partyMember.ObjectId} to premade list");
                     PremadePartyID.Add(partyMember.Name.GetText());
                 }
             }
@@ -218,7 +218,7 @@ public class AutoVoteMvp : Feature
         }
         catch (Exception e)
         {
-            Svc.Log.Error(e, "Failed to vote!");
+            Svc.Log.Error(e, " [Auto-Commendation] Failed to vote!");
         }
     }
 
@@ -271,10 +271,9 @@ public class AutoVoteMvp : Feature
         {
             var m2 = (FFXIVClientStructs.FFXIV.Client.Game.Group.PartyMember*)member.Address;
             var name = m2->NameString;
-            Svc.Log.Debug($"{name} {m2->Flags.ToString("g")}");
         }
 
-        var list = Svc.Party.Where(i =>
+        var validPartyMembers = Svc.Party.Where(i =>
         i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.GetText()))
             .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
             .ToList();
@@ -297,7 +296,7 @@ public class AutoVoteMvp : Feature
         {
             foreach (var excludedPlayer in CommendExclusions)
             {
-                Svc.Log.Debug($"Removing {excludedPlayer} from commendation list.");
+                //Svc.Log.Debug($" [Auto-Commendation] Removing {excludedPlayer} from commendation list.");
                 list.RemoveAll(x => x.PartyMember.Name.ExtractText() == excludedPlayer);
             }
         }
@@ -306,40 +305,41 @@ public class AutoVoteMvp : Feature
         var healer = list.Where(i => i.PartyMember.ClassJob.Value.Role == 4);
         var dps = list.Where(i => i.PartyMember.ClassJob.Value.Role is 2 or 3);
 
-        if (!list.Any()) list = validPartyMembers; //In case list is empty, may as well start from scratch - will also help prevent ArgumentOutOfRangeException
         (int index, IPartyMember member) voteTarget = new();
-        if (ManualCommendName != "")
+        if (list.Any())
         {
-            voteTarget = list.First(i => i.PartyMember.Name.ExtractText() == ManualCommendName);
-            Svc.Log.Debug($"Manual Commendation set for {ManualCommendName}");
+            if (ManualCommendName != "")
+            {
+                voteTarget = list.First(i => i.PartyMember.Name.ExtractText() == ManualCommendName);
+                Svc.Log.Debug($" [Auto-Commendation] Manual Commendation set for {ManualCommendName}");
+            }
+            else switch (Config.Priority)
+                {
+                    //tank
+                    case 0:
+                        if (tanks.Any()) voteTarget = RandomPick(tanks);
+                        else if (healer.Any()) voteTarget = RandomPick(healer);
+                        else voteTarget = RandomPick(dps);
+                        break;
+                    //Healer
+                    case 1:
+                        if (healer.Any()) voteTarget = RandomPick(healer);
+                        else if (tanks.Any()) voteTarget = RandomPick(tanks);
+                        else voteTarget = RandomPick(dps);
+                        break;
+                    //DPS
+                    case 2:
+                        if (dps.Any()) voteTarget = RandomPick(dps);
+                        else if (tanks.Any()) voteTarget = RandomPick(tanks);
+                        else voteTarget = RandomPick(healer);
+                        break;
+                    //No Priority
+                    case 3:
+                        voteTarget = RandomPick(list);
+                        break;
+                }
         }
-        else switch (Config.Priority)
-        {
-            //tank
-            case 0:
-                if (tanks.Any()) voteTarget = RandomPick(tanks);
-                else if (healer.Any()) voteTarget = RandomPick(healer);
-                else voteTarget = RandomPick(dps);
-                break;
-            //Healer
-            case 1:
-                if (healer.Any()) voteTarget = RandomPick(healer);
-                else if (tanks.Any()) voteTarget = RandomPick(tanks);
-                else voteTarget = RandomPick(dps);
-                break;
-            //DPS
-            case 2:
-                if (dps.Any()) voteTarget = RandomPick(dps);
-                else if (tanks.Any()) voteTarget = RandomPick(tanks);
-                else voteTarget = RandomPick(healer);
-                break;
-            //No Priority
-            case 3:
-                voteTarget = RandomPick(list);
-                break;
-        }
-
-        if (voteTarget.member == null) voteTarget = RandomPick(validPartyMembers); //Make attempt to randomly pick a valid party member worst case scenario
+        //else Svc.Log.Debug(" [Auto-Commendation] No valid member for commendation. Skipping.");
         if (voteTarget.member == null) return -1; //If attempt failed and value is still null, then return -1
 
         for (int i = 22; i <= 22 + 7; i++)
@@ -362,10 +362,9 @@ public class AutoVoteMvp : Feature
                         },
                         new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.Value!.RowId),
                     });
-                    Svc.Chat.Print(new SeString(payload));
                 }
 
-                Svc.Log.Debug($"Commed {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
+                Svc.Log.Debug($" [Auto-Commendation] Commended {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
                 return (int)bannerWindow->AtkValues[i - 14].UInt;
             }
         }
