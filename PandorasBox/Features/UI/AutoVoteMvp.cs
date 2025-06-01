@@ -273,11 +273,10 @@ public class AutoVoteMvp : Feature
             var name = m2->NameString;
         }
 
-        var validPartyMembers = Svc.Party.Where(i =>
+        var list = Svc.Party.Where(i =>
         i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.GetText()))
             .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
             .ToList();
-        var list = (validPartyMembers ?? new List<(int, IPartyMember)>()).ToList();
 
         if (!list.Any()) return -1;
 
