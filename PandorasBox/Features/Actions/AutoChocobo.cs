@@ -38,7 +38,7 @@ namespace PandorasBox.Features.Actions
             if (!Svc.Condition[ConditionFlag.NormalConditions] || Svc.Condition[ConditionFlag.Casting] || IsMoving()) return;
             if (Svc.Condition[ConditionFlag.InCombat] && !Config.UseInCombat) return;
             if (Svc.Party.Length > 1 && !Config.UseInParty) return;
-            if (AFKTimer.Stopwatch.Elapsed.TotalMinutes >= 5 && Config.AfkCheck) return;
+            if (IsAFK() && Config.AfkCheck) return;
 
             var am = ActionManager.Instance();
             if (UIState.Instance()->Buddy.CompanionInfo.TimeLeft <= Config.RemainingTimeLimit)
@@ -51,6 +51,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
+            UseAFKTimer = true;
             Svc.Framework.Update += RunFeature;
             base.Enable();
         }

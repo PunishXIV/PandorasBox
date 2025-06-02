@@ -27,6 +27,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using static FFXIVClientStructs.FFXIV.Client.Game.ActionManager;
+using System.Diagnostics;
 
 namespace PandorasBox.Features
 {
@@ -56,6 +57,15 @@ namespace PandorasBox.Features
 
         public abstract FeatureType FeatureType { get; }
 
+        protected Stopwatch AFKTimer { get; private set; } = new Stopwatch();
+        protected bool UseAFKTimer { get; set; } = false;
+
+        protected bool IsAFK(int minutes = 5)
+        {
+            if (!UseAFKTimer) return false;
+            return AFKTimer.Elapsed.TotalMinutes >= minutes;
+        }
+
         public void InterfaceSetup(PandorasBox plugin, IDalamudPluginInterface pluginInterface, Configuration config, FeatureProvider fp)
         {
             this.config = config;
@@ -72,12 +82,26 @@ namespace PandorasBox.Features
         {
             Svc.Log.Debug($"Enabling {Name}");
             Enabled = true;
+            if (UseAFKTimer)
+                Svc.Framework.Update += UpdateTimer;
         }
 
         public virtual void Disable()
         {
             TaskManager!.Abort();
             Enabled = false;
+            Svc.Framework.Update -= UpdateTimer;
+        }
+
+        private void UpdateTimer(IFramework framework)
+        {
+            if ((Player.Available && Player.IsMoving) || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
+            {
+                if (!AFKTimer.IsRunning)
+                    AFKTimer.Restart();
+            }
+            else
+                AFKTimer.Reset();
         }
 
         public virtual void Dispose()
