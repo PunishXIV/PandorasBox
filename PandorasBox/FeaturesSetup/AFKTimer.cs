@@ -15,14 +15,17 @@ namespace PandorasBox.FeaturesSetup
 
         private static unsafe void UpdateTimer(IFramework framework)
         {
-            if (Player.IsMoving || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
+            if (Player.AvailableThreadSafe)
             {
-                if (!Stopwatch.IsRunning)
-                    Stopwatch.Restart();
-            }
-            else
-            {
-                Stopwatch.Reset();
+                if (Player.IsMoving || Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
+                {
+                    if (!Stopwatch.IsRunning)
+                        Stopwatch.Restart();
+                }
+                else
+                {
+                    Stopwatch.Reset();
+                }
             }
         }
 
