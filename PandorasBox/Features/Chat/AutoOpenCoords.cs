@@ -134,7 +134,7 @@ internal class AutoOpenCoords : Feature
 
     public unsafe void PlaceMapMarker(MapLinkMessage maplinkMessage)
     {
-        if (Player.TerritoryIntendedUse is not City_Area or Open_World or Inn or Starting_Area or Housing_Instances or Residential_Area or Chocobo_Square or Gold_Saucer or Diadem or Barracks)
+        if (Player.TerritoryIntendedUse is not (City_Area or Open_World or Inn or Starting_Area or Housing_Instances or Residential_Area or Chocobo_Square or Gold_Saucer or Diadem or Barracks))
         {
             Svc.Log.Debug($"Not in a city area, skipping map marker placement.");
             return;

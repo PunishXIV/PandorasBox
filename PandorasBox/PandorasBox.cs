@@ -82,7 +82,6 @@ public class PandorasBox : IDalamudPlugin
         FeatureProviders.Clear();
         PandoraIPC.Dispose();
         Events.Disable();
-        AFKTimer.Dispose();
     }
 
     private void OnCommand(string command, string args)

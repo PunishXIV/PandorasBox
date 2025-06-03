@@ -76,8 +76,7 @@ namespace PandorasBox.Features.Other
             var gs = GetGearsetForClassJob(cjID);
             if (gs is null) return true;
 
-            Chat chat = new();
-            chat.SendMessage($"/gearset change {gs.Value + 1}");
+            Chat.SendMessage($"/gearset change {gs.Value + 1}");
 
             return true;
         }
