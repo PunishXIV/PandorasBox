@@ -64,30 +64,27 @@ namespace PandorasBox.Features.Commands
                 return;
             }
 
-            // Prefer normal item if found, otherwise use key item
             if (itemValid)
-            {
                 Use(item);
-            }
-            else if (keyItemValid)
-            {
+            else
                 Use(keyItem);
+        }
+
+        private unsafe void Use(object item)
+        {
+            if (item is Item normalItem)
+            {
+                var id = normalItem.RowId;
+                if (InventoryManager.Instance()->GetInventoryItemCount(id, true) > 0)
+                    id += 1_000_000;
+
+                AgentInventoryContext.Instance()->UseItem(id);
             }
-        }
-
-        private unsafe void Use(EventItem? keyItem)
-        {
-            var id = keyItem?.RowId ?? 0;
-            AgentInventoryContext.Instance()->UseItem(id, InventoryType.KeyItems);
-        }
-
-        private unsafe void Use(Item? item)
-        {
-            var id = item?.RowId ?? 0;
-            if (InventoryManager.Instance()->GetInventoryItemCount(id, true) > 0)
-                id += 1_000_000;
-
-            AgentInventoryContext.Instance()->UseItem(id);
+            else if (item is EventItem keyItem)
+            {
+                var id = keyItem.RowId;
+                AgentInventoryContext.Instance()->UseItem(id, InventoryType.KeyItems);
+            }
         }
     }
 }
