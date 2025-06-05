@@ -21,32 +21,69 @@ namespace PandorasBox.Features.Commands
 
         protected unsafe override void OnCommand(List<string> args)
         {
-            var item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(0);
+            if (args == null || args.Count == 0)
+            {
+                DuoLog.Error("No item name or ID provided.");
+                return;
+            }
+
             var argName = string.Join(' ', args).Replace("\"", "").ToLower().Trim();
 
+            // Special case for Aether Compass
             if (argName == "aether compass")
             {
                 ActionManager.Instance()->UseAction(ActionType.Action, 26988);
                 return;
             }
 
-            if (uint.TryParse(args[0].Trim(), out var id))
-                item = Svc.Data.GetExcelSheet<Item>(Svc.ClientState.ClientLanguage).GetRow(id);
-            else
-                item = Svc.Data.GetExcelSheet<Item>().FirstOrDefault(x => x.Name.ToString().Contains(argName, StringComparison.CurrentCultureIgnoreCase));
+            Item item;
+            EventItem keyItem;
+            uint id = 0;
 
-            if (item.RowId == 0 || string.IsNullOrEmpty(item.Name.ToString()))
+            // Try to parse as item ID
+            if (uint.TryParse(args[0].Trim(), out id))
+            {
+                Svc.Data.GetExcelSheet<Item>().TryGetRow(id, out item);
+                Svc.Data.GetExcelSheet<EventItem>().TryGetRow(id, out keyItem);
+            }
+            else
+            {
+                item = Svc.Data.GetExcelSheet<Item>().FirstOrDefault(x =>
+                    x.Name.ToString().Contains(argName, StringComparison.CurrentCultureIgnoreCase));
+                keyItem = Svc.Data.GetExcelSheet<EventItem>().FirstOrDefault(x =>
+                    x.Name.ToString().Contains(argName, StringComparison.CurrentCultureIgnoreCase));
+            }
+
+            // Check if item or key item was found
+            bool itemValid = item.RowId != 0 && !string.IsNullOrEmpty(item.Name.ToString());
+            bool keyItemValid = keyItem.RowId != 0 && !string.IsNullOrEmpty(keyItem.Name.ToString());
+
+            if (!itemValid && !keyItemValid)
             {
                 DuoLog.Error($@"Item ""{argName}"" not found.");
                 return;
             }
 
-            Use(item);
+            // Prefer normal item if found, otherwise use key item
+            if (itemValid)
+            {
+                Use(item);
+            }
+            else if (keyItemValid)
+            {
+                Use(keyItem);
+            }
         }
 
-        private unsafe void Use(Item item)
+        private unsafe void Use(EventItem? keyItem)
         {
-            var id = item.RowId;
+            var id = keyItem?.RowId ?? 0;
+            AgentInventoryContext.Instance()->UseItem(id, InventoryType.KeyItems);
+        }
+
+        private unsafe void Use(Item? item)
+        {
+            var id = item?.RowId ?? 0;
             if (InventoryManager.Instance()->GetInventoryItemCount(id, true) > 0)
                 id += 1_000_000;
 
