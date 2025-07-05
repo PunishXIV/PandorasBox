@@ -85,9 +85,7 @@ namespace PandorasBox.Features.UI
                     {
                         if (ImGui.Button($"Extracting. Click to abort.###AbortExtract", size))
                         {
-                            Extracting = false;
-                            TaskManager.Abort();
-                            TaskManager.Enqueue(() => YesAlready.Unlock());
+                            Abort();
                         }
                     }
 
@@ -100,15 +98,20 @@ namespace PandorasBox.Features.UI
                 }
                 else
                 {
-                    Extracting = false;
-                    TaskManager.Abort();
-                    TaskManager.Enqueue(() => YesAlready.Unlock());
+                    Abort();
                 }
             }
             catch (Exception e)
             {
                 Svc.Log.Debug(e, "ExtractAllException");
             }
+        }
+
+        private void Abort()
+        {
+            Extracting = false;
+            TaskManager.Abort();
+            TaskManager.Enqueue(() => YesAlready.Unlock());
         }
 
         private void TryExtractAll()
@@ -355,8 +358,7 @@ namespace PandorasBox.Features.UI
                     TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
                 }
             }
-            TaskManager.Enqueue(() => { Extracting = false; return true; });
-            TaskManager.Enqueue(() => YesAlready.Unlock(), "YesAlreadyUnlock");
+            TaskManager.Enqueue(() => Abort());
         }
 
         public static unsafe void CloseMateriaMenu()
