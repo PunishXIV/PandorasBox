@@ -127,7 +127,7 @@ namespace PandorasBox.Features.Targets
                     if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj)) continue;
 
                     if (Svc.Data.GetExcelSheet<EObj>().TryGetFirst(x => x.RowId == baseObj->BaseId, out var sheetItem))
-                        if ((sheetItem.SgbPath.Value.SgbPath.ToString().Contains("bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0005.sgb") || Exits.Contains(sheetItem.RowId)) && Config.ExcludeExit)
+                        if (Config.ExcludeExit && (sheetItem.SgbPath.ValueNullable?.SgbPath.ToString().Contains("bgcommon/world/lvd/shared/for_vfx/sgvf_w_lvd_b0005.sgb") == true || Exits.Contains(sheetItem.RowId)))
                             continue;
 
                     if (!TaskManager.IsBusy)

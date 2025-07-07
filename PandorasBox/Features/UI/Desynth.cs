@@ -126,7 +126,6 @@ namespace PandorasBox.Features.UI
                                 Desynthing = true;
                                 TaskManager.Enqueue(YesAlready.Lock);
                                 TaskManager.Enqueue(TryDesynthAll);
-                                TaskManager.Enqueue(YesAlready.Unlock);
                             }
                         }
                         else
@@ -165,14 +164,15 @@ namespace PandorasBox.Features.UI
                 if (addon->ItemCount > 0)
                 {
                     TaskManager.Enqueue(DesynthFirst, "Desynthing");
-                    TaskManager.EnqueueWithTimeout(ConfirmDesynth, 200, "Confirm Desynth");
-                    TaskManager.EnqueueWithTimeout(CloseResults, 3000, "Close Results");
-                    TaskManager.EnqueueDelay(400);
+                    TaskManager.EnqueueWithTimeout(ConfirmDesynth, 2000, "Confirm Desynth");
+                    TaskManager.EnqueueWithTimeout(CloseResults, 9000, "Close Results");
+                    TaskManager.EnqueueDelay(500);
                     TaskManager.Enqueue(TryDesynthAll, "Repeat Loop");
                 }
                 else
                 {
-                    TaskManager.Enqueue(() => Desynthing = false);
+                    Desynthing = false;
+                    YesAlready.Unlock();
                 }
             }
         }
@@ -192,7 +192,7 @@ namespace PandorasBox.Features.UI
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageDialog", 1);
             if (addon == null || !addon->IsVisible) return false;
             Callback.Fire(addon, false, 0, false);
-            return true;
+            return Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39];
         }
 
         private static bool? DesynthFirst()
