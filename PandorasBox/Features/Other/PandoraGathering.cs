@@ -225,7 +225,7 @@ namespace PandorasBox.Features.Other
             overlay = new Overlays(this);
             Config = LoadConfig<Configs>() ?? new Configs();
 
-            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 40 33 C0 48 8B F1 48 8D 4C 24 ?? 89 44 24 20 89 44 24 28 89 44 24 30 8D 50 03 89 44 24 38 E8 ?? ?? ?? ?? 48 8B 86", QuickGatherToggle);
+            quickGatherToggle ??= Svc.Hook.HookFromSignature<QuickGatherToggleDelegate>("E8 ?? ?? ?? ?? E9 ?? ?? ?? ?? 80 B9 ?? ?? ?? ?? ?? 0F 85 ?? ?? ?? ?? 48 8B 84 24 ?? ?? ?? ??", QuickGatherToggle);
 
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
