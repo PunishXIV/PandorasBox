@@ -70,7 +70,7 @@ namespace PandorasBox.Features.UI
 
             if (Config.UseShortcut)
             {
-                if (Svc.GameGui.GetAddonByName("FreeCompanyChest").GetAtkUnitBase(out var addon))
+                if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FreeCompanyChest", out var addon))
                 {
                     if (ImGui.GetIO().KeyCtrl)
                     {
@@ -82,7 +82,8 @@ namespace PandorasBox.Features.UI
 
         private unsafe MenuItem CheckInventoryItem(uint ItemId, bool itemHq, int itemAmount)
         {
-            if (Svc.GameGui.GetAddonByName("FreeCompanyChest").GetAtkUnitBase(out var addon))
+            
+            if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FreeCompanyChest", out var addon))
             {
                 if (!addon->IsVisible) return null;
                 if (addon->UldManager.NodeList[4]->IsVisible()) return null;

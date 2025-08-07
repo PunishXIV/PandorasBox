@@ -843,7 +843,7 @@ namespace PandorasBox.Features.Other
 
         private void ClickGather(int index)
         {
-            TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
+            TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
             TaskManager.Enqueue(() =>
             {
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
@@ -1071,7 +1071,7 @@ namespace PandorasBox.Features.Other
         private void QuickGatherToggle(AddonGathering* a1)
         {
             if (a1 == null && Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
-                a1 = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                a1 = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
 
             a1->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
             quickGatherToggle?.Original(a1);
