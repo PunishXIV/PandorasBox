@@ -15,6 +15,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <PackageReference Include="ECommons" Version="3.0.0.8" />
         <PackageReference Include="NAudio" Version="2.1.0" />
         <Reference Include="JetBrains.Annotations">
             <Private>false</Private>
@@ -47,6 +48,5 @@
 
     <ItemGroup>
         <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
-        <ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
     </ItemGroup>
 </Project>

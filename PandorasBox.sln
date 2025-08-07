@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PandorasBox", "PandorasBox\
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PunishLib", "PunishLib\PunishLib\PunishLib.csproj", "{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ECommons", "ECommons\ECommons\ECommons.csproj", "{59095151-30AC-433C-B57F-1E7E97E68AEC}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,22 +51,6 @@ Global
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.ReleaseForms|Any CPU.Build.0 = Release|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.ReleaseForms|x64.ActiveCfg = Release|x64
 		{FCF7C2E0-0B83-4B60-A895-7235FE0AA7B0}.ReleaseForms|x64.Build.0 = Release|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Debug|Any CPU.Build.0 = Debug|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Debug|x64.ActiveCfg = Debug|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Debug|x64.Build.0 = Debug|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.DebugForms|Any CPU.ActiveCfg = DebugForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.DebugForms|Any CPU.Build.0 = DebugForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.DebugForms|x64.ActiveCfg = DebugForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.DebugForms|x64.Build.0 = DebugForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Release|Any CPU.ActiveCfg = Release|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Release|Any CPU.Build.0 = Release|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Release|x64.ActiveCfg = Release|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.Release|x64.Build.0 = Release|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.ReleaseForms|Any CPU.ActiveCfg = ReleaseForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.ReleaseForms|Any CPU.Build.0 = ReleaseForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.ReleaseForms|x64.ActiveCfg = ReleaseForms|x64
-		{59095151-30AC-433C-B57F-1E7E97E68AEC}.ReleaseForms|x64.Build.0 = ReleaseForms|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
