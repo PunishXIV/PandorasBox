@@ -41,7 +41,7 @@ namespace PandorasBox.Features.Actions
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
-            if (!TerritoryInfo.Instance()->InSanctuary || MJIManager.Instance()->IsPlayerInSanctuary)
+            if (!TerritoryInfo.Instance()->InSanctuary || !MJIManager.Instance()->IsPlayerInSanctuary)
                 return;
 
             var r = new Regex("/hou/|/ind/");
