@@ -5,7 +5,7 @@ using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -42,7 +42,7 @@ namespace PandorasBox.Features.Actions
 
         private bool GatheredOnIsland(ConditionFlag flag, bool value)
         {
-            return flag == ConditionFlag.OccupiedInQuestEvent && !value && MJIManager.Instance()->IsPlayerInSanctuary != 0;
+            return flag == ConditionFlag.OccupiedInQuestEvent && !value && !MJIManager.Instance()->IsPlayerInSanctuary;
         }
 
         private void RunFeature(ConditionFlag flag, bool value)

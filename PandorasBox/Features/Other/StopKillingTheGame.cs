@@ -126,7 +126,7 @@ namespace PandorasBox.Features.Other
             if (!Config.CloseAutomatically) return;
             if (Svc.GameGui.GetAddonByName("Dialogue") != IntPtr.Zero && !Svc.Condition.Any())
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Dialogue");
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Dialogue").Address;
                 if (!addon->IsVisible) return;
 
                 WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.NumPad0);

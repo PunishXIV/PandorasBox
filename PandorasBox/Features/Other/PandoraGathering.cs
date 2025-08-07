@@ -14,7 +14,7 @@ using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -238,7 +238,7 @@ namespace PandorasBox.Features.Other
 
         private void UpdateIntegrity(IFramework framework)
         {
-            var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering");
+            var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
             if (addon != null)
             {
                 CurrentIntegrity = addon->AtkValues[110].UInt;
@@ -266,7 +266,7 @@ namespace PandorasBox.Features.Other
             Svc.Chat.ChatMessage -= CheckRevisit;
             Svc.Framework.Update -= UpdateIntegrity;
 
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
             if (addon != null)
             {
                 addon->UldManager.NodeList[5]->ToggleVisibility(true);
@@ -290,7 +290,7 @@ namespace PandorasBox.Features.Other
         {
             if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                 if (addon == null) return;
                 if (!addon->IsVisible) return;
 
@@ -357,7 +357,7 @@ namespace PandorasBox.Features.Other
 
                 ImGui.Dummy(new Vector2(2f));
 
-                ImGui.Columns(3, null, false);
+                ImGui.Columns(3,default, false);
 
                 if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
                 {
@@ -509,7 +509,7 @@ namespace PandorasBox.Features.Other
         {
             try
             {
-                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
 
                 if (addon != null && Config.Gathering)
                 {
@@ -595,7 +595,7 @@ namespace PandorasBox.Features.Other
                 TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
                 TaskManager.Enqueue(() =>
                 {
-                    var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1);
+                    var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
 
                     if (addon == null) return;
 
@@ -846,14 +846,14 @@ namespace PandorasBox.Features.Other
             TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.Gathering42]);
             TaskManager.Enqueue(() =>
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering");
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
                 if (addon is null) return;
 
                 if (addon is null) return;
                 var checkBox = addon->GetNodeById(17 + (uint)index)->GetAsAtkComponentCheckBox();
                 if (checkBox is null) return;
                 checkBox->AtkComponentButton.IsChecked = true;
-                Callback.Fire(addon, true, index);
+               ECommons.Automation.Callback.Fire(addon, true, index);
                 CheckNodeAndClick(index);
             });
         }

@@ -3,7 +3,7 @@ using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using ECommons.Automation.UIInput;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System.Collections.Generic;
@@ -51,7 +51,7 @@ namespace PandorasBox.Features.UI
 
         private void PostSetup(AddonEvent type, AddonArgs args)
         {
-            var addon = (AtkUnitBase*)args.Addon;
+            var addon = (AtkUnitBase*)args.Addon.Address;
             TaskManager.EnqueueDelay(50);
             TaskManager.Enqueue(() => SelectRank(addon, Config.DefaultRank));
             TaskManager.EnqueueDelay(50);

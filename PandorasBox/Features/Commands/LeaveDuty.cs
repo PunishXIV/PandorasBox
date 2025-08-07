@@ -20,11 +20,11 @@ namespace PandorasBox.Features.Commands
                 Chat.Instance.SendMessage("/dfinder");
                 if (Svc.GameGui.GetAddonByName("ContentsFinderMenu") != IntPtr.Zero)
                 {
-                    var ui = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContentsFinderMenu");
+                    var ui = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContentsFinderMenu").Address;
                     Callback.Fire(ui, true, 0);
                     Callback.Fire(ui, false, -2);
 
-                    var yesno = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno");
+                    var yesno = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno").Address;
                     Callback.Fire(yesno, true, 0);
                 }
             }

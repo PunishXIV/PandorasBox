@@ -16,7 +16,7 @@ using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using Newtonsoft.Json;
 using PandorasBox.FeaturesSetup;
@@ -447,7 +447,7 @@ namespace PandorasBox.Features
             {
                 try
                 {
-                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i);
+                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i).Address;
                     if (addon == null) return null;
                     if (GenericHelpers.IsAddonReady(addon))
                     {
@@ -475,7 +475,7 @@ namespace PandorasBox.Features
             {
                 try
                 {
-                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i);
+                    var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i).Address;
                     if (addon == null) return null;
                     if (GenericHelpers.IsAddonReady(addon))
                     {

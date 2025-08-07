@@ -49,7 +49,7 @@ namespace PandorasBox.Features.UI
         {
             if (args.AddonName == "SelectIconString")
             {
-                var addon = (AddonSelectIconString*)args.Addon;
+                var addon = (AddonSelectIconString*)args.Addon.Address;
 
                 var list = addon->PopupMenu.PopupMenu.List;
 
@@ -75,7 +75,7 @@ namespace PandorasBox.Features.UI
 
             if (args.AddonName == "SelectString")
             {
-                var addon = (AddonSelectString*)args.Addon;
+                var addon = (AddonSelectString*)args.Addon.Address;
 
                 var list = addon->PopupMenu.PopupMenu.List;
 

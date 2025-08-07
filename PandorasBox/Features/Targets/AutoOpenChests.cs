@@ -103,7 +103,7 @@ namespace PandorasBox.Features.Targets
             if (CloseWindowTime < DateTime.Now) return;
             if (Svc.GameGui.GetAddonByName("NeedGreed", 1) != IntPtr.Zero)
             {
-                var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1);
+                var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1).Address;
                 if (needGreedWindow == null) return;
 
                 if (needGreedWindow->IsVisible)

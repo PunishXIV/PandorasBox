@@ -61,7 +61,7 @@ namespace PandorasBox.Features.UI
         {
             if (SlotsFilled.Contains(i)) return true;
 
-            var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextIconMenu", 1);
+            var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextIconMenu", 1).Address;
 
             if (contextMenu is null || !contextMenu->IsVisible)
             {

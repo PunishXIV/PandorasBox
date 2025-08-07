@@ -3,7 +3,7 @@ using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
@@ -41,7 +41,7 @@ namespace PandorasBox.Features.Actions
         {
             if (Svc.ClientState.LocalPlayer == null) return;
 
-            if (!TerritoryInfo.Instance()->InSanctuary || MJIManager.Instance()->IsPlayerInSanctuary == 1)
+            if (!TerritoryInfo.Instance()->InSanctuary || MJIManager.Instance()->IsPlayerInSanctuary)
                 return;
 
             var r = new Regex("/hou/|/ind/");
