@@ -3,4 +3,4 @@
 	url = https://github.com/NightmareXIV/ECommons.git
 [submodule "PunishLib"]
 	path = PunishLib
-	url = https://github.com/PunishXIV/PunishLib.git
+	url = https://github.com/PunishXIV/PunishLib
