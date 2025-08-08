@@ -2,7 +2,7 @@ using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
@@ -37,7 +37,7 @@ namespace PandorasBox.Features.UI
         {
             if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1).Address;
                 if (addon == null)
                     return;
 
@@ -119,7 +119,7 @@ namespace PandorasBox.Features.UI
 
         private void TryReduceAll()
         {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1).Address;
             if (addon != null)
             {
                 var length = addon->UldManager.NodeList[3]->GetAsAtkComponentList()->ListLength;
@@ -137,7 +137,7 @@ namespace PandorasBox.Features.UI
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
             if (Svc.GameGui.GetAddonByName("PurifyResult",1) != IntPtr.Zero)
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyResult",1);
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyResult",1).Address;
                 addon->Close(true);
                 return true;
             }
@@ -173,7 +173,7 @@ namespace PandorasBox.Features.UI
             Overlay = null!;
             if (Svc.GameGui.GetAddonByName("PurifyItemSelector", 1) != IntPtr.Zero)
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1);
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("PurifyItemSelector", 1).Address;
                 var node = addon->UldManager.NodeList[5];
 
                 node->ToggleVisibility(true);

@@ -48,7 +48,7 @@ namespace PandorasBox.Features.UI
         {
             try
             {
-                var addon = (AtkUnitBase*)args.Addon;
+                var addon = (AtkUnitBase*)args.Addon.Address;
                 if (addon == null)
                     return;
 

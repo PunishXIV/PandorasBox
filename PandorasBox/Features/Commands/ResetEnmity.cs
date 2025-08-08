@@ -60,7 +60,7 @@ namespace PandorasBox.Features.Commands
             var addonByName = Svc.GameGui.GetAddonByName("_EnemyList", 1);
             if (addonByName != IntPtr.Zero)
             {
-                var addon = (AddonEnemyList*)addonByName;
+                var addon = (AddonEnemyList*)addonByName.Address;
                 // the 21 works now, but if this doesn't in the future, check this. It used to be 19.
                 var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUIModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[21];
 

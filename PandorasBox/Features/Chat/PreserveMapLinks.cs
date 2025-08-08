@@ -191,7 +191,7 @@ public unsafe partial class CoordsToMapLink : Feature
 
     public override void Enable()
     {
-        parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 30 E8 ?? ?? ?? ?? 48 8B 44 24 30 80 38 00 0F 84", new(HandleParseMessageDetour));
+        parseMessageHook ??= Svc.Hook.HookFromSignature<ParseMessageDelegate>("E8 ?? ?? ?? ?? 48 8B D0 48 8D 4C 24 ?? E8 ?? ?? ?? ?? 48 8B 44 24 ?? 48 8B CE", new(HandleParseMessageDetour));
         parseMessageHook?.Enable();
 
         foreach (var territoryType in Svc.Data.GetExcelSheet<TerritoryType>())

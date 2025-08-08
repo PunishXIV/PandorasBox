@@ -3,7 +3,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons;
 using ECommons.DalamudServices;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.IPC;

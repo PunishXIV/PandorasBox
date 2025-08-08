@@ -2,7 +2,7 @@ using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
@@ -37,7 +37,7 @@ namespace PandorasBox.Features.UI
         {
             if (Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero)
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop");
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
                 if (!addon->IsVisible) return;
 
                 var tradeButton = addon->UldManager.NodeList[2];
@@ -92,7 +92,7 @@ namespace PandorasBox.Features.UI
 
         private void TryTradeAll()
         {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop");
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
             if (!addon->IsVisible) return;
 
             var list = addon->UldManager.NodeList[22]->GetAsAtkComponentList();
@@ -115,7 +115,7 @@ namespace PandorasBox.Features.UI
                         TaskManager.Abort();
                     }
                 });
-                TaskManager.Enqueue(() => Callback.Fire(addon, false, 15, (uint)0), $"Trading{i}");
+                TaskManager.Enqueue(() => ECommons.Automation.Callback.Fire(addon, false, 15, (uint)0), $"Trading{i}");
                 TaskManager.EnqueueDelay(500);
             }
             TaskManager.Enqueue(() => { Trading = false; TaskManager.Abort(); });
@@ -133,7 +133,7 @@ namespace PandorasBox.Features.UI
         {
             if (Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero)
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop");
+                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
                 if (!addon->IsVisible) return;
 
                 var tradeButton = addon->UldManager.NodeList[2];

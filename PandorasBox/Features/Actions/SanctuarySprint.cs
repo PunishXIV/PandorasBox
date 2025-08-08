@@ -39,7 +39,7 @@ namespace PandorasBox.Features
 
         private void RunFeature(IFramework framework)
         {
-            if (MJIManager.Instance()->IsPlayerInSanctuary == 0)
+            if (!MJIManager.Instance()->IsPlayerInSanctuary)
                 return;
 
             if (IsRpWalking() && !Config.RPWalk)

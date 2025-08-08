@@ -7,7 +7,7 @@ using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
@@ -95,7 +95,7 @@ public class AutoVoteMvp : Feature
         if (Svc.ClientState.IsPvP) return;
         CheckForDeadPartyMembers();
 
-        var bannerWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("BannerMIP", 1);
+        var bannerWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("BannerMIP", 1).Address;
         if (bannerWindow == null) return;
 
         try

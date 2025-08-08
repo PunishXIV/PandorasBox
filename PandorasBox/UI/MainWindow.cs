@@ -6,7 +6,7 @@ using Dalamud.Utility;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using PandorasBox.Features;
 using PandorasBox.Features.ChatFeature;
 using PandorasBox.FeaturesSetup;
@@ -144,7 +144,7 @@ internal class MainWindow : Window
 
                     if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
                     {
-                        ImGuiEx.LineCentered("###Logo", () => { ImGui.Image(logo.ImGuiHandle, new(125f.Scale(), 125f.Scale())); });
+                        ImGuiEx.LineCentered("###Logo", () => { ImGui.Image(logo.Handle, new(125f.Scale(), 125f.Scale())); });
 
                     }
 

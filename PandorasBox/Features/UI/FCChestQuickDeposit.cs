@@ -7,7 +7,7 @@ using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
@@ -70,7 +70,7 @@ namespace PandorasBox.Features.UI
 
             if (Config.UseShortcut)
             {
-                if (Svc.GameGui.GetAddonByName("FreeCompanyChest").GetAtkUnitBase(out var addon))
+                if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FreeCompanyChest", out var addon))
                 {
                     if (ImGui.GetIO().KeyCtrl)
                     {
@@ -82,7 +82,8 @@ namespace PandorasBox.Features.UI
 
         private unsafe MenuItem CheckInventoryItem(uint ItemId, bool itemHq, int itemAmount)
         {
-            if (Svc.GameGui.GetAddonByName("FreeCompanyChest").GetAtkUnitBase(out var addon))
+            
+            if (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FreeCompanyChest", out var addon))
             {
                 if (!addon->IsVisible) return null;
                 if (addon->UldManager.NodeList[4]->IsVisible()) return null;
@@ -315,7 +316,7 @@ namespace PandorasBox.Features.UI
 
         private unsafe IntPtr AgentById(AgentId id)
         {
-            var uiModule = (UIModule*)Svc.GameGui.GetUIModule();
+            var uiModule = (UIModule*)Svc.GameGui.GetUIModule().Address;
             var agents = uiModule->GetAgentModule();
             var agent = agents->GetAgentByInternalId(id);
             return (IntPtr)agent;

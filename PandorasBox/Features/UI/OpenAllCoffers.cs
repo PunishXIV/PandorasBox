@@ -99,8 +99,8 @@ namespace PandorasBox.Features.UI
                     if (item->ItemId == ItemId)
                     {
                         var ag = AgentInventoryContext.Instance();
-                        ag->OpenForItemSlot(container->Type, i, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
-                        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1);
+                        ag->OpenForItemSlot(container->Type, i,0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
+                        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1).Address;
                         if (contextMenu != null)
                         {
                             var values = stackalloc AtkValue[5];

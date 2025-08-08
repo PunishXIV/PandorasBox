@@ -28,7 +28,7 @@ namespace PandorasBox.Features.UI
 
         private void PostSetup(AddonEvent type, AddonArgs args)
         {
-            var addon = (AtkUnitBase*)args.Addon;
+            var addon = (AtkUnitBase*)args.Addon.Address;
             var seString = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(addon->AtkValues[0].String));
             if (seString.Payloads.Count < 3 || seString.Payloads[2] is not TextPayload payload2)
             {
