@@ -42,7 +42,7 @@ namespace PandorasBox.Features.Actions
 
         private bool GatheredOnIsland(ConditionFlag flag, bool value)
         {
-            return flag == ConditionFlag.OccupiedInQuestEvent && !value && !MJIManager.Instance()->IsPlayerInSanctuary;
+            return flag == ConditionFlag.OccupiedInQuestEvent && !value && MJIManager.Instance()->IsPlayerInSanctuary;
         }
 
         private void RunFeature(ConditionFlag flag, bool value)
