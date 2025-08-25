@@ -514,11 +514,11 @@ namespace PandorasBox.Features.Other
                 if (addon != null && Config.Gathering)
                 {
                     var ids = new List<uint>();
-                    for (int i = 7; i <= (11 * 8) + 7; i += 11)
+                    for (int i = 6; i <= (11 * 8); i += 11)
                     {
                         ids.Add(addon->AtkValues[i].UInt);
                     }
-
+                    Svc.Log.Debug($"Gathering IDs: {string.Join(", ", ids)}");
                     if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0)))
                     {
                         Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
