@@ -241,8 +241,8 @@ namespace PandorasBox.Features.Other
             var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
             if (addon != null)
             {
-                CurrentIntegrity = addon->AtkValues[110].UInt;
-                MaxIntegrity = addon->AtkValues[111].UInt;
+                CurrentIntegrity = addon->AtkValues[109].UInt;
+                MaxIntegrity = addon->AtkValues[110].UInt;
             }
         }
 
@@ -600,7 +600,7 @@ namespace PandorasBox.Features.Other
                     if (addon == null) return;
 
                     var ids = new List<uint>();
-                    for (int i = 7; i <= (11 * 8) + 7; i += 11)
+                    for (int i = 6; i <= (11 * 8); i += 11)
                     {
                         ids.Add(addon->AtkValues[i].UInt);
                     }
@@ -691,7 +691,7 @@ namespace PandorasBox.Features.Other
                                 QuickGatherToggle(addon);
                             }
 
-                            var integrityLeft = addon->AtkValues[110].UInt;
+                            var integrityLeft = CurrentIntegrity;
                             if (integrityLeft > 1)
                                 ClickGather(lastGatheredIndex);
                         }
