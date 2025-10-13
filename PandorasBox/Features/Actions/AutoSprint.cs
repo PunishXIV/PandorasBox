@@ -44,9 +44,12 @@ namespace PandorasBox.Features.Actions
             if (!TerritoryInfo.Instance()->InSanctuary || MJIManager.Instance()->IsPlayerInSanctuary)
                 return;
 
-            var r = new Regex("/hou/|/ind/");
-            var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString();
-            if (r.IsMatch(loc) && Config.ExcludeHousing) return;
+            if (Config.ExcludeHousing)
+            {
+                var r = new Regex("/hou/|/ind/");
+                var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString();
+                if (r.IsMatch(loc)) return;
+            }
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;
