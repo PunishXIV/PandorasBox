@@ -69,7 +69,7 @@ public class AutoVoteMvp : Feature
             {
                 foreach (var partyMember in Svc.Party)
                 {
-                    Svc.Log.Debug($"Adding {partyMember.Name.GetText()} {partyMember.ObjectId} to premade list");
+                    Svc.Log.Debug($"Adding {partyMember.Name.GetText()} {partyMember.EntityId} to premade list");
                     PremadePartyID.Add(partyMember.Name.GetText());
                 }
             }
@@ -120,20 +120,20 @@ public class AutoVoteMvp : Feature
             foreach (var pm in Svc.Party)
             {
                 if (pm.GameObject == null) continue;
-                if (pm.ObjectId == Svc.ClientState.LocalPlayer.GameObjectId) continue;
+                if (pm.EntityId == Svc.ClientState.LocalPlayer?.GameObjectId) continue;
                 if (pm.GameObject.IsDead)
                 {
-                    if (DeadPlayers.Contains(pm.ObjectId)) continue;
-                    DeadPlayers.Add(pm.ObjectId);
-                    if (DeathTracker.ContainsKey(pm.ObjectId))
-                        DeathTracker[pm.ObjectId] += 1;
+                    if (DeadPlayers.Contains(pm.EntityId)) continue;
+                    DeadPlayers.Add(pm.EntityId);
+                    if (DeathTracker.ContainsKey(pm.EntityId))
+                        DeathTracker[pm.EntityId] += 1;
                     else
-                        DeathTracker.TryAdd(pm.ObjectId, 1);
+                        DeathTracker.TryAdd(pm.EntityId, 1);
 
                 }
                 else
                 {
-                    DeadPlayers.Remove(pm.ObjectId);
+                    DeadPlayers.Remove(pm.EntityId);
                 }
             }
         }
@@ -159,8 +159,8 @@ public class AutoVoteMvp : Feature
         }
 
         var list = Svc.Party.Where(i =>
-        i.ObjectId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.GetText()))
-            .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.ObjectId, hud) - 1), PartyMember))
+        i.EntityId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.GetText()))
+            .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.EntityId, hud) - 1), PartyMember))
             .ToList();
 
         if (!list.Any()) return -1;
@@ -171,7 +171,7 @@ public class AutoVoteMvp : Feature
             {
                 if (deadPlayers.Value >= Config.HowManyDeaths)
                 {
-                    list.RemoveAll(x => x.PartyMember.ObjectId == deadPlayers.Key);
+                    list.RemoveAll(x => x.PartyMember.EntityId == deadPlayers.Key);
                 }
             }
         }

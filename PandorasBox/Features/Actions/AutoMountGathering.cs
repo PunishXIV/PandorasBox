@@ -71,7 +71,7 @@ namespace PandorasBox.Features.Actions
                     {
                         TaskManager.EnqueueWithTimeout(() => Svc.Condition[ConditionFlag.Mounted], 5000);
                         TaskManager.EnqueueWithTimeout(() => Svc.Condition[ConditionFlag.InFlight] || Svc.Condition[ConditionFlag.Diving], 3000);
-                        TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove on"); });
+                        TaskManager.Enqueue(() => { Chat.SendMessage("/automove on"); });
                     }
                 });
             }

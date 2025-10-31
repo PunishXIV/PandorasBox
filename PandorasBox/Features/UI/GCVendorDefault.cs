@@ -64,7 +64,8 @@ namespace PandorasBox.Features.UI
             {
                 0 => addon->GetNodeById(37)->GetAsAtkComponentRadioButton(),
                 1 => addon->GetNodeById(38)->GetAsAtkComponentRadioButton(),
-                2 => addon->GetNodeById(39)->GetAsAtkComponentRadioButton()
+                2 => addon->GetNodeById(39)->GetAsAtkComponentRadioButton(),
+                _ => throw new System.NotImplementedException()
             };
             rankButton->ClickRadioButton((AtkComponentBase*)addon, (uint)defaultRank);
         }
@@ -78,7 +79,8 @@ namespace PandorasBox.Features.UI
                     0 => addon->GetNodeById(46)->GetAsAtkComponentRadioButton(),
                     1 => addon->GetNodeById(44)->GetAsAtkComponentRadioButton(),
                     2 => addon->GetNodeById(45)->GetAsAtkComponentRadioButton(),
-                    3 => addon->GetNodeById(47)->GetAsAtkComponentRadioButton()
+                    3 => addon->GetNodeById(47)->GetAsAtkComponentRadioButton(),
+                    _ => throw new System.NotImplementedException()
                 };
                 var state = tabIndex == defaultTab;
                 tabButton->IsSelected = state;

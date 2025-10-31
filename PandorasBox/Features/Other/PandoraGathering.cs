@@ -901,11 +901,11 @@ namespace PandorasBox.Features.Other
 
             }
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
-            var NodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
+            var NodeId = Svc.ClientState.LocalPlayer?.TargetObject?.BaseId;
             var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
-            Svc.Log.Debug($"{baseNode.Value.RowId}");
-            if (Items.Any(x => x.NodeId == baseNode.Value.RowId)) return true;
-            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode.Value.RowId))) return true;
+            Svc.Log.Debug($"{baseNode?.RowId}");
+            if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
+            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
 
 
             return false;

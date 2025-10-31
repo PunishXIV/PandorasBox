@@ -106,9 +106,9 @@ namespace PandorasBox.Features.Targets
 
                 if (Svc.Targets.Target != null)
                 {
-                    if (nearbyNodes.Any(x => x.DataId == Svc.Targets.Target.DataId))
+                    if (nearbyNodes.Any(x => x.BaseId == Svc.Targets.Target.BaseId))
                     {
-                        var nearestNode = nearbyNodes.First(x => x.DataId == Svc.Targets.Target.DataId);
+                        var nearestNode = nearbyNodes.First(x => x.BaseId == Svc.Targets.Target.BaseId);
                         var baseObj = (GameObject*)nearestNode.Address;
 
                         if (!TargetSystem.Instance()->IsObjectInViewRange(baseObj) || !TargetSystem.Instance()->IsObjectOnScreen(baseObj)) return;

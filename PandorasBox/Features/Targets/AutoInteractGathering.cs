@@ -123,7 +123,7 @@ namespace PandorasBox.Features.Targets
                 return;
             }
 
-            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
+            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
             var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
 
@@ -132,31 +132,31 @@ namespace PandorasBox.Features.Targets
             if (gatheringPoint.GatheringSubCategory.IsValid && !gatheringPoint.GatheringSubCategory.Value.FolkloreBook.IsEmpty)
                 Folklore = gatheringPoint.GatheringSubCategory.Value.FolkloreBook.ToString();
 
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0) && Config.ExcludeTimedUnspoiled)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId == 0) && Config.ExcludeTimedUnspoiled)
                 return;
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.EphemeralStartTime != 65535) && Config.ExcludeTimedEphermeral)
                 return;
-            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.DataId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
+            if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
                 return;
 
             if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
+                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
+                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
             if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
-                TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/automove off"); });
+                TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }

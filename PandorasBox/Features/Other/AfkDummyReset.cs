@@ -51,7 +51,7 @@ namespace PandorasBox.Features.Other
 
                     var delay = (Config.InactivityTimer * 1000) + (Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Action>().GetRow(am->GetAdjustedActionId(acId)).Cast100ms * 100);
                     TaskManager.EnqueueDelay(delay);
-                    TaskManager.Enqueue(() => { Chat.Instance.SendMessage("/presetenmity"); });
+                    TaskManager.Enqueue(() => { Chat.SendMessage("/presetenmity"); });
                 }
                 catch(Exception ex)
                 {

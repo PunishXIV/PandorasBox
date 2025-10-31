@@ -17,7 +17,7 @@ namespace PandorasBox.Features.Commands
         {
             if (GameMain.Instance()->CurrentContentFinderConditionId != 0 && !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat])
             {
-                Chat.Instance.SendMessage("/dfinder");
+                Chat.SendMessage("/dfinder");
                 if (Svc.GameGui.GetAddonByName("ContentsFinderMenu") != IntPtr.Zero)
                 {
                     var ui = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContentsFinderMenu").Address;
