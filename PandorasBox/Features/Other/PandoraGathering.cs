@@ -376,12 +376,6 @@ namespace PandorasBox.Features.Other
 
                 if (ImGui.Checkbox("Remember Item", ref Config.RememberLastNode))
                     SaveConfig(Config);
-                if (Config.RememberLastNode)
-                {
-                    using var _ = ImRaii.PushIndent();
-                    if (ImGui.Checkbox("Don't Buff if Item Not Present", ref Config.DontBuffIfItemNotPresent))
-                        SaveConfig(Config);
-                }
 
                 if (ImGui.IsItemHovered() && InDiadem)
                 {
@@ -743,6 +737,13 @@ namespace PandorasBox.Features.Other
 
             if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
                 SaveConfig(Config);
+
+            if (Config.RememberLastNode)
+            {
+                using var _ = ImRaii.PushIndent();
+                if (ImGui.Checkbox("Don't Buff if Item Not Present", ref Config.DontBuffIfItemNotPresent))
+                    SaveConfig(Config);
+            }
 
             if (ImGui.IsItemHovered() && InDiadem)
             {
