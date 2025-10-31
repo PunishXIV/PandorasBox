@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog":  "- New command /puseitem."
+    "ChangeLog":  "- Slow down chest opening."
 }

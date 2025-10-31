@@ -1,6 +1,7 @@
 using Dalamud.Game.ClientState.Objects.Enums;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
+using ECommons.Throttlers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.Control;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
@@ -49,6 +50,9 @@ namespace PandorasBox.Features.Targets
         {
             CloseWindow();
 
+            if (!EzThrottler.Throttle("ChestThrottle", 200))
+                return;
+
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
                 return;
 
@@ -60,27 +64,24 @@ namespace PandorasBox.Features.Targets
             var treasure = Svc.Objects.FirstOrDefault(o =>
             {
                 if (o == null) return false;
-                var dis = Vector3.Distance(player.Position, o.Position) - player.HitboxRadius - o.HitboxRadius;
-                if (dis > 0.5f) return false;
+                var dis = Vector3.Distance(player.Position, o.Position);
+                if (dis > 2f) return false;
 
                 var obj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)o.Address;
                 if (!obj->GetIsTargetable()) return false;
                 if ((ObjectKind)obj->ObjectKind != ObjectKind.Treasure) return false;
 
-                // Opened
                 foreach (var item in Loot.Instance()->Items)
                     if (item.ChestObjectId == o.GameObjectId) return false;
+
+                var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)obj;
+                if (tr->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened) ||
+                    tr->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.FadedOut)) return false;
 
                 return true;
             });
 
             if (treasure == null) return;
-            if (DateTime.Now < NextOpenTime) return;
-            if (treasure.GameObjectId == LastChestId && DateTime.Now - NextOpenTime < TimeSpan.FromSeconds(10)) return;
-
-            NextOpenTime = DateTime.Now.AddSeconds(new Random().NextDouble() + 0.2);
-            LastChestId = treasure.GameObjectId;
-
             try
             {
                 Svc.Targets.Target = treasure;
