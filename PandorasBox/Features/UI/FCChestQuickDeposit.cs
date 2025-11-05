@@ -119,7 +119,8 @@ namespace PandorasBox.Features.UI
                         100 => (uint)InventoryType.FreeCompanyPage2,
                         99 => (uint)InventoryType.FreeCompanyPage3,
                         98 => (uint)InventoryType.FreeCompanyPage4,
-                        97 => (uint)InventoryType.FreeCompanyPage5
+                        97 => (uint)InventoryType.FreeCompanyPage5,
+                        _ => throw new NotImplementedException()
                     };
                 }
             }

@@ -47,7 +47,7 @@ namespace PandorasBox.Features.Other
             if (!baseObj->GetIsTargetable())
                 return;
 
-            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.DataId);
+            var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
 
             if (Svc.ClientState.LocalPlayer.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() != 2 && (job is 0 or 1 or 2 or 3))

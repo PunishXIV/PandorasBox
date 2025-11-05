@@ -1,3 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Numerics;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Conditions;
@@ -6,23 +11,18 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Hooking;
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Components;
+using Dalamud.Interface.Utility.Raii;
 using ECommons;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.Gamepad;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
 using Action = Lumina.Excel.Sheets.Action;
 
 namespace PandorasBox.Features.Other
@@ -165,6 +165,8 @@ namespace PandorasBox.Features.Other
             public bool Gathering = false;
 
             public bool RememberLastNode = false;
+
+            public bool DontBuffIfItemNotPresent = false;
 
             public bool Use500GPYield = false;
 
@@ -357,7 +359,7 @@ namespace PandorasBox.Features.Other
 
                 ImGui.Dummy(new Vector2(2f));
 
-                ImGui.Columns(3,default, false);
+                ImGui.Columns(3, default, false);
 
                 if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
                 {
@@ -612,6 +614,12 @@ namespace PandorasBox.Features.Other
                         return;
                     }
 
+                    if (Config.RememberLastNode && Config.DontBuffIfItemNotPresent && !ids.Any(x => x is not 0 && x == lastGatheredItem))
+                    {
+                        Svc.Log.Debug("Last gathered item not found in current node.");
+                        return;
+                    }
+
                     var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
                     if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
                     {
@@ -729,6 +737,13 @@ namespace PandorasBox.Features.Other
 
             if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
                 SaveConfig(Config);
+
+            if (Config.RememberLastNode)
+            {
+                using var _ = ImRaii.PushIndent();
+                if (ImGui.Checkbox("Don't Buff if Item Not Present", ref Config.DontBuffIfItemNotPresent))
+                    SaveConfig(Config);
+            }
 
             if (ImGui.IsItemHovered() && InDiadem)
             {
@@ -853,7 +868,7 @@ namespace PandorasBox.Features.Other
                 var checkBox = addon->GetNodeById(17 + (uint)index)->GetAsAtkComponentCheckBox();
                 if (checkBox is null) return;
                 checkBox->AtkComponentButton.IsChecked = true;
-               ECommons.Automation.Callback.Fire(addon, true, index);
+                ECommons.Automation.Callback.Fire(addon, true, index);
                 CheckNodeAndClick(index);
             });
         }
@@ -887,11 +902,11 @@ namespace PandorasBox.Features.Other
 
             }
             if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
-            var NodeId = Svc.ClientState.LocalPlayer?.TargetObject?.DataId;
+            var NodeId = Svc.ClientState.LocalPlayer?.TargetObject?.BaseId;
             var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
-            Svc.Log.Debug($"{baseNode.Value.RowId}");
-            if (Items.Any(x => x.NodeId == baseNode.Value.RowId)) return true;
-            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode.Value.RowId))) return true;
+            Svc.Log.Debug($"{baseNode?.RowId}");
+            if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
+            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
 
 
             return false;
