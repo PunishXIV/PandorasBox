@@ -80,7 +80,7 @@ namespace PandorasBox.Features
 
         public virtual void Enable()
         {
-            Svc.Log.Debug($"Enabling {Name}");
+            Svc.Log.Debug($"Enabling {Name} / {this.GetType().Name}");
             Enabled = true;
             if (UseAFKTimer)
                 Svc.Framework.Update += UpdateTimer;
