@@ -8,6 +8,13 @@ namespace PandorasBox.IPC
 {
     internal static class PandoraIPC
     {
+        // Feature Description: Non-internal IPCs use the feature's Name property to identify features, while
+        // internal IPCs use the class name of the feature
+        // e.g Non-internal: "Auto-Summon Chocobo", Internal: "AutoChocobo"
+        // Config IPCs share this distinction as well, except both versions use the config property name as its argument and not the display name
+        // e.g Non-internal: ("Auto-Summon Chocobo", "UseInCombat"), Internal: ("AutoChocobo", "UseInCombat")
+
+
         private static TaskManager TM = new() { RemainingTimeMS = 1000 * 60 * 60 * 24 };
         internal static void Init()
         {
