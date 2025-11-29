@@ -170,7 +170,7 @@ namespace PandorasBox.Features.Actions
             if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
+                addon->AtkUnitBase.GetNodeById(2)->IsVisible())
             {
                 new AddonMaster.SelectYesno((IntPtr)addon).Yes();
                 return true;
