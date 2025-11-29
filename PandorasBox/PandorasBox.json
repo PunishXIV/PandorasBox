@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog":  "- Update some methods for placing buttons (more to come)."
+    "ChangeLog":  "- Update some methods for placing buttons (more to come).\n- Fix Reset Enmity from skipping non-targeted dummies"
 }

@@ -14,7 +14,7 @@ namespace PandorasBox.Features.Actions
 {
     public unsafe class AutoMountCombat : Feature
     {
-        public override string Name => "Auto-Mount After Combat ";
+        public override string Name => "Auto-Mount After Combat";
 
         public override string Description => "Mounts upon ending combat.";
 

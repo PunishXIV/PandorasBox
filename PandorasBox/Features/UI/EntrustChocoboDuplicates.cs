@@ -45,7 +45,7 @@ namespace PandorasBox.Features.UI
             var addon = (AddonInventoryBuddy*)Svc.GameGui.GetAddonByName("InventoryBuddy").Address;
             if (addon != null && addon->AtkUnitBase.IsVisible)
             {
-                var node = addon->AtkUnitBase.UldManager.NodeList[3];
+                var node = addon->AtkUnitBase.GetNodeById(83);
 
                 if (node == null)
                     return;
