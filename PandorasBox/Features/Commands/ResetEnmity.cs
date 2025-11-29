@@ -1,9 +1,12 @@
+using Dalamud.Game.ClientState.Objects.Types;
 using ECommons.DalamudServices;
+using ECommons.GameFunctions;
 using FFXIVClientStructs.FFXIV.Client.Game.Character;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using Character = Dalamud.Game.ClientState.Objects.Types.ICharacter;
 
@@ -57,21 +60,27 @@ namespace PandorasBox.Features.Commands
 
         private void ResetAll()
         {
-            var addonByName = Svc.GameGui.GetAddonByName("_EnemyList", 1);
-            if (addonByName != IntPtr.Zero)
+            foreach (var dummy in Svc.Objects.Where(x => x is IBattleChara ch && ch.NameId == 541))
             {
-                var addon = (AddonEnemyList*)addonByName.Address;
-                // the 21 works now, but if this doesn't in the future, check this. It used to be 19.
-                var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUIModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[21];
-
-                for (var i = 0; i < addon->EnemyCount; i++)
-                {
-                    var enemyObjectId = numArray->IntArray[8 + i * 6];
-                    var enemyChara = CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)enemyObjectId);
-                    if (enemyChara is null) continue;
-                    if (enemyChara->Character.NameId == 541) Reset(enemyObjectId);
-                }
+                Reset((int)dummy.GameObjectId);
             }
+
+            //var addonByName = Svc.GameGui.GetAddonByName("_EnemyList", 1);
+            //if (addonByName != IntPtr.Zero)
+            //{
+            //    var addon = (AddonEnemyList*)addonByName.Address;
+
+            //    //the 21 works now, but if this doesn't in the future, check this. It used to be 19.
+            //    var numArray = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()->GetUIModule()->GetRaptureAtkModule()->AtkModule.AtkArrayDataHolder.NumberArrays[21];
+
+            //    for (var i = 0; i < addon->EnemyCount; i++)
+            //    {
+            //        var enemyObjectId = numArray->IntArray[8 + i * 6];
+            //        var enemyChara = CharacterManager.Instance()->LookupBattleCharaByEntityId((uint)enemyObjectId);
+            //        if (enemyChara is null) continue;
+            //        if (enemyChara->Character.NameId == 541) Reset(enemyObjectId);
+            //    }
+            //}
         }
     }
 }
