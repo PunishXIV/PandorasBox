@@ -40,7 +40,7 @@ namespace PandorasBox.Features.UI
                 var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
                 if (!addon->IsVisible) return;
 
-                var tradeButton = addon->UldManager.NodeList[2];
+                var tradeButton = addon->GetNodeById(51);
 
                 if (tradeButton->IsVisible())
                     tradeButton->ToggleVisibility(false);
