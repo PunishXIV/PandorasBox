@@ -45,7 +45,7 @@ namespace PandorasBox.Features
             {
                 if (TryGetAddonByName<AddonRepair>("Repair", out var addon))
                 {
-                    if (!addon->IsVisible)
+                    if (!addon->IsVisible || !addon->IsFullyLoaded())
                     {
                         Repairing = false;
                         TaskManager.Abort();

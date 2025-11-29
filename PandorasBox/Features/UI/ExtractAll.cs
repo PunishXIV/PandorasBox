@@ -42,7 +42,7 @@ namespace PandorasBox.Features.UI
                 if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero)
                 {
                     var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1).Address;
-                    if (!ptr->IsVisible)
+                    if (!ptr->IsVisible || !ptr->IsFullyLoaded())
                         return;
 
                     var node = ptr->UldManager.NodeList[2];

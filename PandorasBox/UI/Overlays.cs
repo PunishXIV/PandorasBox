@@ -10,7 +10,6 @@ namespace PandorasBox.UI
 {
     internal class Overlays : Window
     {
-        public bool DalamudErrorBs;
         private Feature Feature { get; set; }
         public Overlays(Feature t) : base($"###Overlay{t.Name}", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoBackground | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.AlwaysAutoResize, true)
         {
@@ -31,21 +30,17 @@ namespace PandorasBox.UI
             P.Ws.AddWindow(this);
         }
 
-        public void ForceDisableErrors()
+        public override void Draw()
         {
-            DalamudErrorBs = (bool)this.GetFoP("hasError");
-
-            if (this.DalamudErrorBs)
-                this.SetFoP("hasError", false);
+            try
+            {
+                Feature.Draw();
+            }
+            catch (Exception ex)
+            {
+                Svc.Log.Error(ex, $"Error in overlay Draw() for feature {Feature.Name}");
+            }
         }
-
-        public override void PreDraw()
-        {
-            ForceDisableErrors();
-            base.PreDraw();
-        }
-
-        public override void Draw() => Feature.Draw();
 
         public override bool DrawConditions() => Feature.Enabled && Feature.DrawConditions();
     }

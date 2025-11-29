@@ -43,7 +43,7 @@ namespace PandorasBox.Features.UI
         public override void Draw()
         {
             var addon = (AddonInventoryBuddy*)Svc.GameGui.GetAddonByName("InventoryBuddy").Address;
-            if (addon != null && addon->AtkUnitBase.IsVisible)
+            if (addon != null && addon->AtkUnitBase.IsVisible && addon->IsFullyLoaded())
             {
                 var node = addon->AtkUnitBase.GetNodeById(83);
 

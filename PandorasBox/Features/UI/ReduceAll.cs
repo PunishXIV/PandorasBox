@@ -41,7 +41,7 @@ namespace PandorasBox.Features.UI
                 if (addon == null)
                     return;
 
-                if (!addon->IsVisible)
+                if (!addon->IsVisible || !addon->IsFullyLoaded())
                 {
                     Reducing = false;
                     TaskManager.Abort();
