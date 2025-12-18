@@ -96,7 +96,7 @@ namespace PandorasBox.Features.Targets
             if (Svc.ClientState.LocalPlayer is null) return;
             if (Svc.ClientState.LocalPlayer.IsCasting) return;
             if (Svc.Condition[ConditionFlag.Jumping]) return;
-            if (Config.ZoneWhitelist.Count > 0 && !Config.ZoneWhitelist.Contains(Player.Territory)) return;
+            if (Config.ZoneWhitelist.Count > 0 && !Config.ZoneWhitelist.Contains(Player.Territory.RowId)) return;
 
             var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && Vector3.Distance(x.Position, Player.Object.Position) < 4 && GameObjectHelper.GetHeightDifference(x) <= 4 && x.IsTargetable).ToList();
             if (nearbyNodes.Count == 0)
