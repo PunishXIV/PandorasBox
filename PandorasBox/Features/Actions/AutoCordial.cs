@@ -41,15 +41,15 @@ namespace PandorasBox.Features.Actions
 
         private static bool WillOvercap(int gp_recovery)
         {
-            return ((int)Svc.ClientState.LocalPlayer!.CurrentGp + gp_recovery) > (int)Svc.ClientState.LocalPlayer.MaxGp;
+            return ((int)Svc.Objects.LocalPlayer!.CurrentGp + gp_recovery) > (int)Svc.Objects.LocalPlayer.MaxGp;
         }
 
         private void RunFeature(IFramework framework)
         {
-            if (Svc.ClientState.LocalPlayer is null) return;
-            if (!(Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 16 || Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 17 || Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 18)) return;
-            if (Svc.ClientState.LocalPlayer.ClassJob.Value.RowId == 18 && !Config.UseOnFisher) return;
-            if (Svc.ClientState.LocalPlayer.CurrentGp >= Config.Threshold) return;
+            if (Svc.Objects.LocalPlayer is null) return;
+            if (!(Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 16 || Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 17 || Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 18)) return;
+            if (Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 18 && !Config.UseOnFisher) return;
+            if (Svc.Objects.LocalPlayer.CurrentGp >= Config.Threshold) return;
 
             var im = InventoryManager.Instance();
             var inv1 = im->GetInventoryContainer(InventoryType.Inventory1);

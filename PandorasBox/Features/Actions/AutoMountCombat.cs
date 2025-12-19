@@ -64,7 +64,7 @@ namespace PandorasBox.Features.Actions
         private static bool NotInCombat => !Svc.Condition[ConditionFlag.InCombat];
         private bool? TryMount()
         {
-            if (Svc.ClientState.LocalPlayer is null) return false;
+            if (Svc.Objects.LocalPlayer is null) return false;
             if (Svc.Condition[ConditionFlag.InCombat]) return false;
             if (Config.DisableInFates && FateManager.Instance()->CurrentFate != null) return false;
             if (Svc.Condition[ConditionFlag.Mounted]) return true;

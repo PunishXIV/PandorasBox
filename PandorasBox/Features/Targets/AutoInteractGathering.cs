@@ -93,8 +93,8 @@ namespace PandorasBox.Features.Targets
             if (Svc.Condition[ConditionFlag.Gathering] || Svc.Condition[ConditionFlag.OccupiedInQuestEvent])
                 return;
 
-            if (Svc.ClientState.LocalPlayer is null) return;
-            if (Svc.ClientState.LocalPlayer.IsCasting) return;
+            if (Svc.Objects.LocalPlayer is null) return;
+            if (Svc.Objects.LocalPlayer.IsCasting) return;
             if (Svc.Condition[ConditionFlag.Jumping]) return;
             if (Config.ZoneWhitelist.Count > 0 && !Config.ZoneWhitelist.Contains(Player.Territory.RowId)) return;
 
@@ -125,7 +125,7 @@ namespace PandorasBox.Features.Targets
 
             var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
             var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
-            var targetGp = Math.Min(Config.RequiredGP, Svc.ClientState.LocalPlayer.MaxGp);
+            var targetGp = Math.Min(Config.RequiredGP, Svc.Objects.LocalPlayer.MaxGp);
 
             string Folklore = "";
 
@@ -139,21 +139,21 @@ namespace PandorasBox.Features.Targets
             if (Svc.Data.GetExcelSheet<GatheringPointTransient>().Any(x => x.RowId == nearestNode.BaseId && x.GatheringRarePopTimeTable.Value.RowId > 0 && Folklore.Length > 0 && gatheringPoint.GatheringSubCategory.Value.Item.RowId != 0) && Config.ExcludeTimedLegendary)
                 return;
 
-            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 16 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeMiner && job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId == 16 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 17 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeBotanist && job is 2 or 3 && Svc.Objects.LocalPlayer.ClassJob.RowId == 17 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });
                 TaskManager.EnqueueWithTimeout(() => { TargetSystem.Instance()->OpenObjectInteraction(baseObj); return true; }, 1000);
                 return;
             }
-            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.ClientState.LocalPlayer.ClassJob.RowId == 18 && Svc.ClientState.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
+            if (!Config.ExcludeFishing && job is 4 or 5 && Svc.Objects.LocalPlayer.ClassJob.RowId == 18 && Svc.Objects.LocalPlayer.CurrentGp >= targetGp && !TaskManager.IsBusy)
             {
                 TaskManager.EnqueueDelay((int)(Config.Throttle * 1000));
                 TaskManager.Enqueue(() => { Chat.SendMessage("/automove off"); });

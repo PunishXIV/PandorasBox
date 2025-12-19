@@ -35,19 +35,6 @@ namespace PandorasBox.Features.UI
                     }
                 }
             }
-
-            if (args.AddonName == "SalvageDialog")
-            {
-                if (TryGetAddonByName<AddonSalvageDialog>("SalvageDialog", out var addon))
-                {
-                    if (!addon->DesynthesizeButton->IsEnabled)
-                    {
-                        addon->DesynthesizeButton->AtkComponentBase.SetEnabledState(true);
-                        addon->AtkUnitBase.UldManager.NodeList[5]->ToggleVisibility(false);
-                        addon->AtkUnitBase.SetFocusNode(addon->DesynthesizeButton->AtkComponentBase.AtkResNode);
-                    }
-                }
-            }
         }
 
         public override void Disable()

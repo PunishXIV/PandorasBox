@@ -74,7 +74,7 @@ namespace PandorasBox.Features.Other
                 if (zone.ExVersion.RowId == 4 && Config.ExcludeEW) return;
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Config.ExcludeCombat) return;
 
-                if (Svc.ClientState.LocalPlayer?.Level > FateMaxLevel)
+                if (Svc.Objects.LocalPlayer?.Level > FateMaxLevel)
                 Chat.SendMessage("/lsync");
             }
         }

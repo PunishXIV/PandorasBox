@@ -35,8 +35,8 @@ namespace PandorasBox.Features.Actions
 
         private unsafe void CheckMotifs(IFramework framework)
         {
-            if (Svc.ClientState.LocalPlayer is null) return;
-            if (Svc.ClientState.LocalPlayer.ClassJob.RowId != 42) return;
+            if (Svc.Objects.LocalPlayer is null) return;
+            if (Svc.Objects.LocalPlayer.ClassJob.RowId != 42) return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) return;
             if (TerritoryInfo.Instance()->InSanctuary) return;
 

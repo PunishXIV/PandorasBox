@@ -1,5 +1,6 @@
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using ECommons;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
@@ -69,7 +70,7 @@ namespace PandorasBox.Features.UI
                 }
                 catch (Exception ex)
                 {
-
+                    ex.Log();
                 }
             }
 
@@ -94,7 +95,7 @@ namespace PandorasBox.Features.UI
                 }
                 catch (Exception ex)
                 {
-
+                    ex.Log();
                 }
             }
 

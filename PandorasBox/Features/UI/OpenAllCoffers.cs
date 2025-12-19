@@ -132,7 +132,7 @@ namespace PandorasBox.Features.UI
                             contextMenu->FireCallback(5, values, true);
 
                             TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.ClientState.LocalPlayer.GameObjectId) == 0);
+                            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer.GameObjectId) == 0);
                             TaskManager.Enqueue(() => ActionManager.Instance()->AnimationLock == 0);
                             TaskManager.Enqueue(() => OpenItem(ItemId));
 

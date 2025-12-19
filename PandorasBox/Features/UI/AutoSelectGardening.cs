@@ -63,7 +63,7 @@ namespace PandorasBox.Features.UI
 
         private void RunFeature(IFramework framework)
         {
-            if (Svc.ClientState.LocalPlayer == null) return;
+            if (Svc.Objects.LocalPlayer == null) return;
             if (Config.IncludeFertilzing && (Svc.GameGui.GetAddonByName("InventoryExpansion") != IntPtr.Zero || Svc.GameGui.GetAddonByName("Inventory") != IntPtr.Zero || Svc.GameGui.GetAddonByName("InventoryLarge") != IntPtr.Zero) && !Fertilized)
             {
                 if (Config.SelectedFertilizer == 0) goto SoilSeeds;

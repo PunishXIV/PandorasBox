@@ -120,7 +120,7 @@ public class AutoVoteMvp : Feature
             foreach (var pm in Svc.Party)
             {
                 if (pm.GameObject == null) continue;
-                if (pm.EntityId == Svc.ClientState.LocalPlayer?.GameObjectId) continue;
+                if (pm.EntityId == Svc.Objects.LocalPlayer?.GameObjectId) continue;
                 if (pm.GameObject.IsDead)
                 {
                     if (DeadPlayers.Contains(pm.EntityId)) continue;
