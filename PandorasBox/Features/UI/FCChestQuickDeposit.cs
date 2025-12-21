@@ -35,7 +35,7 @@ namespace PandorasBox.Features.UI
 
         private IContextMenu contextMenu;
 
-        private static readonly SeString DepositString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Deposit into FC Chest"));
+        private static readonly SeString DepositString = new SeString().Append(new TextPayload("Deposit into FC Chest"));
 
         public override bool UseAutoConfig => true;
         public class Configs : FeatureConfig
@@ -89,10 +89,12 @@ namespace PandorasBox.Features.UI
                 if (addon->UldManager.NodeList[4]->IsVisible()) return null;
                 if (addon->UldManager.NodeList[7]->IsVisible()) return null;
 
+                if (ItemId >= 1_000_000) ItemId -= 1_000_000;
                 if (Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == ItemId, out var sheetItem))
                 {
                     if (sheetItem.IsUntradable) return null;
                     var menu = new MenuItem();
+                    menu.Prefix = Dalamud.Game.Text.SeIconChar.BoxedLetterP;
                     menu.Name = DepositString;
                     menu.OnClicked += _ => DepositItem(ItemId, addon, itemHq, itemAmount);
                     return menu;
