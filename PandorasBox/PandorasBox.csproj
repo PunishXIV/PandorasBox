@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/13.0.0">
+<Project Sdk="Dalamud.NET.Sdk/14.0.1">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
         <Version>1.6.3.24</Version>
@@ -19,13 +19,12 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ECommons" Version="3.1.0.3" />
+        <PackageReference Include="ECommons" Version="3.1.0.6" />
         <PackageReference Include="NAudio" Version="2.1.0" />
         <Reference Include="JetBrains.Annotations">
             <Private>false</Private>
             <HintPath>$(DalamudLibPath)\JetBrains.Annotations.dll</HintPath>
         </Reference>
-        <PackageReference Update="DalamudPackager" Version="13.0.0" />
     </ItemGroup>
 
     <ItemGroup>
