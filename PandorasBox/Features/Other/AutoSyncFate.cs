@@ -73,9 +73,11 @@ namespace PandorasBox.Features.Other
                 if (zone.ExVersion.RowId == 3 && Config.ExcludeShB) return;
                 if (zone.ExVersion.RowId == 4 && Config.ExcludeEW) return;
                 if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Config.ExcludeCombat) return;
+                // lsync does not work for DoH/DoL, so exclude them
+                if (Svc.Objects.LocalPlayer?.ClassJob.Value.ClassJobCategory is { RowId: 32 or 33 }) return;
 
                 if (Svc.Objects.LocalPlayer?.Level > FateMaxLevel)
-                Chat.SendMessage("/lsync");
+                    Chat.SendMessage("/lsync");
             }
         }
         private void CheckFates(IFramework framework)
@@ -84,7 +86,6 @@ namespace PandorasBox.Features.Other
             {
                 FateMaxLevel = FateManager.Instance()->CurrentFate->MaxLevel;
                 FateID = FateManager.Instance()->CurrentFate->FateId;
-              
             }
             else
             {
