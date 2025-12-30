@@ -4,9 +4,8 @@ using System.Numerics;
 
 namespace PandorasBox.Helpers
 {
-    internal static class AtkResNodeHelper
+    public static unsafe class AtkResNodeHelper
     {
-
         public static unsafe bool GetAtkUnitBase(this nint ptr, out AtkUnitBase* atkUnitBase)
         {
             if (ptr == IntPtr.Zero) { atkUnitBase = null;  return false; }
@@ -40,6 +39,20 @@ namespace PandorasBox.Helpers
             }
 
             return scale;
+        }
+
+        public static T* SearchNodeById<T>(this AtkUldManager atkUldManager, uint nodeId) where T : unmanaged
+        {
+            foreach (var node in atkUldManager.Nodes)
+            {
+                if (node.Value is not null)
+                {
+                    if (node.Value->NodeId == nodeId)
+                        return (T*)node.Value;
+                }
+            }
+
+            return null;
         }
     }
 }
