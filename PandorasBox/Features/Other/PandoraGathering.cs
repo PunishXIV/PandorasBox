@@ -319,7 +319,7 @@ namespace PandorasBox.Features.Other
                     1 => LightTheme,
                     2 => ClassicFFTheme,
                     3 => LightBlueTheme,
-                    _ => throw new NotImplementedException()
+                    _ => DarkTheme
                 };
 
                 if (color == 3)

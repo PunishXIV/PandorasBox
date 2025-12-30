@@ -83,7 +83,6 @@ namespace PandorasBox.Features.Targets
             if (treasure == null) return;
             try
             {
-                Svc.Targets.Target = treasure;
                 TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)treasure.Address);
                 if (Config.CloseLootWindow)
                 {
