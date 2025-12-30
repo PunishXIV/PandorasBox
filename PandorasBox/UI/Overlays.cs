@@ -2,6 +2,9 @@ using Dalamud.Interface.Windowing;
 using Dalamud.Bindings.ImGui;
 using PandorasBox.Features;
 using System.Linq;
+using ECommons.Reflection;
+using ECommons.DalamudServices;
+using System;
 
 namespace PandorasBox.UI
 {
@@ -27,7 +30,17 @@ namespace PandorasBox.UI
             P.Ws.AddWindow(this);
         }
 
-        public override void Draw() => Feature.Draw();
+        public override void Draw()
+        {
+            try
+            {
+                Feature.Draw();
+            }
+            catch (Exception ex)
+            {
+                Svc.Log.Error(ex, $"Error in overlay Draw() for feature {Feature.Name}");
+            }
+        }
 
         public override bool DrawConditions() => Feature.Enabled && Feature.DrawConditions();
     }

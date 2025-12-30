@@ -24,7 +24,7 @@ namespace PandorasBox.Features.Targets
         {
             var fate = FateManager.Instance();
             var am = ActionManager.Instance();
-            if (fate != null && fate->CurrentFate != null && Svc.ClientState.LocalPlayer?.Level < fate->FateDirector->FateLevel + 6)
+            if (fate != null && fate->CurrentFate != null && Svc.Objects.LocalPlayer?.Level < fate->FateDirector->FateLevel + 6)
             {
                 var tar = Svc.Targets.Target;
                 if (tar == null || tar.IsDead || (tar.Struct()->FateId == 0 && tar.IsHostile()))

@@ -50,11 +50,11 @@ namespace PandorasBox.Features
 
         private void RunFeature(IFramework framework)
         {
-            if (Svc.ClientState.LocalPlayer == null) return;
+            if (Svc.Objects.LocalPlayer == null) return;
 
             if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[ConditionFlag.InCombat]) return;
-            if (Svc.ClientState.LocalPlayer is null) return;
+            if (Svc.Objects.LocalPlayer is null) return;
             var r = new Regex("/hou/|/ind/");
             if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString()) && Config.ExcludeHousing) return;
 
@@ -66,7 +66,7 @@ namespace PandorasBox.Features
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
-            var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+            var hasPeletonBuff = Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && IsMoving() && !TaskManager.IsBusy)
             {
@@ -80,12 +80,12 @@ namespace PandorasBox.Features
         {
             if (IsRpWalking() && !Config.RPWalk) return;
             if (Svc.Condition[ConditionFlag.InCombat]) return;
-            if (Svc.ClientState.LocalPlayer is null) return;
+            if (Svc.Objects.LocalPlayer is null) return;
             if (Config.OnlyInDuty && GameMain.Instance()->CurrentContentFinderConditionId == 0) return;
 
             var am = ActionManager.Instance();
             var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
-            var hasPeletonBuff = Svc.ClientState.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+            var hasPeletonBuff = Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
 
             if (isPeletonReady && !hasPeletonBuff && IsMoving())
             {

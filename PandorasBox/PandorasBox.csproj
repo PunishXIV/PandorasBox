@@ -2,10 +2,14 @@
 <Project Sdk="Dalamud.NET.Sdk/13.0.0">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>1.6.3.18</Version>
+        <Version>1.6.3.26</Version>
         <LangVersion>preview</LangVersion>
+        <TargetFramework>net10.0-windows7.0</TargetFramework>
     </PropertyGroup>
 
+    <PropertyGroup>
+        <NoWarn>CS8625;MSB3277</NoWarn>
+    </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <OutputPath>bin/Release</OutputPath>
     </PropertyGroup>
@@ -15,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ECommons" Version="3.0.1.7" />
+        <PackageReference Include="ECommons" Version="3.1.0.6" />
         <PackageReference Include="NAudio" Version="2.1.0" />
         <Reference Include="JetBrains.Annotations">
             <Private>false</Private>

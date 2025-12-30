@@ -24,7 +24,7 @@ namespace PandorasBox.Features.Commands
                 debug = args[0];
             }
 
-            var questsheet = Svc.Data.GetExcelSheet<Quest>();
+            var questsheet = Svc.Data.GetExcelSheet<TempQuest>();
             var uim = UIState.Instance();
 
             var filteredList = questsheet.Where(x => x.JournalGenre.Value.Icon == 61412 && !string.IsNullOrEmpty(x.Name.ToString()));

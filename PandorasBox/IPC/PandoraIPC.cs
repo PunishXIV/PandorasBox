@@ -172,7 +172,6 @@ namespace PandorasBox.IPC
             return null;
         }
 
-        //OK AND THIS ONE AS WELL
         private static void SetFeatureEnabledInternal(string internalName, bool state)
         {
             foreach (var feature in P.Features)

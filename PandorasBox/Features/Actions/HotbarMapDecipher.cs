@@ -47,7 +47,7 @@ namespace PandorasBox.Features.Actions
         {
             if (actionType == 2)
             {
-                if (ActionManager.Instance()->GetActionStatus(ActionType.Item, actionID, Svc.ClientState.LocalContentId) != 0)
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Item, actionID, Svc.PlayerState.ContentId) != 0)
                 {
                     TaskManager.Abort();
                     return UseActionHook!.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
@@ -170,7 +170,7 @@ namespace PandorasBox.Features.Actions
             if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
+                addon->AtkUnitBase.GetNodeById(2)->IsVisible())
             {
                 new AddonMaster.SelectYesno((IntPtr)addon).Yes();
                 return true;

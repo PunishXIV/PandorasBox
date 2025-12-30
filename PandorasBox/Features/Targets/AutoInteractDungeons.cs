@@ -90,7 +90,7 @@ namespace PandorasBox.Features.Targets
                 TaskManager.Abort();
                 return;
             }
-            if (Svc.ClientState.LocalPlayer == null) return;
+            if (Svc.Objects.LocalPlayer == null) return;
 
             if (GameMain.Instance()->CurrentContentFinderConditionId > 0)
             {

@@ -41,7 +41,7 @@ namespace PandorasBox.Features.UI
                 if (addon == null)
                     return;
 
-                if (!addon->IsVisible)
+                if (!addon->IsVisible || !addon->IsFullyLoaded())
                 {
                     Reducing = false;
                     TaskManager.Abort();
@@ -49,7 +49,7 @@ namespace PandorasBox.Features.UI
                     return;
                 }
 
-                var node = addon->UldManager.NodeList[5];
+                var node = addon->GetNodeById(2);
 
                 if (node == null)
                     return;

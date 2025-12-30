@@ -85,9 +85,9 @@ namespace PandorasBox.Features.UI
             try
             {
                 var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1).Address;
-                if (addon != null && addon->AtkUnitBase.IsVisible)
+                if (addon != null && addon->AtkUnitBase.IsVisible && addon->IsFullyLoaded())
                 {
-                    var node = addon->AtkUnitBase.UldManager.NodeList[12];
+                    var node = addon->AtkUnitBase.GetNodeById(6);
 
                     if (node == null)
                         return;

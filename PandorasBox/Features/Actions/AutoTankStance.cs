@@ -61,10 +61,10 @@ namespace PandorasBox.Features.Actions
 
         private void CheckParty(IFramework framework)
         {
-            if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.ClientState.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
-            if (Config!.ActivateOnDeath && Svc.Party.Any(x => x != null && x.EntityId != Svc.ClientState.LocalPlayer?.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
+            if (Svc.Party.Length == 0 || Svc.Party.Any(x => x == null) || Svc.Objects.LocalPlayer == null || Svc.Condition[ConditionFlag.BetweenAreas]) return;
+            if (Config!.ActivateOnDeath && Svc.Party.Any(x => x != null && x.EntityId != Svc.Objects.LocalPlayer?.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))))
             {
-                MainTank = Svc.Party.First(x => x != null && x.EntityId != Svc.ClientState.LocalPlayer.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).EntityId;
+                MainTank = Svc.Party.First(x => x != null && x.EntityId != Svc.Objects.LocalPlayer.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z))).EntityId;
             }
             else
             {
@@ -73,7 +73,7 @@ namespace PandorasBox.Features.Actions
 
             if (Svc.Party.Any(x => x.EntityId == MainTank))
             {
-                if (MainTank != 0 && Svc.Party.First(x => x.EntityId == MainTank).GameObject!.IsDead && !Svc.ClientState.LocalPlayer.StatusList.Any(x => Stances.Any(y => x.StatusId == y)))
+                if (MainTank != 0 && Svc.Party.First(x => x.EntityId == MainTank).GameObject!.IsDead && !Svc.Objects.LocalPlayer.StatusList.Any(x => Stances.Any(y => x.StatusId == y)))
                 {
                     EnableStance();
                     TaskManager!.Enqueue(() => TaskManager.Abort());
@@ -113,7 +113,7 @@ namespace PandorasBox.Features.Actions
         private bool HasStance()
         {
             if (!Player.Available) return false;
-            ushort stance = Svc.ClientState.LocalPlayer?.ClassJob.RowId switch
+            ushort stance = Svc.Objects.LocalPlayer?.ClassJob.RowId switch
             {
                 1 or 19 => 79,
                 3 or 21 => 91,
@@ -123,12 +123,12 @@ namespace PandorasBox.Features.Actions
             };
 
             if (stance == 0) return true;
-            if (Svc.ClientState.LocalPlayer!.StatusList.Any(x => x.StatusId == stance)) return true;
+            if (Svc.Objects.LocalPlayer!.StatusList.Any(x => x.StatusId == stance)) return true;
             return false;
         }
         private bool EnableStance()
         {
-            if (Svc.ClientState.LocalPlayer?.GetRole() is not CombatRole.Tank) return true;
+            if (Svc.Objects.LocalPlayer?.GetRole() is not CombatRole.Tank) return true;
             if (Config!.OnlyInDuty && !IsInDuty()) return true;
 
             var am = ActionManager.Instance();
@@ -137,9 +137,9 @@ namespace PandorasBox.Features.Actions
             TaskManager.Enqueue(() =>
             {
                 if (Svc.Party.Length > Config.MaxParty) return true;
-                if (Config.NoOtherTanks && Svc.Party.Any(x => x.EntityId != Svc.ClientState.LocalPlayer!.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
+                if (Config.NoOtherTanks && Svc.Party.Any(x => x.EntityId != Svc.Objects.LocalPlayer!.GameObjectId && x.Statuses.Any(y => Stances.Any(z => y.StatusId == z)))) return true;
 
-                uint action = Svc.ClientState.LocalPlayer!.ClassJob.RowId switch
+                uint action = Svc.Objects.LocalPlayer!.ClassJob.RowId switch
                 {
                     1 or 19 => 28,
                     3 or 21 => 48,

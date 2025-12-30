@@ -40,7 +40,7 @@ namespace PandorasBox.Features.Other
 
         private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8)
         {
-            if (type is ActionType.Action or ActionType.Ability)
+            if (type is ActionType.Action)
             {
                 try
                 {

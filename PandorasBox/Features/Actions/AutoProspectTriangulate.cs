@@ -34,7 +34,7 @@ namespace PandorasBox.Features.Actions
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
             TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
             var am = ActionManager.Instance();   
-            if (Svc.ClientState.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
+            if (Svc.Objects.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
                 return;
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering])
             {

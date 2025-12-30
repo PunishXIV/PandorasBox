@@ -47,7 +47,7 @@ namespace PandorasBox.Features
 
             var am = ActionManager.Instance();
             var isSprintReady = am->GetActionStatus(ActionType.Action, 31314) == 0;
-            var hasBuff = Svc.ClientState.LocalPlayer!.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
+            var hasBuff = Svc.Objects.LocalPlayer!.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
 
             if (isSprintReady && !hasBuff && IsMoving())
                 am->UseAction(ActionType.Action, 31314);

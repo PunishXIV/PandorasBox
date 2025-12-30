@@ -57,48 +57,33 @@ namespace PandorasBox.Features.Targets
 
         public bool CanConeAoe()
         {
-            var playerPos = Svc.ClientState.LocalPlayer?.Position ?? new();
+            var playerObj = Svc.Objects.LocalPlayer;
+            if (playerObj is null)
+                return false;
+
             return Svc.Objects.Any(o => o.ObjectKind == ObjectKind.BattleNpc &&
                                     (BattleNpcSubKind)o.SubKind == BattleNpcSubKind.Enemy &&
-                                    GameObjectIsTargetable(o) &&
-                                    PointInCone(o.Position - Svc.ClientState.LocalPlayer.Position, Svc.ClientState.LocalPlayer.Rotation, 0 + (o.HitboxRadius / 2)) &&
-                                    PointInCircle(o.Position - playerPos, Config.MaxDistance + o.HitboxRadius));
+                                    o.IsTargetable &&
+                                    PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + (o.HitboxRadius / 2)) &&
+                                    PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
         }
 
-        public IGameObject NearestConeTarget()
+        public IGameObject? NearestConeTarget()
         {
             if (CanConeAoe())
             {
-                var playerPos = Svc.ClientState.LocalPlayer?.Position ?? new();
+                var playerObj = Svc.Objects.LocalPlayer!;
+
                 var target = Svc.Objects.OrderBy(GameObjectHelper.GetTargetDistance).First(o => o.ObjectKind == ObjectKind.BattleNpc &&
                                                 (BattleNpcSubKind)o.SubKind == BattleNpcSubKind.Enemy &&
-                                                GameObjectIsTargetable(o) &&
-                                                PointInCone(o.Position - Svc.ClientState.LocalPlayer.Position, Svc.ClientState.LocalPlayer.Rotation, 0 + (o.HitboxRadius / 2)) &&
-                                                PointInCircle(o.Position - playerPos, Config.MaxDistance + o.HitboxRadius));
+                                                o.IsTargetable &&
+                                                PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + (o.HitboxRadius / 2)) &&
+                                                PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
 
                 return target;
             }
 
             return null;
-        }
-
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject* GameObjectInternal(IGameObject obj)
-        {
-            return (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)obj?.Address;
-        }
-        public static unsafe FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara* BattleCharaInternal(IBattleChara chara)
-        {
-            return (FFXIVClientStructs.FFXIV.Client.Game.Character.BattleChara*)chara?.Address;
-        }
-
-        public static unsafe bool GameObjectIsTargetable(IGameObject obj)
-        {
-            return GameObjectInternal(obj)->GetIsTargetable();
-        }
-
-        public static unsafe bool GameObjectIsDead(IGameObject obj)
-        {
-            return GameObjectInternal(obj)->IsDead();
         }
 
         public static bool PointInCone(Vector3 offsetFromOrigin, Vector3 direction, float halfAngle)

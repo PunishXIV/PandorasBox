@@ -44,7 +44,6 @@ namespace PandorasBox.Features.Targets
         }
 
         private static DateTime NextOpenTime = DateTime.Now;
-        private static ulong LastChestId = 0;
 
         private void RunFeature(IFramework framework)
         {
@@ -84,7 +83,6 @@ namespace PandorasBox.Features.Targets
             if (treasure == null) return;
             try
             {
-                Svc.Targets.Target = treasure;
                 TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)treasure.Address);
                 if (Config.CloseLootWindow)
                 {

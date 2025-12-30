@@ -497,64 +497,11 @@ namespace PandorasBox.Features
             return null;
         }
 
-        internal static bool TrySelectSpecificEntry(string text, Func<bool>? Throttler = null)
-        {
-            return TrySelectSpecificEntry(new string[] { text }, Throttler);
-        }
-
-        internal static unsafe bool TrySelectSpecificEntry(IEnumerable<string> text, Func<bool>? Throttler = null)
-        {
-            if (GenericHelpers.TryGetAddonByName<AddonSelectString>("SelectString", out var addon) && GenericHelpers.IsAddonReady(&addon->AtkUnitBase))
-            {
-                var entry = GetEntries(addon).FirstOrDefault(x => x.ContainsAny(text));
-                if (entry != null)
-                {
-                    var index = GetEntries(addon).IndexOf(entry);
-                    if (index >= 0 && IsSelectItemEnabled(addon, index) && (Throttler?.Invoke() ?? GenericThrottle))
-                    {
-                        new AddonMaster.SelectString((nint)addon).Entries[index].Select();
-                        Svc.Log.Debug($"TrySelectSpecificEntry: selecting {entry}/{index} as requested by {text.Print()}");
-                        return true;
-                    }
-                }
-            }
-            else
-            {
-                RethrottleGeneric();
-            }
-            return false;
-        }
-
-        internal static unsafe bool IsSelectItemEnabled(AddonSelectString* addon, int index)
-        {
-            var step1 = (AtkTextNode*)addon->AtkUnitBase
-                        .UldManager.NodeList[2]
-                        ->GetComponent()->UldManager.NodeList[index + 1]
-                        ->GetComponent()->UldManager.NodeList[3];
-            return GenericHelpers.IsSelectItemEnabled(step1);
-        }
-
-        internal static unsafe List<string> GetEntries(AddonSelectString* addon)
-        {
-            var list = new List<string>();
-            for (var i = 0; i < addon->PopupMenu.PopupMenu.EntryCount; i++)
-            {
-                list.Add(MemoryHelper.ReadSeStringNullTerminated((nint)addon->PopupMenu.PopupMenu.EntryNames[i].Value).GetText());
-            }
-            return list;
-        }
-
-        internal static bool GenericThrottle => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200);
-        internal static void RethrottleGeneric(int num) => EzThrottler.Throttle("PandorasBoxGenericThrottle", num, true);
-        internal static void RethrottleGeneric() => EzThrottler.Throttle("PandorasBoxGenericThrottle", 200, true);
-
-        internal static unsafe bool IsLoading() => (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeBack", out var fb) && fb->IsVisible) || (GenericHelpers.TryGetAddonByName<AtkUnitBase>("FadeMiddle", out var fm) && fm->IsVisible);
-
         public unsafe bool IsInDuty() => GameMain.Instance()->CurrentContentFinderConditionId > 0;
 
         public unsafe bool ZoneHasFlight()
         {
-            if (Svc.ClientState.LocalPlayer is null) return false;
+            if (Svc.Objects.LocalPlayer is null) return false;
             var territory = Svc.Data.Excel.GetSheet<TerritoryType>()?.GetRow(Svc.ClientState.TerritoryType);
             return territory?.TerritoryIntendedUse.RowId is 1 or 47 or 49;
         }

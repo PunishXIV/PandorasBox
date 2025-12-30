@@ -39,21 +39,24 @@ namespace PandorasBox.Features.Actions
 
         private void RunFeature(IFramework framework)
         {
-            if (Svc.ClientState.LocalPlayer == null) return;
+            if (Svc.Objects.LocalPlayer == null) return;
 
             if (!TerritoryInfo.Instance()->InSanctuary || MJIManager.Instance()->IsPlayerInSanctuary)
                 return;
 
-            var r = new Regex("/hou/|/ind/");
-            var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString();
-            if (r.IsMatch(loc) && Config.ExcludeHousing) return;
+            if (Config.ExcludeHousing)
+            {
+                var r = new Regex("/hou/|/ind/");
+                var loc = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString();
+                if (r.IsMatch(loc)) return;
+            }
 
             if (IsRpWalking() && !Config.RPWalk)
                 return;
 
             var am = ActionManager.Instance();
             var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
-            var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+            var hasSprintBuff = Svc.Objects.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && IsMoving() && !TaskManager.IsBusy)
             {
@@ -67,7 +70,7 @@ namespace PandorasBox.Features.Actions
         {
             var am = ActionManager.Instance();
             var isSprintReady = am->GetActionStatus(ActionType.GeneralAction, 4) == 0;
-            var hasSprintBuff = Svc.ClientState.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
+            var hasSprintBuff = Svc.Objects.LocalPlayer?.StatusList.Any(x => x.StatusId == 50);
 
             if (isSprintReady && IsMoving())
             {

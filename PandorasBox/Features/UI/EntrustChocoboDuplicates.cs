@@ -16,6 +16,8 @@ using System.Threading.Tasks;
 using Lumina.Excel.Sheets;
 using static ECommons.UIHelpers.AddonMasterImplementations.AddonMaster;
 using static FFXIVClientStructs.FFXIV.Component.GUI.AtkEventDispatcher;
+using ECommons.UIHelpers.AddonMasterImplementations;
+using System.Linq;
 
 namespace PandorasBox.Features.UI
 {
@@ -43,9 +45,9 @@ namespace PandorasBox.Features.UI
         public override void Draw()
         {
             var addon = (AddonInventoryBuddy*)Svc.GameGui.GetAddonByName("InventoryBuddy").Address;
-            if (addon != null && addon->AtkUnitBase.IsVisible)
+            if (addon != null && addon->AtkUnitBase.IsVisible && addon->IsFullyLoaded())
             {
-                var node = addon->AtkUnitBase.UldManager.NodeList[3];
+                var node = addon->AtkUnitBase.GetNodeById(83);
 
                 if (node == null)
                     return;
@@ -130,7 +132,8 @@ namespace PandorasBox.Features.UI
             {
                 if (ag->EventIds[e] == eventId)
                 {
-                   ECommons.Automation.Callback.Fire(contextMenu, true, 0, e - 7, 0, 0, 0);
+                    new AddonMaster.ContextMenu(contextMenu).Entries.First().Select();
+                   //ECommons.Automation.Callback.Fire(contextMenu, true, 0, e - 7, 0, 0, 0);
                     return;
                 }
             }

@@ -42,13 +42,13 @@ namespace PandorasBox.Features.UI
         private bool IsPrivatePF(AddonLookingForGroupDetail* addon)
         {
             // 111 is the lock icon
-            return addon->AtkUnitBase.UldManager.NodeList[111]->IsVisible();
+            return addon->AtkUnitBase.GetNodeById(8)->IsVisible();
         }
 
         private bool IsSelfParty(AddonLookingForGroupDetail* addon)
         {
             // 113 is the party host's name
-            return addon->AtkUnitBase.UldManager.NodeList[113]->GetAsAtkTextNode()->NodeText.ToString() == Svc.ClientState.LocalPlayer.Name.TextValue;
+            return addon->AtkUnitBase.GetNodeById(6)->GetAsAtkTextNode()->NodeText.ToString() == Svc.Objects.LocalPlayer.Name.TextValue;
         }
 
         internal static bool ConfirmYesNo()
@@ -59,7 +59,7 @@ namespace PandorasBox.Features.UI
                 r->AtkUnitBase.IsVisible && TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
                 addon->AtkUnitBase.IsVisible &&
                 addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.UldManager.NodeList[15]->IsVisible())
+                addon->AtkUnitBase.GetNodeById(2)->IsVisible())
             {
                 new AddonMaster.SelectYesno((IntPtr)addon).Yes();
                 return true;
