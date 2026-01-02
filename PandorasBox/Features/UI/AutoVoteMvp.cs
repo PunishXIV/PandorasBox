@@ -1,3 +1,9 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Addon.Lifecycle;
+using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
 using Dalamud.Game.ClientState.Party;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -5,47 +11,34 @@ using ECommons;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Bindings.ImGui;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.InteropServices;
 
 namespace PandorasBox.Features.UI;
 
 public class AutoVoteMvp : Feature
 {
     public override string Name => "Auto-Commendation after Duty";
-
     public override string Description => "Automatically give a commendation to a random player in your party at the end of a duty.";
-
     public override FeatureType FeatureType => FeatureType.UI;
 
     public override bool UseAutoConfig => false;
-
-    private List<string> PremadePartyID { get; set; } = new();
-
-    private List<uint> DeadPlayers { get; set; } = new();
-
-    private Dictionary<uint, int> DeathTracker { get; set; } = new();
+    private List<string> PremadePartyID { get; set; } = [];
+    private List<uint> DeadPlayers { get; set; } = [];
+    private Dictionary<uint, int> DeathTracker { get; set; } = [];
 
     public class Configs : FeatureConfig
     {
         public int Priority = 0;
-
         public bool HideChat = false;
-
         public bool ExcludeDeaths = false;
-
         public int HowManyDeaths = 1;
-
         public bool ResetOnWipe = false;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override unsafe void Enable()
     {
@@ -57,6 +50,7 @@ public class AutoVoteMvp : Feature
         }
         Config = LoadConfig<Configs>() ?? new Configs();
         Svc.Framework.Update += FrameworkUpdate;
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "BannerMIP", OnBannerSetup);
         Svc.Condition.ConditionChange += UpdatePartyCache;
         base.Enable();
     }
@@ -85,6 +79,7 @@ public class AutoVoteMvp : Feature
     {
         SaveConfig(Config);
         Svc.Framework.Update -= FrameworkUpdate;
+        Svc.AddonLifecycle.UnregisterListener(OnBannerSetup);
         Svc.Condition.ConditionChange -= UpdatePartyCache;
         base.Disable();
     }
@@ -94,13 +89,16 @@ public class AutoVoteMvp : Feature
         if (Player.Object == null) return;
         if (Svc.ClientState.IsPvP) return;
         CheckForDeadPartyMembers();
+    }
 
-        var bannerWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("BannerMIP", 1).Address;
-        if (bannerWindow == null) return;
-
+    private unsafe void OnBannerSetup(AddonEvent type, AddonArgs args)
+    {
+        if (Svc.ClientState.IsPvP) return;
+        var atk = (AtkUnitBase*)args.Addon.Address;
         try
         {
-            VoteBanner(bannerWindow, ChoosePlayer(bannerWindow));
+            if (ChoosePlayer(atk) is not -1 and var playerIndex)
+                VoteBanner((AtkUnitBase*)args.Addon.Address, playerIndex);
         }
         catch (Exception e)
         {
@@ -110,58 +108,40 @@ public class AutoVoteMvp : Feature
 
     private void CheckForDeadPartyMembers()
     {
-        if (Svc.Party.Any())
-        {
-            if (Config.ResetOnWipe && Svc.Party.All(x => x.GameObject?.IsDead == true))
-            {
-                DeathTracker.Clear();
-            }
-
-            foreach (var pm in Svc.Party)
-            {
-                if (pm.GameObject == null) continue;
-                if (pm.EntityId == Svc.Objects.LocalPlayer?.GameObjectId) continue;
-                if (pm.GameObject.IsDead)
-                {
-                    if (DeadPlayers.Contains(pm.EntityId)) continue;
-                    DeadPlayers.Add(pm.EntityId);
-                    if (DeathTracker.ContainsKey(pm.EntityId))
-                        DeathTracker[pm.EntityId] += 1;
-                    else
-                        DeathTracker.TryAdd(pm.EntityId, 1);
-
-                }
-                else
-                {
-                    DeadPlayers.Remove(pm.EntityId);
-                }
-            }
-        }
-        else
+        if (!Svc.Party.Any())
         {
             DeathTracker.Clear();
             DeadPlayers.Clear();
+            return;
+        }
+
+        if (Config.ResetOnWipe && Svc.Party.All(x => x.GameObject?.IsDead == true))
+            DeathTracker.Clear();
+
+        foreach (var pm in Svc.Party.Where(pm => pm.GameObject != null && pm.EntityId != Svc.Objects.LocalPlayer?.GameObjectId))
+        {
+            if (pm.GameObject?.IsDead ?? false)
+            {
+                if (DeadPlayers.Contains(pm.EntityId)) continue;
+                DeadPlayers.Add(pm.EntityId);
+                if (DeathTracker.ContainsKey(pm.EntityId))
+                    DeathTracker[pm.EntityId] += 1;
+                else
+                    DeathTracker.TryAdd(pm.EntityId, 1);
+            }
+            else
+                DeadPlayers.Remove(pm.EntityId);
         }
     }
 
     private unsafe int ChoosePlayer(AtkUnitBase* bannerWindow)
     {
-        var hud = FFXIVClientStructs.FFXIV.Client.System.Framework.Framework.Instance()
-            ->GetUIModule()->GetAgentModule()->GetAgentHUD();
-
+        var hud = UIModule.Instance()->GetAgentModule()->GetAgentHUD();
         if (hud == null) throw new Exception("HUD is empty!");
 
-        foreach (var member in Svc.Party.Cast<IPartyMember>())
-        {
-            var m2 = (FFXIVClientStructs.FFXIV.Client.Game.Group.PartyMember*)member.Address;
-            var name = m2->NameString;
-            Svc.Log.Debug($"{name} {m2->Flags.ToString("g")}");
-        }
-
-        var list = Svc.Party.Where(i =>
-        i.EntityId != Player.Object.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.GetText()))
-            .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.EntityId, hud) - 1), PartyMember))
-            .ToList();
+        var list = Svc.Party.Where(i => i.EntityId != Svc.Objects.LocalPlayer?.GameObjectId && i.GameObject != null && !PremadePartyID.Any(y => y == i.Name.TextValue))
+                .Select(PartyMember => (Math.Max(0, GetPartySlotIndex(PartyMember.EntityId, hud) - 1), PartyMember))
+                .ToList();
 
         if (!list.Any()) return -1;
 
@@ -218,8 +198,8 @@ public class AutoVoteMvp : Feature
                 if (!Config.HideChat)
                 {
                     var payload = PandoraPayload.Payloads.ToList();
-                    payload.AddRange(new List<Payload>()
-                    {
+                    payload.AddRange(
+                    [
                         new TextPayload("Commend given to "),
                         voteTarget.member.ClassJob.Value!.Role switch
                         {
@@ -227,12 +207,11 @@ public class AutoVoteMvp : Feature
                             4 => new IconPayload(BitmapFontIcon.Healer),
                             _ => new IconPayload(BitmapFontIcon.DPS),
                         },
-                        new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.Value!.RowId),
-                    });
+                        new PlayerPayload(voteTarget.member.Name.TextValue, voteTarget.member.World.Value.RowId),
+                    ]);
                     Svc.Chat.Print(new SeString(payload));
                 }
 
-                Svc.Log.Debug($"Commed {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
                 return (int)bannerWindow->AtkValues[i - 14].UInt;
             }
         }
@@ -260,18 +239,10 @@ public class AutoVoteMvp : Feature
     private static unsafe void VoteBanner(AtkUnitBase* bannerWindow, int index)
     {
         if (index == -1) return;
-        var atkValues = (AtkValue*)Marshal.AllocHGlobal(2 * sizeof(AtkValue));
-        atkValues[0].Type = atkValues[1].Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int;
-        atkValues[0].Int = 12;
-        atkValues[1].Int = index;
-        try
-        {
-            bannerWindow->FireCallback(2, atkValues);
-        }
-        finally
-        {
-            Marshal.FreeHGlobal(new nint(atkValues));
-        }
+        var atkValues = stackalloc AtkValue[2];
+        atkValues[0].SetInt(12);
+        atkValues[1].SetInt(index);
+        bannerWindow->FireCallback(2, atkValues);
     }
 
     protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
