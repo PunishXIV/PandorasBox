@@ -212,6 +212,7 @@ public class AutoVoteMvp : Feature
                     Svc.Chat.Print(new SeString(payload));
                 }
 
+                Svc.Log.Debug($"Commed {name} at index {i}, {bannerWindow->AtkValues[i - 14].UInt}");
                 return (int)bannerWindow->AtkValues[i - 14].UInt;
             }
         }
