@@ -15,7 +15,9 @@ namespace PandorasBox.Features.UI
     {
         public override string Name { get; } = "Simplify Relic Quest Pickup";
         public override string Description { get; } = "Adds a description of what stage a quest is for when talking to the NPC.";
+        public override bool FeatureDisabled => true;
 
+        public override string DisabledReason => "No longer being supported. Someone please PR further updates ty.";
         public override FeatureType FeatureType => FeatureType.UI;
 
         public override void Enable()
@@ -50,12 +52,12 @@ namespace PandorasBox.Features.UI
         {
             if (args.AddonName == "SelectIconString")
             {
-                var addon = (AddonSelectIconString*)args.Addon.Address;
-
-                var list = addon->PopupMenu.PopupMenu.List;
-
                 try
                 {
+                    var addon = (AddonSelectIconString*)args.Addon.Address;
+
+                    var list = addon->PopupMenu.PopupMenu.List;
+
                     foreach (var index in Enumerable.Range(0, list->ListLength))
                     {
                         var listItemRenderer = list->ItemRendererList[index].AtkComponentListItemRenderer;
@@ -76,12 +78,12 @@ namespace PandorasBox.Features.UI
 
             if (args.AddonName == "SelectString")
             {
-                var addon = (AddonSelectString*)args.Addon.Address;
-
-                var list = addon->PopupMenu.PopupMenu.List;
-
                 try
                 {
+                    var addon = (AddonSelectString*)args.Addon.Address;
+
+                    var list = addon->PopupMenu.PopupMenu.List;
+
                     foreach (var index in Enumerable.Range(0, list->ListLength))
                     {
                         var listItemRenderer = list->ItemRendererList[index].AtkComponentListItemRenderer;

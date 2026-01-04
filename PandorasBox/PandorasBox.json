@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog":  "- Fix Pandora Gathering UI on new themes (won't blend but it works).\n- Fix /pmsq.\n-'"
+    "ChangeLog":  "- Disable simplify relic quest steps."
 }
