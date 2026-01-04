@@ -19,7 +19,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="ECommons" Version="3.1.0.6" />
+        <PackageReference Include="ECommons" Version="3.1.0.10" />
         <PackageReference Include="NAudio" Version="2.1.0" />
         <Reference Include="JetBrains.Annotations">
             <Private>false</Private>
