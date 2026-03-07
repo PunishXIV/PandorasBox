@@ -3,10 +3,6 @@ using ECommons.EzHookManager;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI.Shell;
 using PandorasBox.FeaturesSetup;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 
 namespace PandorasBox.Features.Other
 {

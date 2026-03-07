@@ -24,8 +24,6 @@ namespace PandorasBox.Features.UI
         public override string Description => "Adds a button to the desynthesis window to desynth all from the current dropdown. (Disclaimer: Pandora takes no responsibility for the loss of any Ultimate weapons or other rare items. Please use responsibly.)";
 
         private delegate IntPtr UpdateItemDelegate(IntPtr a1, ulong index, IntPtr a3, ulong a4);
-        private delegate byte UpdateListDelegate(IntPtr a1, IntPtr a2, IntPtr a3);
-
         private Hook<UpdateItemDelegate> updateItemHook;
 
         private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
