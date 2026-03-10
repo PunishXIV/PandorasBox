@@ -1,18 +1,17 @@
+using System;
+using System.Collections.Generic;
+using System.Numerics;
+using Dalamud.Bindings.ImGui;
 using Dalamud.Hooking;
-using ECommons.Automation;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.UI;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using System;
-using System.Collections.Generic;
-using System.Numerics;
 using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI
@@ -24,9 +23,9 @@ namespace PandorasBox.Features.UI
         public override string Description => "Adds a button to the desynthesis window to desynth all from the current dropdown. (Disclaimer: Pandora takes no responsibility for the loss of any Ultimate weapons or other rare items. Please use responsibly.)";
 
         private delegate IntPtr UpdateItemDelegate(IntPtr a1, ulong index, IntPtr a3, ulong a4);
-        private Hook<UpdateItemDelegate> updateItemHook;
+        private Hook<AddonSalvageItemSelector.Delegates.PopulateSalvageItemListItem> updateItemHook = null!;
 
-        private Dictionary<ulong, Item> ListItems { get; set; } = new Dictionary<ulong, Item>();
+        private Dictionary<int, Item> ListItems { get; set; } = [];
         public override FeatureType FeatureType => FeatureType.UI;
 
         private Overlays Overlay { get; set; }
@@ -35,27 +34,18 @@ namespace PandorasBox.Features.UI
         public override void Enable()
         {
             Overlay = new(this);
-            updateItemHook ??= Svc.Hook.HookFromSignature<UpdateItemDelegate>("48 89 5C 24 ?? 48 89 6C 24 ?? 48 89 74 24 ?? 57 48 83 EC 30 49 8B 38", UpdateItemDetour);
+            updateItemHook ??= Svc.Hook.HookFromAddress<AddonSalvageItemSelector.Delegates.PopulateSalvageItemListItem>((nint)AddonSalvageItemSelector.MemberFunctionPointers.PopulateSalvageItemListItem, UpdateItemDetour);
             updateItemHook?.Enable();
-
-            base.Enable();
         }
 
-        public override void Setup()
+        private void UpdateItemDetour(AddonSalvageItemSelector* thisPtr, int index, AtkResNode** nodeList, AtkComponentListItemRenderer* listItemRenderer)
         {
-            base.Setup();
-        }
-
-
-        private nint UpdateItemDetour(nint a1, ulong index, nint a3, ulong a4)
-        {
-            var retval = updateItemHook.Original(a1, index, a3, a4);
-            var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1).Address;
-            if (addon != null)
+            if (TryGetAddonByName<AddonSalvageItemSelector>("SalvageItemSelector", out var addon))
             {
                 if (index > addon->ItemCount)
                 {
-                    return retval;
+                    updateItemHook.Original(thisPtr, index, nodeList, listItemRenderer);
+                    return;
                 }
 
                 var salvageItem = addon->Items[(int)index];
@@ -63,27 +53,20 @@ namespace PandorasBox.Features.UI
                 var itemData = Svc.Data.Excel.GetSheet<Item>().GetRow(item->ItemId);
 
                 if (ListItems.ContainsKey(index))
-                {
                     ListItems[index] = itemData;
-                }
                 else
-                {
                     ListItems.TryAdd(index, itemData);
-                }
             }
-            return retval;
+            updateItemHook.Original(thisPtr, index, nodeList, listItemRenderer);
         }
 
-        public override bool DrawConditions()
-        {
-            return Svc.GameGui.GetAddonByName("SalvageItemSelector", 1) != nint.Zero;
-        }
+        public override bool DrawConditions() => Svc.GameGui.GetAddonByName("SalvageItemSelector", 1) != nint.Zero;
+
         public override void Draw()
         {
             try
             {
-                var addon = (AddonSalvageItemSelector*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1).Address;
-                if (addon != null && addon->AtkUnitBase.IsVisible && addon->IsFullyLoaded())
+                if (TryGetAddonByName<AddonSalvageItemSelector>("SalvageItemSelector", out var addon))
                 {
                     var node = addon->AtkUnitBase.GetNodeById(6);
 
@@ -210,9 +193,6 @@ namespace PandorasBox.Features.UI
             base.Disable();
         }
 
-        public override void Dispose()
-        {
-            updateItemHook?.Dispose();
-        }
+        public override void Dispose() => updateItemHook?.Dispose();
     }
 }
