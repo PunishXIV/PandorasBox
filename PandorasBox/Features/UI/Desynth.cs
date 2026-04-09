@@ -36,6 +36,7 @@ namespace PandorasBox.Features.UI
             Overlay = new(this);
             updateItemHook ??= Svc.Hook.HookFromAddress<AddonSalvageItemSelector.Delegates.PopulateSalvageItemListItem>((nint)AddonSalvageItemSelector.MemberFunctionPointers.PopulateSalvageItemListItem, UpdateItemDetour);
             updateItemHook?.Enable();
+            base.Enable();
         }
 
         private void UpdateItemDetour(AddonSalvageItemSelector* thisPtr, int index, AtkResNode** nodeList, AtkComponentListItemRenderer* listItemRenderer)

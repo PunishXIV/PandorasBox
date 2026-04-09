@@ -41,6 +41,7 @@ namespace PandorasBox.Features.UI
         {
             Svc.ContextMenu.OnMenuOpened += AddInventoryItem;
             Config = LoadConfig<Configs>() ?? new Configs();
+            base.Enable();
         }
 
         private void AddInventoryItem(IMenuOpenedArgs args)
