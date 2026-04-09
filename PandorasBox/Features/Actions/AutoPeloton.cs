@@ -8,6 +8,7 @@ using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using System.Linq;
 using System.Text.RegularExpressions;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 
 namespace PandorasBox.Features
 {
@@ -58,7 +59,7 @@ namespace PandorasBox.Features
             var r = new Regex("/hou/|/ind/");
             if (r.IsMatch(Svc.Data.GetExcelSheet<TerritoryType>().GetRow(Svc.ClientState.TerritoryType).Bg.ToString()) && Config.ExcludeHousing) return;
 
-            if (Config.AbortCooldown && Countdown.TimeRemaining() > 0)
+            if (Config.AbortCooldown && AgentCountDownSettingDialog.Instance()->TimeRemaining > 0)
             {
                 TaskManager.Abort();
                 return;

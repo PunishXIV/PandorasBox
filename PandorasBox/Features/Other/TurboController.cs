@@ -17,7 +17,7 @@ namespace PandorasBox.Features.Other
 
         public override FeatureType FeatureType => FeatureType.Other;
 
-        private Hook<ControllerPoll>? gamepadPoll;
+        private Hook<PadDeviceInterface.Delegates.Poll>? gamepadPoll;
         private delegate int ControllerPoll(IntPtr controllerInput);
 
         private long ThrottleTime { get; set; } = Environment.TickCount64;
@@ -34,15 +34,15 @@ namespace PandorasBox.Features.Other
         public Configs Config { get; set; } = null!;
 
         public override bool UseAutoConfig => false;
-        public override void Enable()
+        public override unsafe void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            gamepadPoll ??= Svc.Hook.HookFromSignature<ControllerPoll>("40 55 53 57 41 57 48 8D AC 24 ?? ?? ?? ?? 48 81 EC ?? ?? ?? ?? 44 0F 29 B4 24 ?? ?? ?? ??", GamepadPollDetour);
+            gamepadPoll ??= HookFromVTable<PadDeviceInterface.Delegates.Poll>(PadDevice.StaticVirtualTablePointer, 2, GamepadPollDetour);
             gamepadPoll?.Enable();
             base.Enable();
         }
 
-        private unsafe int GamepadPollDetour(IntPtr gamepadInput)
+        private unsafe nint GamepadPollDetour(PadDeviceInterface* gamepadInput)
         {
             var input = (PadDevice*)gamepadInput;
 
@@ -64,7 +64,7 @@ namespace PandorasBox.Features.Other
                 }
             }
 
-            return gamepadPoll!.Original((IntPtr)input);
+            return gamepadPoll!.Original(gamepadInput);
         }
 
         protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
