@@ -1,5 +1,6 @@
 using Dalamud.Hooking;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using PandorasBox.FeaturesSetup;
 using System.Runtime.InteropServices;
 
@@ -13,13 +14,13 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private delegate char? PartyFinderDelegate(long a1, int a2);
-        private Hook<PartyFinderDelegate>? partyFinderHook;
+        private delegate char PartyFinderDelegate(AgentLookingForGroup* a1, int a2);
+        private Hook<PartyFinderDelegate> partyFinderHook;
 
-        private char? PartyFinderDetour(long a1, int a2)
+        private char PartyFinderDetour(AgentLookingForGroup* a1, int a2)
         {
             Marshal.WriteInt16(new nint(a1 + 1128), 100);
-            return partyFinderHook?.Original(a1, a2);
+            return partyFinderHook.Original(a1, a2);
         }
 
         public override void Enable()
