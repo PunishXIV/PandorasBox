@@ -75,7 +75,7 @@ namespace PandorasBox.Features.Actions
 
         private void OnClassChange(uint classJobId)
         {
-            if (HasStance()) return;
+            if (HasStance(classJobId)) return;
             TaskManager!.Enqueue(EnableStance, "JobChange");
         }
 
@@ -97,10 +97,10 @@ namespace PandorasBox.Features.Actions
             }
         }
 
-        private static bool HasStance()
+        private static bool HasStance(uint classJobId = 0)
         {
             if (!Player.Available) return false;
-            ushort stance = Svc.Objects.LocalPlayer?.ClassJob.RowId switch
+            ushort stance = (classJobId == 0 ? Svc.Objects.LocalPlayer?.ClassJob.RowId : classJobId) switch
             {
                 1 or 19 => 79,
                 3 or 21 => 91,
