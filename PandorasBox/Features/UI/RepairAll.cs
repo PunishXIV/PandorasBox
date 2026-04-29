@@ -160,12 +160,12 @@
 //            var values = stackalloc AtkValue[2];
 //            values[0] = new AtkValue()
 //            {
-//                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+//                Type = AtkValueType.Int,
 //                Int = one
 //            };
 //            values[1] = new AtkValue()
 //            {
-//                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+//                Type = AtkValueType.Int,
 //                Int = two
 //            };
 

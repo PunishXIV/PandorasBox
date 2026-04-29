@@ -33,7 +33,7 @@ namespace PandorasBox.Features.Other
         public unsafe override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
+            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>(ActionManager.Addresses.UseAction.Value, UseActionDetour);
             UseActionHook?.Enable();
             base.Enable();
         }

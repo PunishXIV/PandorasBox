@@ -5,6 +5,7 @@ using System.Numerics;
 using Dalamud.Bindings.ImGui;
 using Dalamud.Game.Addon.Lifecycle;
 using Dalamud.Game.Addon.Lifecycle.AddonArgTypes;
+using Dalamud.Game.Chat;
 using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.ClientState.Objects.SubKinds;
 using Dalamud.Game.Text;
@@ -248,9 +249,9 @@ namespace PandorasBox.Features.Other
             }
         }
 
-        private void CheckRevisit(XivChatType type, int timestamp, ref SeString sender, ref SeString message, ref bool isHandled)
+        private void CheckRevisit(IHandleableChatMessage handler)
         {
-            if (type is (XivChatType)2107 && CurrentIntegrity == 0)
+            if (handler.LogKind is (XivChatType)2107 && CurrentIntegrity == 0)
             {
                 TaskManager.Abort();
                 TaskManager.EnqueueDelay(1000);

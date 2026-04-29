@@ -49,7 +49,7 @@ namespace PandorasBox.Features.UI
                     return;
                 }
 
-                var salvageItem = addon->Items[(int)index];
+                var salvageItem = addon->Items[index];
                 var item = InventoryManager.Instance()->GetInventoryContainer(salvageItem.Inventory)->GetInventorySlot(salvageItem.Slot);
                 var itemData = Svc.Data.Excel.GetSheet<Item>().GetRow(item->ItemId);
 

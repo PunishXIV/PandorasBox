@@ -1,9 +1,10 @@
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons;
 using ECommons.DalamudServices;
-using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.IPC;
@@ -33,7 +34,7 @@ namespace PandorasBox.Features.ChatFeature
             [FeatureConfigOption("Ignore <pos> flags")]
             public bool IgnorePOS = false;
 
-            public List<ushort> FilteredChannels = new();
+            public List<XivChatType> FilteredChannels = new();
 
             [FeatureConfigOption("Disable in same zone")]
             public bool DisableSameZone = false;
@@ -57,14 +58,14 @@ namespace PandorasBox.Features.ChatFeature
             XivChatType.RetainerSale
         };
 
-        private void OnChatMessage(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+        private void OnChatMessage(IHandleableChatMessage handler)
         {
             var hasMapLink = false;
             float coordX = 0;
             float coordY = 0;
             float scale = 100;
             MapLinkPayload maplinkPayload = null!;
-            foreach (var payload in message.Payloads)
+            foreach (var payload in handler.Message.Payloads)
             {
                 if (payload is MapLinkPayload mapLinkload)
                 {
@@ -81,12 +82,12 @@ namespace PandorasBox.Features.ChatFeature
                 }
             }
 
-            var messageText = message.TextValue;
+            var messageText = handler.Message.TextValue;
             if (hasMapLink)
             {
                 var newMapLinkMessage = new MapLinkMessage(
-                        (ushort)type,
-                        sender.TextValue,
+                        handler.LogKind,
+                        handler.Sender.TextValue,
                         messageText,
                         coordX,
                         coordY,
@@ -97,7 +98,7 @@ namespace PandorasBox.Features.ChatFeature
                     );
 
                 var filteredOut = false;
-                if (sender.TextValue.ToLower() == "sonar" && !Config.IncludeSonar)
+                if (handler.Sender.TextValue.ToLower() == "sonar" && !Config.IncludeSonar)
                     filteredOut = true;
 
                 var alreadyInList = MapLinkMessageList.Any(w =>
@@ -115,7 +116,7 @@ namespace PandorasBox.Features.ChatFeature
                 });
 
                 if (alreadyInList) filteredOut = true;
-                if (!filteredOut && Config.FilteredChannels.IndexOf((ushort)type) != -1) filteredOut = true;
+                if (!filteredOut && Config.FilteredChannels.IndexOf(handler.LogKind) != -1) filteredOut = true;
                 if (!filteredOut)
                 {
                     if (Config.IgnorePOS && newMapLinkMessage.Text.Contains("Z:")) return;
@@ -223,9 +224,9 @@ namespace PandorasBox.Features.ChatFeature
             if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
             {
                 ImGui.Indent();
-                foreach (ushort chatType in Enum.GetValues(typeof(XivChatType)))
+                foreach (XivChatType chatType in Enum.GetValues(typeof(XivChatType)))
                 {
-                    if (HiddenChatType.IndexOf((XivChatType)chatType) != -1) continue;
+                    if (HiddenChatType.IndexOf(chatType) != -1) continue;
 
                     var chatTypeName = Enum.GetName(typeof(XivChatType), chatType);
                     var checkboxClicked = Config.FilteredChannels.IndexOf(chatType) == -1;

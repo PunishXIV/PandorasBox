@@ -42,7 +42,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void CheckForDuty(ushort obj)
+        private void CheckForDuty(uint obj)
         {
             if (!Config.DutyStart) return;
 

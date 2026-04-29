@@ -37,7 +37,7 @@ namespace PandorasBox.Features.Actions
             base.Enable();
         }
 
-        private void RunFeature(ushort e)
+        private void RunFeature(uint e)
         {
             if (!Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == e).Mount) return;
 

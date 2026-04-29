@@ -191,8 +191,8 @@ public class AutoVoteMvp : Feature
 
         for (int i = 22; i <= 22 + 7; i++)
         {
-            if (bannerWindow->AtkValues[i].Type != FFXIVClientStructs.FFXIV.Component.GUI.ValueType.String) continue;
-            var name = bannerWindow->AtkValues[i].String;
+            if (bannerWindow->AtkValues[i].Type != AtkValueType.String) continue;
+            var name = bannerWindow->AtkValues[i].String.ToString();
             if (name == voteTarget.member.Name.TextValue)
             {
                 if (!Config.HideChat)

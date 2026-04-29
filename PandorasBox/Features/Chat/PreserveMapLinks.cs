@@ -1,3 +1,4 @@
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
@@ -146,14 +147,14 @@ public unsafe partial class CoordsToMapLink : Feature
         return ret;
     }
 
-    private void HandleChatMessage(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private void HandleChatMessage(IHandleableChatMessage handler)
     {
         try
         {
-            for (var i = 0; i < message.Payloads.Count; i++)
+            for (var i = 0; i < handler.Message.Payloads.Count; i++)
             {
-                if (message.Payloads[i] is not MapLinkPayload payload) continue;
-                if (message.Payloads[i + 6] is not TextPayload payloadText) continue;
+                if (handler.Message.Payloads[i] is not MapLinkPayload payload) continue;
+                if (handler.Message.Payloads[i + 6] is not TextPayload payloadText) continue;
                 if (territoryTypeIdField?.GetValue(payload) is not uint { } territoryId) continue;
                 if (mapIdField?.GetValue(payload) is not uint { } mapId) continue;
 

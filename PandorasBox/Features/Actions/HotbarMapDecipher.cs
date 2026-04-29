@@ -12,7 +12,7 @@ using PandorasBox.Helpers;
 using System;
 using System.Collections.Generic;
 using static ECommons.GenericHelpers;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI.ValueType;
+using ValueType = FFXIVClientStructs.FFXIV.Component.GUI;
 
 namespace PandorasBox.Features.Actions
 {
@@ -38,7 +38,7 @@ namespace PandorasBox.Features.Actions
         public override void Enable()
         {
             Config = LoadConfig<Configs>() ?? new Configs();
-            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>((nint)ActionManager.Addresses.UseAction.Value, UseActionDetour);
+            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>(ActionManager.Addresses.UseAction.Value, UseActionDetour);
             UseActionHook.Enable();
             base.Enable();
         }
@@ -115,7 +115,7 @@ namespace PandorasBox.Features.Actions
                             var loops = 0;
                             foreach (var contextObj in contextAgent->EventParams)
                             {
-                                if (contextObj.Type == ValueType.String)
+                                if (contextObj.Type == AtkValueType.String)
                                 {
                                     var label = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(contextObj.String));
 
@@ -130,27 +130,27 @@ namespace PandorasBox.Features.Actions
                                 var values = stackalloc AtkValue[5];
                                 values[0] = new AtkValue()
                                 {
-                                    Type = ValueType.Int,
+                                    Type = AtkValueType.Int,
                                     Int = 0
                                 };
                                 values[1] = new AtkValue()
                                 {
-                                    Type = ValueType.Int,
+                                    Type = AtkValueType.Int,
                                     Int = indexDecipher,
                                 };
                                 values[2] = new AtkValue()
                                 {
-                                    Type = ValueType.Int,
+                                    Type = AtkValueType.Int,
                                     Int = 0
                                 };
                                 values[3] = new AtkValue()
                                 {
-                                    Type = ValueType.Int,
+                                    Type = AtkValueType.Int,
                                     Int = 0
                                 };
                                 values[4] = new AtkValue()
                                 {
-                                    Type = ValueType.Int,
+                                    Type = AtkValueType.Int,
                                     UInt = 0
                                 };
                                 contextMenu->FireCallback(5, values, true);

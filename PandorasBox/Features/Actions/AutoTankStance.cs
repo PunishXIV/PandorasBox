@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using Dalamud.Game.ClientState.Conditions;
+using Dalamud.Game.DutyState;
 using ECommons.DalamudServices;
 using ECommons.GameFunctions;
 using ECommons.GameHelpers;
@@ -60,7 +61,7 @@ namespace PandorasBox.Features.Actions
                 TaskManager!.Enqueue(EnableStance, "FateSync");
         }
 
-        private void OnDutyStart(object? sender, ushort e)
+        private void OnDutyStart(IDutyStateEventArgs args)
         {
             if (HasStance()) return;
             if (GameMain.Instance()->CurrentContentFinderConditionId == 0)

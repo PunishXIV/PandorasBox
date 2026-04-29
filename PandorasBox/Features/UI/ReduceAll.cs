@@ -153,12 +153,12 @@ namespace PandorasBox.Features.UI
             var values = stackalloc AtkValue[2];
             values[0] = new()
             {
-                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                Type = AtkValueType.Int,
                 Int = 12,
             };
             values[1] = new()
             {
-                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.UInt,
+                Type = AtkValueType.UInt,
                 UInt = 0,
             };
 

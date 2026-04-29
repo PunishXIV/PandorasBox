@@ -46,7 +46,7 @@ namespace PandorasBox.Features.UI
                 var values = stackalloc AtkValue[5];
                 values[0] = new AtkValue
                 {
-                    Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                    Type = AtkValueType.Int,
                     Int = 0
                 };
                 addon->FireCallback(1, values, true);

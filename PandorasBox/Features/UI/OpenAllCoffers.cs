@@ -106,27 +106,27 @@ namespace PandorasBox.Features.UI
                             var values = stackalloc AtkValue[5];
                             values[0] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = AtkValueType.Int,
                                 Int = 0
                             };
                             values[1] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = AtkValueType.Int,
                                 UInt = 0
                             };
                             values[2] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = AtkValueType.Int,
                                 Int = 0
                             };
                             values[3] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = AtkValueType.Int,
                                 Int = 0
                             };
                             values[4] = new AtkValue()
                             {
-                                Type = FFXIVClientStructs.FFXIV.Component.GUI.ValueType.Int,
+                                Type = AtkValueType.Int,
                                 UInt = 0
                             };
                             contextMenu->FireCallback(5, values, true);
