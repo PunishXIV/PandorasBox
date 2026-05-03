@@ -7,6 +7,7 @@ using PandorasBox.Helpers;
 using System;
 using System.Linq;
 using System.Numerics;
+using ECommons.GameFunctions;
 
 namespace PandorasBox.Features.Targets
 {
@@ -62,7 +63,7 @@ namespace PandorasBox.Features.Targets
                 return false;
 
             return Svc.Objects.Any(o => o.ObjectKind == ObjectKind.BattleNpc &&
-                                    (BattleNpcSubKind)o.SubKind == BattleNpcSubKind.Enemy &&
+                                    o.Struct()->BattleNpcSubKind == FFXIVClientStructs.FFXIV.Client.Game.Object.BattleNpcSubKind.Combatant &&
                                     o.IsTargetable &&
                                     PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + (o.HitboxRadius / 2)) &&
                                     PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
@@ -75,7 +76,7 @@ namespace PandorasBox.Features.Targets
                 var playerObj = Svc.Objects.LocalPlayer!;
 
                 var target = Svc.Objects.OrderBy(GameObjectHelper.GetTargetDistance).First(o => o.ObjectKind == ObjectKind.BattleNpc &&
-                                                (BattleNpcSubKind)o.SubKind == BattleNpcSubKind.Enemy &&
+                                                o.Struct()->BattleNpcSubKind == FFXIVClientStructs.FFXIV.Client.Game.Object.BattleNpcSubKind.Combatant &&
                                                 o.IsTargetable &&
                                                 PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + (o.HitboxRadius / 2)) &&
                                                 PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
