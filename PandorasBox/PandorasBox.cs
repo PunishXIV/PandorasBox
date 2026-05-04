@@ -1,3 +1,4 @@
+using AllaganLib.GameSheets.Service;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Windowing;
 using Dalamud.Plugin;
@@ -20,6 +21,7 @@ public class PandorasBox : IDalamudPlugin
     private const string CommandName = "/pandora";
     internal WindowSystem Ws;
     internal MainWindow MainWindow;
+    internal static SheetManager? sheetManager;
 
     public static PandorasBox P { get; private set; } = null!;
     public static Configuration Config { get; private set; } = null!;
@@ -36,6 +38,11 @@ public class PandorasBox : IDalamudPlugin
         _ = framework.RunOnFrameworkThread(() =>
         {
             ECommonsMain.Init(pluginInterface, P, ECommons.Module.All);
+            sheetManager = new(pluginInterface, Svc.Data.GameData, new()
+            {
+                BuildItemInfoCache = true,
+
+            });
             Initialize();
         });
     }
@@ -82,6 +89,7 @@ public class PandorasBox : IDalamudPlugin
         FeatureProviders.Clear();
         PandoraIPC.Dispose();
         Events.Disable();
+        sheetManager?.Dispose();
     }
 
     private void OnCommand(string command, string args)
