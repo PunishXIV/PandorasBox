@@ -32,7 +32,7 @@ namespace PandorasBox.Features.Commands
         }
 
         private readonly List<Gearset> gearsets = new();
-        private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged", "doh", "crafters", "doh", "gatherers" };
+        private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged", "doh", "crafters", "dol", "gatherers" };
         private List<ClassJob> jobsList = new();
         protected override void OnCommand(List<string> args)
         {
