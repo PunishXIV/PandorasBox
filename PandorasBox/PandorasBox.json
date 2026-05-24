@@ -1,12 +1,12 @@
 {
-    "Author": "Taurenkey (Puni.sh)",
+    "Author": "Taurenkey, NightmareXIV, croizat (Puni.sh)",
     "Name": "Pandora's Box",
     "Punchline": "Do you dare to open Pandora's Box?",
     "Description": "Pandora's Box is a collection of major QoL tweaks and adjustments.\n\nOpen the box with /pandora",
     "InternalName": "Pandora's Box",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 15,
-    "IconUrl": "https://love.puni.sh/resources/pandora.png",
+    "IconUrl": "https://s3.puni.sh/media/plugin/8/icon-9opcpzqyh1h.png",
     "RepoUrl": "https://github.com/PunishXIV/PandorasBox",
     "DownloadLinkTesting": "https://love.puni.sh/plugins/Pandora/Testing/latest.zip",
     "Tags": [
