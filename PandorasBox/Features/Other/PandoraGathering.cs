@@ -204,7 +204,7 @@ namespace PandorasBox.Features.Other
             public int GPGatherChanceUp = 100;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
 
         public override FeatureType FeatureType => FeatureType.Other;
@@ -220,7 +220,7 @@ namespace PandorasBox.Features.Other
 
         public override bool DrawConditions()
         {
-            return Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
+            return GetGatheringAddon() != null;
         }
 
         public override void Enable()
@@ -229,6 +229,7 @@ namespace PandorasBox.Features.Other
             Config = LoadConfig<Configs>() ?? new Configs();
 
             quickGatherToggle ??= Svc.Hook.HookFromAddress<AddonGathering.Delegates.NotifyQuickGatherState>((nint)AddonGathering.MemberFunctionPointers.NotifyQuickGatherState, QuickGatherToggle);
+            quickGatherToggle?.Enable();
 
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
@@ -269,14 +270,19 @@ namespace PandorasBox.Features.Other
             Svc.Chat.ChatMessage -= CheckRevisit;
             Svc.Framework.Update -= UpdateIntegrity;
 
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-            if (addon != null)
+            var gatheringAddon = GetGatheringAddon();
+            if (gatheringAddon != null)
             {
+                var addon = (AtkUnitBase*)gatheringAddon;
                 addon->UldManager.NodeList[5]->ToggleVisibility(true);
                 addon->UldManager.NodeList[6]->ToggleVisibility(true);
                 addon->UldManager.NodeList[8]->ToggleVisibility(true);
                 addon->UldManager.NodeList[9]->ToggleVisibility(true);
-                addon->UldManager.NodeList[10]->ToggleVisibility(true);
+                var quickGatherNode = GetQuickGatherNode(gatheringAddon);
+                if (quickGatherNode != null)
+                    quickGatherNode->ToggleVisibility(true);
+                else if (addon->UldManager.NodeListCount > 10 && addon->UldManager.NodeList[10] is not null)
+                    addon->UldManager.NodeList[10]->ToggleVisibility(true);
             }
             Svc.Condition.ConditionChange -= ResetCounter;
 
@@ -291,81 +297,86 @@ namespace PandorasBox.Features.Other
 
         public unsafe override void Draw()
         {
-            if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
+            var gatheringAddon = GetGatheringAddon();
+            if (gatheringAddon == null)
+                return;
+
+            var addon = (AtkUnitBase*)gatheringAddon;
+            if (!IsGatheringAddonReady(addon))
+                return;
+
+            if (!TryGetOverlayLayout(addon, gatheringAddon, out var nodeId, out var position, out var scale, out var size))
+                return;
+
+            var quickGatherCheckBox = gatheringAddon->QuickGatheringComponentCheckBox;
+            var quickGatherNode = GetQuickGatherNode(gatheringAddon);
+            if (quickGatherNode != null && quickGatherNode->IsVisible())
+                quickGatherNode->ToggleVisibility(false);
+
+            Svc.GameConfig.TryGet(Dalamud.Game.Config.SystemConfigOption.ColorThemeType, out uint color);
+
+            var theme = color switch
             {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                if (addon == null) return;
-                if (!addon->IsVisible) return;
+                0 => DarkTheme,
+                1 => LightTheme,
+                2 => ClassicFFTheme,
+                3 => LightBlueTheme,
+                _ => DarkTheme
+            };
 
-                if (addon->UldManager.NodeListCount < 5) return;
-                if (addon->UldManager.NodeList[2] is null) return;
-                if (addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10] is null) return;
-                if (!addon->UldManager.NodeList[2]->GetAsAtkComponentNode()->Component->UldManager.NodeList[10]->IsVisible()) return;
+            if (color == 3)
+            {
+                if (addon->UldManager.NodeListCount > 5) addon->UldManager.NodeList[5]->ToggleVisibility(false);
+                if (addon->UldManager.NodeListCount > 6) addon->UldManager.NodeList[6]->ToggleVisibility(false);
+                if (addon->UldManager.NodeListCount > 9) addon->UldManager.NodeList[9]->ToggleVisibility(false);
+                if (addon->UldManager.NodeListCount > 8) addon->UldManager.NodeList[8]->ToggleVisibility(false);
+            }
 
-                var node = addon->UldManager.NodeList[10];
+            LocationEffect = TryGetLocationEffectText(addon, 8);
+            LocationEffect2 = TryGetLocationEffectText(addon, 7);
+            if (color == 1)
+            {
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
+            }
 
-                if (node->IsVisible())
-                    node->ToggleVisibility(false);
+            ImGui.PushStyleColor(ImGuiCol.WindowBg, ImGui.GetColorU32(theme));
+            ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.DalamudGrey3);
+            ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f.Scale());
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
 
-                var position = AtkResNodeHelper.GetNodePosition(node);
-                var scale = AtkResNodeHelper.GetNodeScale(node);
-                var size = new Vector2(node->Width, node->Height) * scale;
+            var fontScale = Math.Max(scale.X, 0.75f);
+            ImGui.GetFont().Scale = fontScale;
+            var oldScale = ImGui.GetIO().FontGlobalScale;
+            ImGui.GetIO().FontGlobalScale = 0.83f;
+            ImGui.PushFont(ImGui.GetFont());
+            size.Y *= 6.3f;
+            size.X *= 1.065f;
+            position.X -= 15f * scale.X;
 
-                Svc.GameConfig.TryGet(Dalamud.Game.Config.SystemConfigOption.ColorThemeType, out uint color);
+            ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
+            ImGui.SetNextWindowSize(size);
+            if (!ImGui.Begin($"###PandoraGathering{nodeId}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
+                | ImGuiWindowFlags.NoResize))
+            {
+                ImGui.PopFont();
+                ImGui.GetIO().FontGlobalScale = oldScale;
+                ImGui.GetFont().Scale = 1;
+                ImGui.PopStyleVar(4);
+                ImGui.PopStyleColor(color == 1 ? 3 : 2);
+                return;
+            }
 
-                var theme = color switch
-                {
-                    0 => DarkTheme,
-                    1 => LightTheme,
-                    2 => ClassicFFTheme,
-                    3 => LightBlueTheme,
-                    _ => DarkTheme
-                };
+            ImGui.Dummy(new Vector2(2f));
 
-                if (color == 3)
-                {
-                    addon->UldManager.NodeList[5]->ToggleVisibility(false);
-                    addon->UldManager.NodeList[6]->ToggleVisibility(false);
-                    addon->UldManager.NodeList[9]->ToggleVisibility(false);
-                    addon->UldManager.NodeList[8]->ToggleVisibility(false);
-                }
-
-                LocationEffect = addon->UldManager.NodeList[8]->GetAsAtkTextNode()->NodeText.GetText();
-                LocationEffect2 = addon->UldManager.NodeList[7]->GetAsAtkTextNode()->NodeText.GetText();
-                if (color == 1)
-                {
-                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
-                }
-
-                ImGui.PushStyleColor(ImGuiCol.WindowBg, ImGui.GetColorU32(theme));
-                ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.DalamudGrey3);
-                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-
-                ImGui.GetFont().Scale = scale.X;
-                var oldScale = ImGui.GetIO().FontGlobalScale;
-                ImGui.GetIO().FontGlobalScale = 0.83f;
-                ImGui.PushFont(ImGui.GetFont());
-                size.Y *= 6.3f;
-                size.X *= 1.065f;
-                position.X -= 15f * scale.X;
-
-                ImGuiHelpers.ForceNextWindowMainViewport();
-                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
-                ImGui.SetNextWindowSize(size);
-                ImGui.Begin($"###PandoraGathering{node->NodeId}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
-                    | ImGuiWindowFlags.NoResize);
-
-                ImGui.Dummy(new Vector2(2f));
-
-                ImGui.Columns(3, default, false);
+            ImGui.Columns(3, default, false);
 
                 if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
                 {
-                    if (Config.Gathering && node->GetAsAtkComponentCheckBox()->IsChecked)
-                        QuickGatherToggle(null);
+                    if (Config.Gathering && quickGatherCheckBox != null && quickGatherCheckBox->IsChecked)
+                        QuickGatherToggle(gatheringAddon);
 
                     if (!Config.Gathering)
                         TaskManager.Abort();
@@ -492,8 +503,6 @@ namespace PandorasBox.Features.Other
 
                 ImGui.PopStyleVar(4);
                 ImGui.PopStyleColor(color == 1 ? 3 : 2);
-
-            }
         }
 
         private void OnEvent(AddonEvent type, AddonArgs args)
@@ -1084,10 +1093,116 @@ namespace PandorasBox.Features.Other
 
         }
 
+        private static AddonGathering* GetGatheringAddon()
+        {
+            for (var i = 1; i <= 2; i++)
+            {
+                var addon = Svc.GameGui.GetAddonByName("Gathering", i);
+                if (addon.Address != nint.Zero)
+                    return (AddonGathering*)addon.Address;
+            }
+
+            return null;
+        }
+
+        private static bool IsGatheringAddonReady(AtkUnitBase* addon)
+            => addon->IsVisible && GenericHelpers.IsAddonReady(addon);
+
+        private static string TryGetLocationEffectText(AtkUnitBase* addon, int nodeIndex)
+        {
+            if (addon->UldManager.NodeListCount <= nodeIndex || addon->UldManager.NodeList[nodeIndex] is null)
+                return string.Empty;
+
+            return addon->UldManager.NodeList[nodeIndex]->GetAsAtkTextNode()->NodeText.GetText();
+        }
+
+        private static bool TryGetOverlayLayout(AtkUnitBase* addon, AddonGathering* gatheringAddon, out uint nodeId, out Vector2 position, out Vector2 scale, out Vector2 size)
+        {
+            nodeId = 0;
+            position = default;
+            scale = Vector2.One;
+            size = new Vector2(420f, 24f);
+
+            var quickGatherNode = GetQuickGatherNode(gatheringAddon);
+            if (TryGetLayoutFromNode(quickGatherNode, ref nodeId, ref position, ref scale, ref size))
+                return true;
+
+            var lastItemRow = GetLastItemRowNode(addon);
+            if (TryGetLayoutFromNode(lastItemRow, ref nodeId, ref position, ref scale, ref size))
+            {
+                position.Y += (lastItemRow->Height + 6f) * scale.Y;
+                size.X = Math.Max(size.X, 360f * scale.X);
+                return true;
+            }
+
+            if (addon->RootNode == null)
+                return false;
+
+            var root = addon->RootNode;
+            nodeId = root->NodeId;
+            position = AtkResNodeHelper.GetNodePosition(root);
+            scale = AtkResNodeHelper.GetNodeScale(root);
+            if (scale.X <= 0.01f || float.IsNaN(scale.X))
+                scale = Vector2.One;
+
+            var rootWidth = root->Width * scale.X;
+            var rootHeight = root->Height * scale.Y;
+            size = new Vector2(Math.Max(rootWidth * 0.92f, 360f * scale.X), 24f * scale.Y);
+            position.X += rootWidth * 0.04f;
+            position.Y += rootHeight * 0.68f;
+            return true;
+        }
+
+        private static bool TryGetLayoutFromNode(AtkResNode* node, ref uint nodeId, ref Vector2 position, ref Vector2 scale, ref Vector2 size)
+        {
+            if (node == null)
+                return false;
+
+            nodeId = node->NodeId;
+            position = AtkResNodeHelper.GetNodePosition(node);
+            scale = AtkResNodeHelper.GetNodeScale(node);
+            if (scale.X <= 0.01f || float.IsNaN(scale.X))
+                scale = Vector2.One;
+
+            if (node->Width > 0 && node->Height > 0)
+            {
+                size = new Vector2(Math.Max(node->Width, 40f), Math.Max(node->Height, 18f)) * scale;
+                return true;
+            }
+
+            return false;
+        }
+
+        private static AtkResNode* GetLastItemRowNode(AtkUnitBase* addon)
+        {
+            for (var i = 7; i >= 0; i--)
+            {
+                var node = addon->GetNodeById((uint)(17 + i));
+                if (node != null)
+                    return node;
+            }
+
+            return null;
+        }
+
+        private static AtkResNode* GetQuickGatherNode(AddonGathering* addon)
+        {
+            var checkBox = addon->QuickGatheringComponentCheckBox;
+            if (checkBox == null)
+                return null;
+
+            if (checkBox->OwnerNode != null)
+                return (AtkResNode*)checkBox->OwnerNode;
+
+            return checkBox->GetAtkResNode();
+        }
+
         private void QuickGatherToggle(AddonGathering* thisPtr)
         {
-            if (thisPtr == null && Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
-                thisPtr = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
+            if (thisPtr == null)
+                thisPtr = GetGatheringAddon();
+
+            if (thisPtr == null || thisPtr->QuickGatheringComponentCheckBox == null) return;
 
             thisPtr->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
             quickGatherToggle?.Original(thisPtr);
