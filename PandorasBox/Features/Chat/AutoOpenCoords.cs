@@ -1,18 +1,17 @@
+using Dalamud.Bindings.ImGui;
+using Dalamud.Game.Chat;
 using Dalamud.Game.Text;
-using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.UI.Agent;
-using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using static ECommons.ExcelServices.TerritoryIntendedUseEnum;
-using Dalamud.Game.Chat;
 
 namespace PandorasBox.Features.ChatFeature;
 
@@ -144,12 +143,10 @@ internal class AutoOpenCoords : Feature
         var map = Svc.Data.GetExcelSheet<TerritoryType>().GetRow(maplinkMessage.TerritoryId).Map;
         var maplink = new MapLinkPayload(maplinkMessage.TerritoryId, map.RowId, maplinkMessage.X, maplinkMessage.Y);
 
+        Svc.GameGui.OpenMapWithMapLink(maplink);
         if (Config.DontOpenMap)
-        {
-            AgentMap.Instance()->SetFlagMapMarker(maplinkMessage.TerritoryId, map.RowId, maplink.RawX, maplink.RawY);
-        }
-        else
-            Svc.GameGui.OpenMapWithMapLink(maplink);
+            AgentMap.Instance()->HideAddon();
+
     }
 
     public override void Enable()
@@ -163,14 +160,15 @@ internal class AutoOpenCoords : Feature
     {
         SaveConfig(Config);
         Svc.Chat.ChatMessage -= OnChatMessage;
+        MapLinkMessageList.Clear();
         base.Disable();
     }
 
     protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
     {
-        if (ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar)) hasChanged = true;
-        if (ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS)) hasChanged = true;
-        //ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
+        hasChanged |= ImGui.Checkbox("Include Sonar links", ref Config.IncludeSonar);
+        hasChanged |= ImGui.Checkbox("Ignore <pos> flags", ref Config.IgnorePOS);
+        hasChanged |= ImGui.Checkbox("Set <flag> without opening the map", ref Config.DontOpenMap);
 
         if (ImGui.CollapsingHeader("Channel Filters (Whitelist)"))
         {

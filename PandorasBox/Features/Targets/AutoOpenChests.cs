@@ -19,7 +19,7 @@ namespace PandorasBox.Features.Targets
     {
         public override string Name => "Automatically Open Chests";
 
-        public override string Description => "Walk up to a chest to automatically open it.";
+        public override string Description => "Walk up to a chest to automatically open it. (Does not work with Deep Dungeon chests)";
 
         public override FeatureType FeatureType => FeatureType.Targeting;
 
