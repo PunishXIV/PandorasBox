@@ -32,7 +32,7 @@ namespace PandorasBox.Features.Targets
             public bool OpenInHighEndDuty = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => true;
 

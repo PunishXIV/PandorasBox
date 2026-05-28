@@ -17,7 +17,8 @@ namespace PandorasBox.Helpers
         {
             var assembly = Assembly.GetExecutingAssembly();
             var t = assembly.GetTypes().Where(x => x == typeof(T)).First();
-            var f = (T)Activator.CreateInstance(t);
+            var f = (T?)Activator.CreateInstance(t);
+            if (f is null) return false;
 
             return IsEnabled(f);
 

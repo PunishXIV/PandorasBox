@@ -56,7 +56,7 @@ namespace PandorasBox.Features.Targets
         }
 
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
         public void TryInteract(GameObject* baseObj)
         {
             if (Config.InteractMethod is 1 or 3)

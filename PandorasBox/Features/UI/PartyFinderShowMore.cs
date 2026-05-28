@@ -15,7 +15,7 @@ namespace PandorasBox.Features.UI
         public override FeatureType FeatureType => FeatureType.UI;
 
         private delegate char PartyFinderDelegate(AgentLookingForGroup* a1, int a2);
-        private Hook<PartyFinderDelegate> partyFinderHook;
+        private Hook<PartyFinderDelegate> partyFinderHook = null!;
 
         private char PartyFinderDetour(AgentLookingForGroup* a1, int a2)
         {

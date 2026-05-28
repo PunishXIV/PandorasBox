@@ -39,7 +39,11 @@ namespace PandorasBox.Features.UI
             var trimmedText = lastSpace >= 0
                 ? rawText.Remove(lastSpace).TrimEnd()
                 : rawText.TrimEnd();
-            var sheetText = Svc.Data.GetExcelSheet<Addon>()!.First(x => x.RowId == 155).Text.ToDalamudString().Payloads[2].ToString().Trim();
+            var sheetPayloads = Svc.Data.GetExcelSheet<Addon>()!.GetRow(155).Text.ToDalamudString().Payloads;
+            if (sheetPayloads.Count < 3 || sheetPayloads[2] is not TextPayload sheetPayload)
+                return;
+
+            var sheetText = sheetPayload.ToString().Trim();
 
             if (sheetText == trimmedText)
             {

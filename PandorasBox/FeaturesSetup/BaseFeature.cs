@@ -448,7 +448,7 @@ public abstract class BaseFeature
                 if (GenericHelpers.IsAddonReady(addon))
                 {
                     var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                    var text = MemoryHelper.ReadSeString(&textNode->NodeText).GetText();
+                    var text = textNode->NodeText.GetText();
                     if (compare(text))
                     {
                         Svc.Log.Verbose($"SelectYesno {text} addon {i} by predicate");
@@ -476,7 +476,7 @@ public abstract class BaseFeature
                 if (GenericHelpers.IsAddonReady(addon))
                 {
                     var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                    var text = MemoryHelper.ReadSeString(&textNode->NodeText).GetText().Replace(" ", "");
+                    var text = textNode->NodeText.GetText().Replace(" ", "");
                     if (text.EqualsAny(s.Select(x => x.Replace(" ", ""))))
                     {
                         Svc.Log.Verbose($"SelectYesno {s.Print()} addon {i}");

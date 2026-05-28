@@ -21,7 +21,7 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private IContextMenu contextMenu;
+        private IContextMenu contextMenu = null!;
 
         private static readonly SeString OpenString = new SeString(PandoraPayload.Payloads.ToArray()).Append(new TextPayload("Open All"));
 
@@ -41,7 +41,7 @@ namespace PandorasBox.Features.UI
                 args.AddMenuItem(item);
         }
 
-        private MenuItem CheckInventoryItem(uint ItemId)
+        private MenuItem? CheckInventoryItem(uint ItemId)
         {
             if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == ItemId, out var sheetItem))
             {
@@ -132,7 +132,7 @@ namespace PandorasBox.Features.UI
                             contextMenu->FireCallback(5, values, true);
 
                             TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer.GameObjectId) == 0);
+                            TaskManager.Enqueue(() => Svc.Objects.LocalPlayer != null && ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer.GameObjectId) == 0);
                             TaskManager.Enqueue(() => ActionManager.Instance()->AnimationLock == 0);
                             TaskManager.Enqueue(() => OpenItem(ItemId));
 

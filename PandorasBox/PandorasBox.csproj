@@ -19,14 +19,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="AllaganLib.GameSheets" Version="2.2.0" />
-        <PackageReference Include="ECommons" Version="3.2.0.19" />
-        <PackageReference Include="NAudio" Version="2.1.0" />
+        <PackageReference Include="AllaganLib.GameSheets" Version="2.2.4" />
+        <PackageReference Include="ECommons" Version="3.2.1.3" />
+        <PackageReference Include="NAudio" Version="2.3.0" />
         <Reference Include="JetBrains.Annotations">
             <Private>false</Private>
             <HintPath>$(DalamudLibPath)\JetBrains.Annotations.dll</HintPath>
         </Reference>
         <PackageReference Update="DalamudPackager" Version="15.0.0" />
+        <PackageReference Update="DotNet.ReproducibleBuilds" Version="2.0.2" />
     </ItemGroup>
 
     <ItemGroup>

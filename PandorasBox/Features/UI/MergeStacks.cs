@@ -25,7 +25,7 @@ namespace PandorasBox.Features.UI
 
         private bool InventoryOpened { get; set; } = false;
 
-        private Dictionary<uint, Item> Sheet { get; set; }
+        private Dictionary<uint, Item> Sheet { get; set; } = null!;
 
         public class InventorySlot
         {
@@ -44,7 +44,7 @@ namespace PandorasBox.Features.UI
             public bool SortAfter = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => true;
 

@@ -106,14 +106,14 @@ namespace PandorasBox.Features.UI
                                 }
                             }
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
 
                         }
                     }
                 }
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 //ex.Log();
             }

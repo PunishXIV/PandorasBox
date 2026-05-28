@@ -22,7 +22,7 @@ namespace PandorasBox.Features.Other
             public float Throttle = 0.1f;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => true;
 

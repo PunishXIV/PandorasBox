@@ -27,11 +27,11 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        public Dictionary<uint, Item> Seeds { get; set; }
-        public Dictionary<uint, Item> Soils { get; set; }
-        public Dictionary<uint, Item> Fertilizers { get; set; }
+        public Dictionary<uint, Item> Seeds { get; set; } = null!;
+        public Dictionary<uint, Item> Soils { get; set; } = null!;
+        public Dictionary<uint, Item> Fertilizers { get; set; } = null!;
 
-        public Dictionary<uint, Addon> AddonText { get; set; }
+        public Dictionary<uint, Addon> AddonText { get; set; } = null!;
 
         public class Configs : FeatureConfig
         {
@@ -46,7 +46,7 @@ namespace PandorasBox.Features.UI
             public bool OnlyShowInventoryItems = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         private bool Fertilized { get; set; } = false;
         private List<int> SlotsFilled { get; set; } = new();

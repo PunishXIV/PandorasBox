@@ -114,7 +114,7 @@ readonly public unsafe struct TempQuest(ExcelPage page, uint offset, uint row) :
     public readonly bool Unknown13 => page.ReadPackedBool(offset + 2792, 6);
 
     private static QuestParamsStruct QuestParamsCtor(ExcelPage page, uint parentOffset, uint offset, uint i) => new(page, parentOffset, offset + 4 + i * 8);
-    private static QuestListenerParamsStruct QuestListenerParamsCtor(ExcelPage page, uint parentOffset, uint offset, uint i) => new(page, parentOffset, offset + 404 + i * 20);
+    private static QuestListenerParamsStruct QuestListenerParamsCtor(ExcelPage page, uint parentOffset, uint offset, uint i) => new(page, offset + 404 + i * 20);
     private static TodoParamsStruct TodoParamsCtor(ExcelPage page, uint parentOffset, uint offset, uint i) => new(page, parentOffset, offset + 1684 + i * 36);
     private static RowRef RewardCtor(ExcelPage page, uint parentOffset, uint offset, uint i) => (/* ItemRewardType */ page.ReadUInt8(offset + 2630)) switch
     {
@@ -146,7 +146,7 @@ readonly public unsafe struct TempQuest(ExcelPage page, uint offset, uint row) :
         public readonly uint ScriptArg => page.ReadUInt32(offset + 4);
     }
 
-    public readonly struct QuestListenerParamsStruct(ExcelPage page, uint parentOffset, uint offset)
+    public readonly struct QuestListenerParamsStruct(ExcelPage page, uint offset)
     {
         public readonly uint Listener => page.ReadUInt32(offset);
         public readonly uint ConditionValue => page.ReadUInt32(offset + 4);

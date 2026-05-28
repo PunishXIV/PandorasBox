@@ -24,10 +24,10 @@ namespace PandorasBox.Features.Other
             public int InactivityTimer = 1;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         internal unsafe delegate bool UseActionDelegate(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8);
-        internal Hook<UseActionDelegate> UseActionHook;
+        internal new Hook<UseActionDelegate> UseActionHook = null!;
 
 
         public unsafe override void Enable()

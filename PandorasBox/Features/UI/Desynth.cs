@@ -28,7 +28,7 @@ namespace PandorasBox.Features.UI
         private Dictionary<int, Item> ListItems { get; set; } = [];
         public override FeatureType FeatureType => FeatureType.UI;
 
-        private Overlays Overlay { get; set; }
+        private Overlays Overlay { get; set; } = null!;
 
         private bool Desynthing { get; set; } = false;
         public override void Enable()

@@ -38,7 +38,7 @@ namespace PandorasBox.Features.Other
             public bool ExcludeCombat = false;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => true;
 

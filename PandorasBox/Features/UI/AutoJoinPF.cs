@@ -48,7 +48,8 @@ namespace PandorasBox.Features.UI
         private bool IsSelfParty(AddonLookingForGroupDetail* addon)
         {
             // 113 is the party host's name
-            return addon->AtkUnitBase.GetNodeById(6)->GetAsAtkTextNode()->NodeText.ToString() == Svc.Objects.LocalPlayer.Name.TextValue;
+            var localPlayer = Svc.Objects.LocalPlayer;
+            return localPlayer != null && addon->AtkUnitBase.GetNodeById(6)->GetAsAtkTextNode()->NodeText.ToString() == localPlayer.Name.TextValue;
         }
 
         internal static bool ConfirmYesNo()

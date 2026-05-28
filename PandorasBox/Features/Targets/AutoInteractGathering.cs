@@ -62,7 +62,7 @@ namespace PandorasBox.Features.Targets
             public List<uint> ZoneWhitelist = [];
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override void Enable()
         {
@@ -98,7 +98,8 @@ namespace PandorasBox.Features.Targets
             if (Svc.Condition[ConditionFlag.Jumping]) return;
             if (Config.ZoneWhitelist.Count > 0 && !Config.ZoneWhitelist.Contains(Player.Territory.RowId)) return;
 
-            var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && Vector3.Distance(x.Position, Player.Object.Position) < 4 && GameObjectHelper.GetHeightDifference(x) <= 4 && x.IsTargetable).ToList();
+            var playerPosition = Svc.Objects.LocalPlayer.Position;
+            var nearbyNodes = Svc.Objects.Where(x => (x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.GatheringPoint || x.ObjectKind == Dalamud.Game.ClientState.Objects.Enums.ObjectKind.CardStand) && Vector3.Distance(x.Position, playerPosition) < 4 && GameObjectHelper.GetHeightDifference(x) <= 4 && x.IsTargetable).ToList();
             if (nearbyNodes.Count == 0)
                 return;
 

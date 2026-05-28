@@ -21,7 +21,7 @@ namespace PandorasBox.Features.UI
 
         public bool Trading { get; private set; } = false;
 
-        internal Overlays overlay;
+        internal Overlays overlay = null!;
         public override void Enable()
         {
             overlay = new(this);

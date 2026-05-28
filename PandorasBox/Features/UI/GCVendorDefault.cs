@@ -25,7 +25,7 @@ namespace PandorasBox.Features.UI
             public int DefaultTab = 0;
         }
 
-        public Configs Config { get; private set; }
+        public Configs Config { get; private set; } = null!;
 
         public override bool UseAutoConfig => false;
 

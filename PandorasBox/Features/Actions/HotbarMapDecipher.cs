@@ -22,9 +22,9 @@ namespace PandorasBox.Features.Actions
         public override string Description { get; } = "Allows deciphering treaure maps from hotbar.";
         public override FeatureType FeatureType { get; } = FeatureType.Actions;
 
-        public new delegate bool UseActionDelegate(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget);
+        public delegate bool UseActionDelegate(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget);
 
-        public new static Hook<UseActionDelegate>? UseActionHook;
+        public static new Hook<UseActionDelegate>? UseActionHook;
 
         public class Configs : FeatureConfig
         {

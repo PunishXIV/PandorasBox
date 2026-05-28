@@ -19,7 +19,7 @@ namespace PandorasBox.Features.UI
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        internal Overlays Overlay;
+        internal Overlays Overlay = null!;
 
         internal bool Reducing;
         public override void Enable()
