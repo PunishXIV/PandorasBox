@@ -76,73 +76,15 @@ namespace PandorasBox.Features.UI
             {
                 return true;
             }
-            if (!GetAddonByID(invId)->IsVisible)
-            {
-                return null;
-            }
 
-            var inventories = new List<InventoryType>
-            {
-                InventoryType.Inventory1,
-                InventoryType.Inventory2,
-                InventoryType.Inventory3,
-                InventoryType.Inventory4,
-            };
+            TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
+            TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer.GameObjectId) == 0);
+            TaskManager.Enqueue(() => ActionManager.Instance()->AnimationLock == 0);
+            TaskManager.Enqueue(() => OpenItem(ItemId));
 
-            foreach (var inv in inventories)
-            {
-                var container = InventoryManager.Instance()->GetInventoryContainer(inv);
-                for (var i = 0; i < container->Size; i++)
-                {
-                    var item = container->GetInventorySlot(i);
+            AgentInventoryContext.Instance()->UseItem(ItemId);
 
-                    if (item->ItemId == ItemId)
-                    {
-                        var ag = AgentInventoryContext.Instance();
-                        ag->OpenForItemSlot(container->Type, i,0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
-                        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1).Address;
-                        if (contextMenu != null)
-                        {
-                            var values = stackalloc AtkValue[5];
-                            values[0] = new AtkValue()
-                            {
-                                Type = AtkValueType.Int,
-                                Int = 0
-                            };
-                            values[1] = new AtkValue()
-                            {
-                                Type = AtkValueType.Int,
-                                UInt = 0
-                            };
-                            values[2] = new AtkValue()
-                            {
-                                Type = AtkValueType.Int,
-                                Int = 0
-                            };
-                            values[3] = new AtkValue()
-                            {
-                                Type = AtkValueType.Int,
-                                Int = 0
-                            };
-                            values[4] = new AtkValue()
-                            {
-                                Type = AtkValueType.Int,
-                                UInt = 0
-                            };
-                            contextMenu->FireCallback(5, values, true);
-
-                            TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
-                            TaskManager.Enqueue(() => Svc.Objects.LocalPlayer != null && ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer.GameObjectId) == 0);
-                            TaskManager.Enqueue(() => ActionManager.Instance()->AnimationLock == 0);
-                            TaskManager.Enqueue(() => OpenItem(ItemId));
-
-                            return true;
-                        }
-                    }
-                }
-            }
-
-            return false;
+            return true;
         }
 
         public override void Disable()
