@@ -52,6 +52,10 @@
     </ItemGroup>
 
     <ItemGroup>
+      <None Include=".editorconfig" />
+    </ItemGroup>
+
+    <ItemGroup>
         <ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
     </ItemGroup>
 </Project>

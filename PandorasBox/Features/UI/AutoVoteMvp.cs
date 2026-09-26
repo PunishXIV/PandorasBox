@@ -18,8 +18,7 @@ using PandorasBox.FeaturesSetup;
 
 namespace PandorasBox.Features.UI;
 
-public class AutoVoteMvp : Feature
-{
+public class AutoVoteMvp : Feature {
     public override string Name => "Auto-Commendation after Duty";
     public override string Description => "Automatically give a commendation to a random player in your party at the end of a duty.";
     public override FeatureType FeatureType => FeatureType.UI;
@@ -29,8 +28,7 @@ public class AutoVoteMvp : Feature
     private List<uint> DeadPlayers { get; set; } = [];
     private Dictionary<uint, int> DeathTracker { get; set; } = [];
 
-    public class Configs : FeatureConfig
-    {
+    public class Configs : FeatureConfig {
         public int Priority = 0;
         public bool HideChat = false;
         public bool ExcludeDeaths = false;
@@ -40,10 +38,8 @@ public class AutoVoteMvp : Feature
 
     public Configs Config { get; private set; } = null!;
 
-    public override unsafe void Enable()
-    {
-        if (GameMain.Instance()->CurrentContentFinderConditionId != 0)
-        {
+    public override unsafe void Enable() {
+        if (GameMain.Instance()->CurrentContentFinderConditionId != 0) {
             var payload = PandoraPayload.Payloads.ToList();
             payload.Add(new TextPayload(" [Auto-Commendation] Please note as this feature was enabled mid-duty, it may not operate correctly if you have queued into the duty with other players in your party before joining."));
             Svc.Chat.Print(new SeString(payload));
@@ -55,28 +51,22 @@ public class AutoVoteMvp : Feature
         base.Enable();
     }
 
-    private void UpdatePartyCache(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value)
-    {
-        if (Svc.Condition.Any())
-        {
-            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.WaitingForDuty && value)
-            {
-                foreach (var partyMember in Svc.Party)
-                {
+    private void UpdatePartyCache(Dalamud.Game.ClientState.Conditions.ConditionFlag flag, bool value) {
+        if (Svc.Condition.Any()) {
+            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.WaitingForDuty && value) {
+                foreach (var partyMember in Svc.Party) {
                     Svc.Log.Debug($"Adding {partyMember.Name.GetText()} {partyMember.EntityId} to premade list");
                     PremadePartyID.Add(partyMember.Name.GetText());
                 }
             }
 
-            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty && !value)
-            {
+            if (flag == Dalamud.Game.ClientState.Conditions.ConditionFlag.BoundByDuty && !value) {
                 PremadePartyID.Clear();
             }
         }
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         SaveConfig(Config);
         Svc.Framework.Update -= FrameworkUpdate;
         Svc.AddonLifecycle.UnregisterListener(OnBannerSetup);
@@ -84,32 +74,26 @@ public class AutoVoteMvp : Feature
         base.Disable();
     }
 
-    private unsafe void FrameworkUpdate(IFramework framework)
-    {
+    private unsafe void FrameworkUpdate(IFramework framework) {
         if (Player.Object == null) return;
         if (Svc.ClientState.IsPvP) return;
         CheckForDeadPartyMembers();
     }
 
-    private unsafe void OnBannerSetup(AddonEvent type, AddonArgs args)
-    {
+    private unsafe void OnBannerSetup(AddonEvent type, AddonArgs args) {
         if (Svc.ClientState.IsPvP) return;
         var atk = (AtkUnitBase*)args.Addon.Address;
-        try
-        {
+        try {
             if (ChoosePlayer(atk) is not -1 and var playerIndex)
                 VoteBanner((AtkUnitBase*)args.Addon.Address, playerIndex);
         }
-        catch (Exception e)
-        {
+        catch (Exception e) {
             Svc.Log.Error(e, "Failed to vote!");
         }
     }
 
-    private void CheckForDeadPartyMembers()
-    {
-        if (!Svc.Party.Any())
-        {
+    private void CheckForDeadPartyMembers() {
+        if (!Svc.Party.Any()) {
             DeathTracker.Clear();
             DeadPlayers.Clear();
             return;
@@ -118,10 +102,8 @@ public class AutoVoteMvp : Feature
         if (Config.ResetOnWipe && Svc.Party.All(x => x.GameObject?.IsDead == true))
             DeathTracker.Clear();
 
-        foreach (var pm in Svc.Party.Where(pm => pm.GameObject != null && pm.EntityId != Svc.Objects.LocalPlayer?.GameObjectId))
-        {
-            if (pm.GameObject?.IsDead ?? false)
-            {
+        foreach (var pm in Svc.Party.Where(pm => pm.GameObject != null && pm.EntityId != Svc.Objects.LocalPlayer?.GameObjectId)) {
+            if (pm.GameObject?.IsDead ?? false) {
                 if (DeadPlayers.Contains(pm.EntityId)) continue;
                 DeadPlayers.Add(pm.EntityId);
                 if (DeathTracker.ContainsKey(pm.EntityId))
@@ -134,8 +116,7 @@ public class AutoVoteMvp : Feature
         }
     }
 
-    private unsafe int ChoosePlayer(AtkUnitBase* bannerWindow)
-    {
+    private unsafe int ChoosePlayer(AtkUnitBase* bannerWindow) {
         var hud = UIModule.Instance()->GetAgentModule()->GetAgentHUD();
         if (hud == null) throw new Exception("HUD is empty!");
 
@@ -145,12 +126,9 @@ public class AutoVoteMvp : Feature
 
         if (!list.Any()) return -1;
 
-        if (Config.ExcludeDeaths)
-        {
-            foreach (var deadPlayers in DeathTracker)
-            {
-                if (deadPlayers.Value >= Config.HowManyDeaths)
-                {
+        if (Config.ExcludeDeaths) {
+            foreach (var deadPlayers in DeathTracker) {
+                if (deadPlayers.Value >= Config.HowManyDeaths) {
                     list.RemoveAll(x => x.PartyMember.EntityId == deadPlayers.Key);
                 }
             }
@@ -161,8 +139,7 @@ public class AutoVoteMvp : Feature
         var dps = list.Where(i => i.PartyMember.ClassJob.Value.Role is 2 or 3);
 
         (int index, IPartyMember member) voteTarget = new();
-        switch (Config.Priority)
-        {
+        switch (Config.Priority) {
             //tank
             case 0:
                 if (tanks.Any()) voteTarget = RandomPick(tanks);
@@ -189,14 +166,11 @@ public class AutoVoteMvp : Feature
 
         if (voteTarget.member == null) return -1;
 
-        for (int i = 22; i <= 22 + 7; i++)
-        {
+        for (int i = 22; i <= 22 + 7; i++) {
             if (bannerWindow->AtkValues[i].Type != AtkValueType.String) continue;
             var name = bannerWindow->AtkValues[i].String.ToString();
-            if (name == voteTarget.member.Name.TextValue)
-            {
-                if (!Config.HideChat)
-                {
+            if (name == voteTarget.member.Name.TextValue) {
+                if (!Config.HideChat) {
                     var payload = PandoraPayload.Payloads.ToList();
                     payload.AddRange(
                     [
@@ -220,13 +194,10 @@ public class AutoVoteMvp : Feature
         return -1;
     }
 
-    private static unsafe int GetPartySlotIndex(uint GameObjectId, AgentHUD* hud)
-    {
+    private static unsafe int GetPartySlotIndex(uint GameObjectId, AgentHUD* hud) {
         var list = hud->PartyMembers;
-        for (var i = 0; i < hud->PartyMemberCount; i++)
-        {
-            if (list[i].Object->GetGameObjectId() == GameObjectId)
-            {
+        for (var i = 0; i < hud->PartyMemberCount; i++) {
+            if (list[i].Object->GetGameObjectId() == GameObjectId) {
                 return i;
             }
         }
@@ -237,8 +208,7 @@ public class AutoVoteMvp : Feature
     private static T RandomPick<T>(IEnumerable<T> list)
         => list.ElementAt(new Random().Next(list.Count() - 1));
 
-    private static unsafe void VoteBanner(AtkUnitBase* bannerWindow, int index)
-    {
+    private static unsafe void VoteBanner(AtkUnitBase* bannerWindow, int index) {
         if (index == -1) return;
         var atkValues = stackalloc AtkValue[2];
         atkValues[0].SetInt(12);
@@ -246,29 +216,24 @@ public class AutoVoteMvp : Feature
         bannerWindow->FireCallback(2, atkValues);
     }
 
-    protected override DrawConfigDelegate DrawConfigTree => (ref bool _) =>
-    {
+    protected override DrawConfigDelegate DrawConfigTree => (ref bool _) => {
         bool hasChanged = false;
-        if (ImGui.RadioButton("Prioritize Tank Vote", Config.Priority == 0))
-        {
+        if (ImGui.RadioButton("Prioritize Tank Vote", Config.Priority == 0)) {
             Config.Priority = 0;
             hasChanged = true;
         }
 
-        if (ImGui.RadioButton("Prioritize Healer Vote", Config.Priority == 1))
-        {
+        if (ImGui.RadioButton("Prioritize Healer Vote", Config.Priority == 1)) {
             Config.Priority = 1;
             hasChanged = true;
         }
 
-        if (ImGui.RadioButton("Prioritize DPS Vote", Config.Priority == 2))
-        {
+        if (ImGui.RadioButton("Prioritize DPS Vote", Config.Priority == 2)) {
             Config.Priority = 2;
             hasChanged = true;
         }
 
-        if (ImGui.RadioButton("No Priority", Config.Priority == 3))
-        {
+        if (ImGui.RadioButton("No Priority", Config.Priority == 3)) {
             Config.Priority = 3;
             hasChanged = true;
         }
@@ -279,8 +244,7 @@ public class AutoVoteMvp : Feature
         if (ImGui.Checkbox("Exclude Party Members That Die", ref Config.ExcludeDeaths))
             hasChanged = true;
 
-        if (Config.ExcludeDeaths)
-        {
+        if (Config.ExcludeDeaths) {
             if (ImGui.DragInt("How Many Times?", ref Config.HowManyDeaths, 0.01f, 1, 100)) hasChanged = true;
             if (ImGui.Checkbox("Reset Death Tracker on Wipe", ref Config.ResetOnWipe)) hasChanged = true;
         }

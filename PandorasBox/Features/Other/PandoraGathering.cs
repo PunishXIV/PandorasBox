@@ -26,1080 +26,938 @@ using System.Linq;
 using System.Numerics;
 using Action = Lumina.Excel.Sheets.Action;
 
-namespace PandorasBox.Features.Other
-{
-    public unsafe class PandoraGathering : Feature
+namespace PandorasBox.Features.Other;
+
+public unsafe class PandoraGathering : Feature {
+
+    public static readonly (uint ItemId, uint SeedId)[] Seeds =
     {
+        (4785, 7715), // Paprika          
+        (4777, 7716), // Wild Onion       
+        (4778, 7717), // Coerthan Carrot  
+        (4782, 7718), // La Noscean Lettuce
+        (4804, 7719), // Cinderfoot Olive 
+        (4787, 7720), // Popoto           
+        (4821, 7721), // Millioncorn      
+        (4788, 7722), // Wizard Eggplant  
+        (4789, 7723), // Midland Cabbage  
+        (4809, 7725), // La Noscean Orange
+        (4808, 7726), // Lowland Grapes   
+        (4810, 7727), // Faerie Apple     
+        (4811, 7728), // Sun Lemon        
+        (4812, 7729), // Pixie Plums      
+        (4814, 7730), // Blood Currants   
+        (6146, 7731), // Mirror Apple     
+        (4815, 7732), // Rolanberry       
+        (4829, 7735), // Garlean Garlic   
+        (5539, 7736), // Lavender         
+        (4830, 7737), // Black Pepper     
+        (4835, 7738), // Ala Mhigan Mustard
+        (4836, 7739), // Pearl Ginger     
+        (5542, 7740), // Chamomile        
+        (5346, 7741), // Flax         
+        (4837, 7742), // Midland Basil
+        (5543, 7743), // Mandrake     
+        (4842, 7744), // Almonds
 
-        public static readonly (uint ItemId, uint SeedId)[] Seeds =
-        {
-            (4785, 7715), // Paprika          
-            (4777, 7716), // Wild Onion       
-            (4778, 7717), // Coerthan Carrot  
-            (4782, 7718), // La Noscean Lettuce
-            (4804, 7719), // Cinderfoot Olive 
-            (4787, 7720), // Popoto           
-            (4821, 7721), // Millioncorn      
-            (4788, 7722), // Wizard Eggplant  
-            (4789, 7723), // Midland Cabbage  
-            (4809, 7725), // La Noscean Orange
-            (4808, 7726), // Lowland Grapes   
-            (4810, 7727), // Faerie Apple     
-            (4811, 7728), // Sun Lemon        
-            (4812, 7729), // Pixie Plums      
-            (4814, 7730), // Blood Currants   
-            (6146, 7731), // Mirror Apple     
-            (4815, 7732), // Rolanberry       
-            (4829, 7735), // Garlean Garlic   
-            (5539, 7736), // Lavender         
-            (4830, 7737), // Black Pepper     
-            (4835, 7738), // Ala Mhigan Mustard
-            (4836, 7739), // Pearl Ginger     
-            (5542, 7740), // Chamomile        
-            (5346, 7741), // Flax         
-            (4837, 7742), // Midland Basil
-            (5543, 7743), // Mandrake     
-            (4842, 7744), // Almonds
+        (29669, 29670), // Oddly Specific Latex                 
+        (29671, 29672), // Oddly Specific Obsidian              
+        (29674, 29675), // Oddly Specific Amber                 
+        (29676, 29677), // Oddly Specific Dark Matter           
+        (31125, 31126), // Oddly Specific Leafborne Aethersand  
+        (31130, 31131), // Oddly Specific Primordial Resin      
+        (31127, 31128), // Oddly Specific Landborne Aethersand  
+        (31132, 31133), // Oddly Specific Primordial Asphaltum  
 
-            (29669, 29670), // Oddly Specific Latex                 
-            (29671, 29672), // Oddly Specific Obsidian              
-            (29674, 29675), // Oddly Specific Amber                 
-            (29676, 29677), // Oddly Specific Dark Matter           
-            (31125, 31126), // Oddly Specific Leafborne Aethersand  
-            (31130, 31131), // Oddly Specific Primordial Resin      
-            (31127, 31128), // Oddly Specific Landborne Aethersand  
-            (31132, 31133), // Oddly Specific Primordial Asphaltum  
+        (38788, 38789), // Splendorous Earth Shard
+        (38790, 38791), // Splendorous Water Shard
+        (38794, 38795), // Splendorous Lightning Shard
+        (38796, 38797), // Splendorous Fire Shard
 
-            (38788, 38789), // Splendorous Earth Shard
-            (38790, 38791), // Splendorous Water Shard
-            (38794, 38795), // Splendorous Lightning Shard
-            (38796, 38797), // Splendorous Fire Shard
+        (39805, 39806), // Custom Ice Crystal
+        (39807, 39808), // Custom Wind Crystal
+        (39811, 39812), // Brilliant Lightning Cluster
+        (39813, 39814), // Brilliant Earth Cluster
+    };
 
-            (39805, 39806), // Custom Ice Crystal
-            (39807, 39808), // Custom Wind Crystal
-            (39811, 39812), // Brilliant Lightning Cluster
-            (39813, 39814), // Brilliant Earth Cluster
-        };
+    public static readonly (uint ItemId, uint NodeId)[] Items =
+    {
+        (7758, 203),  // Grade 1 La Noscean Topsoil
+        (7761, 200),  // Grade 1 Shroud Topsoil   
+        (7764, 201),  // Grade 1 Thanalan Topsoil 
+        (7759, 150),  // Grade 2 La Noscean Topsoil
+        (7762, 209),  // Grade 2 Shroud Topsoil   
+        (7765, 151),  // Grade 2 Thanalan Topsoil 
+        (10092, 210), // Black Limestone          
+        (10094, 177), // Little Worm              
+        (10097, 133), // Yafaemi Wildgrass        
+        (12893, 295), // Dark Chestnut            
+        (15865, 30),  // Firelight Seeds          
+        (15866, 39),  // Icelight Seeds           
+        (15867, 21),  // Windlight Seeds          
+        (15868, 31),  // Earthlight Seeds         
+        (15869, 25),  // Levinlight Seeds         
+        (15870, 14),  // Waterlight Seeds
+        (12534, 285), // Mythrite Ore             
+        (12535, 353), // Hardsilver Ore           
+        (12537, 286), // Titanium Ore             
+        (12579, 356), // Birch Log                
+        (12878, 297), // Cyclops Onion            
+        (12879, 298), // Emerald Beans
+        (39806, 920), // Custom Ice Crystal
+        (39808, 930), // Custom Wind Crystal
+        (38791, 924), // Splendorous Water Shard
+        (38789, 926), // Splendorous Earth Shard
+        (38795, 923), // Adaptive Lightning Crystal
+        (38797, 925), // Adaptive Fire Crystal
+        (39812, 929), // Brilliant Lightning Cluster
+        (39814, 931), // Brilliant Earth Cluster
+        (41287, 938), // Inspirational Wind Cluster
+        (41289, 940), // Inspirational Fire Cluster
+        (41291, 939), // Nightforged Ice Cluster
+        (41293, 941), // Nightforged Water Cluster
+    };
 
-        public static readonly (uint ItemId, uint NodeId)[] Items =
-        {
-            (7758, 203),  // Grade 1 La Noscean Topsoil
-            (7761, 200),  // Grade 1 Shroud Topsoil   
-            (7764, 201),  // Grade 1 Thanalan Topsoil 
-            (7759, 150),  // Grade 2 La Noscean Topsoil
-            (7762, 209),  // Grade 2 Shroud Topsoil   
-            (7765, 151),  // Grade 2 Thanalan Topsoil 
-            (10092, 210), // Black Limestone          
-            (10094, 177), // Little Worm              
-            (10097, 133), // Yafaemi Wildgrass        
-            (12893, 295), // Dark Chestnut            
-            (15865, 30),  // Firelight Seeds          
-            (15866, 39),  // Icelight Seeds           
-            (15867, 21),  // Windlight Seeds          
-            (15868, 31),  // Earthlight Seeds         
-            (15869, 25),  // Levinlight Seeds         
-            (15870, 14),  // Waterlight Seeds
-            (12534, 285), // Mythrite Ore             
-            (12535, 353), // Hardsilver Ore           
-            (12537, 286), // Titanium Ore             
-            (12579, 356), // Birch Log                
-            (12878, 297), // Cyclops Onion            
-            (12879, 298), // Emerald Beans
-            (39806, 920), // Custom Ice Crystal
-            (39808, 930), // Custom Wind Crystal
-            (38791, 924), // Splendorous Water Shard
-            (38789, 926), // Splendorous Earth Shard
-            (38795, 923), // Adaptive Lightning Crystal
-            (38797, 925), // Adaptive Fire Crystal
-            (39812, 929), // Brilliant Lightning Cluster
-            (39814, 931), // Brilliant Earth Cluster
-            (41287, 938), // Inspirational Wind Cluster
-            (41289, 940), // Inspirational Fire Cluster
-            (41291, 939), // Nightforged Ice Cluster
-            (41293, 941), // Nightforged Water Cluster
-        };
+    public static readonly (uint MapId, uint[] NodeIds)[] Maps =
+    {
+        (6688,  new uint[]{20, 49, 137, 140, 141, 180}),                                 // Leather
+        (6689,  new uint[]{46, 142, 143, 185, 186}),                                     // Goatskin
+        (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Toadskin
+        (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Boarskin
+        (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Peisteskin
+        (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),                     // Archaeoskin
+        (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Wyvernskin
+        (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Dragonskin
+        (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gaganaskin
+        (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gazelleskin
+        (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Gliderskin
+        (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Zonureskin
+        (36611, new uint[]{847, 848, 825, 826}),                                         // Saigaskin
+        (36612, new uint[]{847, 848, 825, 826}),                                         // Kumbhiraskin
+        (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
+     };
 
-        public static readonly (uint MapId, uint[] NodeIds)[] Maps =
-        {
-            (6688,  new uint[]{20, 49, 137, 140, 141, 180}),                                 // Leather
-            (6689,  new uint[]{46, 142, 143, 185, 186}),                                     // Goatskin
-            (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Toadskin
-            (6691,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Boarskin
-            (6692,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Peisteskin
-            (12241, new uint[]{295, 287, 297, 286, 298, 296, 288, 285}),                     // Archaeoskin
-            (12242, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Wyvernskin
-            (12243, new uint[]{391, 356, 354, 358, 352, 359, 361, 360, 300, 351, 353, 355}), // Dragonskin
-            (17835, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gaganaskin
-            (17836, new uint[]{514, 513, 517, 516, 519, 529, 493, 491, 495}),                // Gazelleskin
-            (26744, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Gliderskin
-            (26745, new uint[]{621, 620, 625, 623, 596, 648, 598, 600, 602}),                // Zonureskin
-            (36611, new uint[]{847, 848, 825, 826}),                                         // Saigaskin
-            (36612, new uint[]{847, 848, 825, 826}),                                         // Kumbhiraskin
-            (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
-         };
+    private Hook<AddonGathering.Delegates.NotifyQuickGatherState> quickGatherToggle = null!;
 
-        private Hook<AddonGathering.Delegates.NotifyQuickGatherState> quickGatherToggle = null!;
+    internal Vector4 DarkTheme = new Vector4(0.26f, 0.26f, 0.26f, 1f);
+    internal Vector4 LightTheme = new Vector4(0.97f, 0.87f, 0.75f, 1f);
+    internal Vector4 ClassicFFTheme = new Vector4(0.21f, 0f, 0.68f, 1f);
+    internal Vector4 LightBlueTheme = new Vector4(0.21f, 0.36f, 0.59f, 0.25f);
+    internal Vector4 TransparentTheme = new Vector4(0, 0, 0, 0);
 
-        internal Vector4 DarkTheme = new Vector4(0.26f, 0.26f, 0.26f, 1f);
-        internal Vector4 LightTheme = new Vector4(0.97f, 0.87f, 0.75f, 1f);
-        internal Vector4 ClassicFFTheme = new Vector4(0.21f, 0f, 0.68f, 1f);
-        internal Vector4 LightBlueTheme = new Vector4(0.21f, 0.36f, 0.59f, 0.25f);
-        internal Vector4 TransparentTheme = new Vector4(0, 0, 0, 0);
+    public override string Name => "Pandora Quick Gather";
 
-        public override string Name => "Pandora Quick Gather";
+    public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
 
-        public override string Description => "Replaces the Quick Gather checkbox with a new one that enables better quick gathering. Works on all nodes and can be interrupted at any point by disabling the checkbox. Also remembers your settings between sessions.";
+    public bool InDiadem => Svc.ClientState.TerritoryType == 939;
 
-        public bool InDiadem => Svc.ClientState.TerritoryType == 939;
+    private string? LocationEffect;
+    private string? LocationEffect2;
 
-        private string? LocationEffect;
-        private string? LocationEffect2;
+    private bool HiddenRevealed = false;
 
-        private bool HiddenRevealed = false;
+    public class Configs : FeatureConfig {
+        public bool CollectibleStop = false;
 
-        public class Configs : FeatureConfig
-        {
-            public bool CollectibleStop = false;
+        public bool ShiftStop = false;
 
-            public bool ShiftStop = false;
+        public bool Gathering = false;
 
-            public bool Gathering = false;
+        public bool RememberLastNode = false;
 
-            public bool RememberLastNode = false;
+        public bool DontBuffIfItemNotPresent = false;
 
-            public bool DontBuffIfItemNotPresent = false;
+        public bool Use500GPYield = false;
 
-            public bool Use500GPYield = false;
+        public int GP500Yield = 500;
 
-            public int GP500Yield = 500;
+        public bool Use100GPYield = false;
 
-            public bool Use100GPYield = false;
+        public int GP100Yield = 100;
 
-            public int GP100Yield = 100;
+        public bool UseTidings = false;
 
-            public bool UseTidings = false;
+        public int GPTidings = 200;
 
-            public int GPTidings = 200;
+        public int GatherersBoon = 100;
 
-            public int GatherersBoon = 100;
+        public bool UseGivingLand = false;
 
-            public bool UseGivingLand = false;
+        public int GPGivingLand = 200;
 
-            public int GPGivingLand = 200;
+        public bool UseTwelvesBounty = false;
 
-            public bool UseTwelvesBounty = false;
+        public int GPTwelvesBounty = 150;
 
-            public int GPTwelvesBounty = 150;
+        public bool UseSolidReason = false;
 
-            public bool UseSolidReason = false;
+        public int GPSolidReason = 300;
 
-            public int GPSolidReason = 300;
+        public bool UseLuck = false;
 
-            public bool UseLuck = false;
+        public int GPLuck = 200;
 
-            public int GPLuck = 200;
+        public bool GatherChanceUp = false;
 
-            public bool GatherChanceUp = false;
+        public int GPGatherChanceUp = 100;
+    }
 
-            public int GPGatherChanceUp = 100;
+    public Configs Config { get; private set; }
+
+    public override FeatureType FeatureType => FeatureType.Other;
+
+    private Overlays? overlay;
+
+    public override bool UseAutoConfig => false;
+
+    private uint lastGatheredIndex = 10;
+    private uint lastGatheredItem = 0;
+    private uint CurrentIntegrity { get; set; } = 0;
+    private uint MaxIntegrity { get; set; } = 0;
+
+    public override bool DrawConditions() {
+        return Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
+    }
+
+    public override void Enable() {
+        overlay = new Overlays(this);
+        Config = LoadConfig<Configs>() ?? new Configs();
+
+        quickGatherToggle ??= Svc.Hook.HookFromAddress<AddonGathering.Delegates.NotifyQuickGatherState>((nint)AddonGathering.MemberFunctionPointers.NotifyQuickGatherState, QuickGatherToggle);
+
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
+        Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
+        Svc.Condition.ConditionChange += ResetCounter;
+        Svc.Chat.ChatMessage += CheckRevisit;
+        Svc.Framework.Update += UpdateIntegrity;
+
+        base.Enable();
+    }
+
+    private void UpdateIntegrity(IFramework framework) {
+        var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
+        if (addon != null) {
+            CurrentIntegrity = addon->AtkValues[109].UInt;
+            MaxIntegrity = addon->AtkValues[110].UInt;
         }
+    }
 
-        public Configs Config { get; private set; }
-
-
-        public override FeatureType FeatureType => FeatureType.Other;
-
-        private Overlays? overlay;
-
-        public override bool UseAutoConfig => false;
-
-        private uint lastGatheredIndex = 10;
-        private uint lastGatheredItem = 0;
-        private uint CurrentIntegrity { get; set; } = 0;
-        private uint MaxIntegrity { get; set; } = 0;
-
-        public override bool DrawConditions()
-        {
-            return Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
+    private void CheckRevisit(IHandleableChatMessage handler) {
+        if (handler.LogKind is (XivChatType)2107 && CurrentIntegrity == 0) {
+            TaskManager.Abort();
+            TaskManager.EnqueueDelay(1000);
+            AddonSetup(AddonEvent.PostSetup, null);
         }
+    }
 
-        public override void Enable()
-        {
-            overlay = new Overlays(this);
-            Config = LoadConfig<Configs>() ?? new Configs();
+    public override void Disable() {
+        P.Ws.RemoveWindow(overlay!);
+        SaveConfig(Config);
+        quickGatherToggle?.Disable();
+        Svc.AddonLifecycle.UnregisterListener(OnEvent);
+        Svc.AddonLifecycle.UnregisterListener(AddonSetup);
+        Svc.Chat.ChatMessage -= CheckRevisit;
+        Svc.Framework.Update -= UpdateIntegrity;
 
-            quickGatherToggle ??= Svc.Hook.HookFromAddress<AddonGathering.Delegates.NotifyQuickGatherState>((nint)AddonGathering.MemberFunctionPointers.NotifyQuickGatherState, QuickGatherToggle);
-
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostReceiveEvent, "Gathering", OnEvent);
-            Svc.AddonLifecycle.RegisterListener(AddonEvent.PostSetup, "Gathering", AddonSetup);
-            Svc.Condition.ConditionChange += ResetCounter;
-            Svc.Chat.ChatMessage += CheckRevisit;
-            Svc.Framework.Update += UpdateIntegrity;
-
-            base.Enable();
+        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+        if (addon != null) {
+            addon->GetNodeById(38)->ToggleVisibility(true);
+            addon->GetNodeById(37)->ToggleVisibility(true);
+            addon->GetNodeById(33)->ToggleVisibility(true);
+            addon->GetNodeById(34)->ToggleVisibility(true);
+            addon->GetNodeById(31)->ToggleVisibility(true);
         }
+        Svc.Condition.ConditionChange -= ResetCounter;
 
-        private void UpdateIntegrity(IFramework framework)
-        {
-            var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
-            if (addon != null)
-            {
-                CurrentIntegrity = addon->AtkValues[109].UInt;
-                MaxIntegrity = addon->AtkValues[110].UInt;
-            }
-        }
+        base.Disable();
+    }
 
-        private void CheckRevisit(IHandleableChatMessage handler)
-        {
-            if (handler.LogKind is (XivChatType)2107 && CurrentIntegrity == 0)
-            {
-                TaskManager.Abort();
-                TaskManager.EnqueueDelay(1000);
-                AddonSetup(AddonEvent.PostSetup, null);
-            }
-        }
+    public override void Dispose() {
+        quickGatherToggle?.Dispose();
+        base.Dispose();
+    }
 
-        public override void Disable()
-        {
-            P.Ws.RemoveWindow(overlay!);
-            SaveConfig(Config);
-            quickGatherToggle?.Disable();
-            Svc.AddonLifecycle.UnregisterListener(OnEvent);
-            Svc.AddonLifecycle.UnregisterListener(AddonSetup);
-            Svc.Chat.ChatMessage -= CheckRevisit;
-            Svc.Framework.Update -= UpdateIntegrity;
-
+    public override unsafe void Draw() {
+        if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero) {
             var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-            if (addon != null)
-            {
-                addon->GetNodeById(38)->ToggleVisibility(true);
-                addon->GetNodeById(37)->ToggleVisibility(true);
-                addon->GetNodeById(33)->ToggleVisibility(true);
-                addon->GetNodeById(34)->ToggleVisibility(true);
-                addon->GetNodeById(31)->ToggleVisibility(true);
-            }
-            Svc.Condition.ConditionChange -= ResetCounter;
+            if (addon == null) return;
+            if (!addon->IsVisible) return;
 
-            base.Disable();
-        }
+            var node = addon->GetNodeById(31);
 
-        public override void Dispose()
-        {
-            quickGatherToggle?.Dispose();
-            base.Dispose();
-        }
+            if (node->IsVisible())
+                node->ToggleVisibility(false);
 
-        public unsafe override void Draw()
-        {
-            if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
-            {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                if (addon == null) return;
-                if (!addon->IsVisible) return;
+            var position = AtkResNodeHelper.GetNodePosition(node);
+            var scale = AtkResNodeHelper.GetNodeScale(node);
+            var size = new Vector2(node->Width, node->Height) * scale;
 
-                var node = addon->GetNodeById(31);
+            Svc.GameConfig.TryGet(Dalamud.Game.Config.SystemConfigOption.ColorThemeType, out uint color);
 
-                if (node->IsVisible())
-                    node->ToggleVisibility(false);
+            var theme = TransparentTheme;
+            var isLightTheme = color is 1 or 4 or 7;
 
-                var position = AtkResNodeHelper.GetNodePosition(node);
-                var scale = AtkResNodeHelper.GetNodeScale(node);
-                var size = new Vector2(node->Width, node->Height) * scale;
+            addon->GetNodeById(38)->ToggleVisibility(false);
+            addon->GetNodeById(37)->ToggleVisibility(false);
+            addon->GetNodeById(33)->ToggleVisibility(false);
+            addon->GetNodeById(34)->ToggleVisibility(false);
 
-                Svc.GameConfig.TryGet(Dalamud.Game.Config.SystemConfigOption.ColorThemeType, out uint color);
-
-                var theme = TransparentTheme;
-                var isLightTheme = color is 1 or 4 or 7;
-
-                addon->GetNodeById(38)->ToggleVisibility(false);
-                addon->GetNodeById(37)->ToggleVisibility(false);
-                addon->GetNodeById(33)->ToggleVisibility(false);
-                addon->GetNodeById(34)->ToggleVisibility(false);
-
-                LocationEffect = addon->GetNodeById(34)->GetAsAtkTextNode()->NodeText.GetText();
-                LocationEffect2 = addon->GetNodeById(35)->GetAsAtkTextNode()->NodeText.GetText();
-                if (isLightTheme)
-                {
-                    ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
-                }
-
-                ImGui.PushStyleColor(ImGuiCol.WindowBg, ImGui.GetColorU32(theme));
-                ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.DalamudGrey3);
-                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-
-                ImGui.GetFont().Scale = scale.X;
-                var oldScale = ImGui.GetIO().FontGlobalScale;
-                ImGui.GetIO().FontGlobalScale = 0.83f;
-                ImGui.PushFont(ImGui.GetFont());
-                size.Y *= 6.3f;
-                size.X *= 1.065f;
-                position.X -= 15f * scale.X;
-
-                ImGuiHelpers.ForceNextWindowMainViewport();
-                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
-                ImGui.SetNextWindowSize(size);
-                ImGui.Begin($"###PandoraGathering{node->NodeId}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
-                    | ImGuiWindowFlags.NoResize);
-
-                ImGui.Dummy(new Vector2(2f));
-
-                ImGui.Columns(3, default, false);
-
-                if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering))
-                {
-                    if (Config.Gathering && node->GetAsAtkComponentCheckBox()->IsChecked)
-                        QuickGatherToggle(null);
-
-                    if (!Config.Gathering)
-                        TaskManager.Abort();
-
-                    SaveConfig(Config);
-                }
-
-                ImGui.NextColumn();
-
-                if (ImGui.Checkbox("Remember Item", ref Config.RememberLastNode))
-                    SaveConfig(Config);
-
-                if (ImGui.IsItemHovered() && InDiadem)
-                {
-                    ImGui.BeginTooltip();
-                    ImGui.Text("In the Diadem, this will remember the last slot selected and not the last item due to the varying nature of the nodes.");
-                    ImGui.EndTooltip();
-                }
-                var language = Svc.ClientState.ClientLanguage;
-                switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
-                {
-                    case 17:
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.ToString()}", ref Config.Use100GPYield))
-                        {
-                            Config.UseGivingLand = false;
-                            Config.UseTwelvesBounty = false;
-                            SaveConfig(Config);
-                        }
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.ToString()}", ref Config.Use500GPYield))
-                        {
-                            Config.UseGivingLand = false;
-                            Config.UseTwelvesBounty = false;
-                            SaveConfig(Config);
-                        }
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.ToString()}", ref Config.UseTidings))
-                        {
-                            Config.UseGivingLand = false;
-                            Config.UseTwelvesBounty = false;
-                            SaveConfig(Config);
-                        }
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.ToString()}", ref Config.UseSolidReason))
-                        {
-                            SaveConfig(Config);
-                        }
-                        break;
-                    case 16:
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.ToString()}", ref Config.Use100GPYield))
-                        {
-                            Config.UseGivingLand = false;
-                            Config.UseTwelvesBounty = false;
-                            SaveConfig(Config);
-                        }
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.ToString()}", ref Config.Use500GPYield))
-                        {
-                            Config.UseGivingLand = false;
-                            Config.UseTwelvesBounty = false;
-                            SaveConfig(Config);
-                        }
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.ToString()}", ref Config.UseTidings))
-                        {
-                            Config.UseGivingLand = false;
-                            Config.UseTwelvesBounty = false;
-                            SaveConfig(Config);
-                        }
-                        ImGui.NextColumn();
-                        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.ToString()}", ref Config.UseSolidReason))
-                        {
-                            SaveConfig(Config);
-                        }
-                        break;
-                }
-
-                ImGui.NextColumn();
-                if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.ToString()}", ref Config.UseGivingLand))
-                {
-                    Config.Use100GPYield = false;
-                    Config.Use500GPYield = false;
-                    Config.UseTidings = false;
-                    SaveConfig(Config);
-                }
-
-                ImGui.NextColumn();
-                if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.ToString().ToTitleCase()}", ref Config.UseTwelvesBounty))
-                {
-                    Config.Use100GPYield = false;
-                    Config.Use500GPYield = false;
-                    Config.UseTidings = false;
-                    SaveConfig(Config);
-                }
-
-                ImGui.NextColumn();
-                if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
-                    SaveConfig(Config);
-
-                ImGui.Columns(1);
-
-                if (LocationEffect.Length > 0)
-                {
-                    ImGuiEx.LineCentered("###LocationEffect", () =>
-                    {
-                        ImGui.Text($"{LocationEffect}");
-                    });
-                }
-                if (LocationEffect2.Length > 0)
-                {
-                    ImGuiEx.LineCentered("###LocationEffect2", () =>
-                    {
-                        ImGui.Text($"{LocationEffect2}");
-                    });
-                }
-
-                ImGui.End();
-
-                ImGui.GetFont().Scale = 1;
-                ImGui.GetIO().FontGlobalScale = oldScale;
-                ImGui.PopFont();
-
-                ImGui.PopStyleVar(4);
-                ImGui.PopStyleColor(isLightTheme ? 3 : 2);
-
-            }
-        }
-
-        private void OnEvent(AddonEvent type, AddonArgs args)
-        {
-            if (args is AddonReceiveEventArgs a)
-            {
-                if ((AtkEventType)a.AtkEventType is AtkEventType.ButtonClick)
-                {
-                    var index = a.EventParam;
-                    CheckNodeAndClick(index);
-                }
-            }
-        }
-
-        private void CheckNodeAndClick(int index)
-        {
-            try
-            {
-                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
-
-                if (addon != null && Config.Gathering)
-                {
-                    var ids = new List<uint>();
-                    for (int i = 6; i <= (11 * 8); i += 11)
-                    {
-                        ids.Add(addon->AtkValues[i].UInt);
-                    }
-                    Svc.Log.Debug($"Gathering IDs: {string.Join(", ", ids)}");
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0)))
-                    {
-                        Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
-                        Disable();
-                        return;
-                    }
-
-                    var item = ids[index];
-
-                    if (item != lastGatheredItem && item != 0)
-                    {
-                        TaskManager.Abort();
-                        lastGatheredIndex = (byte)index;
-                        lastGatheredItem = item;
-                    }
-
-                    if (item != 0)
-                    {
-                        if ((Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable) || (Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.RowId == 0))
-                        {
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                            TaskManager.Enqueue(() =>
-                            {
-                                var diffIntegrity = MaxIntegrity - CurrentIntegrity;
-
-                                if (Config.GPSolidReason <= Svc.Objects.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction() && diffIntegrity >= 2)
-                                {
-                                    TaskManager.BeginStack();
-                                    TaskManager.Enqueue(() => UseIntegrityAction());
-                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                                    TaskManager.Enqueue(() => UseWisdom());
-                                    TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                                    TaskManager.InsertStack();
-                                }
-                            });
-                            TaskManager.Enqueue(() =>
-                            {
-                                if (Config.GP100Yield <= Svc.Objects.LocalPlayer!.CurrentGp && Config.Use100GPYield)
-                                {
-                                    TaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
-                                }
-                            });
-
-                            ClickGather(lastGatheredIndex);
-
-                        }
-                    }
-
-                }
-            }
-            catch (Exception ex)
-            {
-                ex.Log();
-            }
-        }
-
-        private bool CanUseIntegrityAction()
-        {
-            switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
-            {
-                case 17:
-                    return ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0;
-                case 16:
-                    return ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0;
+            LocationEffect = addon->GetNodeById(34)->GetAsAtkTextNode()->NodeText.GetText();
+            LocationEffect2 = addon->GetNodeById(35)->GetAsAtkTextNode()->NodeText.GetText();
+            if (isLightTheme) {
+                ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(0f, 0f, 0f, 1f));
             }
 
-            return true;
-        }
+            ImGui.PushStyleColor(ImGuiCol.WindowBg, ImGui.GetColorU32(theme));
+            ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.DalamudGrey3);
+            ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 1f.Scale());
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
 
-        private void AddonSetup(AddonEvent type, AddonArgs args)
-        {
-            if (Config.Gathering && ((Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2)) || !Config.ShiftStop))
-            {
-                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                TaskManager.Enqueue(() =>
-                {
-                    var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
+            ImGui.GetFont().Scale = scale.X;
+            var oldScale = ImGui.GetIO().FontGlobalScale;
+            ImGui.GetIO().FontGlobalScale = 0.83f;
+            ImGui.PushFont(ImGui.GetFont());
+            size.Y *= 6.3f;
+            size.X *= 1.065f;
+            position.X -= 15f * scale.X;
 
-                    if (addon == null) return;
+            ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
+            ImGui.SetNextWindowSize(size);
+            ImGui.Begin($"###PandoraGathering{node->NodeId}", ImGuiWindowFlags.NoNavFocus | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings
+                | ImGuiWindowFlags.NoResize);
 
-                    var ids = new List<uint>();
-                    for (int i = 6; i <= (11 * 8); i += 11)
-                    {
-                        ids.Add(addon->AtkValues[i].UInt);
-                    }
+            ImGui.Dummy(new Vector2(2f));
 
-                    if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0)))
-                    {
-                        Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
-                        Disable();
-                        return;
-                    }
+            ImGui.Columns(3, default, false);
 
-                    if (Config.RememberLastNode && Config.DontBuffIfItemNotPresent && !ids.Any(x => x is not 0 && x == lastGatheredItem))
-                    {
-                        Svc.Log.Debug("Last gathered item not found in current node.");
-                        return;
-                    }
+            if (ImGui.Checkbox("Enable P. Gathering", ref Config.Gathering)) {
+                if (Config.Gathering && node->GetAsAtkComponentCheckBox()->IsChecked)
+                    QuickGatherToggle(null);
 
-                    var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
-                    if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles)
-                    {
-                        Dictionary<uint, int> boonChances = new();
-                        Dictionary<int, int> gatherChances = new();
-
-                        for (uint i = 0; i <= 7; i++)
-                        {
-                            int.TryParse(addon->GetNodeById(17 + i)->GetAsAtkComponentNode()->Component->GetNodeById(16)->GetAsAtkTextNode()->NodeText.ToString(), out var boonChance);
-                            boonChances.Add(i, boonChance);
-                        }
-
-                        Svc.Log.Debug($"Boon Chances: {string.Join(", ", boonChances)}");
-
-                        if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.Objects.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed)
-                        {
-                            TaskManager.Enqueue(() => UseLuck(), "UseLuck");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                            TaskManager.Enqueue(() => AddonSetup(type, args));
-                            HiddenRevealed = true;
-                            return;
-                        }
-
-                        HiddenRevealed = false;
-
-                        if (Config.GPTidings <= Svc.Objects.LocalPlayer!.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon)))
-                        {
-                            TaskManager.Enqueue(() => UseTidings(), "UseTidings");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        }
-
-                        if (Config.GP500Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use500GPYield)
-                        {
-                            TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        }
-
-                        if (Config.GP100Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use100GPYield)
-                        {
-                            TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        }
-
-                        if (Config.GPGatherChanceUp <= Svc.Objects.LocalPlayer.CurrentGp && Config.GatherChanceUp)
-                        {
-
-                        }
-
-                        if (Config.GPGivingLand <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseGivingLand)
-                        {
-                            TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        }
-
-                        if (Config.GPTwelvesBounty <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseTwelvesBounty)
-                        {
-                            TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
-                            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        }
-
-                    }
-                    if (Config.RememberLastNode)
-                    {
-                        if (lastGatheredIndex > 7)
-                            return;
-
-                        if (ids.Any(x => x == lastGatheredItem))
-                        {
-                            lastGatheredIndex = (uint)ids.IndexOf(lastGatheredItem);
-                        }
-
-                        if (ids[(int)lastGatheredIndex] == lastGatheredItem || InDiadem)
-                        {
-                            var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
-                            if (quickGathering)
-                            {
-                                QuickGatherToggle(addon);
-                            }
-
-                            var integrityLeft = CurrentIntegrity;
-                            if (integrityLeft > 1)
-                                ClickGather(lastGatheredIndex);
-                        }
-                    }
-                });
-            }
-        }
-
-        private void ResetCounter(ConditionFlag flag, bool value)
-        {
-            if (flag == ConditionFlag.Gathering && !value)
-            {
-                TaskManager.Abort();
-            }
-        }
-
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
-        {
-            if (ImGui.Checkbox($"Hold Shift / {GamePad.ControllerButtons[Dalamud.Game.ClientState.GamePad.GamepadButtons.L2]} to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
-                SaveConfig(Config);
-
-            if (ImGui.Checkbox($"Disable Starting Buffs on Nodes with Collectibles", ref Config.CollectibleStop))
-                SaveConfig(Config);
-
-            ImGuiComponents.HelpMarker("This will stop Pandora from using any actions when you start a node with a collectible on it. This is intended to prevent wasting GP on buffs that don't apply to collectibles.");
-
-            if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering))
-            {
                 if (!Config.Gathering)
                     TaskManager.Abort();
 
                 SaveConfig(Config);
             }
 
-            if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
+            ImGui.NextColumn();
+
+            if (ImGui.Checkbox("Remember Item", ref Config.RememberLastNode))
                 SaveConfig(Config);
 
-            if (Config.RememberLastNode)
-            {
-                using var _ = ImRaii.PushIndent();
-                if (ImGui.Checkbox("Don't Buff if Item Not Present", ref Config.DontBuffIfItemNotPresent))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.IsItemHovered() && InDiadem)
-            {
+            if (ImGui.IsItemHovered() && InDiadem) {
                 ImGui.BeginTooltip();
                 ImGui.Text("In the Diadem, this will remember the last slot selected and not the last item due to the varying nature of the nodes.");
                 ImGui.EndTooltip();
             }
             var language = Svc.ClientState.ClientLanguage;
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.ToString()}", ref Config.Use100GPYield))
-            {
-                Config.UseGivingLand = false;
-                Config.UseTwelvesBounty = false;
-                SaveConfig(Config);
+            switch (Svc.Objects.LocalPlayer!.ClassJob.RowId) {
+                case 17:
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.ToString()}", ref Config.Use100GPYield)) {
+                        Config.UseGivingLand = false;
+                        Config.UseTwelvesBounty = false;
+                        SaveConfig(Config);
+                    }
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.ToString()}", ref Config.Use500GPYield)) {
+                        Config.UseGivingLand = false;
+                        Config.UseTwelvesBounty = false;
+                        SaveConfig(Config);
+                    }
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.ToString()}", ref Config.UseTidings)) {
+                        Config.UseGivingLand = false;
+                        Config.UseTwelvesBounty = false;
+                        SaveConfig(Config);
+                    }
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.ToString()}", ref Config.UseSolidReason)) {
+                        SaveConfig(Config);
+                    }
+                    break;
+                case 16:
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.ToString()}", ref Config.Use100GPYield)) {
+                        Config.UseGivingLand = false;
+                        Config.UseTwelvesBounty = false;
+                        SaveConfig(Config);
+                    }
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.ToString()}", ref Config.Use500GPYield)) {
+                        Config.UseGivingLand = false;
+                        Config.UseTwelvesBounty = false;
+                        SaveConfig(Config);
+                    }
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.ToString()}", ref Config.UseTidings)) {
+                        Config.UseGivingLand = false;
+                        Config.UseTwelvesBounty = false;
+                        SaveConfig(Config);
+                    }
+                    ImGui.NextColumn();
+                    if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.ToString()}", ref Config.UseSolidReason)) {
+                        SaveConfig(Config);
+                    }
+                    break;
             }
 
-            if (Config.Use100GPYield)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP1", ref Config.GP100Yield, 100, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.ToString()}", ref Config.Use500GPYield))
-            {
-                Config.UseGivingLand = false;
-                Config.UseTwelvesBounty = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.Use500GPYield)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP2", ref Config.GP500Yield, 500, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.ToString()}", ref Config.UseTidings))
-            {
-                Config.UseGivingLand = false;
-                Config.UseTwelvesBounty = false;
-                SaveConfig(Config);
-            }
-
-            if (Config.UseTidings)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP3", ref Config.GPTidings, 200, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (Config.UseTidings)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. Gatherer's Boon% For Tidings", ref Config.GatherersBoon, 1, 100))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.ToString()}", ref Config.UseSolidReason))
-            {
-                SaveConfig(Config);
-            }
-
-            if (Config.UseSolidReason)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP4", ref Config.GPSolidReason, 300, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.ToString()}", ref Config.UseGivingLand))
-            {
+            ImGui.NextColumn();
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.ToString()}", ref Config.UseGivingLand)) {
                 Config.Use100GPYield = false;
                 Config.Use500GPYield = false;
                 Config.UseTidings = false;
                 SaveConfig(Config);
             }
 
-            if (Config.UseGivingLand)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP5", ref Config.GPGivingLand, 200, 1000))
-                    SaveConfig(Config);
-            }
-
-            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.ToString().ToTitleCase()}", ref Config.UseTwelvesBounty))
-            {
+            ImGui.NextColumn();
+            if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.ToString().ToTitleCase()}", ref Config.UseTwelvesBounty)) {
                 Config.Use100GPYield = false;
                 Config.Use500GPYield = false;
                 Config.UseTidings = false;
                 SaveConfig(Config);
             }
 
-            if (Config.UseTwelvesBounty)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP6", ref Config.GPTwelvesBounty, 150, 1000))
-                    SaveConfig(Config);
-            }
-
+            ImGui.NextColumn();
             if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
                 SaveConfig(Config);
 
-            if (Config.UseLuck)
-            {
-                ImGui.PushItemWidth(300);
-                if (ImGui.SliderInt("Min. GP###MinGP7", ref Config.GPLuck, 200, 1000))
-                    SaveConfig(Config);
+            ImGui.Columns(1);
+
+            if (LocationEffect.Length > 0) {
+                ImGuiEx.LineCentered("###LocationEffect", () => {
+                    ImGui.Text($"{LocationEffect}");
+                });
+            }
+            if (LocationEffect2.Length > 0) {
+                ImGuiEx.LineCentered("###LocationEffect2", () => {
+                    ImGui.Text($"{LocationEffect2}");
+                });
             }
 
-        };
+            ImGui.End();
 
-        private void ClickGather(uint index)
-        {
-            TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-            TaskManager.Enqueue(() =>
-            {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-                if (addon is null) return;
+            ImGui.GetFont().Scale = 1;
+            ImGui.GetIO().FontGlobalScale = oldScale;
+            ImGui.PopFont();
 
-                if (addon is null) return;
-                var checkBox = addon->GetNodeById(17 + index)->GetAsAtkComponentCheckBox();
-                if (checkBox is null) return;
-                checkBox->AtkComponentButton.IsChecked = true;
-                ECommons.Automation.Callback.Fire(addon, true, index);
-                CheckNodeAndClick((int)index);
+            ImGui.PopStyleVar(4);
+            ImGui.PopStyleColor(isLightTheme ? 3 : 2);
+
+        }
+    }
+
+    private void OnEvent(AddonEvent type, AddonArgs args) {
+        if (args is AddonReceiveEventArgs a) {
+            if ((AtkEventType)a.AtkEventType is AtkEventType.ButtonClick) {
+                var index = a.EventParam;
+                CheckNodeAndClick(index);
+            }
+        }
+    }
+
+    private void CheckNodeAndClick(int index) {
+        try {
+            var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
+
+            if (addon != null && Config.Gathering) {
+                var ids = new List<uint>();
+                for (int i = 6; i <= (11 * 8); i += 11) {
+                    ids.Add(addon->AtkValues[i].UInt);
+                }
+                Svc.Log.Debug($"Gathering IDs: {string.Join(", ", ids)}");
+                if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0))) {
+                    Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
+                    Disable();
+                    return;
+                }
+
+                var item = ids[index];
+
+                if (item != lastGatheredItem && item != 0) {
+                    TaskManager.Abort();
+                    lastGatheredIndex = (byte)index;
+                    lastGatheredItem = item;
+                }
+
+                if (item != 0) {
+                    if (Svc.Data.GetExcelSheet<Item>()!.FindFirst(x => x.RowId == item, out var sitem) && !sitem.IsCollectable || Svc.Data.GetExcelSheet<EventItem>().FindFirst(x => x.RowId == item, out var eitem) && eitem.Quest.RowId == 0) {
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                        TaskManager.Enqueue(() => {
+                            var diffIntegrity = MaxIntegrity - CurrentIntegrity;
+
+                            if (Config.GPSolidReason <= Svc.Objects.LocalPlayer!.CurrentGp && Config.UseSolidReason && CanUseIntegrityAction() && diffIntegrity >= 2) {
+                                TaskManager.BeginStack();
+                                TaskManager.Enqueue(() => UseIntegrityAction());
+                                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                                TaskManager.Enqueue(() => UseWisdom());
+                                TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                                TaskManager.InsertStack();
+                            }
+                        });
+                        TaskManager.Enqueue(() => {
+                            if (Config.GP100Yield <= Svc.Objects.LocalPlayer!.CurrentGp && Config.Use100GPYield) {
+                                TaskManager.InsertMulti([new(() => Use100GPSkill()), new(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction])]);
+                            }
+                        });
+
+                        ClickGather(lastGatheredIndex);
+
+                    }
+                }
+            }
+        }
+        catch (Exception ex) {
+            ex.Log();
+        }
+    }
+
+    private bool CanUseIntegrityAction() {
+        switch (Svc.Objects.LocalPlayer!.ClassJob.RowId) {
+            case 17:
+                return ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0;
+            case 16:
+                return ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0;
+        }
+
+        return true;
+    }
+
+    private void AddonSetup(AddonEvent type, AddonArgs args) {
+        if (Config.Gathering && (Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2) || !Config.ShiftStop)) {
+            TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+            TaskManager.Enqueue(() => {
+                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
+
+                if (addon == null) return;
+
+                var ids = new List<uint>();
+                for (int i = 6; i <= (11 * 8); i += 11) {
+                    ids.Add(addon->AtkValues[i].UInt);
+                }
+
+                if (ids.Any(x => Svc.Data.Excel.GetSheet<EventItem>().Any(y => y.RowId == x && y.Quest.RowId > 0))) {
+                    Svc.Chat.PrintError($"This node contains quest nodes which can result in soft-locking the quest. Pandora Gathering has been disabled.");
+                    Disable();
+                    return;
+                }
+
+                if (Config.RememberLastNode && Config.DontBuffIfItemNotPresent && !ids.Any(x => x is not 0 && x == lastGatheredItem)) {
+                    Svc.Log.Debug("Last gathered item not found in current node.");
+                    return;
+                }
+
+                var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
+                if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles) {
+                    Dictionary<uint, int> boonChances = new();
+                    Dictionary<int, int> gatherChances = new();
+
+                    for (uint i = 0; i <= 7; i++) {
+                        int.TryParse(addon->GetNodeById(17 + i)->GetAsAtkComponentNode()->Component->GetNodeById(16)->GetAsAtkTextNode()->NodeText.ToString(), out var boonChance);
+                        boonChances.Add(i, boonChance);
+                    }
+
+                    Svc.Log.Debug($"Boon Chances: {string.Join(", ", boonChances)}");
+
+                    if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.Objects.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed) {
+                        TaskManager.Enqueue(() => UseLuck(), "UseLuck");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                        TaskManager.Enqueue(() => AddonSetup(type, args));
+                        HiddenRevealed = true;
+                        return;
+                    }
+
+                    HiddenRevealed = false;
+
+                    if (Config.GPTidings <= Svc.Objects.LocalPlayer!.CurrentGp && Config.UseTidings && (boonChances.TryGetValue(lastGatheredIndex, out var val) && val >= Config.GatherersBoon || boonChances.Where(x => x.Value != 0).All(x => x.Value >= Config.GatherersBoon))) {
+                        TaskManager.Enqueue(() => UseTidings(), "UseTidings");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                    }
+
+                    if (Config.GP500Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use500GPYield) {
+                        TaskManager.Enqueue(() => Use500GPSkill(), "Use500GPSetup");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                    }
+
+                    if (Config.GP100Yield <= Svc.Objects.LocalPlayer.CurrentGp && Config.Use100GPYield) {
+                        TaskManager.Enqueue(() => Use100GPSkill(), "Use100GPSetup");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                    }
+
+                    if (Config.GPGatherChanceUp <= Svc.Objects.LocalPlayer.CurrentGp && Config.GatherChanceUp) {
+
+                    }
+
+                    if (Config.GPGivingLand <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseGivingLand) {
+                        TaskManager.Enqueue(() => UseGivingLand(), "UseGivingSetup");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                    }
+
+                    if (Config.GPTwelvesBounty <= Svc.Objects.LocalPlayer.CurrentGp && Config.UseTwelvesBounty) {
+                        TaskManager.Enqueue(() => UseTwelvesBounty(), "UseTwelvesSetup");
+                        TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+                    }
+                }
+                if (Config.RememberLastNode) {
+                    if (lastGatheredIndex > 7)
+                        return;
+
+                    if (ids.Any(x => x == lastGatheredItem)) {
+                        lastGatheredIndex = (uint)ids.IndexOf(lastGatheredItem);
+                    }
+
+                    if (ids[(int)lastGatheredIndex] == lastGatheredItem || InDiadem) {
+                        var quickGathering = addon->QuickGatheringComponentCheckBox->IsChecked;
+                        if (quickGathering) {
+                            QuickGatherToggle(addon);
+                        }
+
+                        var integrityLeft = CurrentIntegrity;
+                        if (integrityLeft > 1)
+                            ClickGather(lastGatheredIndex);
+                    }
+                }
             });
         }
+    }
 
-        private void UseLuck()
-        {
-            switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
-            {
-                case 17: //BTN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 4095);
-                    }
-                    break;
-                case 16: //MIN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4081) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 4081);
-                    }
-                    break;
-            }
+    private void ResetCounter(ConditionFlag flag, bool value) {
+        if (flag == ConditionFlag.Gathering && !value) {
+            TaskManager.Abort();
+        }
+    }
+
+    protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
+        if (ImGui.Checkbox($"Hold Shift / {GamePad.ControllerButtons[Dalamud.Game.ClientState.GamePad.GamepadButtons.L2]} to Temporarily Disable on Starting a Node", ref Config.ShiftStop))
+            SaveConfig(Config);
+
+        if (ImGui.Checkbox($"Disable Starting Buffs on Nodes with Collectibles", ref Config.CollectibleStop))
+            SaveConfig(Config);
+
+        ImGuiComponents.HelpMarker("This will stop Pandora from using any actions when you start a node with a collectible on it. This is intended to prevent wasting GP on buffs that don't apply to collectibles.");
+
+        if (ImGui.Checkbox("Enable Pandora Gathering", ref Config.Gathering)) {
+            if (!Config.Gathering)
+                TaskManager.Abort();
+
+            SaveConfig(Config);
         }
 
-        private bool NodeHasHiddenItems(List<uint> ids)
-        {
-            foreach (var id in ids.Where(x => x != 0))
-            {
-                if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
-                if (Maps.Any(x => x.MapId == id)) return false;
-                if (Items.Any(x => x.ItemId == id)) return false;
+        if (ImGui.Checkbox("Remember Item Between Nodes", ref Config.RememberLastNode))
+            SaveConfig(Config);
 
-            }
-            if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
-            var NodeId = Svc.Objects.LocalPlayer?.TargetObject?.BaseId;
-            var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
-            Svc.Log.Debug($"{baseNode?.RowId}");
-            if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
-            if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
-
-
-            return false;
+        if (Config.RememberLastNode) {
+            using var _ = ImRaii.PushIndent();
+            if (ImGui.Checkbox("Don't Buff if Item Not Present", ref Config.DontBuffIfItemNotPresent))
+                SaveConfig(Config);
         }
 
-        private bool? UseGatherChanceUp()
-        {
-            switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 220) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 220);
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 237) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 237);
-                    }
-                    break;
-            }
-
-            return true;
+        if (ImGui.IsItemHovered() && InDiadem) {
+            ImGui.BeginTooltip();
+            ImGui.Text("In the Diadem, this will remember the last slot selected and not the last item due to the varying nature of the nodes.");
+            ImGui.EndTooltip();
         }
-        private bool? UseIntegrityAction()
-        {
-            switch (Svc.Objects.LocalPlayer!.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 215);
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 232);
-                    }
-                    break;
-            }
+        var language = Svc.ClientState.ClientLanguage;
 
-            return true;
+        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4087).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(4073).Name.ToString()}", ref Config.Use100GPYield)) {
+            Config.UseGivingLand = false;
+            Config.UseTwelvesBounty = false;
+            SaveConfig(Config);
         }
 
-        private bool? UseGivingLand()
-        {
-            switch (Svc.Objects.LocalPlayer?.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4590) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 4590);
-                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4589) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 4589);
-                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
-                    }
-                    break;
-            }
-
-            return true;
+        if (Config.Use100GPYield) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP1", ref Config.GP100Yield, 100, 1000))
+                SaveConfig(Config);
         }
 
-        private bool? UseTwelvesBounty()
-        {
-            switch (Svc.Objects.LocalPlayer?.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 282) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 282);
-                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 280) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 280);
-                        TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
-                    }
-                    break;
-            }
-
-            return true;
+        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(224).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(241).Name.ToString()}", ref Config.Use500GPYield)) {
+            Config.UseGivingLand = false;
+            Config.UseTwelvesBounty = false;
+            SaveConfig(Config);
         }
 
-        private void Use100GPSkill()
-        {
-            if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 1286 || x.StatusId == 756))
-                return;
-
-            switch (chara.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 273);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
-                    }
-                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4087) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 4087);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 272);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
-                    }
-                    else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4073) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 4073);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
-                    }
-                    break;
-            }
+        if (Config.Use500GPYield) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP2", ref Config.GP500Yield, 500, 1000))
+                SaveConfig(Config);
         }
 
-        private void Use500GPSkill()
-        {
-            if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 219))
-                return;
-
-            switch (chara.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 224) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 224);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 241) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 241);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
-                    }
-                    break;
-            }
-
+        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(21204).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(21203).Name.ToString()}", ref Config.UseTidings)) {
+            Config.UseGivingLand = false;
+            Config.UseTwelvesBounty = false;
+            SaveConfig(Config);
         }
 
-        private void UseTidings()
-        {
-            if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 2667))
-                return;
-
-            switch (chara.ClassJob.RowId)
-            {
-                case 17: //BTN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 21204);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
-                    }
-                    break;
-                case 16: //MIN
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 21203);
-                        TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
-                    }
-                    break;
-            }
-
+        if (Config.UseTidings) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP3", ref Config.GPTidings, 200, 1000))
+                SaveConfig(Config);
         }
 
-        private void QuickGatherToggle(AddonGathering* thisPtr)
-        {
-            if (thisPtr == null && Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
-                thisPtr = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
-
-            thisPtr->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
-            quickGatherToggle?.Original(thisPtr);
+        if (Config.UseTidings) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. Gatherer's Boon% For Tidings", ref Config.GatherersBoon, 1, 100))
+                SaveConfig(Config);
         }
 
-        private bool? UseWisdom()
-        {
-            switch (Svc.Objects.LocalPlayer?.ClassJob.RowId)
-            {
-                case 17:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 26522);
-                    }
-                    break;
-                case 16:
-                    if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26521) == 0)
-                    {
-                        ActionManager.Instance()->UseAction(ActionType.Action, 26521);
-                    }
-                    break;
-            }
-
-            return true;
+        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(215).Name.ToString()} / {Svc.Data.GetExcelSheet<Action>(language).GetRow(232).Name.ToString()}", ref Config.UseSolidReason)) {
+            SaveConfig(Config);
         }
 
+        if (Config.UseSolidReason) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP4", ref Config.GPSolidReason, 300, 1000))
+                SaveConfig(Config);
+        }
 
+        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(4590).Name.ToString()}", ref Config.UseGivingLand)) {
+            Config.Use100GPYield = false;
+            Config.Use500GPYield = false;
+            Config.UseTidings = false;
+            SaveConfig(Config);
+        }
+
+        if (Config.UseGivingLand) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP5", ref Config.GPGivingLand, 200, 1000))
+                SaveConfig(Config);
+        }
+
+        if (ImGui.Checkbox($"Use {Svc.Data.GetExcelSheet<Action>(language).GetRow(282).Name.ToString().ToTitleCase()}", ref Config.UseTwelvesBounty)) {
+            Config.Use100GPYield = false;
+            Config.Use500GPYield = false;
+            Config.UseTidings = false;
+            SaveConfig(Config);
+        }
+
+        if (Config.UseTwelvesBounty) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP6", ref Config.GPTwelvesBounty, 150, 1000))
+                SaveConfig(Config);
+        }
+
+        if (ImGui.Checkbox($"Reveal Hidden Items", ref Config.UseLuck))
+            SaveConfig(Config);
+
+        if (Config.UseLuck) {
+            ImGui.PushItemWidth(300);
+            if (ImGui.SliderInt("Min. GP###MinGP7", ref Config.GPLuck, 200, 1000))
+                SaveConfig(Config);
+        }
+    };
+
+    private void ClickGather(uint index) {
+        TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
+        TaskManager.Enqueue(() => {
+            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
+            if (addon is null) return;
+
+            if (addon is null) return;
+            var checkBox = addon->GetNodeById(17 + index)->GetAsAtkComponentCheckBox();
+            if (checkBox is null) return;
+            checkBox->AtkComponentButton.IsChecked = true;
+            ECommons.Automation.Callback.Fire(addon, true, index);
+            CheckNodeAndClick((int)index);
+        });
+    }
+
+    private void UseLuck() {
+        switch (Svc.Objects.LocalPlayer!.ClassJob.RowId) {
+            case 17: //BTN
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4095) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 4095);
+                }
+                break;
+            case 16: //MIN
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4081) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 4081);
+                }
+                break;
+        }
+    }
+
+    private bool NodeHasHiddenItems(List<uint> ids) {
+        foreach (var id in ids.Where(x => x != 0)) {
+            if (Svc.Data.GetExcelSheet<GatheringItem>().FindFirst(x => x.Item.RowId == id, out var item) && item.IsHidden) return false; //The node is exposed, don't need to expose it.
+            if (Maps.Any(x => x.MapId == id)) return false;
+            if (Items.Any(x => x.ItemId == id)) return false;
+
+        }
+        if (Seeds.Any(x => ids.Any(y => x.ItemId == y))) return true;
+        var NodeId = Svc.Objects.LocalPlayer?.TargetObject?.BaseId;
+        var baseNode = Svc.Data.GetExcelSheet<GatheringPoint>()?.Where(x => x.RowId == NodeId).First().GatheringPointBase.Value;
+        Svc.Log.Debug($"{baseNode?.RowId}");
+        if (Items.Any(x => x.NodeId == baseNode?.RowId)) return true;
+        if (Maps.Any(x => x.NodeIds.Any(y => y == baseNode?.RowId))) return true;
+
+        return false;
+    }
+
+    private bool? UseGatherChanceUp() {
+        switch (Svc.Objects.LocalPlayer!.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 220) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 220);
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 237) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 237);
+                }
+                break;
+        }
+
+        return true;
+    }
+    private bool? UseIntegrityAction() {
+        switch (Svc.Objects.LocalPlayer!.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 215);
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 232);
+                }
+                break;
+        }
+
+        return true;
+    }
+
+    private bool? UseGivingLand() {
+        switch (Svc.Objects.LocalPlayer?.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4590) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 4590);
+                    TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4589) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 4589);
+                    TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1802));
+                }
+                break;
+        }
+
+        return true;
+    }
+
+    private bool? UseTwelvesBounty() {
+        switch (Svc.Objects.LocalPlayer?.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 282) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 282);
+                    TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 280) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 280);
+                    TaskManager.Insert(() => Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 825));
+                }
+                break;
+        }
+
+        return true;
+    }
+
+    private void Use100GPSkill() {
+        if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 1286 || x.StatusId == 756))
+            return;
+
+        switch (chara.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 273) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 273);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
+                }
+                else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4087) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 4087);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 272) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 272);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 1286));
+                }
+                else if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 4073) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 4073);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 756));
+                }
+                break;
+        }
+    }
+
+    private void Use500GPSkill() {
+        if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 219))
+            return;
+
+        switch (chara.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 224) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 224);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 241) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 241);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 219));
+                }
+                break;
+        }
+    }
+
+    private void UseTidings() {
+        if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 2667))
+            return;
+
+        switch (chara.ClassJob.RowId) {
+            case 17: //BTN
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21204) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 21204);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
+                }
+                break;
+            case 16: //MIN
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 21203) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 21203);
+                    TaskManager.Insert(() => chara.StatusList.Any(x => x.StatusId == 2667));
+                }
+                break;
+        }
+    }
+
+    private void QuickGatherToggle(AddonGathering* thisPtr) {
+        if (thisPtr == null && Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
+            thisPtr = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
+
+        thisPtr->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
+        quickGatherToggle?.Original(thisPtr);
+    }
+
+    private bool? UseWisdom() {
+        switch (Svc.Objects.LocalPlayer?.ClassJob.RowId) {
+            case 17:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26522) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 26522);
+                }
+                break;
+            case 16:
+                if (ActionManager.Instance()->GetActionStatus(ActionType.Action, 26521) == 0) {
+                    ActionManager.Instance()->UseAction(ActionType.Action, 26521);
+                }
+                break;
+        }
+
+        return true;
     }
 }

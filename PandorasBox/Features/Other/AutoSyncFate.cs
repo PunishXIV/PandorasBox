@@ -5,99 +5,86 @@ using Lumina.Excel.Sheets;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
 
-namespace PandorasBox.Features.Other
-{
-    public unsafe class AutoSyncFate : Feature
-    {
-        private ushort fateID;
+namespace PandorasBox.Features.Other;
 
-        public override string Name => "Auto-Sync FATEs";
+public unsafe class AutoSyncFate : Feature {
+    private ushort fateID;
 
-        public override string Description => "Syncs when entering a FATE if you're overlevelled.";
+    public override string Name => "Auto-Sync FATEs";
 
-        public override FeatureType FeatureType => FeatureType.Other;
+    public override string Description => "Syncs when entering a FATE if you're overlevelled.";
 
-        public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption($@"Exclude ""A Realm Reborn"" zones", "" , 1)]
-            public bool ExcludeARR = false;
+    public override FeatureType FeatureType => FeatureType.Other;
 
-            [FeatureConfigOption($@"Exclude ""Heavensward"" zones", "", 2)]
-            public bool ExcludeHW = false;
+    public class Configs : FeatureConfig {
+        [FeatureConfigOption($@"Exclude ""A Realm Reborn"" zones", "", 1)]
+        public bool ExcludeARR = false;
 
-            [FeatureConfigOption($@"Exclude ""Stormblood"" zones", "", 3)]
-            public bool ExcludeSB = false;
+        [FeatureConfigOption($@"Exclude ""Heavensward"" zones", "", 2)]
+        public bool ExcludeHW = false;
 
-            [FeatureConfigOption($@"Exclude ""Shadowbringers"" zones", "", 4)]
-            public bool ExcludeShB = false;
+        [FeatureConfigOption($@"Exclude ""Stormblood"" zones", "", 3)]
+        public bool ExcludeSB = false;
 
-            [FeatureConfigOption($@"Exclude ""Endwalker"" zones", "", 5)]
-            public bool ExcludeEW = false;
+        [FeatureConfigOption($@"Exclude ""Shadowbringers"" zones", "", 4)]
+        public bool ExcludeShB = false;
 
-            [FeatureConfigOption("Don't trigger when in combat", "", 6)]
-            public bool ExcludeCombat = false;
-        }
+        [FeatureConfigOption($@"Exclude ""Endwalker"" zones", "", 5)]
+        public bool ExcludeEW = false;
 
-        public Configs Config { get; private set; }
+        [FeatureConfigOption("Don't trigger when in combat", "", 6)]
+        public bool ExcludeCombat = false;
+    }
 
-        public override bool UseAutoConfig => true;
+    public Configs Config { get; private set; }
 
-        public ushort FateID
-        {
-            get => fateID; set
-            {
-                if (fateID != value)
-                {
-                    SyncFate(value);
-                }
-                fateID = value;
+    public override bool UseAutoConfig => true;
+
+    public ushort FateID {
+        get => fateID; set {
+            if (fateID != value) {
+                SyncFate(value);
             }
+            fateID = value;
         }
+    }
 
-        public byte FateMaxLevel;
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += CheckFates;
-            base.Enable();
-        }
+    public byte FateMaxLevel;
+    public override void Enable() {
+        Config = LoadConfig<Configs>() ?? new Configs();
+        Svc.Framework.Update += CheckFates;
+        base.Enable();
+    }
 
-        public void SyncFate(ushort value)
-        {
-            if (value != 0)
-            {
-                var zone = Svc.Data.GetExcelSheet<TerritoryType>().Where(x => x.RowId == Svc.ClientState.TerritoryType).First();
-                if (zone.ExVersion.RowId == 0 && Config.ExcludeARR) return;
-                if (zone.ExVersion.RowId == 1 && Config.ExcludeHW) return;
-                if (zone.ExVersion.RowId == 2 && Config.ExcludeSB) return;
-                if (zone.ExVersion.RowId == 3 && Config.ExcludeShB) return;
-                if (zone.ExVersion.RowId == 4 && Config.ExcludeEW) return;
-                if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Config.ExcludeCombat) return;
-                // lsync does not work for DoH/DoL, so exclude them
-                if (Svc.Objects.LocalPlayer?.ClassJob.Value.ClassJobCategory is { RowId: 32 or 33 }) return;
+    public void SyncFate(ushort value) {
+        if (value != 0) {
+            var zone = Svc.Data.GetExcelSheet<TerritoryType>().Where(x => x.RowId == Svc.ClientState.TerritoryType).First();
+            if (zone.ExVersion.RowId == 0 && Config.ExcludeARR) return;
+            if (zone.ExVersion.RowId == 1 && Config.ExcludeHW) return;
+            if (zone.ExVersion.RowId == 2 && Config.ExcludeSB) return;
+            if (zone.ExVersion.RowId == 3 && Config.ExcludeShB) return;
+            if (zone.ExVersion.RowId == 4 && Config.ExcludeEW) return;
+            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Config.ExcludeCombat) return;
+            // lsync does not work for DoH/DoL, so exclude them
+            if (Svc.Objects.LocalPlayer?.ClassJob.Value.ClassJobCategory is { RowId: 32 or 33 }) return;
 
-                if (Svc.Objects.LocalPlayer?.Level > FateMaxLevel)
-                    Chat.SendMessage("/lsync");
-            }
+            if (Svc.Objects.LocalPlayer?.Level > FateMaxLevel)
+                Chat.SendMessage("/lsync");
         }
-        private void CheckFates(IFramework framework)
-        {
-            if (FateManager.Instance()->CurrentFate != null)
-            {
-                FateMaxLevel = FateManager.Instance()->CurrentFate->MaxLevel;
-                FateID = FateManager.Instance()->CurrentFate->FateId;
-            }
-            else
-            {
-                FateID = 0;
-            }
+    }
+    private void CheckFates(IFramework framework) {
+        if (FateManager.Instance()->CurrentFate != null) {
+            FateMaxLevel = FateManager.Instance()->CurrentFate->MaxLevel;
+            FateID = FateManager.Instance()->CurrentFate->FateId;
         }
+        else {
+            FateID = 0;
+        }
+    }
 
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= CheckFates;
-            base.Disable();
-        }
+    public override void Disable() {
+        SaveConfig(Config);
+        Svc.Framework.Update -= CheckFates;
+        base.Disable();
     }
 }

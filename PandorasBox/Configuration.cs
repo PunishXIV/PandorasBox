@@ -3,28 +3,24 @@ using Dalamud.Plugin;
 using System;
 using System.Collections.Generic;
 
-namespace PandorasBox
-{
-    [Serializable]
-    public class Configuration : IPluginConfiguration
-    {
-        public int Version { get; set; } = 0;
+namespace PandorasBox;
 
-        public List<string> EnabledFeatures = new();
+[Serializable]
+public class Configuration : IPluginConfiguration {
+    public int Version { get; set; } = 0;
 
-        public bool DisabledTheme = false;
+    public List<string> EnabledFeatures = new();
 
-        [NonSerialized]
-        private IDalamudPluginInterface? pluginInterface;
+    public bool DisabledTheme = false;
 
-        public void Initialize(IDalamudPluginInterface pluginInterface)
-        {
-            this.pluginInterface = pluginInterface;
-        }
+    [NonSerialized]
+    private IDalamudPluginInterface? pluginInterface;
 
-        public void Save()
-        {
-            this.pluginInterface!.SavePluginConfig(this);
-        }
+    public void Initialize(IDalamudPluginInterface pluginInterface) {
+        this.pluginInterface = pluginInterface;
+    }
+
+    public void Save() {
+        pluginInterface!.SavePluginConfig(this);
     }
 }

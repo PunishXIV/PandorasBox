@@ -13,116 +13,102 @@ using System;
 using System.Linq;
 using System.Numerics;
 
-namespace PandorasBox.Features.Targets
-{
-    public unsafe class AutoOpenChests : Feature
-    {
-        public override string Name => "Automatically Open Chests";
+namespace PandorasBox.Features.Targets;
 
-        public override string Description => "Walk up to a chest to automatically open it. (Does not work with Deep Dungeon chests)";
+public unsafe class AutoOpenChests : Feature {
+    public override string Name => "Automatically Open Chests";
 
-        public override FeatureType FeatureType => FeatureType.Targeting;
+    public override string Description => "Walk up to a chest to automatically open it. (Does not work with Deep Dungeon chests)";
 
-        public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption("Immediately Close Loot Window After Opening", "", 1)]
-            public bool CloseLootWindow = false;
+    public override FeatureType FeatureType => FeatureType.Targeting;
 
-            [FeatureConfigOption("Open Chests in High End Duties", "", 2)]
-            public bool OpenInHighEndDuty = false;
-        }
+    public class Configs : FeatureConfig {
+        [FeatureConfigOption("Immediately Close Loot Window After Opening", "", 1)]
+        public bool CloseLootWindow = false;
 
-        public Configs Config { get; private set; }
+        [FeatureConfigOption("Open Chests in High End Duties", "", 2)]
+        public bool OpenInHighEndDuty = false;
+    }
 
-        public override bool UseAutoConfig => true;
+    public Configs Config { get; private set; }
 
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
-            base.Enable();
-        }
+    public override bool UseAutoConfig => true;
 
-        private static DateTime NextOpenTime = DateTime.Now;
+    public override void Enable() {
+        Config = LoadConfig<Configs>() ?? new Configs();
+        Svc.Framework.Update += RunFeature;
+        base.Enable();
+    }
 
-        private void RunFeature(IFramework framework)
-        {
-            CloseWindow();
+    private static DateTime NextOpenTime = DateTime.Now;
 
-            if (!EzThrottler.Throttle("ChestThrottle", 200))
-                return;
+    private void RunFeature(IFramework framework) {
+        CloseWindow();
 
-            if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
-                return;
+        if (!EzThrottler.Throttle("ChestThrottle", 200))
+            return;
 
-            if (!Config.OpenInHighEndDuty && Svc.Data.GetExcelSheet<ContentFinderCondition>().FindFirst(x => x.RowId == GameMain.Instance()->CurrentContentFinderConditionId, out var contentFinderInfo) && contentFinderInfo.HighEndDuty)
-                return;
+        if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas])
+            return;
 
-            var player = Player.Object;
-            if (player == null) return; 
-            var treasure = Svc.Objects.FirstOrDefault(o =>
-            {
-                if (o == null) return false;
-                var dis = Vector3.Distance(player.Position, o.Position);
-                if (dis > 2f) return false;
+        if (!Config.OpenInHighEndDuty && Svc.Data.GetExcelSheet<ContentFinderCondition>().FindFirst(x => x.RowId == GameMain.Instance()->CurrentContentFinderConditionId, out var contentFinderInfo) && contentFinderInfo.HighEndDuty)
+            return;
 
-                var obj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)o.Address;
-                if (!obj->GetIsTargetable()) return false;
-                if ((ObjectKind)obj->ObjectKind != ObjectKind.Treasure) return false;
+        var player = Player.Object;
+        if (player == null) return;
+        var treasure = Svc.Objects.FirstOrDefault(o => {
+            if (o == null) return false;
+            var dis = Vector3.Distance(player.Position, o.Position);
+            if (dis > 2f) return false;
 
-                foreach (var item in Loot.Instance()->Items)
-                    if (item.ChestObjectId == o.GameObjectId) return false;
+            var obj = (FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)o.Address;
+            if (!obj->GetIsTargetable()) return false;
+            if ((ObjectKind)obj->ObjectKind != ObjectKind.Treasure) return false;
 
-                var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)obj;
-                if (tr->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened) ||
-                    tr->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.FadedOut)) return false;
+            foreach (var item in Loot.Instance()->Items)
+                if (item.ChestObjectId == o.GameObjectId) return false;
 
-                return true;
-            });
+            var tr = (FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure*)obj;
+            if (tr->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.Opened) ||
+                tr->Flags.HasFlag(FFXIVClientStructs.FFXIV.Client.Game.Object.Treasure.TreasureFlags.FadedOut)) return false;
 
-            if (treasure == null) return;
-            try
-            {
-                TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)treasure.Address);
-                if (Config.CloseLootWindow)
-                {
-                    CloseWindowTime = DateTime.Now.AddSeconds(0.5);
-                }
-            }
-            catch (Exception ex)
-            {
-                Svc.Log.Error(ex, "Failed to open the chest!");
+            return true;
+        });
+
+        if (treasure == null) return;
+        try {
+            TargetSystem.Instance()->InteractWithObject((FFXIVClientStructs.FFXIV.Client.Game.Object.GameObject*)(void*)treasure.Address);
+            if (Config.CloseLootWindow) {
+                CloseWindowTime = DateTime.Now.AddSeconds(0.5);
             }
         }
+        catch (Exception ex) {
+            Svc.Log.Error(ex, "Failed to open the chest!");
+        }
+    }
 
-        private static DateTime CloseWindowTime = DateTime.Now;
-        private static unsafe void CloseWindow()
-        {
-            if (CloseWindowTime < DateTime.Now) return;
-            if (Svc.GameGui.GetAddonByName("NeedGreed", 1) != IntPtr.Zero)
-            {
-                var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1).Address;
-                if (needGreedWindow == null) return;
+    private static DateTime CloseWindowTime = DateTime.Now;
+    private static unsafe void CloseWindow() {
+        if (CloseWindowTime < DateTime.Now) return;
+        if (Svc.GameGui.GetAddonByName("NeedGreed", 1) != IntPtr.Zero) {
+            var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1).Address;
+            if (needGreedWindow == null) return;
 
-                if (needGreedWindow->IsVisible)
-                {
-                    needGreedWindow->Close(true);
-                    return;
-                }
-            }
-            else
-            {
+            if (needGreedWindow->IsVisible) {
+                needGreedWindow->Close(true);
                 return;
             }
-
+        }
+        else {
             return;
         }
 
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
-        }
+        return;
+    }
+
+    public override void Disable() {
+        SaveConfig(Config);
+        Svc.Framework.Update -= RunFeature;
+        base.Disable();
     }
 }
