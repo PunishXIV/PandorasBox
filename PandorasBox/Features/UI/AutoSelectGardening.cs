@@ -20,8 +20,10 @@ namespace PandorasBox.Features.UI;
 
 public unsafe class AutoSelectGardening : Feature {
     public override string Name => "Auto-select Gardening Soil/Seeds";
-
     public override string Description => "Automatically fill in gardening windows with seeds and soil.";
+
+    public override bool FeatureDisabled => true;
+    public override string DisabledReason => "Moved to YesAlready";
 
     public override FeatureType FeatureType => FeatureType.UI;
 
