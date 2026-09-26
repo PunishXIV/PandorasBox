@@ -25,18 +25,14 @@ internal class CachedSound {
             while ((samplesRead = audioFileReader.Read(readBuffer, 0, readBuffer.Length)) > 0) {
                 wholeFile.AddRange(readBuffer.Take(samplesRead));
             }
-            AudioData = wholeFile.ToArray();
+            AudioData = [.. wholeFile];
         }
     }
 }
 
-internal class CachedSoundSampleProvider : ISampleProvider {
-    private readonly CachedSound cachedSound;
+internal class CachedSoundSampleProvider(CachedSound cachedSound) : ISampleProvider {
+    private readonly CachedSound cachedSound = cachedSound;
     private long position;
-
-    public CachedSoundSampleProvider(CachedSound cachedSound) {
-        this.cachedSound = cachedSound;
-    }
 
     public int Read(float[] buffer, int offset, int count) {
         var availableSamples = cachedSound.AudioData.Length - position;

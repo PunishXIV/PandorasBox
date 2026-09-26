@@ -84,37 +84,37 @@ public unsafe class QuickPlateLink : CommandFeature {
                     if (IsRoleMatch(string.Join(" ", values), out var role)) {
                         switch (role) {
                             case "tanks":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(1)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(1))];
                                 break;
                             case "healers":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(4)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(4))];
                                 break;
                             case "dps":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(2, 3)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(2, 3))];
                                 break;
                             case "melees":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(2)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => x.Role.EqualsAny<byte>(2))];
                                 break;
                             case "ranged":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).EqualsAny<int>(3, 4)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).EqualsAny<int>(3, 4))];
                                 break;
                             case "magical ranged":
                             case "casters":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(4)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(4))];
                                 break;
                             case "physical ranged":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(3)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(3))];
                                 break;
                             case "crafters":
                             case "doh":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(10)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(10))];
                                 break;
                             case "gatherers":
                             case "dol":
-                                jobsList = Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(20)).ToList();
+                                jobsList = [.. Svc.Data.GetExcelSheet<ClassJob>().Where(x => (x.UIPriority / 10).Equals(20))];
                                 break;
                         }
-                        ParseGearset(jobsList.Select(job => job.Name.ToString()).ToList(), plate);
+                        ParseGearset([.. jobsList.Select(job => job.Name.ToString())], plate);
                         LinkPlateToGearset(plate);
                     }
                     else {

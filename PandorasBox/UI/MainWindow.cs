@@ -207,7 +207,7 @@ internal class MainWindow : Window {
                                 DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
                                 break;
                             case OpenWindow.Commands:
-                                DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
+                                DrawCommands([.. P.Features.Where(x => x.FeatureType == FeatureType.Commands)]);
                                 break;
                             case OpenWindow.About:
                                 AboutTab.Draw("Pandora's Box");

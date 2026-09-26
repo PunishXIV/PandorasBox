@@ -16,7 +16,7 @@ public unsafe class CallbackCommand : CommandFeature {
     public override string Description => "Fires arbitrary callbacks to any addon of your choosing. Play with responsibly.";
 
     protected override void OnCommandInternal(string _, string args) {
-        OnCommand(args.Split(' ').ToList());
+        OnCommand([.. args.Split(' ')]);
     }
 
     protected override void OnCommand(List<string> args) {
@@ -30,7 +30,7 @@ public unsafe class CallbackCommand : CommandFeature {
         }
 
         var valueArgs = ParseValueArguments(args, 2);
-        Callback.Fire(addonArg, boolArg, valueArgs.ToArray());
+        Callback.Fire(addonArg, boolArg, [.. valueArgs]);
     }
 
     private static List<object> ParseValueArguments(List<string> args, int startIndex) {

@@ -7,16 +7,12 @@ using System.Reflection;
 
 namespace PandorasBox.Features;
 
-public class FeatureProvider : IDisposable {
+public class FeatureProvider(Assembly assembly) : IDisposable {
     public bool Disposed { get; protected set; } = false;
 
     public List<BaseFeature> Features { get; } = [];
 
-    public Assembly Assembly { get; init; } = null!;
-
-    public FeatureProvider(Assembly assembly) {
-        Assembly = assembly;
-    }
+    public Assembly Assembly { get; init; } = assembly;
 
     public virtual void LoadFeatures() {
         foreach (var t in Assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(Feature)) && !x.IsAbstract)) {

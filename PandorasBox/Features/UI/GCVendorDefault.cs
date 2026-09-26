@@ -34,11 +34,14 @@ public unsafe class GCVendorDefault : Feature {
         "Bottom Tab"
     ];
 
-    private List<string> Categories { get; set; } = Svc.Data.GetExcelSheet<GCShopItemCategory>()
-        .Where(x => !string.IsNullOrEmpty(x.Name.ToString()))
-        .Select(x => x.Name.ToString())
-        .Append(Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 518).Text.ToString())
-        .ToList();
+    private List<string> Categories { get; set; } =
+    [
+        .. Svc.Data.GetExcelSheet<GCShopItemCategory>()
+                .Where(x => !string.IsNullOrEmpty(x.Name.ToString()))
+                .Select(x => x.Name.ToString())
+,
+        Svc.Data.GetExcelSheet<Addon>().First(x => x.RowId == 518).Text.ToString(),
+    ];
 
     public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();

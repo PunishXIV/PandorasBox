@@ -206,7 +206,7 @@ internal class AutoTPCoords : Feature {
 
                 if (ImGui.Checkbox(chatTypeName + "##filter", ref checkboxClicked)) {
                     hasChanged = true;
-                    Config.FilteredChannels = Config.FilteredChannels.Distinct().ToList();
+                    Config.FilteredChannels = [.. Config.FilteredChannels.Distinct()];
 
                     if (checkboxClicked) {
                         if (Config.FilteredChannels.IndexOf(chatType) != -1)
@@ -216,7 +216,7 @@ internal class AutoTPCoords : Feature {
                         Config.FilteredChannels.Add(chatType);
                     }
 
-                    Config.FilteredChannels = Config.FilteredChannels.Distinct().ToList();
+                    Config.FilteredChannels = [.. Config.FilteredChannels.Distinct()];
                     Config.FilteredChannels.Sort();
                 }
             }

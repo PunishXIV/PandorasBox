@@ -324,9 +324,9 @@ public unsafe class AutoSelectGardening : Feature {
         if (ImGui.Checkbox("Show Only Inventory Items", ref Config.OnlyShowInventoryItems))
             hasChanged = true;
 
-        var invSoil = Config.OnlyShowInventoryItems ? Soils.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : Soils.ToArray();
-        var invSeeds = Config.OnlyShowInventoryItems ? Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : Seeds.ToArray();
-        var invFert = Config.OnlyShowInventoryItems ? Fertilizers.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : Fertilizers.ToArray();
+        var invSoil = Config.OnlyShowInventoryItems ? Soils.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : [.. Soils];
+        var invSeeds = Config.OnlyShowInventoryItems ? Seeds.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : [.. Seeds];
+        var invFert = Config.OnlyShowInventoryItems ? Fertilizers.Where(x => InventoryManager.Instance()->GetInventoryItemCount(x.Value.RowId) > 0).ToArray() : [.. Fertilizers];
 
         var soilPrev = Config.SelectedSoil == 0 ? "" : Soils[Config.SelectedSoil].Name.ExtractText();
         if (ImGui.BeginCombo("Soil", soilPrev)) {

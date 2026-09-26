@@ -76,7 +76,7 @@ public unsafe class AutoCordial : Feature {
     public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();
 
-        rawCordialsData = Svc.Data.GetExcelSheet<Item>()
+        rawCordialsData = [.. Svc.Data.GetExcelSheet<Item>()
             .Where(row => cordialRowIDs.Any(num => num == row.RowId))
             .Select(row => (
                 Name: row.Name.ToString(),
@@ -84,9 +84,9 @@ public unsafe class AutoCordial : Feature {
                 CanBeHQ: row.CanBeHq,
                 NQGP: row.ItemAction.Value.Data[0],
                 HQGP: row.ItemAction.Value.DataHQ[0]
-            )).ToArray();
+            ))];
 
-        cordials = rawCordialsData
+        cordials = [.. rawCordialsData
             .SelectMany((cordial, index) => cordial.CanBeHQ
                 ? new[]
                 {
@@ -96,8 +96,7 @@ public unsafe class AutoCordial : Feature {
                 :
                 [
                     (Name: cordial.Name, Id: cordial.Id, GP: cordial.NQGP)
-                ]).OrderByDescending(cordial => cordial.GP)
-            .ToArray();
+                ]).OrderByDescending(cordial => cordial.GP)];
 
         Svc.Framework.Update += RunFeature;
         base.Enable();
