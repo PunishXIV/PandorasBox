@@ -67,9 +67,13 @@ public abstract class BaseFeature {
         Ready = true;
     }
 
-    public virtual void Enable() {
+    public virtual unsafe void Enable() {
         Svc.Log.Debug($"Enabling {Name} / {GetType().Name}");
         Enabled = true;
+        if (GetType().GetMethod(nameof(UseActionDetour))!.DeclaringType != typeof(BaseFeature)) {
+            UseActionHook ??= Svc.Hook.HookFromAddress<ActionManager.Delegates.UseAction>((nint)ActionManager.MemberFunctionPointers.UseAction, UseActionDetour);
+            UseActionHook.Enable();
+        }
         if (UseAFKTimer)
             Svc.Framework.Update += UpdateTimer;
     }
@@ -77,6 +81,7 @@ public abstract class BaseFeature {
     public virtual void Disable() {
         TaskManager!.Abort();
         Enabled = false;
+        UseActionHook?.Disable();
         Svc.Framework.Update -= UpdateTimer;
     }
 
@@ -90,6 +95,8 @@ public abstract class BaseFeature {
     }
 
     public virtual void Dispose() {
+        UseActionHook?.Dispose();
+        UseActionHook = null;
         Ready = false;
     }
 
@@ -433,8 +440,7 @@ public abstract class BaseFeature {
     public virtual void SendActionDetour(ulong targetObjectId, byte actionType, uint actionId, ushort sequence, long a5, long a6, long a7, long a8, long a9)
         => SendActionHook?.Original(targetObjectId, actionType, actionId, sequence, a5, a6, a7, a8, a9);
 
-    [EzHook("E8 ?? ?? ?? ?? B0 01 EB B6", detourName: "UseActionDetour")]
-    public EzHook<ActionManager.Delegates.UseAction>? UseActionHook;
+    public Hook<ActionManager.Delegates.UseAction>? UseActionHook { get; protected set; }
 
     public virtual unsafe bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, ActionManager.UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted)
         => UseActionHook!.Original(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);

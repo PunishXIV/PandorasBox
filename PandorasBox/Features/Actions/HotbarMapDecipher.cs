@@ -1,4 +1,3 @@
-using Dalamud.Hooking;
 using Dalamud.Memory;
 using ECommons.DalamudServices;
 using ECommons.UIHelpers.AddonMasterImplementations;
@@ -20,10 +19,6 @@ internal unsafe class HotbarMapDecipher : Feature {
     public override string Description { get; } = "Allows deciphering treaure maps from hotbar.";
     public override FeatureType FeatureType { get; } = FeatureType.Actions;
 
-    public delegate bool UseActionDelegate(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget);
-
-    public static new Hook<UseActionDelegate>? UseActionHook;
-
     public class Configs : FeatureConfig {
         [FeatureConfigOption("Automatically Decipher")]
         public bool AutoDecipher = false;
@@ -32,22 +27,21 @@ internal unsafe class HotbarMapDecipher : Feature {
     public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
+
     public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();
-        UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>(ActionManager.Addresses.UseAction.Value, UseActionDetour);
-        UseActionHook.Enable();
         base.Enable();
     }
 
-    private bool UseActionDetour(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget) {
-        if (actionType == 2) {
-            if (ActionManager.Instance()->GetActionStatus(ActionType.Item, actionID, Svc.PlayerState.ContentId) != 0) {
+    public override bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, ActionManager.UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted) {
+        if (actionType == ActionType.Item) {
+            if (ActionManager.Instance()->GetActionStatus(ActionType.Item, actionId, Svc.PlayerState.ContentId) != 0) {
                 TaskManager.Abort();
-                return UseActionHook!.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
+                return base.UseActionDetour(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
             }
 
-            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == actionID, out var item) && item.FilterGroup == 18) {
-                TaskManager.Enqueue(() => OpenItem(actionID));
+            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == actionId, out var item) && item.FilterGroup == 18) {
+                TaskManager.Enqueue(() => OpenItem(actionId));
 
                 if (Config.AutoDecipher) {
                     TaskManager.EnqueueDelay(200);
@@ -56,7 +50,7 @@ internal unsafe class HotbarMapDecipher : Feature {
             }
         }
 
-        return UseActionHook!.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
+        return base.UseActionDetour(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
     }
 
     private unsafe bool? OpenItem(uint ItemId) {
@@ -151,12 +145,6 @@ internal unsafe class HotbarMapDecipher : Feature {
 
     public override void Disable() {
         SaveConfig(Config);
-        UseActionHook?.Disable();
         base.Disable();
-    }
-
-    public override void Dispose() {
-        UseActionHook?.Dispose();
-        base.Dispose();
     }
 }

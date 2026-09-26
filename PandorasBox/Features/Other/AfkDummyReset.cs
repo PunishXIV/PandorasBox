@@ -1,4 +1,3 @@
-using Dalamud.Hooking;
 using ECommons;
 using ECommons.Automation;
 using ECommons.DalamudServices;
@@ -24,24 +23,19 @@ internal class AfkDummyReset : Feature {
 
     public Configs Config { get; private set; } = null!;
 
-    internal unsafe delegate bool UseActionDelegate(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8);
-    internal new Hook<UseActionDelegate> UseActionHook = null!;
-
-    public override unsafe void Enable() {
+    public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();
-        UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>(ActionManager.Addresses.UseAction.Value, UseActionDetour);
-        UseActionHook?.Enable();
         base.Enable();
     }
 
-    private unsafe bool UseActionDetour(ActionManager* am, ActionType type, uint acId, long target, uint a5, uint a6, uint a7, void* a8) {
-        if (type is ActionType.Action) {
+    public override unsafe bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, ActionManager.UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted) {
+        if (actionType is ActionType.Action) {
             try {
                 if (TaskManager.IsBusy) {
                     TaskManager.Abort();
                 }
 
-                var delay = Config.InactivityTimer * 1000 + Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Action>().GetRow(am->GetAdjustedActionId(acId)).Cast100ms * 100;
+                var delay = Config.InactivityTimer * 1000 + Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.Action>().GetRow(actionManager->GetAdjustedActionId(actionId)).Cast100ms * 100;
                 TaskManager.EnqueueDelay(delay);
                 TaskManager.Enqueue(() => { Chat.SendMessage("/presetenmity"); });
             }
@@ -49,17 +43,11 @@ internal class AfkDummyReset : Feature {
                 ex.Log();
             }
         }
-        return UseActionHook.Original(am, type, acId, target, a5, a6, a7, a8);
+        return base.UseActionDetour(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
     }
 
     public override void Disable() {
         SaveConfig(Config);
-        UseActionHook?.Disable();
         base.Disable();
-    }
-
-    public override void Dispose() {
-        UseActionHook?.Dispose();
-        base.Dispose();
     }
 }
