@@ -1,15 +1,16 @@
+using Dalamud.Bindings.ImGui;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ECommons.Throttlers;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using Dalamud.Bindings.ImGui;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
 using System;
 using System.Numerics;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI;
 
@@ -28,66 +29,61 @@ public unsafe class ExtractAll : Feature {
         base.Enable();
     }
 
-    public override bool DrawConditions() {
-        return Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero;
-    }
+    public override bool DrawConditions() => TryGetAddonByName<AtkUnitBase>("Materialize", out _);
 
     public override void Draw() {
         try {
-            if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero) {
-                var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1).Address;
-                if (!ptr->IsVisible || !ptr->IsFullyLoaded())
-                    return;
+            if (!TryGetAddonByName<AtkUnitBase>("Materialize", out var ptr)) {
+                Abort();
+                return;
+            }
+            if (!ptr->IsVisible || !ptr->IsFullyLoaded())
+                return;
 
-                var node = ptr->UldManager.NodeList[2];
+            var node = ptr->UldManager.NodeList[2];
 
-                if (node == null)
-                    return;
+            if (node == null)
+                return;
 
-                if (node->IsVisible())
-                    node->ToggleVisibility(false);
+            if (node->IsVisible())
+                node->ToggleVisibility(false);
 
-                var position = AtkResNodeHelper.GetNodePosition(node);
-                var scale = AtkResNodeHelper.GetNodeScale(node);
-                var size = new Vector2(node->Width, node->Height) * scale;
+            var position = AtkResNodeHelper.GetNodePosition(node);
+            var scale = AtkResNodeHelper.GetNodeScale(node);
+            var size = new Vector2(node->Width, node->Height) * scale;
 
-                ImGuiHelpers.ForceNextWindowMainViewport();
-                ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
+            ImGuiHelpers.ForceNextWindowMainViewport();
+            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
 
-                ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-                var oldSize = ImGui.GetFont().Scale;
-                ImGui.GetFont().Scale *= scale.X;
-                ImGui.PushFont(ImGui.GetFont());
-                ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
-                ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-                ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
-                    | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
+            ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
+            var oldSize = ImGui.GetFont().Scale;
+            ImGui.GetFont().Scale *= scale.X;
+            ImGui.PushFont(ImGui.GetFont());
+            ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 5f.Scale());
+            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
+            ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
+            ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+                | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
-                if (!Extracting) {
-                    if (ImGui.Button($"Extract All###StartExtract", size)) {
-                        Extracting = true;
-                        TryExtractAll();
-                    }
+            if (!Extracting) {
+                if (ImGui.Button($"Extract All###StartExtract", size)) {
+                    Extracting = true;
+                    TryExtractAll();
                 }
-                else {
-                    if (ImGui.Button($"Extracting. Click to abort.###AbortExtract", size)) {
-                        Abort();
-                    }
-                }
-
-                ImGui.End();
-                ImGui.PopStyleVar(5);
-                ImGui.GetFont().Scale = oldSize;
-                ImGui.PopFont();
-                ImGui.PopStyleColor();
-
             }
             else {
-                Abort();
+                if (ImGui.Button($"Extracting. Click to abort.###AbortExtract", size)) {
+                    Abort();
+                }
             }
+
+            ImGui.End();
+            ImGui.PopStyleVar(5);
+            ImGui.GetFont().Scale = oldSize;
+            ImGui.PopFont();
+            ImGui.PopStyleColor();
         }
         catch (Exception e) {
             Svc.Log.Debug(e, "ExtractAllException");
@@ -122,40 +118,13 @@ public unsafe class ExtractAll : Feature {
 
         var equip = im->GetInventoryContainer(InventoryType.EquippedItems);
 
-        InventoryContainer*[] container1 =
-        [
-            equip
-        ];
-
-        InventoryContainer*[] container2 =
-        [
-            arm1, arm12
-        ];
-
-        InventoryContainer*[] container3 =
-        [
-            arm2, arm3, arm4
-        ];
-
-        InventoryContainer*[] container4 =
-        [
-            arm6, arm7,
-        ];
-
-        InventoryContainer*[] container5 =
-        [
-            arm8, arm9
-        ];
-
-        InventoryContainer*[] container6 =
-        [
-            arm10, arm11
-        ];
-
-        InventoryContainer*[] container7 =
-        [
-            inv1, inv2, inv3, inv4
-        ];
+        InventoryContainer*[] container1 = [equip];
+        InventoryContainer*[] container2 = [arm1, arm12];
+        InventoryContainer*[] container3 = [arm2, arm3, arm4];
+        InventoryContainer*[] container4 = [arm6, arm7];
+        InventoryContainer*[] container5 = [arm8, arm9];
+        InventoryContainer*[] container6 = [arm10, arm11];
+        InventoryContainer*[] container7 = [inv1, inv2, inv3, inv4];
 
         var spiritBondedItems1 = Array.Empty<InventoryItem>();
         var spiritBondedItems2 = Array.Empty<InventoryItem>();
@@ -311,7 +280,7 @@ public unsafe class ExtractAll : Feature {
     }
 
     public static unsafe void CloseMateriaMenu() {
-        if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero) {
+        if (TryGetAddonByName<AtkUnitBase>("Materialize", out _)) {
             ActionManager.Instance()->UseAction(ActionType.GeneralAction, 14);
         }
     }
@@ -320,8 +289,7 @@ public unsafe class ExtractAll : Feature {
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
         TaskManager.InsertMulti([new(() => EzThrottler.Throttle("Switching", 300)), new(() => EzThrottler.Check("Switching"))]);
 
-        if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero) {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1).Address;
+        if (TryGetAddonByName<AtkUnitBase>("Materialize", out var addon)) {
             var values = stackalloc AtkValue[2];
             values[0] = new AtkValue() {
                 Type = AtkValueType.Int,
@@ -344,17 +312,12 @@ public unsafe class ExtractAll : Feature {
     public unsafe bool? ConfirmMateriaDialog() {
         try {
             if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
-            if (Svc.GameGui.GetAddonByName("Materialize") == IntPtr.Zero) return true;
+            if (!TryGetAddonByName<AtkUnitBase>("Materialize", out _)) return true;
 
-            var materializePTR = Svc.GameGui.GetAddonByName("MaterializeDialog", 1);
-            if (materializePTR == IntPtr.Zero)
+            if (!TryGetAddonByName<AtkUnitBase>("MaterializeDialog", out var materializeDialog))
                 return true;
 
-            var materalizeWindow = (AtkUnitBase*)materializePTR.Address;
-            if (materalizeWindow == null)
-                return true;
-
-            new AddonMaster.MaterializeDialog(materializePTR).Materialize();
+            new AddonMaster.MaterializeDialog((nint)materializeDialog).Materialize();
 
             TaskManager.InsertMulti([new(() => EzThrottler.Throttle("Extracting", 100), "ExtractingThrottle"), new(() => EzThrottler.Check("Extracting"), "ExtractingCheck")]);
             return true;
@@ -365,7 +328,7 @@ public unsafe class ExtractAll : Feature {
         }
     }
 
-    public static bool IsMateriaMenuDialogOpen() => Svc.GameGui.GetAddonByName("MaterializeDialog", 1) != IntPtr.Zero;
+    public static bool IsMateriaMenuDialogOpen() => TryGetAddonByName<AtkUnitBase>("MaterializeDialog", out _);
 
     public bool? GenerateAndFireCallback() {
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39]) return false;
@@ -381,8 +344,7 @@ public unsafe class ExtractAll : Feature {
             UInt = 0,
         };
 
-        var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1).Address;
-        if (ptr == null) return true;
+        if (!TryGetAddonByName<AtkUnitBase>("Materialize", out var ptr)) return true;
 
         ptr->FireCallback(2, values);
 
@@ -391,9 +353,7 @@ public unsafe class ExtractAll : Feature {
     public override void Disable() {
         P.Ws.RemoveWindow(OverlayWindow);
         OverlayWindow = null!;
-        if (Svc.GameGui.GetAddonByName("Materialize", 1) != IntPtr.Zero) {
-            var ptr = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Materialize", 1).Address;
-
+        if (TryGetAddonByName<AtkUnitBase>("Materialize", out var ptr)) {
             var node = ptr->UldManager.NodeList[2];
 
             if (node == null)

@@ -5,8 +5,8 @@ using Dalamud.Bindings.ImGui;
 using PandorasBox.FeaturesSetup;
 using PandorasBox.Helpers;
 using PandorasBox.UI;
-using System;
 using System.Numerics;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI;
 
@@ -25,63 +25,58 @@ public unsafe class TradeAllCollectibles : Feature {
         base.Enable();
     }
 
-    public override bool DrawConditions() {
-        return Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero;
-    }
+    public override bool DrawConditions() => TryGetAddonByName<AtkUnitBase>("CollectablesShop", out _);
 
     public override void Draw() {
-        if (Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero) {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
-            if (!addon->IsVisible || !addon->IsFullyLoaded()) return;
+        if (!TryGetAddonByName<AtkUnitBase>("CollectablesShop", out var addon) || !addon->IsVisible || !addon->IsFullyLoaded())
+            return;
 
-            var tradeButton = addon->GetNodeById(51);
+        var tradeButton = addon->GetNodeById(51);
 
-            if (tradeButton->IsVisible())
-                tradeButton->ToggleVisibility(false);
+        if (tradeButton->IsVisible())
+            tradeButton->ToggleVisibility(false);
 
-            var position = AtkResNodeHelper.GetNodePosition(tradeButton);
-            var scale = AtkResNodeHelper.GetNodeScale(tradeButton);
-            var size = new Vector2(tradeButton->Width, tradeButton->Height) * scale;
+        var position = AtkResNodeHelper.GetNodePosition(tradeButton);
+        var scale = AtkResNodeHelper.GetNodeScale(tradeButton);
+        var size = new Vector2(tradeButton->Width, tradeButton->Height) * scale;
 
-            ImGuiHelpers.ForceNextWindowMainViewport();
-            ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
+        ImGuiHelpers.ForceNextWindowMainViewport();
+        ImGuiHelpers.SetNextWindowPosRelativeMainViewport(position);
 
-            ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
-            var oldSize = ImGui.GetFont().Scale;
-            ImGui.GetFont().Scale *= scale.X;
-            ImGui.PushFont(ImGui.GetFont());
-            ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
-            ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
-            ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
-            ImGui.Begin($"###RepairAll{tradeButton->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
-                | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
+        ImGui.PushStyleColor(ImGuiCol.WindowBg, 0);
+        var oldSize = ImGui.GetFont().Scale;
+        ImGui.GetFont().Scale *= scale.X;
+        ImGui.PushFont(ImGui.GetFont());
+        ImGui.PushStyleVar(ImGuiStyleVar.FrameRounding, 0f.Scale());
+        ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0f.Scale(), 0f.Scale()));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowPadding, new Vector2(0f.Scale(), 0f.Scale()));
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowBorderSize, 0f.Scale());
+        ImGui.PushStyleVar(ImGuiStyleVar.WindowMinSize, size);
+        ImGui.Begin($"###RepairAll{tradeButton->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
+            | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
-            if (!Trading) {
-                if (ImGui.Button($"Trade All###StartTrade", size)) {
-                    Trading = true;
-                    TryTradeAll();
-                }
+        if (!Trading) {
+            if (ImGui.Button($"Trade All###StartTrade", size)) {
+                Trading = true;
+                TryTradeAll();
             }
-            else {
-                if (ImGui.Button($"Trading. Click to abort.###AbortTrade", size)) {
-                    Trading = false;
-                    TaskManager.Abort();
-                }
-            }
-
-            ImGui.End();
-            ImGui.PopStyleVar(5);
-            ImGui.GetFont().Scale = oldSize;
-            ImGui.PopFont();
-            ImGui.PopStyleColor();
         }
+        else {
+            if (ImGui.Button($"Trading. Click to abort.###AbortTrade", size)) {
+                Trading = false;
+                TaskManager.Abort();
+            }
+        }
+
+        ImGui.End();
+        ImGui.PopStyleVar(5);
+        ImGui.GetFont().Scale = oldSize;
+        ImGui.PopFont();
+        ImGui.PopStyleColor();
     }
 
     private void TryTradeAll() {
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
-        if (!addon->IsVisible) return;
+        if (!TryGetAddonByName<AtkUnitBase>("CollectablesShop", out var addon) || !addon->IsVisible) return;
 
         var list = addon->UldManager.NodeList[22]->GetAsAtkComponentList();
         var listCount = list->ListLength;
@@ -94,7 +89,7 @@ public unsafe class TradeAllCollectibles : Feature {
 
         for (var i = 1; i <= listCount; i++) {
             TaskManager.Enqueue(() => {
-                if (Svc.GameGui.GetAddonByName("SelectYesno") != IntPtr.Zero) {
+                if (TryGetAddonByName<AtkUnitBase>("SelectYesno", out _)) {
                     Trading = false;
                     TaskManager.Abort();
                 }
@@ -113,15 +108,11 @@ public unsafe class TradeAllCollectibles : Feature {
     }
 
     private void ReEnableButton() {
-        if (Svc.GameGui.GetAddonByName("CollectablesShop") != IntPtr.Zero) {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("CollectablesShop").Address;
-            if (!addon->IsVisible) return;
+        if (!TryGetAddonByName<AtkUnitBase>("CollectablesShop", out var addon) || !addon->IsVisible) return;
 
-            var tradeButton = addon->UldManager.NodeList[2];
+        var tradeButton = addon->UldManager.NodeList[2];
 
-            if (!tradeButton->IsVisible())
-                tradeButton->ToggleVisibility(true);
-
-        }
+        if (!tradeButton->IsVisible())
+            tradeButton->ToggleVisibility(true);
     }
 }

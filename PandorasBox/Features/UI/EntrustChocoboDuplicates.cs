@@ -13,6 +13,7 @@ using System.Numerics;
 using Lumina.Excel.Sheets;
 using ECommons.UIHelpers.AddonMasterImplementations;
 using System.Linq;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.UI;
 
@@ -32,11 +33,10 @@ public unsafe class EntrustChocoboDuplicates : Feature {
     }
 
     public override bool DrawConditions() {
-        return Svc.GameGui.GetAddonByName("InventoryBuddy") != nint.Zero;
+        return TryGetAddonByName<AtkUnitBase>("InventoryBuddy", out _);
     }
     public override void Draw() {
-        var addon = (AddonInventoryBuddy*)Svc.GameGui.GetAddonByName("InventoryBuddy").Address;
-        if (addon != null && addon->AtkUnitBase.IsVisible && addon->IsFullyLoaded()) {
+        if (TryGetAddonByName<AddonInventoryBuddy>("InventoryBuddy", out var addon) && addon->AtkUnitBase.IsVisible && addon->IsFullyLoaded()) {
             var node = addon->AtkUnitBase.GetNodeById(83);
 
             if (node == null)
@@ -107,8 +107,7 @@ public unsafe class EntrustChocoboDuplicates : Feature {
     private static void FireInventoryMenu(InventoryType inventory, InventoryItem* item, int eventId) {
         var ag = AgentInventoryContext.Instance();
         ag->OpenForItemSlot(inventory, item->Slot, 0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
-        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1).Address;
-        if (contextMenu == null) return;
+        if (!TryGetAddonByName<AtkUnitBase>("ContextMenu", out var contextMenu)) return;
 
         for (int e = 0; e <= contextMenu->AtkValuesCount; e++) {
             if (ag->EventIds[e] == eventId) {

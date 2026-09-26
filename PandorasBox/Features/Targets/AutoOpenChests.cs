@@ -12,6 +12,7 @@ using PandorasBox.Helpers;
 using System;
 using System.Linq;
 using System.Numerics;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.Targets;
 
@@ -90,10 +91,7 @@ public unsafe class AutoOpenChests : Feature {
     private static DateTime CloseWindowTime = DateTime.Now;
     private static unsafe void CloseWindow() {
         if (CloseWindowTime < DateTime.Now) return;
-        if (Svc.GameGui.GetAddonByName("NeedGreed", 1) != IntPtr.Zero) {
-            var needGreedWindow = (AtkUnitBase*)Svc.GameGui.GetAddonByName("NeedGreed", 1).Address;
-            if (needGreedWindow == null) return;
-
+        if (TryGetAddonByName<AtkUnitBase>("NeedGreed", out var needGreedWindow)) {
             if (needGreedWindow->IsVisible) {
                 needGreedWindow->Close(true);
                 return;

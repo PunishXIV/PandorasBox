@@ -2,8 +2,8 @@ using ECommons.Automation;
 using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Component.GUI;
-using System;
 using System.Collections.Generic;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.Commands;
 
@@ -15,13 +15,12 @@ internal class LeaveDuty : CommandFeature {
     protected override unsafe void OnCommand(List<string> args) {
         if (GameMain.Instance()->CurrentContentFinderConditionId != 0 && !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat]) {
             Chat.SendMessage("/dfinder");
-            if (Svc.GameGui.GetAddonByName("ContentsFinderMenu") != IntPtr.Zero) {
-                var ui = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContentsFinderMenu").Address;
+            if (TryGetAddonByName<AtkUnitBase>("ContentsFinderMenu", out var ui)) {
                 Callback.Fire(ui, true, 0);
                 Callback.Fire(ui, false, -2);
 
-                var yesno = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno").Address;
-                Callback.Fire(yesno, true, 0);
+                if (TryGetAddonByName<AtkUnitBase>("SelectYesno", out var yesno))
+                    Callback.Fire(yesno, true, 0);
             }
         }
         else {

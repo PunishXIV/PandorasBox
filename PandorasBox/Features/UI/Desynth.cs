@@ -56,7 +56,7 @@ public unsafe class Desynth : Feature {
         updateItemHook.Original(thisPtr, index, nodeList, listItemRenderer);
     }
 
-    public override bool DrawConditions() => Svc.GameGui.GetAddonByName("SalvageItemSelector", 1) != nint.Zero;
+    public override bool DrawConditions() => TryGetAddonByName<AddonSalvageItemSelector>("SalvageItemSelector", out _);
 
     public override void Draw() {
         try {
@@ -141,24 +141,21 @@ public unsafe class Desynth : Feature {
 
     private bool? CloseResults() {
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return false;
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageResult", 1).Address;
-        if (addon == null || !addon->IsVisible) return false;
+        if (!TryGetAddonByName<AtkUnitBase>("SalvageResult", out var addon) || !addon->IsVisible) return false;
         addon->Close(true);
         return true;
     }
 
     private bool? ConfirmDesynth() {
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return false;
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageDialog", 1).Address;
-        if (addon == null || !addon->IsVisible) return false;
+        if (!TryGetAddonByName<AtkUnitBase>("SalvageDialog", out var addon) || !addon->IsVisible) return false;
         ECommons.Automation.Callback.Fire(addon, false, 0, false);
         return Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied39];
     }
 
     private static bool? DesynthFirst() {
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Occupied]) return false;
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SalvageItemSelector", 1).Address;
-        if (addon == null) return null;
+        if (!TryGetAddonByName<AtkUnitBase>("SalvageItemSelector", out var addon)) return null;
         ECommons.Automation.Callback.Fire(addon, false, 12, 0);
         return true;
     }

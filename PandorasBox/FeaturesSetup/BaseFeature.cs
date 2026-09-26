@@ -377,45 +377,39 @@ public abstract class BaseFeature {
     }
 
     internal static unsafe AtkUnitBase* GetSpecificYesno(Predicate<string> compare) {
-        for (var i = 1; i < 100; i++) {
-            try {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i).Address;
-                if (addon == null) return null;
-                if (GenericHelpers.IsAddonReady(addon)) {
-                    var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                    var text = textNode->NodeText.ExtractText();
-                    if (compare(text)) {
-                        Svc.Log.Verbose($"SelectYesno {text} addon {i} by predicate");
-                        return addon;
-                    }
+        try {
+            if (!GenericHelpers.TryGetAddonByName<AtkUnitBase>("SelectYesno", out var addon)) return null;
+            if (GenericHelpers.IsAddonReady(addon)) {
+                var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
+                var text = textNode->NodeText.ExtractText();
+                if (compare(text)) {
+                    Svc.Log.Verbose($"SelectYesno {text} addon by predicate");
+                    return addon;
                 }
             }
-            catch (Exception e) {
-                Svc.Log.Error("", e);
-                return null;
-            }
+        }
+        catch (Exception e) {
+            Svc.Log.Error("", e);
+            return null;
         }
         return null;
     }
 
     internal static unsafe AtkUnitBase* GetSpecificYesno(params string[] s) {
-        for (var i = 1; i < 100; i++) {
-            try {
-                var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("SelectYesno", i).Address;
-                if (addon == null) return null;
-                if (GenericHelpers.IsAddonReady(addon)) {
-                    var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
-                    var text = textNode->NodeText.ExtractText().Replace(" ", "");
-                    if (text.EqualsAny(s.Select(x => x.Replace(" ", "")))) {
-                        Svc.Log.Verbose($"SelectYesno {s.Print()} addon {i}");
-                        return addon;
-                    }
+        try {
+            if (!GenericHelpers.TryGetAddonByName<AtkUnitBase>("SelectYesno", out var addon)) return null;
+            if (GenericHelpers.IsAddonReady(addon)) {
+                var textNode = addon->UldManager.NodeList[15]->GetAsAtkTextNode();
+                var text = textNode->NodeText.ExtractText().Replace(" ", "");
+                if (text.EqualsAny(s.Select(x => x.Replace(" ", "")))) {
+                    Svc.Log.Verbose($"SelectYesno {s.Print()} addon");
+                    return addon;
                 }
             }
-            catch (Exception e) {
-                Svc.Log.Error("", e);
-                return null;
-            }
+        }
+        catch (Exception e) {
+            Svc.Log.Error("", e);
+            return null;
         }
         return null;
     }

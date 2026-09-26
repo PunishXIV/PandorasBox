@@ -25,6 +25,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using Action = Lumina.Excel.Sheets.Action;
+using static ECommons.GenericHelpers;
 
 namespace PandorasBox.Features.Other;
 
@@ -215,9 +216,7 @@ public unsafe class PandoraGathering : Feature {
     private uint CurrentIntegrity { get; set; } = 0;
     private uint MaxIntegrity { get; set; } = 0;
 
-    public override bool DrawConditions() {
-        return Svc.GameGui.GetAddonByName("Gathering") != nint.Zero;
-    }
+    public override bool DrawConditions() => TryGetAddonByName<AtkUnitBase>("Gathering", out _);
 
     public override void Enable() {
         overlay = new Overlays(this);
@@ -235,8 +234,7 @@ public unsafe class PandoraGathering : Feature {
     }
 
     private void UpdateIntegrity(IFramework framework) {
-        var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering").Address;
-        if (addon != null) {
+        if (TryGetAddonByName<AddonGathering>("Gathering", out var addon)) {
             CurrentIntegrity = addon->AtkValues[109].UInt;
             MaxIntegrity = addon->AtkValues[110].UInt;
         }
@@ -259,8 +257,7 @@ public unsafe class PandoraGathering : Feature {
         Svc.Chat.ChatMessage -= CheckRevisit;
         Svc.Framework.Update -= UpdateIntegrity;
 
-        var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-        if (addon != null) {
+        if (TryGetAddonByName<AtkUnitBase>("Gathering", out var addon)) {
             addon->GetNodeById(38)->ToggleVisibility(true);
             addon->GetNodeById(37)->ToggleVisibility(true);
             addon->GetNodeById(33)->ToggleVisibility(true);
@@ -278,9 +275,7 @@ public unsafe class PandoraGathering : Feature {
     }
 
     public override unsafe void Draw() {
-        if (Svc.GameGui.GetAddonByName("Gathering") != nint.Zero) {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-            if (addon == null) return;
+        if (TryGetAddonByName<AtkUnitBase>("Gathering", out var addon)) {
             if (!addon->IsVisible) return;
 
             var node = addon->GetNodeById(31);
@@ -461,9 +456,7 @@ public unsafe class PandoraGathering : Feature {
 
     private void CheckNodeAndClick(int index) {
         try {
-            var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
-
-            if (addon != null && Config.Gathering) {
+            if (TryGetAddonByName<AddonGathering>("Gathering", out var addon) && Config.Gathering) {
                 var ids = new List<uint>();
                 for (int i = 6; i <= (11 * 8); i += 11) {
                     ids.Add(addon->AtkValues[i].UInt);
@@ -529,9 +522,7 @@ public unsafe class PandoraGathering : Feature {
         if (Config.Gathering && (Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2) || !Config.ShiftStop)) {
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
             TaskManager.Enqueue(() => {
-                var addon = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
-
-                if (addon == null) return;
+                if (!TryGetAddonByName<AddonGathering>("Gathering", out var addon)) return;
 
                 var ids = new List<uint>();
                 for (int i = 6; i <= (11 * 8); i += 11) {
@@ -752,8 +743,7 @@ public unsafe class PandoraGathering : Feature {
     private void ClickGather(uint index) {
         TaskManager!.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
         TaskManager.Enqueue(() => {
-            var addon = (AtkUnitBase*)Svc.GameGui.GetAddonByName("Gathering").Address;
-            if (addon is null) return;
+            if (!TryGetAddonByName<AtkUnitBase>("Gathering", out var addon)) return;
 
             if (addon is null) return;
             var checkBox = addon->GetNodeById(17 + index)->GetAsAtkComponentCheckBox();
@@ -936,8 +926,8 @@ public unsafe class PandoraGathering : Feature {
     }
 
     private void QuickGatherToggle(AddonGathering* thisPtr) {
-        if (thisPtr == null && Svc.GameGui.GetAddonByName("Gathering") != nint.Zero)
-            thisPtr = (AddonGathering*)Svc.GameGui.GetAddonByName("Gathering", 1).Address;
+        if (thisPtr == null && TryGetAddonByName<AddonGathering>("Gathering", out var gatheringAddon))
+            thisPtr = gatheringAddon;
 
         thisPtr->QuickGatheringComponentCheckBox->AtkComponentButton.Flags ^= 0x40000;
         quickGatherToggle?.Original(thisPtr);

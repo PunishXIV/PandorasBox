@@ -84,8 +84,7 @@ internal unsafe class HotbarMapDecipher : Feature {
                 if (item->ItemId == ItemId) {
                     var ag = AgentInventoryContext.Instance();
                     ag->OpenForItemSlot(container->Type, i, 0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
-                    var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1).Address;
-                    if (contextMenu != null) {
+                    if (TryGetAddonByName<AtkUnitBase>("ContextMenu", out var contextMenu)) {
                         var contextAgent = AgentInventoryContext.Instance();
                         var indexDecipher = -1;
 

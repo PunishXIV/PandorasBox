@@ -53,9 +53,7 @@ public unsafe class AutoSelectTurnin : Feature {
     private bool? TryClickItem(AddonRequest* addon, int i) {
         if (SlotsFilled.Contains(i)) return true;
 
-        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextIconMenu", 1).Address;
-
-        if (contextMenu is null || !contextMenu->IsVisible) {
+        if (!TryGetAddonByName<AtkUnitBase>("ContextIconMenu", out var contextMenu) || !contextMenu->IsVisible) {
             var slot = i - 1;
             var unk = 44 * i + (i - 1);
 
