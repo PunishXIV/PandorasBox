@@ -24,7 +24,6 @@ internal unsafe class StickyQuickPanel : Feature {
     private void PreventCloseEvent(AddonEvent type, AddonArgs args) {
         var addon = (AtkUnitBase*)args.Addon.Address;
         addon->DisableCloseOnLoadScreen = true;
-        //addon->Flags1B4 |= 0x16;
         addon->DisableFocusability = true;
     }
 }
