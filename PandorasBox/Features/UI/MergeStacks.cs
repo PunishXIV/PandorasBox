@@ -20,11 +20,11 @@ public unsafe class MergeStacks : Feature {
 
     public override string DisabledReason => "Moved to CBT";
 
-    public List<InventorySlot> inventorySlots = new();
+    public List<InventorySlot> inventorySlots = [];
 
     private bool InventoryOpened { get; set; } = false;
 
-    private Dictionary<uint, Item> Sheet { get; set; }
+    private Dictionary<uint, Item> Sheet { get; set; } = null!;
 
     public class InventorySlot {
         public InventoryType Container { get; set; }
@@ -41,7 +41,7 @@ public unsafe class MergeStacks : Feature {
         public bool SortAfter = false;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
 
@@ -122,7 +122,6 @@ public unsafe class MergeStacks : Feature {
 
     public override void Disable() {
         SaveConfig(Config);
-        Sheet = null;
         Svc.Framework.Update -= RunFeature;
         base.Disable();
     }

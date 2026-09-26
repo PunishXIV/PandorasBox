@@ -17,14 +17,14 @@ public unsafe class AutoSelectTurnin : Feature {
 
     public override FeatureType FeatureType => FeatureType.UI;
 
-    private List<int> SlotsFilled { get; set; } = new();
+    private List<int> SlotsFilled { get; set; } = [];
 
     public class Configs : FeatureConfig {
         [FeatureConfigOption("Automatically Confirm")]
         public bool AutoConfirm = false;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
 

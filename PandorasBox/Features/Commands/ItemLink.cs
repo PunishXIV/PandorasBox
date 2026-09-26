@@ -13,7 +13,7 @@ namespace PandorasBox.Features.Commands;
 public unsafe class ItemLinkCommand : CommandFeature {
     public override string Name => "Item Link";
     public override string Command { get; set; } = "/plink";
-    public override List<string> Parameters => new() { "[<item name>], [<id>]" };
+    public override List<string> Parameters => ["[<item name>], [<id>]"];
     public override string Description => "It's like the other item link commands, but allows searching.";
 
     public override FeatureType FeatureType => FeatureType.Commands;

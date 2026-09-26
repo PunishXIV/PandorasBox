@@ -18,7 +18,7 @@ public unsafe class ReduceAll : Feature {
 
     public override FeatureType FeatureType => FeatureType.UI;
 
-    internal Overlays Overlay;
+    internal Overlays Overlay = null!;
 
     internal bool Reducing;
     public override void Enable() {
@@ -39,7 +39,7 @@ public unsafe class ReduceAll : Feature {
             if (!addon->IsVisible || !addon->IsFullyLoaded()) {
                 Reducing = false;
                 TaskManager.Abort();
-                TaskManager.Enqueue(() => YesAlready.Unlock());
+                TaskManager.Enqueue(YesAlready.Unlock);
                 return;
             }
 
@@ -77,16 +77,16 @@ public unsafe class ReduceAll : Feature {
                 if (!Reducing) {
                     if (ImGui.Button($"Reduce All###StartReduce", size)) {
                         Reducing = true;
-                        TaskManager.Enqueue(() => YesAlready.Lock());
-                        TaskManager.Enqueue(() => TryReduceAll());
-                        TaskManager.Enqueue(() => YesAlready.Unlock());
+                        TaskManager.Enqueue(YesAlready.Lock);
+                        TaskManager.Enqueue(TryReduceAll);
+                        TaskManager.Enqueue(YesAlready.Unlock);
                     }
                 }
                 else {
                     if (ImGui.Button($"Reducing. Click to abort.###AbortReduce", size)) {
                         Reducing = false;
                         TaskManager.Abort();
-                        TaskManager.Enqueue(() => YesAlready.Unlock());
+                        TaskManager.Enqueue(YesAlready.Unlock);
                     }
                 }
             }
@@ -100,7 +100,7 @@ public unsafe class ReduceAll : Feature {
         else {
             Reducing = false;
             TaskManager.Abort();
-            TaskManager.Enqueue(() => YesAlready.Unlock());
+            TaskManager.Enqueue(YesAlready.Unlock);
         }
     }
 

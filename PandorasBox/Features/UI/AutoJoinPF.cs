@@ -27,7 +27,7 @@ public unsafe class AutoJoinPF : Feature {
             TaskManager.Enqueue(() => !(IsPrivatePF(addon) || IsSelfParty(addon)));
             TaskManager.EnqueueDelay(300);
             TaskManager.Enqueue(() => Callback.Fire((AtkUnitBase*)addon, false, 0));
-            TaskManager.Enqueue(() => ConfirmYesNo());
+            TaskManager.Enqueue(ConfirmYesNo);
         }
         else {
             TaskManager.Abort();
@@ -41,7 +41,7 @@ public unsafe class AutoJoinPF : Feature {
 
     private bool IsSelfParty(AddonLookingForGroupDetail* addon) {
         // 113 is the party host's name
-        return addon->AtkUnitBase.GetNodeById(6)->GetAsAtkTextNode()->NodeText.ToString() == Svc.Objects.LocalPlayer.Name.TextValue;
+        return addon->AtkUnitBase.GetNodeById(6)->GetAsAtkTextNode()->NodeText.ToString() == Svc.Objects.LocalPlayer!.Name.TextValue;
     }
 
     internal static bool ConfirmYesNo() {

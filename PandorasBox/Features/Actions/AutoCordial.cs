@@ -18,7 +18,7 @@ public unsafe class AutoCordial : Feature {
 
     public override bool UseAutoConfig => true;
 
-    internal static readonly List<uint> cordialRowIDs = new() { 12669, 6141, 16911 };
+    internal static readonly List<uint> cordialRowIDs = [12669, 6141, 16911];
 
     internal static (string Name, uint Id, bool CanBeHQ, ushort NQGP, ushort HQGP)[] rawCordialsData = [];
     internal static (string Name, uint Id, ushort GP)[] cordials = [];
@@ -43,7 +43,7 @@ public unsafe class AutoCordial : Feature {
 
     private void RunFeature(IFramework framework) {
         if (Svc.Objects.LocalPlayer is null) return;
-        if (!(Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 16 || Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 17 || Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 18)) return;
+        if (Svc.Objects.LocalPlayer.ClassJob.Value.RowId is not (16 or 17 or 18)) return;
         if (Svc.Objects.LocalPlayer.ClassJob.Value.RowId == 18 && !Config.UseOnFisher) return;
         if (Svc.Objects.LocalPlayer.CurrentGp >= Config.Threshold) return;
 
@@ -53,7 +53,7 @@ public unsafe class AutoCordial : Feature {
         var inv3 = im->GetInventoryContainer(InventoryType.Inventory3);
         var inv4 = im->GetInventoryContainer(InventoryType.Inventory4);
 
-        InventoryContainer*[] container = { inv1, inv2, inv3, inv4 };
+        InventoryContainer*[] container = [inv1, inv2, inv3, inv4];
 
         var am = ActionManager.Instance();
 
@@ -93,10 +93,10 @@ public unsafe class AutoCordial : Feature {
                     (Name: cordial.Name, Id: cordial.Id + 1_000_000, GP: cordial.HQGP),
                     (Name: cordial.Name, Id: cordial.Id, GP: cordial.NQGP)
                 }
-                : new[]
-                {
+                :
+                [
                     (Name: cordial.Name, Id: cordial.Id, GP: cordial.NQGP)
-                }).OrderByDescending(cordial => cordial.GP)
+                ]).OrderByDescending(cordial => cordial.GP)
             .ToArray();
 
         Svc.Framework.Update += RunFeature;

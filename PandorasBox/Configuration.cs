@@ -9,7 +9,7 @@ namespace PandorasBox;
 public class Configuration : IPluginConfiguration {
     public int Version { get; set; } = 0;
 
-    public List<string> EnabledFeatures = new();
+    public List<string> EnabledFeatures = [];
 
     public bool DisabledTheme = false;
 

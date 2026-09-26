@@ -23,16 +23,16 @@ public unsafe class GCVendorDefault : Feature {
         public int DefaultTab = 0;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => false;
 
-    private List<string> Tabs { get; set; } = new()
-    {
+    private List<string> Tabs { get; set; } =
+    [
         "Top Tab",
         "Middle Tab",
         "Bottom Tab"
-    };
+    ];
 
     private List<string> Categories { get; set; } = Svc.Data.GetExcelSheet<GCShopItemCategory>()
         .Where(x => !string.IsNullOrEmpty(x.Name.ToString()))

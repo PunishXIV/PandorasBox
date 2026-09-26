@@ -25,7 +25,7 @@ internal class SimplifyRelicQuest : Feature {
     }
 
     public static readonly (uint[] RelicQuestId, string RelicStep)[] SimpleRelics =
-    {
+    [
        ([69381, 70189, 70267, 69429, 67748], "Step 1"),
        ([69506, 70262, 70268, 69430, 67749], "Step 2"),
        ([69507, 70308, 70304, 69519, 67750], "Step 3"),
@@ -44,7 +44,7 @@ internal class SimplifyRelicQuest : Feature {
        ([66662], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(28)!.Name.ToString()),
        ([66663], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(29)!.Name.ToString()),
        ([67115], Svc.Data.GetExcelSheet<ClassJobCategory>()!.GetRow(92)!.Name.ToString()),
-    };
+    ];
 
     private unsafe void AddonSetup(AddonEvent type, AddonArgs args) {
         if (args.AddonName == "SelectIconString") {

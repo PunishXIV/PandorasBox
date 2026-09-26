@@ -61,7 +61,7 @@ public unsafe class AutoPeloton : Feature {
 
         var am = ActionManager.Instance();
         var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
-        var hasPeletonBuff = Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+        var hasPeletonBuff = Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId is 1199 or 50);
 
         if (isPeletonReady && !hasPeletonBuff && IsMoving() && !TaskManager.IsBusy) {
             TaskManager.Enqueue(() => EzThrottler.Throttle("Pelotoning", (int)(Config.ThrottleF * 1000)));
@@ -78,7 +78,7 @@ public unsafe class AutoPeloton : Feature {
 
         var am = ActionManager.Instance();
         var isPeletonReady = am->GetActionStatus(ActionType.Action, 7557) == 0;
-        var hasPeletonBuff = Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId == 1199 || x.StatusId == 50);
+        var hasPeletonBuff = Svc.Objects.LocalPlayer.StatusList.Any(x => x.StatusId is 1199 or 50);
 
         if (isPeletonReady && !hasPeletonBuff && IsMoving()) {
             am->UseAction(ActionType.Action, 7557);

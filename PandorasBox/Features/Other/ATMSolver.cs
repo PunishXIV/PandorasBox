@@ -13,7 +13,7 @@ internal class ATMSolver : Feature {
 
     public override FeatureType FeatureType => FeatureType.Other;
     private long Throttler { get; set; } = Environment.TickCount64;
-    private Random random = new Random();
+    private readonly Random random = new();
     public override void Enable() {
         Svc.Framework.Update += RunFeature;
         base.Enable();

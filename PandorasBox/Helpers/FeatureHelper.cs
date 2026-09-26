@@ -13,16 +13,16 @@ public static class FeatureHelper {
 
     public static bool IsEnabled<T>() where T : BaseFeature {
         var assembly = Assembly.GetExecutingAssembly();
-        var t = assembly.GetTypes().Where(x => x == typeof(T)).First();
-        var f = (T)Activator.CreateInstance(t);
+        var t = assembly.GetTypes().First(x => x == typeof(T));
+        var f = (T?)Activator.CreateInstance(t);
 
-        return IsEnabled(f);
+        return f != null && IsEnabled(f);
 
     }
 
     public static void EnableFeature<T>() where T : BaseFeature {
-        var t = Assembly.GetExecutingAssembly().GetTypes().Where(x => x == typeof(T)).First();
-        var f = P.Features.Where(x => x.GetType().Name == t.Name).FirstOrDefault();
+        var t = Assembly.GetExecutingAssembly().GetTypes().First(x => x == typeof(T));
+        var f = P.Features.FirstOrDefault(x => x.GetType().Name == t.Name);
 
         if (f != null && !f.Enabled) {
             f.Enable();
@@ -30,8 +30,8 @@ public static class FeatureHelper {
     }
 
     public static void DisableFeature<T>() where T : BaseFeature {
-        var t = Assembly.GetExecutingAssembly().GetTypes().Where(x => x == typeof(T)).First();
-        var f = P.Features.Where(x => x.GetType().Name == t.Name).FirstOrDefault();
+        var t = Assembly.GetExecutingAssembly().GetTypes().First(x => x == typeof(T));
+        var f = P.Features.FirstOrDefault(x => x.GetType().Name == t.Name);
 
         if (f != null && f.Enabled) {
             f.Disable();
@@ -39,8 +39,8 @@ public static class FeatureHelper {
     }
 
     public static FeatureConfig GetConfig<T>() where T : BaseFeature {
-        var t = Assembly.GetExecutingAssembly().GetTypes().Where(x => x == typeof(T)).First();
-        var f = P.Features.Where(x => x.GetType().Name == t.Name).FirstOrDefault();
+        var t = Assembly.GetExecutingAssembly().GetTypes().First(x => x == typeof(T));
+        var f = P.Features.FirstOrDefault(x => x.GetType().Name == t.Name);
 
         if (f != null) {
             var config = f.GetType().GetProperties().FirstOrDefault(x => x.PropertyType.IsSubclassOf(typeof(FeatureConfig)))?.GetValue(f);

@@ -14,7 +14,7 @@ internal class UseItem : CommandFeature {
     public override string Name => "Use Item";
     public override string Description => $@"Uses an Item from your inventory.";
 
-    public override List<string> Parameters => new() { "itemName" };
+    public override List<string> Parameters => ["itemName"];
 
     protected override unsafe void OnCommand(List<string> args) {
         if (args == null || args.Count == 0) {

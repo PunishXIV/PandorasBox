@@ -24,7 +24,7 @@ internal class TurboController : Feature {
     public class Configs : FeatureConfig {
         public int Throttle = 250;
 
-        public List<GamepadButtons> ExcludedButtons = new();
+        public List<GamepadButtons> ExcludedButtons = [];
 
         public bool CombatOnly = false;
     }

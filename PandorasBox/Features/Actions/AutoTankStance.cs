@@ -65,7 +65,7 @@ public unsafe class AutoTankStance : Feature {
         }
         TaskManager!.Enqueue(() => Player.Available);
         TaskManager!.Enqueue(() => Svc.DutyState.IsDutyStarted);
-        TaskManager!.Enqueue(() => EnableStance(), "TankStanceDungeonEnabled");
+        TaskManager!.Enqueue(EnableStance, "TankStanceDungeonEnabled");
     }
 
     private void OnClassChange(uint classJobId) {
@@ -83,7 +83,7 @@ public unsafe class AutoTankStance : Feature {
         if (Svc.Party.Any(x => x.EntityId == MainTank)) {
             if (MainTank != 0 && Svc.Party.First(x => x.EntityId == MainTank).GameObject!.IsDead && !Svc.Objects.LocalPlayer.StatusList.Any(x => Stances.Any(y => x.StatusId == y))) {
                 EnableStance();
-                TaskManager!.Enqueue(() => TaskManager.Abort());
+                TaskManager!.Enqueue(TaskManager.Abort);
             }
         }
     }

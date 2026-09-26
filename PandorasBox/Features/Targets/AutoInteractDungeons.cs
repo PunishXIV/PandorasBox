@@ -20,7 +20,7 @@ public unsafe class AutoInteractDungeons : Feature {
 
     public override FeatureType FeatureType => FeatureType.Targeting;
 
-    public List<uint> Exits = new() { 2000046, 2000066, 2000139, 2000187, 2000275, 2000370, 2000493, 2000596, 2000605, 2000683, 2000788,
+    public List<uint> Exits = [ 2000046, 2000066, 2000139, 2000187, 2000275, 2000370, 2000493, 2000596, 2000605, 2000683, 2000788,
                                                  2001143, 2001144, 2001215, 2001216, 2001610, 2001695, 2001716, 2001717, 2001835, 2001871, 2002502,
                                                  2002738, 2002740, 2002879, 2002880, 2002888, 2003454, 2004012, 2004013, 2004014, 2004015, 2004361,
                                                  2004651, 2004781, 2004783, 2004805, 2004936, 2004966, 2005218, 2005313, 2005332, 2005333, 2005334,
@@ -33,7 +33,7 @@ public unsafe class AutoInteractDungeons : Feature {
                                                  2011238, 2011239, 2011250, 2011268, 2011277, 2011282, 2011309, 2011393, 2011583, 2011673, 2011721,
                                                  2011729, 2011739, 2011851, 2011937, 2012292, 2012294, 2012296, 2012341, 2012380, 2012385, 2012528,
                                                  2012529, 2012531, 2012533, 2012613, 2012683, 2012718, 2012721, 2012842, 2012871, 2013077, 2013104,
-                                                 2013137, 2013167, 2013227, 2013290 };
+                                                 2013137, 2013167, 2013227, 2013290 ];
 
     public class Configs : FeatureConfig {
         public float ThrottleF = 0.1f;
@@ -53,7 +53,7 @@ public unsafe class AutoInteractDungeons : Feature {
         public int InteractMethod = 1;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
     public void TryInteract(GameObject* baseObj) {
         if (Config.InteractMethod is 1 or 3) {
             if (baseObj->GetIsTargetable())

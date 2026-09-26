@@ -20,7 +20,7 @@ public unsafe class ExtractAll : Feature {
 
     public override FeatureType FeatureType => FeatureType.UI;
 
-    internal Overlays OverlayWindow;
+    internal Overlays OverlayWindow = null!;
 
     internal bool Extracting = false;
     public override void Enable() {
@@ -97,7 +97,7 @@ public unsafe class ExtractAll : Feature {
     private void Abort() {
         Extracting = false;
         TaskManager.Abort();
-        TaskManager.Enqueue(() => YesAlready.Unlock());
+        TaskManager.Enqueue(YesAlready.Unlock);
     }
 
     private void TryExtractAll() {
@@ -123,39 +123,39 @@ public unsafe class ExtractAll : Feature {
         var equip = im->GetInventoryContainer(InventoryType.EquippedItems);
 
         InventoryContainer*[] container1 =
-        {
+        [
             equip
-        };
+        ];
 
         InventoryContainer*[] container2 =
-        {
+        [
             arm1, arm12
-        };
+        ];
 
         InventoryContainer*[] container3 =
-        {
+        [
             arm2, arm3, arm4
-        };
+        ];
 
         InventoryContainer*[] container4 =
-        {
+        [
             arm6, arm7,
-        };
+        ];
 
         InventoryContainer*[] container5 =
-        {
+        [
             arm8, arm9
-        };
+        ];
 
         InventoryContainer*[] container6 =
-        {
+        [
             arm10, arm11
-        };
+        ];
 
         InventoryContainer*[] container7 =
-        {
+        [
             inv1, inv2, inv3, inv4
-        };
+        ];
 
         var spiritBondedItems1 = Array.Empty<InventoryItem>();
         var spiritBondedItems2 = Array.Empty<InventoryItem>();
@@ -165,7 +165,7 @@ public unsafe class ExtractAll : Feature {
         var spiritBondedItems6 = Array.Empty<InventoryItem>();
         var spiritBondedItems7 = Array.Empty<InventoryItem>();
 
-        TaskManager.Enqueue(() => YesAlready.Lock(), "LockYesAlready");
+        TaskManager.Enqueue(YesAlready.Lock, "LockYesAlready");
         //Container 1
         foreach (var container in container1) {
             for (var i = 1; i <= container->Size; i++) {
@@ -180,9 +180,9 @@ public unsafe class ExtractAll : Feature {
         if (spiritBondedItems1.Length > 0) {
             for (var i = 1; i <= spiritBondedItems1.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(1), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
 
@@ -201,9 +201,9 @@ public unsafe class ExtractAll : Feature {
 
             for (var i = 1; i <= spiritBondedItems2.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(2), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
 
@@ -222,9 +222,9 @@ public unsafe class ExtractAll : Feature {
 
             for (var i = 1; i <= spiritBondedItems3.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(3), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
 
@@ -242,9 +242,9 @@ public unsafe class ExtractAll : Feature {
         if (spiritBondedItems4.Length > 0) {
             for (var i = 1; i <= spiritBondedItems4.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(4), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
 
@@ -262,9 +262,9 @@ public unsafe class ExtractAll : Feature {
         if (spiritBondedItems5.Length > 0) {
             for (var i = 1; i <= spiritBondedItems5.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(5), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
 
@@ -282,9 +282,9 @@ public unsafe class ExtractAll : Feature {
         if (spiritBondedItems6.Length > 0) {
             for (var i = 1; i <= spiritBondedItems6.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(6), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
 
@@ -302,12 +302,12 @@ public unsafe class ExtractAll : Feature {
         if (spiritBondedItems7.Length > 0) {
             for (var i = 1; i <= spiritBondedItems7.Length; i++) {
                 TaskManager.Enqueue(() => SwitchTabs(7), "SwitchTabs");
-                TaskManager.Enqueue(() => GenerateAndFireCallback(), "GenerateAndFireCallback");
+                TaskManager.Enqueue(GenerateAndFireCallback, "GenerateAndFireCallback");
                 //TaskManager.Enqueue(() => IsMateriaMenuDialogOpen(), "IsMateriaMenuDialogOpen");
-                TaskManager.Enqueue(() => ConfirmMateriaDialog(), "ConfirmMateriaDialog");
+                TaskManager.Enqueue(ConfirmMateriaDialog, "ConfirmMateriaDialog");
             }
         }
-        TaskManager.Enqueue(() => Abort());
+        TaskManager.Enqueue(Abort);
     }
 
     public static unsafe void CloseMateriaMenu() {

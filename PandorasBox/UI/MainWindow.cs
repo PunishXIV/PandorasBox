@@ -110,7 +110,7 @@ internal class MainWindow : Window {
     }
 
     private string searchString = string.Empty;
-    private List<BaseFeature> filteredFeatures = new();
+    private readonly List<BaseFeature> filteredFeatures = [];
     private bool hornybonk;
 
     public override void Draw() {

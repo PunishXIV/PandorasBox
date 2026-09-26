@@ -20,7 +20,7 @@ public unsafe class AutoSwitchGatherer : Feature {
         public float Throttle = 0.1f;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
 
@@ -46,7 +46,7 @@ public unsafe class AutoSwitchGatherer : Feature {
         var gatheringPoint = Svc.Data.GetExcelSheet<GatheringPoint>().First(x => x.RowId == nearestNode.BaseId);
         var job = gatheringPoint.GatheringPointBase.Value.GatheringType.Value.RowId;
 
-        if (Svc.Objects.LocalPlayer.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() != 2 && job is 0 or 1 or 2 or 3)
+        if (Svc.Objects.LocalPlayer.StatusList.Count(x => x.StatusId is 217 or 225) != 2 && job is 0 or 1 or 2 or 3)
             return;
 
         if (job is 0 or 1 && Svc.Objects.LocalPlayer.ClassJob.RowId != 16 && !TaskManager.IsBusy) {

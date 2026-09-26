@@ -8,8 +8,6 @@ using System.Linq;
 namespace PandorasBox.Features.Other;
 
 public unsafe class AutoSyncFate : Feature {
-    private ushort fateID;
-
     public override string Name => "Auto-Sync FATEs";
 
     public override string Description => "Syncs when entering a FATE if you're overlevelled.";
@@ -36,16 +34,16 @@ public unsafe class AutoSyncFate : Feature {
         public bool ExcludeCombat = false;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
 
     public ushort FateID {
-        get => fateID; set {
-            if (fateID != value) {
+        get; set {
+            if (field != value) {
                 SyncFate(value);
             }
-            fateID = value;
+            field = value;
         }
     }
 
@@ -58,7 +56,7 @@ public unsafe class AutoSyncFate : Feature {
 
     public void SyncFate(ushort value) {
         if (value != 0) {
-            var zone = Svc.Data.GetExcelSheet<TerritoryType>().Where(x => x.RowId == Svc.ClientState.TerritoryType).First();
+            var zone = Svc.Data.GetExcelSheet<TerritoryType>().First(x => x.RowId == Svc.ClientState.TerritoryType);
             if (zone.ExVersion.RowId == 0 && Config.ExcludeARR) return;
             if (zone.ExVersion.RowId == 1 && Config.ExcludeHW) return;
             if (zone.ExVersion.RowId == 2 && Config.ExcludeSB) return;

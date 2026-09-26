@@ -32,7 +32,7 @@ public class OpenAllCoffers : Feature {
             args.AddMenuItem(item);
     }
 
-    private MenuItem CheckInventoryItem(uint ItemId) {
+    private MenuItem? CheckInventoryItem(uint ItemId) {
         if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == ItemId, out var sheetItem)) {
             if (sheetItem.StackSize <= 1) return null;
             if (sheetItem.ItemAction.RowId is 388 or 367 or 2462) {
@@ -63,7 +63,7 @@ public class OpenAllCoffers : Feature {
         }
 
         TaskManager.Enqueue(() => !Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Casting]);
-        TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer.GameObjectId) == 0);
+        TaskManager.Enqueue(() => ActionManager.Instance()->GetActionStatus(ActionType.Item, ItemId, Svc.Objects.LocalPlayer!.GameObjectId) == 0);
         TaskManager.Enqueue(() => ActionManager.Instance()->AnimationLock == 0);
         TaskManager.Enqueue(() => OpenItem(ItemId));
 

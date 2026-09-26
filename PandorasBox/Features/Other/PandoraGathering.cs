@@ -31,7 +31,7 @@ namespace PandorasBox.Features.Other;
 public unsafe class PandoraGathering : Feature {
 
     public static readonly (uint ItemId, uint SeedId)[] Seeds =
-    {
+    [
         (4785, 7715), // Paprika          
         (4777, 7716), // Wild Onion       
         (4778, 7717), // Coerthan Carrot  
@@ -78,10 +78,10 @@ public unsafe class PandoraGathering : Feature {
         (39807, 39808), // Custom Wind Crystal
         (39811, 39812), // Brilliant Lightning Cluster
         (39813, 39814), // Brilliant Earth Cluster
-    };
+    ];
 
     public static readonly (uint ItemId, uint NodeId)[] Items =
-    {
+    [
         (7758, 203),  // Grade 1 La Noscean Topsoil
         (7761, 200),  // Grade 1 Shroud Topsoil   
         (7764, 201),  // Grade 1 Thanalan Topsoil 
@@ -116,10 +116,10 @@ public unsafe class PandoraGathering : Feature {
         (41289, 940), // Inspirational Fire Cluster
         (41291, 939), // Nightforged Ice Cluster
         (41293, 941), // Nightforged Water Cluster
-    };
+    ];
 
     public static readonly (uint MapId, uint[] NodeIds)[] Maps =
-    {
+    [
         (6688,  new uint[]{20, 49, 137, 140, 141, 180}),                                 // Leather
         (6689,  new uint[]{46, 142, 143, 185, 186}),                                     // Goatskin
         (6690,  new uint[]{198, 294, 197, 147, 199, 149, 189, 284, 210, 209, 150, 151}), // Toadskin
@@ -135,15 +135,15 @@ public unsafe class PandoraGathering : Feature {
         (36611, new uint[]{847, 848, 825, 826}),                                         // Saigaskin
         (36612, new uint[]{847, 848, 825, 826}),                                         // Kumbhiraskin
         (39591, new uint[]{846, 844, 824, 823}),                                         // Ophiotauroskin
-     };
+     ];
 
     private Hook<AddonGathering.Delegates.NotifyQuickGatherState> quickGatherToggle = null!;
 
-    internal Vector4 DarkTheme = new Vector4(0.26f, 0.26f, 0.26f, 1f);
-    internal Vector4 LightTheme = new Vector4(0.97f, 0.87f, 0.75f, 1f);
-    internal Vector4 ClassicFFTheme = new Vector4(0.21f, 0f, 0.68f, 1f);
-    internal Vector4 LightBlueTheme = new Vector4(0.21f, 0.36f, 0.59f, 0.25f);
-    internal Vector4 TransparentTheme = new Vector4(0, 0, 0, 0);
+    internal Vector4 DarkTheme = new(0.26f, 0.26f, 0.26f, 1f);
+    internal Vector4 LightTheme = new(0.97f, 0.87f, 0.75f, 1f);
+    internal Vector4 ClassicFFTheme = new(0.21f, 0f, 0.68f, 1f);
+    internal Vector4 LightBlueTheme = new(0.21f, 0.36f, 0.59f, 0.25f);
+    internal Vector4 TransparentTheme = new(0, 0, 0, 0);
 
     public override string Name => "Pandora Quick Gather";
 
@@ -202,7 +202,7 @@ public unsafe class PandoraGathering : Feature {
         public int GPGatherChanceUp = 100;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override FeatureType FeatureType => FeatureType.Other;
 
@@ -246,7 +246,7 @@ public unsafe class PandoraGathering : Feature {
         if (handler.LogKind is (XivChatType)2107 && CurrentIntegrity == 0) {
             TaskManager.Abort();
             TaskManager.EnqueueDelay(1000);
-            AddonSetup(AddonEvent.PostSetup, null);
+            StartGathering();
         }
     }
 
@@ -516,17 +516,16 @@ public unsafe class PandoraGathering : Feature {
     }
 
     private bool CanUseIntegrityAction() {
-        switch (Svc.Objects.LocalPlayer!.ClassJob.RowId) {
-            case 17:
-                return ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0;
-            case 16:
-                return ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0;
-        }
-
-        return true;
+        return Svc.Objects.LocalPlayer!.ClassJob.RowId switch {
+            17 => ActionManager.Instance()->GetActionStatus(ActionType.Action, 215) == 0,
+            16 => ActionManager.Instance()->GetActionStatus(ActionType.Action, 232) == 0,
+            _ => true,
+        };
     }
 
-    private void AddonSetup(AddonEvent type, AddonArgs args) {
+    private void AddonSetup(AddonEvent type, AddonArgs args) => StartGathering();
+
+    private void StartGathering() {
         if (Config.Gathering && (Config.ShiftStop && !ImGui.GetIO().KeyShift && !GamePad.IsButtonHeld(Dalamud.Game.ClientState.GamePad.GamepadButtons.L2) || !Config.ShiftStop)) {
             TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
             TaskManager.Enqueue(() => {
@@ -552,8 +551,8 @@ public unsafe class PandoraGathering : Feature {
 
                 var nodeHasCollectibles = ids.Any(x => Svc.Data.Excel.GetSheet<Item>().Any(y => y.RowId == x && y.IsCollectable));
                 if (nodeHasCollectibles && !Config.CollectibleStop || !nodeHasCollectibles) {
-                    Dictionary<uint, int> boonChances = new();
-                    Dictionary<int, int> gatherChances = new();
+                    Dictionary<uint, int> boonChances = [];
+                    Dictionary<int, int> gatherChances = [];
 
                     for (uint i = 0; i <= 7; i++) {
                         int.TryParse(addon->GetNodeById(17 + i)->GetAsAtkComponentNode()->Component->GetNodeById(16)->GetAsAtkTextNode()->NodeText.ToString(), out var boonChance);
@@ -565,7 +564,7 @@ public unsafe class PandoraGathering : Feature {
                     if (Config.UseLuck && NodeHasHiddenItems(ids) && Svc.Objects.LocalPlayer!.CurrentGp >= Config.GPLuck && !HiddenRevealed) {
                         TaskManager.Enqueue(() => UseLuck(), "UseLuck");
                         TaskManager.Enqueue(() => !Svc.Condition[ConditionFlag.ExecutingGatheringAction]);
-                        TaskManager.Enqueue(() => AddonSetup(type, args));
+                        TaskManager.Enqueue(StartGathering);
                         HiddenRevealed = true;
                         return;
                     }
@@ -869,7 +868,7 @@ public unsafe class PandoraGathering : Feature {
     }
 
     private void Use100GPSkill() {
-        if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId == 1286 || x.StatusId == 756))
+        if (Svc.Objects.LocalPlayer is not IPlayerCharacter chara || chara.StatusList.Any(x => x.StatusId is 1286 or 756))
             return;
 
         switch (chara.ClassJob.RowId) {

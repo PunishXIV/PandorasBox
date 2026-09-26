@@ -214,7 +214,7 @@ internal unsafe class FCChestQuickDeposit : Feature {
         };
         if (item == null) {
             var guiHoveredItem = Svc.GameGui.HoveredItem;
-            if (guiHoveredItem >= 2000000 || guiHoveredItem == 0) return null;
+            if (guiHoveredItem is >= 2000000 or 0) return null;
             item = (uint)guiHoveredItem % 500_000;
         }
 

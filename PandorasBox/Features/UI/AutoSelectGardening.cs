@@ -25,11 +25,11 @@ public unsafe class AutoSelectGardening : Feature {
 
     public override FeatureType FeatureType => FeatureType.UI;
 
-    public Dictionary<uint, Item> Seeds { get; set; }
-    public Dictionary<uint, Item> Soils { get; set; }
-    public Dictionary<uint, Item> Fertilizers { get; set; }
+    public Dictionary<uint, Item> Seeds { get; set; } = null!;
+    public Dictionary<uint, Item> Soils { get; set; } = null!;
+    public Dictionary<uint, Item> Fertilizers { get; set; } = null!;
 
-    public Dictionary<uint, Addon> AddonText { get; set; }
+    public Dictionary<uint, Addon> AddonText { get; set; } = null!;
 
     public class Configs : FeatureConfig {
         public uint SelectedSoil = 0;
@@ -43,10 +43,10 @@ public unsafe class AutoSelectGardening : Feature {
         public bool OnlyShowInventoryItems = false;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     private bool Fertilized { get; set; } = false;
-    private List<int> SlotsFilled { get; set; } = new();
+    private List<int> SlotsFilled { get; set; } = [];
     public override void Enable() {
         Config = LoadConfig<Configs>() ?? new Configs();
         Seeds = Svc.Data.GetExcelSheet<Item>().Where(x => x.ItemUICategory.RowId == 82 && x.FilterGroup == 20).ToDictionary(x => x.RowId, x => x);
@@ -78,10 +78,7 @@ public unsafe class AutoSelectGardening : Feature {
                     var inv3 = im->GetInventoryContainer(InventoryType.Inventory3);
                     var inv4 = im->GetInventoryContainer(InventoryType.Inventory4);
 
-                    InventoryContainer*[] container =
-                    {
-                        inv1, inv2, inv3, inv4
-                    };
+                    InventoryContainer*[] container = [inv1, inv2, inv3, inv4];
 
                     foreach (var cont in container) {
                         for (var i = 0; i < cont->Size; i++) {
@@ -127,9 +124,9 @@ public unsafe class AutoSelectGardening : Feature {
             var inv4 = im->GetInventoryContainer(InventoryType.Inventory4);
 
             InventoryContainer*[] container =
-            {
+            [
                         inv1, inv2, inv3, inv4
-            };
+            ];
 
             var soilIndex = 0;
             foreach (var cont in container) {
@@ -318,10 +315,6 @@ public unsafe class AutoSelectGardening : Feature {
 
     public override void Disable() {
         SaveConfig(Config);
-        Seeds = null;
-        Soils = null;
-        AddonText = null;
-        Fertilizers = null;
         Svc.Framework.Update -= RunFeature;
         SlotsFilled.Clear();
         base.Disable();

@@ -21,10 +21,10 @@ public unsafe class EntrustChocoboDuplicates : Feature {
     public override string Description => "Adds a button to the bottom of the saddlebag to entrust duplicates.";
     public override FeatureType FeatureType => FeatureType.UI;
 
-    private InventoryType[] playerInventory = [InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4];
-    private InventoryType[] saddlebag = [InventoryType.SaddleBag1, InventoryType.SaddleBag2, InventoryType.PremiumSaddleBag1, InventoryType.PremiumSaddleBag2];
+    private readonly InventoryType[] playerInventory = [InventoryType.Inventory1, InventoryType.Inventory2, InventoryType.Inventory3, InventoryType.Inventory4];
+    private readonly InventoryType[] saddlebag = [InventoryType.SaddleBag1, InventoryType.SaddleBag2, InventoryType.PremiumSaddleBag1, InventoryType.PremiumSaddleBag2];
 
-    private Overlays Overlay { get; set; }
+    private Overlays Overlay { get; set; } = null!;
 
     public override void Enable() {
         Overlay = new(this);
@@ -121,7 +121,6 @@ public unsafe class EntrustChocoboDuplicates : Feature {
 
     public override void Disable() {
         P.Ws.RemoveWindow(Overlay);
-        Overlay = null;
         base.Disable();
     }
 }

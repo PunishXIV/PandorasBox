@@ -20,7 +20,7 @@ internal unsafe class HotbarMapDecipher : Feature {
     public override string Description { get; } = "Allows deciphering treaure maps from hotbar.";
     public override FeatureType FeatureType { get; } = FeatureType.Actions;
 
-    public new delegate bool UseActionDelegate(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget);
+    public delegate bool UseActionDelegate(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget);
 
     public static new Hook<UseActionDelegate>? UseActionHook;
 
@@ -51,7 +51,7 @@ internal unsafe class HotbarMapDecipher : Feature {
 
                 if (Config.AutoDecipher) {
                     TaskManager.EnqueueDelay(200);
-                    TaskManager.Enqueue(() => ConfirmYesNo());
+                    TaskManager.Enqueue(ConfirmYesNo);
                 }
             }
         }
@@ -141,10 +141,7 @@ internal unsafe class HotbarMapDecipher : Feature {
     }
 
     internal static bool ConfirmYesNo() {
-        if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
-            addon->AtkUnitBase.IsVisible &&
-            addon->YesButton->IsEnabled &&
-            addon->AtkUnitBase.GetNodeById(2)->IsVisible()) {
+        if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) && addon->AtkUnitBase.IsVisible && addon->YesButton->IsEnabled && addon->AtkUnitBase.GetNodeById(2)->IsVisible()) {
             new AddonMaster.SelectYesno((IntPtr)addon).Yes();
             return true;
         }

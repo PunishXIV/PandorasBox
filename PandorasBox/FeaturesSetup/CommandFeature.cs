@@ -13,7 +13,7 @@ public abstract partial class CommandFeature : Feature {
     public virtual string[] Alias => [];
     public virtual string HelpMessage => $"[{P?.Name} {Name}]";
     public virtual bool ShowInHelp => false;
-    public virtual List<string> Parameters => new();
+    public virtual List<string> Parameters => [];
     public override FeatureType FeatureType => FeatureType.Commands;
 
     protected abstract void OnCommand(List<string> args);
@@ -23,7 +23,7 @@ public abstract partial class CommandFeature : Feature {
         OnCommand(args.Split(' ').ToList());
     }
 
-    private readonly List<string> registeredCommands = new();
+    private readonly List<string> registeredCommands = [];
 
     public override void Enable() {
         if (Disabled) return;

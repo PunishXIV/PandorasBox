@@ -10,9 +10,9 @@ namespace PandorasBox.Features.Commands;
 public unsafe class CallbackCommand : CommandFeature {
     public override string Name => "Callback";
     public override string Command { get; set; } = "/pcallback";
-    public override string[] Alias => new string[] { "/pcall" };
+    public override string[] Alias => ["/pcall"];
 
-    public override List<string> Parameters => new() { "addonName", "updateStateBool", "atkValues" };
+    public override List<string> Parameters => ["addonName", "updateStateBool", "atkValues"];
     public override string Description => "Fires arbitrary callbacks to any addon of your choosing. Play with responsibly.";
 
     protected override void OnCommandInternal(string _, string args) {

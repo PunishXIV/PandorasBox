@@ -30,7 +30,7 @@ public unsafe class AutoOpenChests : Feature {
         public bool OpenInHighEndDuty = false;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
 
@@ -40,7 +40,7 @@ public unsafe class AutoOpenChests : Feature {
         base.Enable();
     }
 
-    private static DateTime NextOpenTime = DateTime.Now;
+    private static readonly DateTime NextOpenTime = DateTime.Now;
 
     private void RunFeature(IFramework framework) {
         CloseWindow();

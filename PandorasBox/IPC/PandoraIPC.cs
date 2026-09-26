@@ -13,7 +13,7 @@ internal static class PandoraIPC {
     // Config IPCs share this distinction as well, except both versions use the config property name as its argument and not the display name
     // e.g Non-internal: ("Auto-Summon Chocobo", "UseInCombat"), Internal: ("AutoChocobo", "UseInCombat")
 
-    private static TaskManager TM = new() { RemainingTimeMS = 1000 * 60 * 60 * 24 };
+    private static readonly TaskManager TM = new() { RemainingTimeMS = 1000 * 60 * 60 * 24 };
     internal static void Init() {
         Svc.PluginInterface.GetIpcProvider<string, bool?>("PandorasBox.GetFeatureEnabled").RegisterFunc(GetFeatureEnabled);
         Svc.PluginInterface.GetIpcProvider<string, bool, object>("PandorasBox.SetFeatureEnabled").RegisterAction(SetFeatureEnabled);

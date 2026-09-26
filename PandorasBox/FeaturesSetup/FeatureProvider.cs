@@ -10,7 +10,7 @@ namespace PandorasBox.Features;
 public class FeatureProvider : IDisposable {
     public bool Disposed { get; protected set; } = false;
 
-    public List<BaseFeature> Features { get; } = new();
+    public List<BaseFeature> Features { get; } = [];
 
     public Assembly Assembly { get; init; } = null!;
 

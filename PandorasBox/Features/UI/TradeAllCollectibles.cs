@@ -19,7 +19,7 @@ public unsafe class TradeAllCollectibles : Feature {
 
     public bool Trading { get; private set; } = false;
 
-    internal Overlays overlay;
+    internal Overlays overlay = null!;
     public override void Enable() {
         overlay = new(this);
         base.Enable();

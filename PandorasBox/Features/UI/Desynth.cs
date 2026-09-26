@@ -27,7 +27,7 @@ public unsafe class Desynth : Feature {
     private Dictionary<int, Item> ListItems { get; set; } = [];
     public override FeatureType FeatureType => FeatureType.UI;
 
-    private Overlays Overlay { get; set; }
+    private Overlays Overlay { get; set; } = null!;
 
     private bool Desynthing { get; set; } = false;
     public override void Enable() {
@@ -165,7 +165,6 @@ public unsafe class Desynth : Feature {
 
     public override void Disable() {
         P.Ws.RemoveWindow(Overlay);
-        Overlay = null;
         updateItemHook?.Disable();
         base.Disable();
     }

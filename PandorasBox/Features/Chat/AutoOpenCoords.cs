@@ -36,14 +36,14 @@ internal class AutoOpenCoords : Feature {
         [FeatureConfigOption("Ignore <pos> flags")]
         public bool IgnorePOS = false;
 
-        public List<XivChatType> FilteredChannels = new();
+        public List<XivChatType> FilteredChannels = [];
     }
 
-    public List<MapLinkMessage> MapLinkMessageList = new();
+    public List<MapLinkMessage> MapLinkMessageList = [];
     private readonly int filterDupeTimeout = 5;
 
-    public List<XivChatType> HiddenChatType = new()
-    {
+    public List<XivChatType> HiddenChatType =
+    [
         XivChatType.None,
         XivChatType.CustomEmote,
         XivChatType.StandardEmote,
@@ -52,7 +52,7 @@ internal class AutoOpenCoords : Feature {
         XivChatType.GatheringSystemMessage,
         XivChatType.ErrorMessage,
         XivChatType.RetainerSale
-    };
+    ];
 
     private void OnChatMessage(IHandleableChatMessage handler) {
         var hasMapLink = false;

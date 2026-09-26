@@ -16,7 +16,7 @@ internal class RefreshPF : Feature {
         public int Refresh = 10;
     }
 
-    public Config Configs { get; private set; }
+    public Config Configs { get; private set; } = null!;
 
     public override bool UseAutoConfig => true;
 

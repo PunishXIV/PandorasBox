@@ -3,8 +3,6 @@ using ECommons.DalamudServices;
 namespace PandorasBox.FeaturesSetup;
 
 internal static class Events {
-    private static uint? jobID;
-
     public static void Init() {
         Svc.Framework.Update += UpdateEvents;
     }
@@ -19,10 +17,10 @@ internal static class Events {
     }
 
     public static uint? JobID {
-        get => jobID;
+        get;
         set {
-            if (value != null && jobID != value) {
-                jobID = value;
+            if (value != null && field != value) {
+                field = value;
                 Svc.Log.Debug($"Job changed to {value}");
                 OnJobChanged?.Invoke(value);
             }

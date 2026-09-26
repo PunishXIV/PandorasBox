@@ -35,7 +35,11 @@ public unsafe class QuickLowerQuality : Feature {
         var trimmedText = lastSpace >= 0
             ? rawText.Remove(lastSpace).TrimEnd()
             : rawText.TrimEnd();
-        var sheetText = Svc.Data.GetExcelSheet<Addon>()!.First(x => x.RowId == 155).Text.ToDalamudString().Payloads[2].ToString().Trim();
+        var sheetPayloads = Svc.Data.GetExcelSheet<Addon>()!.First(x => x.RowId == 155).Text.ToDalamudString().Payloads;
+        if (sheetPayloads.Count < 3 || sheetPayloads[2] is not TextPayload sheetPayload || sheetPayload.Text is null) {
+            return;
+        }
+        var sheetText = sheetPayload.Text.Trim();
 
         if (sheetText == trimmedText) {
             var values = stackalloc AtkValue[5];

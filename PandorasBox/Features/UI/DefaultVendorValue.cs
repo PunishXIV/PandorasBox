@@ -38,7 +38,7 @@ internal class DefaultVendorValue : Feature {
         setNodes.Clear();
     }
 
-    private HashSet<string> setNodes = [];
+    private readonly HashSet<string> setNodes = [];
 
     private unsafe void CheckNumerics(AddonEvent type, AddonArgs args) {
         try {

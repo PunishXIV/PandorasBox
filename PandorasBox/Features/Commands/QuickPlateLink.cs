@@ -14,9 +14,9 @@ namespace PandorasBox.Features.Commands;
 public unsafe class QuickPlateLink : CommandFeature {
     public override string Name => "Glamour Plate Link";
     public override string Command { get; set; } = "/pglamlink";
-    public override string[] Alias => new string[] { "/pgl" };
+    public override string[] Alias => ["/pgl"];
 
-    public override List<string> Parameters => new() { "[-r <role>]", "[-j <jobs>]", "[-g <gearset names/nums>]", "[-n plate number]" };
+    public override List<string> Parameters => ["[-r <role>]", "[-j <jobs>]", "[-g <gearset names/nums>]", "[-n plate number]"];
     public override string Description => "For quickly linking multiple gearsets to a glamour plate.";
 
     public override FeatureType FeatureType => FeatureType.Commands;
@@ -29,9 +29,9 @@ public unsafe class QuickPlateLink : CommandFeature {
         public byte GlamPlate { get; set; }
     }
 
-    private readonly List<Gearset> gearsets = new();
-    private readonly List<string> roles = new() { "tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged", "doh", "crafters", "dol", "gatherers" };
-    private List<ClassJob> jobsList = new();
+    private readonly List<Gearset> gearsets = [];
+    private readonly List<string> roles = ["tanks", "healers", "dps", "ranged", "casters", "magical ranged", "melees", "physical ranged", "doh", "crafters", "dol", "gatherers"];
+    private List<ClassJob> jobsList = [];
     protected override void OnCommand(List<string> args) {
         gearsets.Clear();
 

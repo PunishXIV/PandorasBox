@@ -31,20 +31,20 @@ internal class AutoTPCoords : Feature {
         [FeatureConfigOption("Ignore <pos> flags")]
         public bool IgnorePOS = false;
 
-        public List<XivChatType> FilteredChannels = new();
+        public List<XivChatType> FilteredChannels = [];
 
         [FeatureConfigOption("Disable in same zone")]
         public bool DisableSameZone = false;
     }
 
-    public List<MapLinkMessage> MapLinkMessageList = new();
+    public List<MapLinkMessage> MapLinkMessageList = [];
     private readonly int filterDupeTimeout = 5;
 
     public Lumina.Excel.ExcelSheet<Aetheryte> Aetherytes = null!;
     public Lumina.Excel.SubrowExcelSheet<MapMarker> AetherytesMap = null!;
 
-    public List<XivChatType> HiddenChatType = new()
-    {
+    public List<XivChatType> HiddenChatType =
+    [
         XivChatType.None,
         XivChatType.CustomEmote,
         XivChatType.StandardEmote,
@@ -53,7 +53,7 @@ internal class AutoTPCoords : Feature {
         XivChatType.GatheringSystemMessage,
         XivChatType.ErrorMessage,
         XivChatType.RetainerSale
-    };
+    ];
 
     private void OnChatMessage(IHandleableChatMessage handler) {
         var hasMapLink = false;

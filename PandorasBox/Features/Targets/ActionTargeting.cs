@@ -29,7 +29,7 @@ public unsafe class ActionTargeting : Feature {
         public float MaxDistance = 3f;
     }
 
-    public Configs Config { get; private set; }
+    public Configs Config { get; private set; } = null!;
 
     public override bool UseAutoConfig => false;
     public override void Enable() {

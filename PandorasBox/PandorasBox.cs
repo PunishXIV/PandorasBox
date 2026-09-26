@@ -26,7 +26,7 @@ public class PandorasBox : IDalamudPlugin {
     public static Configuration Config { get; private set; } = null!;
 
     public List<FeatureProvider> FeatureProviders = [];
-    private FeatureProvider provider;
+    private readonly FeatureProvider provider;
     public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
     public PandorasBox(IDalamudPluginInterface pluginInterface, IFramework framework) {
         P = this;

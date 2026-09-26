@@ -30,7 +30,7 @@ public unsafe class AutoProspectTriangulate : Feature {
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.BetweenAreas]) return;
         TaskManager.EnqueueDelay((int)(Config.ThrottleF * 1000));
         var am = ActionManager.Instance();
-        if (Svc.Objects.LocalPlayer?.StatusList.Where(x => x.StatusId == 217 || x.StatusId == 225).Count() == 2)
+        if (Svc.Objects.LocalPlayer?.StatusList.Count(x => x.StatusId is 217 or 225) == 2)
             return;
         if (Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.Gathering]) {
             TaskManager.Abort();

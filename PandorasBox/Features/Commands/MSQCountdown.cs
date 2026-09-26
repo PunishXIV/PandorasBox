@@ -48,7 +48,7 @@ public unsafe class MSQCountdown : CommandFeature {
         }
 
         int completed = 0;
-        var totalMSQ = filteredList.Where(x => x.Expansion.RowId == CurrentExpansion.RowId).Count();
+        var totalMSQ = filteredList.Count(x => x.Expansion.RowId == CurrentExpansion.RowId);
 
         int uncompleted = 0;
         foreach (var quest in filteredList.Where(x => x.Expansion.RowId == CurrentExpansion.RowId).OrderBy(x => x.Name.ToString())) {

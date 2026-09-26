@@ -14,7 +14,7 @@ public unsafe class PartyFinderShowMore : Feature {
     public override FeatureType FeatureType => FeatureType.UI;
 
     private delegate char PartyFinderDelegate(AgentLookingForGroup* a1, int a2);
-    private Hook<PartyFinderDelegate> partyFinderHook;
+    private Hook<PartyFinderDelegate> partyFinderHook = null!;
 
     private char PartyFinderDetour(AgentLookingForGroup* a1, int a2) {
         Marshal.WriteInt16(new nint(a1 + 1152), 100);
