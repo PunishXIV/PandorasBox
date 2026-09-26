@@ -62,7 +62,7 @@ public unsafe class MSQCountdown : CommandFeature {
             }
         }
 
-        Svc.Log.Error($"{uncompleted} quests not done, total MSQ is {totalMSQ}.");
+        Svc.Log.Info($"{uncompleted} quests not done, total MSQ is {totalMSQ}.");
         if (CurrentExpansion.RowId == 0) {
             if (PlayerState.Instance()->StartTown != 1)
                 totalMSQ -= 23;
