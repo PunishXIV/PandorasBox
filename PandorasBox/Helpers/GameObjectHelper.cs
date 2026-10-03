@@ -4,31 +4,27 @@ using ECommons.GameHelpers;
 using System;
 using System.Numerics;
 
-namespace PandorasBox.Helpers
-{
-    internal static class GameObjectHelper
-    {
-        public static float GetTargetDistance(IGameObject target)
-        {
-            if (target is null || Svc.Objects.LocalPlayer is null)
-                return 0;
+namespace PandorasBox.Helpers;
 
-            if (target.GameObjectId == Svc.Objects.LocalPlayer.GameObjectId)
-                return 0;
+internal static class GameObjectHelper {
+    public static float GetTargetDistance(IGameObject target) {
+        if (target is null || Svc.Objects.LocalPlayer is null)
+            return 0;
 
-            Vector3 position = new(target.Position.X, target.Position.Z, target.Position.Y);
-            Vector3 selfPosition = new(Player.Position.X, Player.Position.Z, Player.Position.Y);
+        if (target.GameObjectId == Svc.Objects.LocalPlayer.GameObjectId)
+            return 0;
 
-            return Math.Max(0, Vector3.Distance(position, selfPosition) - target.HitboxRadius - Svc.Objects.LocalPlayer.HitboxRadius);
-        }
+        Vector3 position = new(target.Position.X, target.Position.Z, target.Position.Y);
+        Vector3 selfPosition = new(Player.Position.X, Player.Position.Z, Player.Position.Y);
 
-        public static float GetHeightDifference(IGameObject target)
-        {
-            var dist = Svc.Objects.LocalPlayer!.Position.Y - target.Position.Y;
-            if (dist < 0)
-                dist *= -1;
+        return Math.Max(0, Vector3.Distance(position, selfPosition) - target.HitboxRadius - Svc.Objects.LocalPlayer.HitboxRadius);
+    }
 
-            return dist;
-        }
+    public static float GetHeightDifference(IGameObject target) {
+        var dist = Svc.Objects.LocalPlayer!.Position.Y - target.Position.Y;
+        if (dist < 0)
+            dist *= -1;
+
+        return dist;
     }
 }

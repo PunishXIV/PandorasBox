@@ -11,62 +11,50 @@ using PandorasBox.FeaturesSetup;
 using System;
 using System.Linq;
 
-namespace PandorasBox.Features.UI
-{
-    internal class DisableKnownGlam : Feature
-    {
+namespace PandorasBox.Features.UI {
+    internal class DisableKnownGlam : Feature {
         public override string Name => "Disable Known Glamours in Glamour Creation";
 
         public override string Description => "Disables items from being transferred to the glamour dresser if it already exists in it";
 
         public override FeatureType FeatureType => FeatureType.UI;
 
-        public override void Enable()
-        {
+        public override void Enable() {
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostDraw, "MiragePrismPrismBoxCrystallize", DisableGlams);
             Svc.AddonLifecycle.RegisterListener(AddonEvent.PostRefresh, "MiragePrismPrismBoxCrystallize", ReenableNodes);
             base.Enable();
         }
 
-        private unsafe void ReenableNodes(AddonEvent type, AddonArgs args)
-        {
+        private unsafe void ReenableNodes(AddonEvent type, AddonArgs args) {
             var list = ((AtkUnitBase*)args.Addon.Address)->GetNodeById(11)->GetAsAtkComponentTreeList();
-            for (int i = 0; i <= 32; i++)
-            {
-                try
-                {
+            for (int i = 0; i <= 32; i++) {
+                try {
                     var renderer = list->GetItemRenderer(i);
                     renderer->GetAtkResNode()->ToggleVisibility(true);
                     renderer->AtkComponentButton.SetEnabledState(true);
                 }
-                catch
-                {
+                catch {
 
                 }
             }
         }
 
-        private unsafe void DisableGlams(AddonEvent type, AddonArgs args)
-        {
-            try
-            {
+        private unsafe void DisableGlams(AddonEvent type, AddonArgs args) {
+            try {
                 var ins = AgentMiragePrismPrismBox.Instance();
                 var list = ((AtkUnitBase*)args.Addon.Address)->GetNodeById(11)->GetAsAtkComponentTreeList();
                 var prismList = ins->Data->PrismBoxItems.ToArray();
                 var catalystList = ins->Data->CrystallizeItems.ToArray().Where(x => x.ItemId > 0).Select(x => x.ItemId > 1_000_000 ? x.ItemId - 1_000_000 : x.ItemId).Take(ins->Data->CrystallizeItemCount);
 
-                foreach (var (it, idx) in catalystList.WithIndex())
-                {
+                foreach (var (it, idx) in catalystList.WithIndex()) {
                     if (it == 0)
                         continue;
 
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(it);
                     var sources = sheetManager?.ItemInfoCache.GetItemUses(it);
                     var isOutfit = sources?.Any(x => x.Type is AllaganLib.GameSheets.Caches.ItemInfoType.GlamourReadySetItem) == true;
-                    for (int p = 0; p <= 32; p++)
-                    {
-                        try
-                        {
+                    for (int p = 0; p <= 32; p++) {
+                        try {
                             var renderer = list->GetItemRenderer(p);
                             if (renderer is null)
                                 continue;
@@ -75,13 +63,11 @@ namespace PandorasBox.Features.UI
                             var nodeText = renderer->ButtonTextNode->NodeText.GetText().Replace(" ", "");
                             var s = p;
 
-                            if (nodeText == itemName)
-                            {
+                            if (nodeText == itemName) {
                                 var outfitsWithItem = Svc.Data.GetExcelSheet<MirageStoreSetItem>().Where(x => x.Items.Any(y => y.RowId == item.RowId));
                                 var manager = MirageManager.Instance();
 
-                                bool allOutfitsCompleted = outfitsWithItem.All(outfit =>
-                                {
+                                bool allOutfitsCompleted = outfitsWithItem.All(outfit => {
                                     var outfitIndex = manager->PrismBoxItemIds.IndexOf(outfit.RowId);
                                     if (outfitIndex == -1)
                                         return false;
@@ -91,8 +77,7 @@ namespace PandorasBox.Features.UI
                                 });
 
                                 var hasInDresser = prismList.Any(x => x.ItemId == it) && allOutfitsCompleted;
-                                if (hasInDresser)
-                                {
+                                if (hasInDresser) {
                                     var btnNode = renderer->GetNodeById(4);
                                     renderer->GetAtkResNode()->ToggleVisibility(false);
                                     renderer->AtkComponentButton.SetEnabledState(false);
@@ -103,21 +88,18 @@ namespace PandorasBox.Features.UI
                                 }
                             }
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
 
                         }
                     }
                 }
             }
-            catch (Exception ex)
-            {
+            catch (Exception ex) {
                 //ex.Log();
             }
         }
 
-        public override void Disable()
-        {
+        public override void Disable() {
             Svc.AddonLifecycle.UnregisterListener(DisableGlams);
             Svc.AddonLifecycle.UnregisterListener(ReenableNodes);
             base.Disable();
@@ -125,11 +107,9 @@ namespace PandorasBox.Features.UI
     }
 }
 
-internal static class MirageExtension
-{
+internal static class MirageExtension {
 
-    extension(MirageStoreSetItem row)
-    {
+    extension(MirageStoreSetItem row) {
         public RowRef<Item> Set => new(row.ExcelPage.Module, row.RowId, row.ExcelPage.Language);
         public unsafe Collection<RowRef<Item>> Items => new(row.ExcelPage, parentOffset: row.RowOffset, offset: row.RowOffset, &ItemCtor, size: 11);
     }

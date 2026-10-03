@@ -10,16 +10,14 @@ using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using PandorasBox.FeaturesSetup;
 namespace PandorasBox.Features.Actions;
 
-internal class AutoMeditation : Feature
-{
+internal class AutoMeditation : Feature {
     public override string Name => "Auto-Meditation";
 
     public override string Description => "Automatically use Meditation when out of combat.";
 
     public override FeatureType FeatureType => FeatureType.Actions;
 
-    public override void Enable()
-    {
+    public override void Enable() {
         Svc.Framework.Update += RunFeature;
         Events.OnJobChanged += DelayStart;
         if (SendActionHook is null) EzSignatureHelper.Initialize(this);
@@ -27,13 +25,11 @@ internal class AutoMeditation : Feature
         base.Enable();
     }
 
-    private static void DelayStart(uint? jobId)
-    {
+    private static void DelayStart(uint? jobId) {
         EzThrottler.Throttle("MNKMed", 3000);
     }
 
-    private static unsafe void RunFeature(IFramework framework)
-    {
+    private static unsafe void RunFeature(IFramework framework) {
         if (Player.Object is null) return;
         var isMonk = Player.Job == Job.MNK;
         var isPugilist = Player.Job == Job.PGL;
@@ -43,8 +39,7 @@ internal class AutoMeditation : Feature
         if (Svc.Condition[ConditionFlag.InCombat]) return;
         if (TerritoryInfo.Instance()->InSanctuary) return;
 
-        if (!Svc.Condition[ConditionFlag.InCombat] && EzThrottler.Throttle("PCTMotifs", 1500))
-        {
+        if (!Svc.Condition[ConditionFlag.InCombat] && EzThrottler.Throttle("PCTMotifs", 1500)) {
             var am = ActionManager.Instance();
             if (am->GetActionStatus(ActionType.Action, 36942) == 0)
                 am->UseAction(ActionType.Action, 36942);
@@ -53,8 +48,7 @@ internal class AutoMeditation : Feature
         }
     }
 
-    public override void Disable()
-    {
+    public override void Disable() {
         Svc.Framework.Update -= RunFeature;
         Events.OnJobChanged -= DelayStart;
         SendActionHook?.Disable();

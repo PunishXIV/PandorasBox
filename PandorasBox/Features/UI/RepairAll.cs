@@ -79,7 +79,6 @@
 //                    ImGui.Begin($"###RepairAll{node->NodeId}", ImGuiWindowFlags.NoResize | ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoNavFocus
 //                        | ImGuiWindowFlags.AlwaysUseWindowPadding | ImGuiWindowFlags.NoTitleBar | ImGuiWindowFlags.NoSavedSettings);
 
-
 //                    if (!Repairing)
 //                    {
 //                        if (ImGui.Button($"Repair All###StartRepair", size))
@@ -228,6 +227,5 @@
 //            base.Disable();
 //        }
 //    }
-
 
 //}
