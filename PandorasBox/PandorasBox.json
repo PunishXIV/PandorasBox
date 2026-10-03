@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog": "- Add new feature to disable known glamours in glamour creation"
+    "ChangeLog": "- Update open all coffers to work when inventory is hidden (such as with inventory replacement plugins).\n- Fix Pandora Gathering UI."
 }

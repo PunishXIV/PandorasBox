@@ -78,21 +78,18 @@ namespace PandorasBox.Features.UI
                             if (nodeText == itemName)
                             {
                                 var outfitsWithItem = Svc.Data.GetExcelSheet<MirageStoreSetItem>().Where(x => x.Items.Any(y => y.RowId == item.RowId));
-                                bool allOutfitsCompleted = true;
-                                foreach (var outfit in outfitsWithItem)
+                                var manager = MirageManager.Instance();
+
+                                bool allOutfitsCompleted = outfitsWithItem.All(outfit =>
                                 {
-                                    var manager = MirageManager.Instance();
                                     var outfitIndex = manager->PrismBoxItemIds.IndexOf(outfit.RowId);
                                     if (outfitIndex == -1)
-                                        continue;
+                                        return false;
 
                                     var index = outfit.Items.IndexOf(x => x.RowId == item.RowId);
-                                    if (!manager->IsSetSlotUnlocked((uint)outfitIndex, index))
-                                    {
-                                        allOutfitsCompleted = false;
-                                        break;
-                                    }
-                                }
+                                    return manager->IsSetSlotUnlocked((uint)outfitIndex, index);
+                                });
+
                                 var hasInDresser = prismList.Any(x => x.ItemId == it) && allOutfitsCompleted;
                                 if (hasInDresser)
                                 {

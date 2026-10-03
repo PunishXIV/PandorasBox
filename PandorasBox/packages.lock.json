@@ -4,15 +4,15 @@
     "net10.0-windows7.0": {
       "AllaganLib.GameSheets": {
         "type": "Direct",
-        "requested": "[2.2.0, )",
-        "resolved": "2.2.0",
-        "contentHash": "NG1pgYuET5QwH8kMhsm4gRo8QMZNpsI5q+l7YMXUkTFLh73uLi1Ed44MaoXimyTu14rJJ4QpJhLTN2J8hcT7kQ==",
+        "requested": "[2.2.4, )",
+        "resolved": "2.2.4",
+        "contentHash": "4CeKEUeSWYWObIIpMPrm46WnWl6KtNn2CEhtNk0cWmHZM+2RQjK+2zj8IkR36vPzsrv5SJNdHm5uzcTnX/K0/A==",
         "dependencies": {
           "AllaganLib.Shared": "2.2.0",
           "Autofac": "9.0.0",
           "Autofac.Extensions.DependencyInjection": "10.0.0",
           "CSVFile": "3.2.1",
-          "LuminaSupplemental.Excel": "4.3.1"
+          "LuminaSupplemental.Excel": "4.3.4"
         }
       },
       "DalamudPackager": {
@@ -29,9 +29,9 @@
       },
       "ECommons": {
         "type": "Direct",
-        "requested": "[3.2.0.16, )",
-        "resolved": "3.2.0.16",
-        "contentHash": "nbWQqETgnryEWedkZSxNValCgTdylNOibwkaYNYvGoY7XBXWK1KzKVgAroPQpGGrF2Q3NX1mbhoDczAaePYc8w=="
+        "requested": "[3.2.1.5, )",
+        "resolved": "3.2.1.5",
+        "contentHash": "G3LN0n/9+roZRPxGQmnEFwU+JFuYXTyAtoiyQ80REFLvtbkp/JjxMGufIKaCwYGic7pEnjei0XECMhgqMb810Q=="
       },
       "NAudio": {
         "type": "Direct",
@@ -84,8 +84,8 @@
       },
       "LuminaSupplemental.Excel": {
         "type": "Transitive",
-        "resolved": "4.3.1",
-        "contentHash": "IO6nJ87ttWmjuVkVlJhmoyuoBe1oKIQDwrGJopHmy4kFfO1qeH6LPOfWLoiz1MrhNZ3brGN1pDjHTx0+VorIqQ==",
+        "resolved": "4.3.4",
+        "contentHash": "HKfQt9eijdKggL3+omdyYg0+vm2e2EAdewnEwzaEbBLJ+pGqhuHQiCwOk2eoVc1zFWcnWJcYoF2bd3r0TCCOsw==",
         "dependencies": {
           "CSVFile": "3.2.1",
           "CsvHelper": "30.0.1",
