@@ -21,16 +21,13 @@ using ThreadLoadImageHandler = ECommons.ImGuiMethods.ThreadLoadImageHandler;
 
 namespace PandorasBox.UI;
 
-internal class MainWindow : Window
-{
+internal class MainWindow : Window {
     public OpenWindow OpenWindow { get; private set; } = OpenWindow.None;
 
     public bool ThemePushed = false;
 
-    public MainWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###PandorasBox")
-    {
-        this.SizeConstraints = new WindowSizeConstraints
-        {
+    public MainWindow() : base($"{P.Name} {P.GetType().Assembly.GetName().Version}###PandorasBox") {
+        SizeConstraints = new WindowSizeConstraints {
             MinimumSize = new Vector2(375, 330),
             MaximumSize = new Vector2(float.MaxValue, float.MaxValue)
         };
@@ -38,16 +35,12 @@ internal class MainWindow : Window
         RespectCloseHotkey = false;
     }
 
-    public static void Dispose()
-    {
+    public static void Dispose() {
 
     }
 
-
-    public override void PreDraw()
-    {
-        if (!Config.DisabledTheme && !ThemePushed)
-        {
+    public override void PreDraw() {
+        if (!Config.DisabledTheme && !ThemePushed) {
             ImGui.PushStyleColor(ImGuiCol.Text, new Vector4(1, 1, 1, 1));
             ImGui.PushStyleColor(ImGuiCol.TextDisabled, new Vector4(0.5f, 0.5f, 0.5f, 1));
             ImGui.PushStyleColor(ImGuiCol.WindowBg, new Vector4(0.03f, 0.17f, 0.04f, 0.94f));
@@ -108,10 +101,8 @@ internal class MainWindow : Window
         base.PreDraw();
     }
 
-    public override void PostDraw()
-    {
-        if (ThemePushed)
-        {
+    public override void PostDraw() {
+        if (ThemePushed) {
             ImGui.PopStyleColor(52);
             ThemePushed = false;
         }
@@ -119,31 +110,26 @@ internal class MainWindow : Window
     }
 
     private string searchString = string.Empty;
-    private List<BaseFeature> filteredFeatures = new();
+    private readonly List<BaseFeature> filteredFeatures = [];
     private bool hornybonk;
 
-    public override void Draw()
-    {
+    public override void Draw() {
         var region = ImGui.GetContentRegionAvail();
         var itemSpacing = ImGui.GetStyle().ItemSpacing;
 
         var topLeftSideHeight = region.Y;
 
-        if (ImGui.BeginTable("$PandorasBoxTableContainer", 2, ImGuiTableFlags.Resizable))
-        {
-            try
-            {
+        if (ImGui.BeginTable("$PandorasBoxTableContainer", 2, ImGuiTableFlags.Resizable)) {
+            try {
                 ImGui.TableSetupColumn($"###LeftColumn", ImGuiTableColumnFlags.WidthFixed, ImGui.GetWindowWidth() / 2);
                 ImGui.TableNextColumn();
 
                 var regionSize = ImGui.GetContentRegionAvail();
                 ImGui.PushStyleVar(ImGuiStyleVar.SelectableTextAlign, new Vector2(0.5f, 0.5f));
-                if (ImGui.BeginChild($"###PandoraLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration))
-                {
+                if (ImGui.BeginChild($"###PandoraLeft", regionSize with { Y = topLeftSideHeight }, false, ImGuiWindowFlags.NoDecoration)) {
                     var imagePath = Config.DisabledTheme ? Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "pandora.png") : Path.Combine(Svc.PluginInterface.AssemblyLocation.DirectoryName!, "pandora_g.png");
 
-                    if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo))
-                    {
+                    if (ThreadLoadImageHandler.TryGetTextureWrap(imagePath, out var logo)) {
                         ImGuiEx.LineCentered("###Logo", () => { ImGui.Image(logo.Handle, new(125f.Scale(), 125f.Scale())); });
 
                     }
@@ -151,29 +137,23 @@ internal class MainWindow : Window
                     ImGui.Spacing();
                     ImGui.Separator();
 
-                    foreach (var window in Enum.GetValues(typeof(OpenWindow)))
-                    {
+                    foreach (var window in Enum.GetValues(typeof(OpenWindow))) {
                         if ((OpenWindow)window == OpenWindow.None) continue;
 
-                        if (ImGui.Selectable($"{window}", OpenWindow == (OpenWindow)window))
-                        {
+                        if (ImGui.Selectable($"{window}", OpenWindow == (OpenWindow)window)) {
                             OpenWindow = (OpenWindow)window;
                         }
                     }
 
                     ImGui.Spacing();
-                    if (Config.DisabledTheme)
-                    {
-                        if (ImGui.Selectable("Enable Theme", false))
-                        {
+                    if (Config.DisabledTheme) {
+                        if (ImGui.Selectable("Enable Theme", false)) {
                             Config.DisabledTheme = false;
                             Config.Save();
                         }
                     }
-                    else
-                    {
-                        if (ImGui.Selectable("Disable Theme", false))
-                        {
+                    else {
+                        if (ImGui.Selectable("Disable Theme", false)) {
                             Config.DisabledTheme = true;
                             Config.Save();
                         }
@@ -182,22 +162,17 @@ internal class MainWindow : Window
                     ImGui.SetCursorPosY(ImGui.GetContentRegionMax().Y - 45f);
                     ImGuiEx.LineCentered("###Search", () => { ImGui.Text($"Search"); ImGuiComponents.HelpMarker("Searches feature names and descriptions for a given word or phrase."); });
                     ImGuiEx.SetNextItemFullWidth();
-                    if (ImGui.InputText("###FeatureSearch", ref searchString, 500))
-                    {
-                        if (searchString.Equals("ERP", StringComparison.CurrentCultureIgnoreCase) && !hornybonk)
-                        {
+                    if (ImGui.InputText("###FeatureSearch", ref searchString, 500)) {
+                        if (searchString.Equals("ERP", StringComparison.CurrentCultureIgnoreCase) && !hornybonk) {
                             hornybonk = true;
                             Util.OpenLink("https://www.youtube.com/watch?v=oO-gc3Lh-oI");
                         }
-                        else
-                        {
+                        else {
                             hornybonk = false;
                         }
                         filteredFeatures.Clear();
-                        if (searchString.Length > 0)
-                        {
-                            foreach (var feature in P.Features)
-                            {
+                        if (searchString.Length > 0) {
+                            foreach (var feature in P.Features) {
                                 if (feature.FeatureType == FeatureType.Commands) continue;
 
                                 if (feature.Description.Contains(searchString, StringComparison.CurrentCultureIgnoreCase) ||
@@ -206,21 +181,16 @@ internal class MainWindow : Window
                             }
                         }
                     }
-
                 }
                 ImGui.EndChild();
                 ImGui.PopStyleVar();
                 ImGui.TableNextColumn();
-                if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (OpenWindow != OpenWindow.None ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration))
-                {
-                    if (filteredFeatures.Count() > 0)
-                    {
+                if (ImGui.BeginChild($"###PandoraRight", Vector2.Zero, false, (OpenWindow != OpenWindow.None ? ImGuiWindowFlags.AlwaysVerticalScrollbar : ImGuiWindowFlags.None) | ImGuiWindowFlags.NoDecoration)) {
+                    if (filteredFeatures.Count() > 0) {
                         DrawFeatures(filteredFeatures.ToArray());
                     }
-                    else
-                    {
-                        switch (OpenWindow)
-                        {
+                    else {
+                        switch (OpenWindow) {
                             case OpenWindow.Actions:
                                 DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.Actions).ToArray());
                                 break;
@@ -237,7 +207,7 @@ internal class MainWindow : Window
                                 DrawFeatures(P.Features.Where(x => x.FeatureType == FeatureType.ChatFeature).ToArray());
                                 break;
                             case OpenWindow.Commands:
-                                DrawCommands(P.Features.Where(x => x.FeatureType == FeatureType.Commands).ToArray());
+                                DrawCommands([.. P.Features.Where(x => x.FeatureType == FeatureType.Commands)]);
                                 break;
                             case OpenWindow.About:
                                 AboutTab.Draw("Pandora's Box");
@@ -247,8 +217,7 @@ internal class MainWindow : Window
                 }
                 ImGui.EndChild();
             }
-            catch(Exception ex)
-            {
+            catch (Exception ex) {
                 ex.Log();
                 ImGui.EndTable();
             }
@@ -256,14 +225,12 @@ internal class MainWindow : Window
         }
     }
 
-    private static void DrawCommands(BaseFeature[] features)
-    {
+    private static void DrawCommands(BaseFeature[] features) {
         if (features == null || !features.Any() || features.Length == 0) return;
         ImGuiEx.LineCentered($"featureHeader{features.First().FeatureType}", () => ImGui.Text($"{features.First().FeatureType}"));
         ImGui.Separator();
 
-        if (ImGui.BeginTable("###CommandsTable", 5, ImGuiTableFlags.Borders))
-        {
+        if (ImGui.BeginTable("###CommandsTable", 5, ImGuiTableFlags.Borders)) {
             ImGui.TableSetupColumn("Name");
             ImGui.TableSetupColumn("Command");
             ImGui.TableSetupColumn("Parameters");
@@ -271,8 +238,7 @@ internal class MainWindow : Window
             ImGui.TableSetupColumn("Aliases");
 
             ImGui.TableHeadersRow();
-            foreach (var feature in features.Cast<CommandFeature>())
-            {
+            foreach (var feature in features.Cast<CommandFeature>()) {
                 if (feature.Disabled) continue;
 
                 ImGui.TableNextRow();
@@ -293,14 +259,11 @@ internal class MainWindow : Window
         }
     }
 
-    private void DrawFeatures(IEnumerable<BaseFeature> features)
-    {
+    private void DrawFeatures(IEnumerable<BaseFeature> features) {
         if (features == null || !features.Any() || !features.Any()) return;
 
-        ImGuiEx.LineCentered($"featureHeader{features.First().FeatureType}", () =>
-        {
-            if (filteredFeatures.Count > 0)
-            {
+        ImGuiEx.LineCentered($"featureHeader{features.First().FeatureType}", () => {
+            if (filteredFeatures.Count > 0) {
                 ImGui.Text($"Search Results");
             }
             else
@@ -308,38 +271,28 @@ internal class MainWindow : Window
         });
         ImGui.Separator();
 
-        foreach (var feature in features)
-        {
-            using (ImRaii.Disabled(feature.FeatureDisabled || feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled()))
-            {
+        foreach (var feature in features) {
+            using (ImRaii.Disabled(feature.FeatureDisabled || feature.GetType() == typeof(AutoTPCoords) && !TeleporterIPC.IsEnabled())) {
                 var enabled = feature.Enabled;
-                if (ImGui.Checkbox($"###{feature.Name}", ref enabled))
-                {
-                    if (enabled)
-                    {
-                        try
-                        {
+                if (ImGui.Checkbox($"###{feature.Name}", ref enabled)) {
+                    if (enabled) {
+                        try {
                             feature.Enable();
-                            if (feature.Enabled)
-                            {
+                            if (feature.Enabled) {
                                 Config.EnabledFeatures.Add(feature.GetType().Name);
                             }
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                         }
                     }
-                    else
-                    {
-                        try
-                        {
+                    else {
+                        try {
                             feature.Disable();
                             Config.EnabledFeatures.RemoveAll(x => x == feature.GetType().Name);
 
                         }
-                        catch (Exception ex)
-                        {
+                        catch (Exception ex) {
                             Svc.Log.Error(ex, $"Failed to enabled {feature.Name}");
                         }
                     }
@@ -350,16 +303,15 @@ internal class MainWindow : Window
                 ImGui.Spacing();
                 ImGui.TextWrapped($"{feature.Description}");
             }
-                if (feature.FeatureDisabled)
-                    ImGuiEx.Text(ImGuiColors.DalamudRed, $"Disabled Reason: {feature.DisabledReason}");
+            if (feature.FeatureDisabled)
+                ImGuiEx.Text(ImGuiColors.DalamudRed, $"Disabled Reason: {feature.DisabledReason}");
 
-                ImGui.Separator();
+            ImGui.Separator();
         }
     }
 }
 
-public enum OpenWindow
-{
+public enum OpenWindow {
     None,
     Actions,
     UI,

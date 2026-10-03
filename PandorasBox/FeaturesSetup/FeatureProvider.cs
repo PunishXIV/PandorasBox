@@ -5,69 +5,51 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 
-namespace PandorasBox.Features
-{
-    public class FeatureProvider : IDisposable
-    {
-        public bool Disposed { get; protected set; } = false;
+namespace PandorasBox.Features;
 
-        public List<BaseFeature> Features { get; } = new();
+public class FeatureProvider(Assembly assembly) : IDisposable {
+    public bool Disposed { get; protected set; } = false;
 
-        public Assembly Assembly { get; init; } = null!;
+    public List<BaseFeature> Features { get; } = [];
 
-        public FeatureProvider(Assembly assembly)
-        {
-            Assembly = assembly;
-        }
+    public Assembly Assembly { get; init; } = assembly;
 
-        public virtual void LoadFeatures()
-        {
-            foreach (var t in Assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(Feature)) && !x.IsAbstract))
-            {
-                try
-                {
-                    var feature = (Feature)Activator.CreateInstance(t)!;
-                    feature.InterfaceSetup(P, Svc.PluginInterface, Config, this);
-                    feature.Setup();
-                    if ((feature.Ready && Config.EnabledFeatures.Contains(t.Name)) || feature.FeatureType == FeatureType.Commands)
-                    {
-                        if (!feature.FeatureDisabled)
-                            feature.Enable();
-                    }
-
-                    Features.Add(feature);
+    public virtual void LoadFeatures() {
+        foreach (var t in Assembly.GetTypes().Where(x => x.IsSubclassOf(typeof(Feature)) && !x.IsAbstract)) {
+            try {
+                var feature = (Feature)Activator.CreateInstance(t)!;
+                feature.InterfaceSetup(P, Svc.PluginInterface, Config, this);
+                feature.Setup();
+                if (feature.Ready && Config.EnabledFeatures.Contains(t.Name) || feature.FeatureType == FeatureType.Commands) {
+                    if (!feature.FeatureDisabled)
+                        feature.Enable();
                 }
-                catch (Exception ex)
-                {
-                    Svc.Log.Error(ex, $"Feature not loaded: {t.Name}");
+
+                Features.Add(feature);
+            }
+            catch (Exception ex) {
+                Svc.Log.Error(ex, $"Feature not loaded: {t.Name}");
+            }
+        }
+    }
+
+    public void UnloadFeatures() {
+        foreach (var t in Features) {
+            if (t.Enabled || t.FeatureType == FeatureType.Commands) {
+                try {
+                    t.Disable();
+                }
+                catch (Exception ex) {
+                    Svc.Log.Error(ex, $"Cannot disable {t.Name}");
                 }
             }
         }
+        Features.Clear();
+    }
 
-        public void UnloadFeatures()
-        {
-            foreach (var t in Features)
-            {
-                if (t.Enabled || t.FeatureType == FeatureType.Commands)
-                {
-                    try
-                    {
-                        t.Disable();
-                    }
-                    catch (Exception ex)
-                    {
-                        Svc.Log.Error(ex, $"Cannot disable {t.Name}");
-                    }
-                }
-            }
-            Features.Clear();
-        }
-
-        public void Dispose()
-        {
-            GC.SuppressFinalize(this);
-            UnloadFeatures();
-            Disposed = true;
-        }
+    public void Dispose() {
+        GC.SuppressFinalize(this);
+        UnloadFeatures();
+        Disposed = true;
     }
 }

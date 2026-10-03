@@ -4,42 +4,36 @@ using FFXIVClientStructs.FFXIV.Client.UI.Agent;
 using PandorasBox.FeaturesSetup;
 using System.Runtime.InteropServices;
 
-namespace PandorasBox.Features.UI
-{
-    public unsafe class PartyFinderShowMore : Feature
-    {
-        public override string Name => "Party Finder Show More";
+namespace PandorasBox.Features.UI;
 
-        public override string Description => "Raise the display limit from 50 to the 100 limit actually allowed by the game.";
+public unsafe class PartyFinderShowMore : Feature {
+    public override string Name => "Party Finder Show More";
 
-        public override FeatureType FeatureType => FeatureType.UI;
+    public override string Description => "Raise the display limit from 50 to the 100 limit actually allowed by the game.";
 
-        private delegate char PartyFinderDelegate(AgentLookingForGroup* a1, int a2);
-        private Hook<PartyFinderDelegate> partyFinderHook;
+    public override FeatureType FeatureType => FeatureType.UI;
 
-        private char PartyFinderDetour(AgentLookingForGroup* a1, int a2)
-        {
-            Marshal.WriteInt16(new nint(a1 + 1152), 100);
-            return partyFinderHook.Original(a1, a2);
-        }
+    private delegate char PartyFinderDelegate(AgentLookingForGroup* a1, int a2);
+    private Hook<PartyFinderDelegate> partyFinderHook = null!;
 
-        public override void Enable()
-        {
-            partyFinderHook ??= Svc.Hook.HookFromSignature<PartyFinderDelegate>("48 89 5c 24 ?? 55 56 57 48 ?? ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? 48 89 85 ?? ?? ?? ?? 48 ?? ?? 0f", new PartyFinderDelegate(PartyFinderDetour));
-            partyFinderHook?.Enable();
-            base.Enable();
-        }
+    private char PartyFinderDetour(AgentLookingForGroup* a1, int a2) {
+        Marshal.WriteInt16(new nint(a1 + 1152), 100);
+        return partyFinderHook.Original(a1, a2);
+    }
 
-        public override void Disable()
-        {
-            partyFinderHook?.Disable();
-            base.Disable();
-        }
+    public override void Enable() {
+        partyFinderHook ??= Svc.Hook.HookFromSignature<PartyFinderDelegate>("48 89 5c 24 ?? 55 56 57 48 ?? ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? ?? ?? ?? ?? 48 ?? ?? 48 89 85 ?? ?? ?? ?? 48 ?? ?? 0f", new PartyFinderDelegate(PartyFinderDetour));
+        partyFinderHook?.Enable();
+        base.Enable();
+    }
 
-        public override void Dispose()
-        {
-            partyFinderHook?.Dispose();
-            base.Dispose();
-        }
+    public override void Disable() {
+        partyFinderHook?.Disable();
+        base.Disable();
+    }
+
+    public override void Dispose() {
+        partyFinderHook?.Dispose();
+        base.Dispose();
     }
 }

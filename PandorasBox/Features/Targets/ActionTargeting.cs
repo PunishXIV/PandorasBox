@@ -9,133 +9,115 @@ using System.Linq;
 using System.Numerics;
 using ECommons.GameFunctions;
 
-namespace PandorasBox.Features.Targets
-{
-    public unsafe class ActionTargeting : Feature
-    {
-        public override string Name => "Action Combat Targeting";
+namespace PandorasBox.Features.Targets;
 
-        public override string Description => "Automatically targets and switches your target to the nearest within your line of sight.";
+public unsafe class ActionTargeting : Feature {
+    public override string Name => "Action Combat Targeting";
 
-        public override FeatureType FeatureType => FeatureType.Targeting;
+    public override string Description => "Automatically targets and switches your target to the nearest within your line of sight.";
 
-        public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption("Unset Target if not in cone range (all times, use with caution)", "", 1)]
-            public bool UnsetTargetRange = false;
+    public override FeatureType FeatureType => FeatureType.Targeting;
 
-            [FeatureConfigOption("Unset Target if not in cone range (only in combat)")]
-            public bool UnsetTargetCombat = false;
+    public class Configs : FeatureConfig {
+        [FeatureConfigOption("Unset Target if not in cone range (all times, use with caution)", "", 1)]
+        public bool UnsetTargetRange = false;
 
-            [FeatureConfigOption("Max Distance (yalms)", "", 2, FloatMin = 0.1f, FloatMax = 30f, FloatIncrements = 0.1f, EditorSize = 300)]
-            public float MaxDistance = 3f;
-        }
+        [FeatureConfigOption("Unset Target if not in cone range (only in combat)")]
+        public bool UnsetTargetCombat = false;
 
-        public Configs Config { get; private set; }
-
-        public override bool UseAutoConfig => false;
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
-            base.Enable();
-        }
-
-        private void RunFeature(IFramework framework)
-        {
-            TargetEnemy();
-        }
-
-        public unsafe void TargetEnemy()
-        {
-            if (NearestConeTarget() != null)
-                Svc.Targets.Target = NearestConeTarget();
-            else if (Config.UnsetTargetRange && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
-                Svc.Targets.Target = null;
-            else if (Config.UnsetTargetCombat && Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
-                Svc.Targets.Target = null;
-        }
-
-        public bool CanConeAoe()
-        {
-            var playerObj = Svc.Objects.LocalPlayer;
-            if (playerObj is null)
-                return false;
-
-            return Svc.Objects.Any(o => o.ObjectKind == ObjectKind.BattleNpc &&
-                                    o.Struct()->BattleNpcSubKind == FFXIVClientStructs.FFXIV.Client.Game.Object.BattleNpcSubKind.Combatant &&
-                                    o.IsTargetable &&
-                                    PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + (o.HitboxRadius / 2)) &&
-                                    PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
-        }
-
-        public IGameObject? NearestConeTarget()
-        {
-            if (CanConeAoe())
-            {
-                var playerObj = Svc.Objects.LocalPlayer!;
-
-                var target = Svc.Objects.OrderBy(GameObjectHelper.GetTargetDistance).First(o => o.ObjectKind == ObjectKind.BattleNpc &&
-                                                o.Struct()->BattleNpcSubKind == FFXIVClientStructs.FFXIV.Client.Game.Object.BattleNpcSubKind.Combatant &&
-                                                o.IsTargetable &&
-                                                PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + (o.HitboxRadius / 2)) &&
-                                                PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
-
-                return target;
-            }
-
-            return null;
-        }
-
-        public static bool PointInCone(Vector3 offsetFromOrigin, Vector3 direction, float halfAngle)
-        {
-            return Vector3.Dot(Vector3.Normalize(offsetFromOrigin), direction) >= MathF.Cos(halfAngle);
-        }
-        public static bool PointInCone(Vector3 offsetFromOrigin, float direction, float halfAngle)
-        {
-            return PointInCone(offsetFromOrigin, DirectionToVec3(direction), halfAngle);
-        }
-
-        public static Vector3 DirectionToVec3(float direction)
-        {
-            return new(MathF.Sin(direction), 0, MathF.Cos(direction));
-        }
-
-        public static bool PointInCircle(Vector3 offsetFromOrigin, float radius)
-        {
-            return offsetFromOrigin.LengthSquared() <= radius * radius;
-        }
-
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
-        }
-
-        protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) =>
-        {
-            ImGui.PushItemWidth(300);
-            if (ImGui.SliderFloat("Max Distance (yalms)", ref Config.MaxDistance, 0.1f, 30f, "%.1f")) hasChanged = true;
-
-            if (ImGui.RadioButton("Don't Unset Target", !Config.UnsetTargetRange && !Config.UnsetTargetCombat))
-            {
-                Config.UnsetTargetRange = false;
-                Config.UnsetTargetCombat = false;
-                hasChanged = true;
-            }
-            if (ImGui.RadioButton("Unset Target if not in cone range (all times, use with caution)", Config.UnsetTargetRange))
-            {
-                Config.UnsetTargetRange = true;
-                Config.UnsetTargetCombat = false;
-                hasChanged = true;
-            }
-            if (ImGui.RadioButton("Unset Target if not in cone range (only in combat)", Config.UnsetTargetCombat))
-            {
-                Config.UnsetTargetRange = false;
-                Config.UnsetTargetCombat = true;
-                hasChanged = true;
-            }
-        };
+        [FeatureConfigOption("Max Distance (yalms)", "", 2, FloatMin = 0.1f, FloatMax = 30f, FloatIncrements = 0.1f, EditorSize = 300)]
+        public float MaxDistance = 3f;
     }
+
+    public Configs Config { get; private set; } = null!;
+
+    public override bool UseAutoConfig => false;
+    public override void Enable() {
+        Config = LoadConfig<Configs>() ?? new Configs();
+        Svc.Framework.Update += RunFeature;
+        base.Enable();
+    }
+
+    private void RunFeature(IFramework framework) {
+        TargetEnemy();
+    }
+
+    public unsafe void TargetEnemy() {
+        if (NearestConeTarget() != null)
+            Svc.Targets.Target = NearestConeTarget();
+        else if (Config.UnsetTargetRange && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
+            Svc.Targets.Target = null;
+        else if (Config.UnsetTargetCombat && Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
+            Svc.Targets.Target = null;
+    }
+
+    public bool CanConeAoe() {
+        var playerObj = Svc.Objects.LocalPlayer;
+        if (playerObj is null)
+            return false;
+
+        return Svc.Objects.Any(o => o.ObjectKind == ObjectKind.BattleNpc &&
+                                o.Struct()->BattleNpcSubKind == FFXIVClientStructs.FFXIV.Client.Game.Object.BattleNpcSubKind.Combatant &&
+                                o.IsTargetable &&
+                                PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + o.HitboxRadius / 2) &&
+                                PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
+    }
+
+    public IGameObject? NearestConeTarget() {
+        if (CanConeAoe()) {
+            var playerObj = Svc.Objects.LocalPlayer!;
+
+            var target = Svc.Objects.OrderBy(GameObjectHelper.GetTargetDistance).First(o => o.ObjectKind == ObjectKind.BattleNpc &&
+                                            o.Struct()->BattleNpcSubKind == FFXIVClientStructs.FFXIV.Client.Game.Object.BattleNpcSubKind.Combatant &&
+                                            o.IsTargetable &&
+                                            PointInCone(o.Position - playerObj.Position, playerObj.Rotation, 0 + o.HitboxRadius / 2) &&
+                                            PointInCircle(o.Position - playerObj.Position, Config.MaxDistance + o.HitboxRadius));
+
+            return target;
+        }
+
+        return null;
+    }
+
+    public static bool PointInCone(Vector3 offsetFromOrigin, Vector3 direction, float halfAngle) {
+        return Vector3.Dot(Vector3.Normalize(offsetFromOrigin), direction) >= MathF.Cos(halfAngle);
+    }
+    public static bool PointInCone(Vector3 offsetFromOrigin, float direction, float halfAngle) {
+        return PointInCone(offsetFromOrigin, DirectionToVec3(direction), halfAngle);
+    }
+
+    public static Vector3 DirectionToVec3(float direction) {
+        return new(MathF.Sin(direction), 0, MathF.Cos(direction));
+    }
+
+    public static bool PointInCircle(Vector3 offsetFromOrigin, float radius) {
+        return offsetFromOrigin.LengthSquared() <= radius * radius;
+    }
+
+    public override void Disable() {
+        SaveConfig(Config);
+        Svc.Framework.Update -= RunFeature;
+        base.Disable();
+    }
+
+    protected override DrawConfigDelegate DrawConfigTree => (ref bool hasChanged) => {
+        ImGui.PushItemWidth(300);
+        if (ImGui.SliderFloat("Max Distance (yalms)", ref Config.MaxDistance, 0.1f, 30f, "%.1f")) hasChanged = true;
+
+        if (ImGui.RadioButton("Don't Unset Target", !Config.UnsetTargetRange && !Config.UnsetTargetCombat)) {
+            Config.UnsetTargetRange = false;
+            Config.UnsetTargetCombat = false;
+            hasChanged = true;
+        }
+        if (ImGui.RadioButton("Unset Target if not in cone range (all times, use with caution)", Config.UnsetTargetRange)) {
+            Config.UnsetTargetRange = true;
+            Config.UnsetTargetCombat = false;
+            hasChanged = true;
+        }
+        if (ImGui.RadioButton("Unset Target if not in cone range (only in combat)", Config.UnsetTargetCombat)) {
+            Config.UnsetTargetRange = false;
+            Config.UnsetTargetCombat = true;
+            hasChanged = true;
+        }
+    };
 }

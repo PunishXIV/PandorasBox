@@ -4,54 +4,48 @@ using FFXIVClientStructs.FFXIV.Client.Game.MJI;
 using PandorasBox.FeaturesSetup;
 using System.Linq;
 
-namespace PandorasBox.Features
-{
-    public unsafe class SanctuarySprint : Feature
-    {
-        public override string Name => "Auto-Sprint on Island Sanctuary";
+namespace PandorasBox.Features;
 
-        public override string Description => "Automatically uses Isle Sprint.";
+public unsafe class SanctuarySprint : Feature {
+    public override string Name => "Auto-Sprint on Island Sanctuary";
 
-        public override FeatureType FeatureType => FeatureType.Actions;
+    public override string Description => "Automatically uses Isle Sprint.";
 
-        public Configs Config { get; private set; } = null!;
-        public override bool UseAutoConfig => true;
+    public override FeatureType FeatureType => FeatureType.Actions;
 
-        public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption("Use whilst walk status is toggled", "", 1)]
-            public bool RPWalk = false;
-        }
+    public Configs Config { get; private set; } = null!;
+    public override bool UseAutoConfig => true;
 
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            Svc.Framework.Update += RunFeature;
-            base.Enable();
-        }
+    public class Configs : FeatureConfig {
+        [FeatureConfigOption("Use whilst walk status is toggled", "", 1)]
+        public bool RPWalk = false;
+    }
 
-        public override void Disable()
-        {
-            Svc.Framework.Update -= RunFeature;
-            SaveConfig(Config);
-            base.Disable();
-        }
+    public override void Enable() {
+        Config = LoadConfig<Configs>() ?? new Configs();
+        Svc.Framework.Update += RunFeature;
+        base.Enable();
+    }
 
-        private void RunFeature(IFramework framework)
-        {
-            if (!MJIManager.Instance()->IsPlayerInSanctuary)
-                return;
+    public override void Disable() {
+        Svc.Framework.Update -= RunFeature;
+        SaveConfig(Config);
+        base.Disable();
+    }
 
-            if (IsRpWalking() && !Config.RPWalk)
-                return;
+    private void RunFeature(IFramework framework) {
+        if (!MJIManager.Instance()->IsPlayerInSanctuary)
+            return;
 
-            var am = ActionManager.Instance();
-            var isSprintReady = am->GetActionStatus(ActionType.Action, 31314) == 0;
-            var hasBuff = Svc.Objects.LocalPlayer!.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
+        if (IsRpWalking() && !Config.RPWalk)
+            return;
 
-            if (isSprintReady && !hasBuff && IsMoving())
-                am->UseAction(ActionType.Action, 31314);
+        var am = ActionManager.Instance();
+        var isSprintReady = am->GetActionStatus(ActionType.Action, 31314) == 0;
+        var hasBuff = Svc.Objects.LocalPlayer!.StatusList.Any(x => x.StatusId == 50 && x.RemainingTime >= 1f);
 
-        }
+        if (isSprintReady && !hasBuff && IsMoving())
+            am->UseAction(ActionType.Action, 31314);
+
     }
 }

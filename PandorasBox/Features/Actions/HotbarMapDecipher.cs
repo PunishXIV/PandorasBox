@@ -1,4 +1,3 @@
-using Dalamud.Hooking;
 using Dalamud.Memory;
 using ECommons.DalamudServices;
 using ECommons.UIHelpers.AddonMasterImplementations;
@@ -12,184 +11,139 @@ using PandorasBox.Helpers;
 using System;
 using System.Collections.Generic;
 using static ECommons.GenericHelpers;
-using ValueType = FFXIVClientStructs.FFXIV.Component.GUI;
 
-namespace PandorasBox.Features.Actions
-{
-    internal unsafe class HotbarMapDecipher : Feature
-    {
-        public override string Name { get; } = "Map Hotbar Decipher";
-        public override string Description { get; } = "Allows deciphering treaure maps from hotbar.";
-        public override FeatureType FeatureType { get; } = FeatureType.Actions;
+namespace PandorasBox.Features.Actions;
 
-        public new delegate bool UseActionDelegate(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget);
+internal unsafe class HotbarMapDecipher : Feature {
+    public override string Name { get; } = "Map Hotbar Decipher";
+    public override string Description { get; } = "Allows deciphering treaure maps from hotbar.";
+    public override FeatureType FeatureType { get; } = FeatureType.Actions;
 
-        public new static Hook<UseActionDelegate>? UseActionHook;
+    public class Configs : FeatureConfig {
+        [FeatureConfigOption("Automatically Decipher")]
+        public bool AutoDecipher = false;
+    }
 
-        public class Configs : FeatureConfig
-        {
-            [FeatureConfigOption("Automatically Decipher")]
-            public bool AutoDecipher = false;
-        }
+    public Configs Config { get; private set; } = null!;
 
-        public Configs Config { get; private set; } = null!;
+    public override bool UseAutoConfig => true;
 
-        public override bool UseAutoConfig => true;
-        public override void Enable()
-        {
-            Config = LoadConfig<Configs>() ?? new Configs();
-            UseActionHook ??= Svc.Hook.HookFromAddress<UseActionDelegate>(ActionManager.Addresses.UseAction.Value, UseActionDetour);
-            UseActionHook.Enable();
-            base.Enable();
-        }
+    public override void Enable() {
+        Config = LoadConfig<Configs>() ?? new Configs();
+        base.Enable();
+    }
 
-        private bool UseActionDetour(ActionManager* actionManager, uint actionType, uint actionID, ulong targetObjectID, uint param, uint useType, int pvp, bool* isGroundTarget)
-        {
-            if (actionType == 2)
-            {
-                if (ActionManager.Instance()->GetActionStatus(ActionType.Item, actionID, Svc.PlayerState.ContentId) != 0)
-                {
-                    TaskManager.Abort();
-                    return UseActionHook!.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
-                }
+    public override bool UseActionDetour(ActionManager* actionManager, ActionType actionType, uint actionId, ulong targetId, uint extraParam, ActionManager.UseActionMode mode, uint comboRouteId, bool* outOptAreaTargeted) {
+        if (actionType == ActionType.Item) {
+            if (ActionManager.Instance()->GetActionStatus(ActionType.Item, actionId, Svc.PlayerState.ContentId) != 0) {
+                TaskManager.Abort();
+                return base.UseActionDetour(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+            }
 
-                if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == actionID, out var item) && item.FilterGroup == 18)
-                {
-                    TaskManager.Enqueue(() => OpenItem(actionID));
+            if (Svc.Data.GetExcelSheet<Item>().FindFirst(x => x.RowId == actionId, out var item) && item.FilterGroup == 18) {
+                TaskManager.Enqueue(() => OpenItem(actionId));
 
-                    if (Config.AutoDecipher)
-                    {
-                        TaskManager.EnqueueDelay(200);
-                        TaskManager.Enqueue(() => ConfirmYesNo());
-                    }
+                if (Config.AutoDecipher) {
+                    TaskManager.EnqueueDelay(200);
+                    TaskManager.Enqueue(ConfirmYesNo);
                 }
             }
-
-            return UseActionHook!.Original(actionManager, actionType, actionID, targetObjectID, param, useType, pvp, isGroundTarget);
         }
 
-        private unsafe bool? OpenItem(uint ItemId)
+        return base.UseActionDetour(actionManager, actionType, actionId, targetId, extraParam, mode, comboRouteId, outOptAreaTargeted);
+    }
+
+    private unsafe bool? OpenItem(uint ItemId) {
+        var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId();
+
+        if (IsMoving()) {
+            return null;
+        }
+
+        if (!IsInventoryFree()) {
+            return null;
+        }
+
+        if (InventoryManager.Instance()->GetInventoryItemCount(ItemId) == 0) {
+            return true;
+        }
+
+        var inventories = new List<InventoryType>
         {
-            var invId = AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId();
+            InventoryType.Inventory1,
+            InventoryType.Inventory2,
+            InventoryType.Inventory3,
+            InventoryType.Inventory4,
+        };
 
-            if (IsMoving())
-            {
-                return null;
-            }
+        foreach (var inv in inventories) {
+            var container = InventoryManager.Instance()->GetInventoryContainer(inv);
+            for (var i = 0; i < container->Size; i++) {
+                var item = container->GetInventorySlot(i);
 
-            if (!IsInventoryFree())
-            {
-                return null;
-            }
+                if (item->ItemId == ItemId) {
+                    var ag = AgentInventoryContext.Instance();
+                    ag->OpenForItemSlot(container->Type, i, 0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
+                    if (TryGetAddonByName<AtkUnitBase>("ContextMenu", out var contextMenu)) {
+                        var contextAgent = AgentInventoryContext.Instance();
+                        var indexDecipher = -1;
 
-            if (InventoryManager.Instance()->GetInventoryItemCount(ItemId) == 0)
-            {
-                return true;
-            }
+                        var loops = 0;
+                        foreach (var contextObj in contextAgent->EventParams) {
+                            if (contextObj.Type == AtkValueType.String) {
+                                var label = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(contextObj.String));
 
-            var inventories = new List<InventoryType>
-            {
-                InventoryType.Inventory1,
-                InventoryType.Inventory2,
-                InventoryType.Inventory3,
-                InventoryType.Inventory4,
-            };
+                                if (Svc.Data.GetExcelSheet<Addon>().GetRow(8100).Text == label.TextValue) indexDecipher = loops;
 
-            foreach (var inv in inventories)
-            {
-                var container = InventoryManager.Instance()->GetInventoryContainer(inv);
-                for (var i = 0; i < container->Size; i++)
-                {
-                    var item = container->GetInventorySlot(i);
-
-                    if (item->ItemId == ItemId)
-                    {
-                        var ag = AgentInventoryContext.Instance();
-                        ag->OpenForItemSlot(container->Type, i,0, AgentModule.Instance()->GetAgentByInternalId(AgentId.Inventory)->GetAddonId());
-                        var contextMenu = (AtkUnitBase*)Svc.GameGui.GetAddonByName("ContextMenu", 1).Address;
-                        if (contextMenu != null)
-                        {
-                            var contextAgent = AgentInventoryContext.Instance();
-                            var indexDecipher = -1;
-
-                            var loops = 0;
-                            foreach (var contextObj in contextAgent->EventParams)
-                            {
-                                if (contextObj.Type == AtkValueType.String)
-                                {
-                                    var label = MemoryHelper.ReadSeStringNullTerminated(new IntPtr(contextObj.String));
-
-                                    if (Svc.Data.GetExcelSheet<Addon>().GetRow(8100).Text == label.TextValue) indexDecipher = loops;
-
-                                    loops++;
-                                }
+                                loops++;
                             }
-
-                            if (indexDecipher != -1)
-                            {
-                                var values = stackalloc AtkValue[5];
-                                values[0] = new AtkValue()
-                                {
-                                    Type = AtkValueType.Int,
-                                    Int = 0
-                                };
-                                values[1] = new AtkValue()
-                                {
-                                    Type = AtkValueType.Int,
-                                    Int = indexDecipher,
-                                };
-                                values[2] = new AtkValue()
-                                {
-                                    Type = AtkValueType.Int,
-                                    Int = 0
-                                };
-                                values[3] = new AtkValue()
-                                {
-                                    Type = AtkValueType.Int,
-                                    Int = 0
-                                };
-                                values[4] = new AtkValue()
-                                {
-                                    Type = AtkValueType.Int,
-                                    UInt = 0
-                                };
-                                contextMenu->FireCallback(5, values, true);
-                            }
-
-                            return true;
                         }
+
+                        if (indexDecipher != -1) {
+                            var values = stackalloc AtkValue[5];
+                            values[0] = new AtkValue() {
+                                Type = AtkValueType.Int,
+                                Int = 0
+                            };
+                            values[1] = new AtkValue() {
+                                Type = AtkValueType.Int,
+                                Int = indexDecipher,
+                            };
+                            values[2] = new AtkValue() {
+                                Type = AtkValueType.Int,
+                                Int = 0
+                            };
+                            values[3] = new AtkValue() {
+                                Type = AtkValueType.Int,
+                                Int = 0
+                            };
+                            values[4] = new AtkValue() {
+                                Type = AtkValueType.Int,
+                                UInt = 0
+                            };
+                            contextMenu->FireCallback(5, values, true);
+                        }
+
+                        return true;
                     }
                 }
             }
-
-            return false;
         }
 
-        internal static bool ConfirmYesNo()
-        {
-            if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) &&
-                addon->AtkUnitBase.IsVisible &&
-                addon->YesButton->IsEnabled &&
-                addon->AtkUnitBase.GetNodeById(2)->IsVisible())
-            {
-                new AddonMaster.SelectYesno((IntPtr)addon).Yes();
-                return true;
-            }
+        return false;
+    }
 
-            return false;
+    internal static bool ConfirmYesNo() {
+        if (TryGetAddonByName<AddonSelectYesno>("SelectYesno", out var addon) && addon->AtkUnitBase.IsVisible && addon->YesButton->IsEnabled && addon->AtkUnitBase.GetNodeById(2)->IsVisible()) {
+            new AddonMaster.SelectYesno((IntPtr)addon).Yes();
+            return true;
         }
 
-        public override void Disable()
-        {
-            SaveConfig(Config);
-            UseActionHook?.Disable();
-            base.Disable();
-        }
+        return false;
+    }
 
-        public override void Dispose()
-        {
-            UseActionHook?.Dispose();
-            base.Dispose();
-        }
+    public override void Disable() {
+        SaveConfig(Config);
+        base.Disable();
     }
 }

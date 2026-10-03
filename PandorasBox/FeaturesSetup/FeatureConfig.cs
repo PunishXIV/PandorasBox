@@ -1,7 +1,5 @@
-namespace PandorasBox.Features
-{
-    public abstract class FeatureConfig
-    {
+namespace PandorasBox.Features;
 
-    }
+public abstract class FeatureConfig {
+
 }

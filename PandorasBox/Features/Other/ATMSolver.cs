@@ -5,85 +5,70 @@ using PandorasBox.FeaturesSetup;
 using System;
 using static ECommons.GenericHelpers;
 
-namespace PandorasBox.Features.Other
-{
-    internal class ATMSolver : Feature
-    {
-        public override string Name { get; } = "Auto Active Time Maneuver";
-        public override string Description { get; } = "Automatically hits a button or mashes for you when the ATM is on screen.";
+namespace PandorasBox.Features.Other;
 
-        public override FeatureType FeatureType => FeatureType.Other;
-        private long Throttler { get; set; } = Environment.TickCount64;
-        private Random random = new Random();
-        public override void Enable()
-        {
-            Svc.Framework.Update += RunFeature;
-            base.Enable();
-        }
+internal class ATMSolver : Feature {
+    public override string Name { get; } = "Auto Active Time Maneuver";
+    public override string Description { get; } = "Automatically hits a button or mashes for you when the ATM is on screen.";
 
-        bool hasDirectChat = false;
+    public override FeatureType FeatureType => FeatureType.Other;
+    private long Throttler { get; set; } = Environment.TickCount64;
+    private readonly Random random = new();
+    public override void Enable() {
+        Svc.Framework.Update += RunFeature;
+        base.Enable();
+    }
 
-        private unsafe void RunFeature(IFramework framework)
-        {
-            if ((TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible) || (TryGetAddonByName<AtkUnitBase>("QTE", out var addon2) && addon2->IsVisible))
-            {
-                DisableDirectChatIfNeeded();
+    bool hasDirectChat = false;
 
-                if (Environment.TickCount64 >= Throttler)
-                {
-                    if (ChatLogIsFocused())
-                        WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.Escape);
+    private unsafe void RunFeature(IFramework framework) {
+        if (TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible || TryGetAddonByName<AtkUnitBase>("QTE", out var addon2) && addon2->IsVisible) {
+            DisableDirectChatIfNeeded();
 
-                    WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.A); //Mashes to try and resolve the QTE
-                    Throttler = Environment.TickCount64 + random.Next(25, 50);
-                }
-            }
-            else
-            {
-                EnableDirectChatIfNeeded();
+            if (Environment.TickCount64 >= Throttler) {
+                if (ChatLogIsFocused())
+                    WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.Escape);
+
+                WindowsKeypress.SendKeypress(ECommons.Interop.LimitedKeys.A); //Mashes to try and resolve the QTE
+                Throttler = Environment.TickCount64 + random.Next(25, 50);
             }
         }
-
-        private unsafe bool ChatLogIsFocused()
-        {
-            var stage = AtkStage.Instance();
-            var unitManagers = &stage->RaptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
-
-            foreach (var i in unitManagers->Entries)
-            {
-                if (i.Value != null)
-                {
-                    var addonName = i.Value->NameString;
-                    if (addonName == "ChatLog")
-                        return true;
-                }
-            }
-
-            return false;
+        else {
+            EnableDirectChatIfNeeded();
         }
+    }
 
-        private void EnableDirectChatIfNeeded()
-        {
-            if (hasDirectChat)
-            {
-                Svc.GameConfig.UiControl.Set("DirectChat", true);
-                hasDirectChat = false;
+    private unsafe bool ChatLogIsFocused() {
+        var stage = AtkStage.Instance();
+        var unitManagers = &stage->RaptureAtkUnitManager->AtkUnitManager.FocusedUnitsList;
+
+        foreach (var i in unitManagers->Entries) {
+            if (i.Value != null) {
+                var addonName = i.Value->NameString;
+                if (addonName == "ChatLog")
+                    return true;
             }
         }
 
-        private void DisableDirectChatIfNeeded()
-        {
-            if (Svc.GameConfig.UiControl.GetBool("DirectChat"))
-            {
-                Svc.GameConfig.UiControl.Set("DirectChat", false);
-                hasDirectChat = true;
-            }
-        }
+        return false;
+    }
 
-        public override void Disable()
-        {
-            Svc.Framework.Update -= RunFeature;
-            base.Disable();
+    private void EnableDirectChatIfNeeded() {
+        if (hasDirectChat) {
+            Svc.GameConfig.UiControl.Set("DirectChat", true);
+            hasDirectChat = false;
         }
+    }
+
+    private void DisableDirectChatIfNeeded() {
+        if (Svc.GameConfig.UiControl.GetBool("DirectChat")) {
+            Svc.GameConfig.UiControl.Set("DirectChat", false);
+            hasDirectChat = true;
+        }
+    }
+
+    public override void Disable() {
+        Svc.Framework.Update -= RunFeature;
+        base.Disable();
     }
 }

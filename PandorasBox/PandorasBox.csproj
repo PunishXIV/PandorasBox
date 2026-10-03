@@ -1,15 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Project Sdk="Dalamud.NET.Sdk/13.0.0">
+<Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
         <Version>1.6.4.3</Version>
         <LangVersion>preview</LangVersion>
-        <TargetFramework>net10.0-windows7.0</TargetFramework>
     </PropertyGroup>
 
-    <PropertyGroup>
-        <NoWarn>CS8625;MSB3277</NoWarn>
-    </PropertyGroup>
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <OutputPath>bin/Release</OutputPath>
     </PropertyGroup>
@@ -22,11 +18,6 @@
         <PackageReference Include="AllaganLib.GameSheets" Version="2.2.0" />
         <PackageReference Include="ECommons" Version="3.2.0.16" />
         <PackageReference Include="NAudio" Version="2.1.0" />
-        <Reference Include="JetBrains.Annotations">
-            <Private>false</Private>
-            <HintPath>$(DalamudLibPath)\JetBrains.Annotations.dll</HintPath>
-        </Reference>
-        <PackageReference Update="DalamudPackager" Version="13.0.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -49,6 +40,10 @@
           <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
           <Visible>false</Visible>
       </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+      <None Include=".editorconfig" />
     </ItemGroup>
 
     <ItemGroup>

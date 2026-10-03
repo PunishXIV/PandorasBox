@@ -15,8 +15,7 @@ using System.Reflection;
 
 namespace PandorasBox;
 
-public class PandorasBox : IDalamudPlugin
-{
+public class PandorasBox : IDalamudPlugin {
     public string Name => "Pandora's Box";
     private const string CommandName = "/pandora";
     internal WindowSystem Ws;
@@ -27,19 +26,16 @@ public class PandorasBox : IDalamudPlugin
     public static Configuration Config { get; private set; } = null!;
 
     public List<FeatureProvider> FeatureProviders = [];
-    private FeatureProvider provider;
+    private readonly FeatureProvider provider;
     public IEnumerable<BaseFeature> Features => FeatureProviders.Where(x => !x.Disposed).SelectMany(x => x.Features).OrderBy(x => x.Name);
-    public PandorasBox(IDalamudPluginInterface pluginInterface, IFramework framework)
-    {
+    public PandorasBox(IDalamudPluginInterface pluginInterface, IFramework framework) {
         P = this;
         Ws = new();
         MainWindow = new();
         provider = new FeatureProvider(Assembly.GetExecutingAssembly());
-        _ = framework.RunOnFrameworkThread(() =>
-        {
+        _ = framework.RunOnFrameworkThread(() => {
             ECommonsMain.Init(pluginInterface, P, ECommons.Module.All);
-            sheetManager = new(pluginInterface, Svc.Data.GameData, new()
-            {
+            sheetManager = new(pluginInterface, Svc.Data.GameData, new() {
                 BuildItemInfoCache = true,
 
             });
@@ -47,16 +43,14 @@ public class PandorasBox : IDalamudPlugin
         });
     }
 
-    private void Initialize()
-    {
+    private void Initialize() {
         PunishLibMain.Init(Svc.PluginInterface, "Pandora's Box", new AboutPlugin() { Sponsor = "https://ko-fi.com/taurenkey" });
 
         Ws.AddWindow(MainWindow);
         Config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         Config.Initialize(Svc.PluginInterface);
 
-        _ = Svc.Commands.AddHandler(CommandName, new CommandInfo(OnCommand)
-        {
+        _ = Svc.Commands.AddHandler(CommandName, new CommandInfo(OnCommand) {
             HelpMessage = "Opens the Pandora menu.",
             ShowInHelp = true
         });
@@ -69,12 +63,9 @@ public class PandorasBox : IDalamudPlugin
         FeatureProviders.Add(provider);
     }
 
-
-    public void Dispose()
-    {
+    public void Dispose() {
         Svc.Commands.RemoveHandler(CommandName);
-        foreach (var f in Features.Where(x => x is not null && x.Enabled))
-        {
+        foreach (var f in Features.Where(x => x is not null && x.Enabled)) {
             f.Disable();
             f.Dispose();
         }
@@ -92,13 +83,11 @@ public class PandorasBox : IDalamudPlugin
         sheetManager?.Dispose();
     }
 
-    private void OnCommand(string command, string args)
-    {
+    private void OnCommand(string command, string args) {
         MainWindow.IsOpen = !MainWindow.IsOpen;
     }
 
-    public void DrawConfigUI()
-    {
+    public void DrawConfigUI() {
         MainWindow.IsOpen = !MainWindow.IsOpen;
     }
 }
