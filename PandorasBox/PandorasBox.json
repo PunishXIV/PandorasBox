@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog": "- Disable gardening stuff. Moved to YesAlready."
+    "ChangeLog": "- Update macro mount skip to include mount roulettes.\n- Fix Action Targeting soft target override issue"
 }

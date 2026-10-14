@@ -43,12 +43,14 @@ public unsafe class ActionTargeting : Feature {
     }
 
     public unsafe void TargetEnemy() {
+        var st = Svc.Targets.SoftTarget; //Store the current soft target
         if (NearestConeTarget() != null)
             Svc.Targets.Target = NearestConeTarget();
         else if (Config.UnsetTargetRange && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
             Svc.Targets.Target = null;
         else if (Config.UnsetTargetCombat && Svc.Condition[Dalamud.Game.ClientState.Conditions.ConditionFlag.InCombat] && Svc.Targets.Target != null && Svc.Targets.Target is IBattleNpc)
             Svc.Targets.Target = null;
+        Svc.Targets.SoftTarget = st; //Restore the soft target to what it was before because SE are weird
     }
 
     public bool CanConeAoe() {
