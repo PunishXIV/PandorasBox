@@ -22,7 +22,8 @@ internal class ATMSolver : Feature {
     bool hasDirectChat = false;
 
     private unsafe void RunFeature(IFramework framework) {
-        if (TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible || TryGetAddonByName<AtkUnitBase>("QTE", out var addon2) && addon2->IsVisible) {
+        var addon2 = (AtkUnitBase*)Svc.GameGui.GetAddonByName("QTE", 2).Address;
+        if (TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible || addon2 != null && addon2->IsVisible) {
             DisableDirectChatIfNeeded();
 
             if (Environment.TickCount64 >= Throttler) {
