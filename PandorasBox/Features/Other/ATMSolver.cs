@@ -22,7 +22,7 @@ internal class ATMSolver : Feature {
     bool hasDirectChat = false;
 
     private unsafe void RunFeature(IFramework framework) {
-        var addon2 = (AtkUnitBase*)Svc.GameGui.GetAddonByName("QTE", 2).Address;
+        var addon2 = (AtkUnitBase*)Svc.GameGui.GetAddonByName("QTE", 2).Address; //This is currently only used in certain events like the FF16 crossover, do not remove.
         if (TryGetAddonByName<AtkUnitBase>("QTE", out var addon) && addon->IsVisible || addon2 != null && addon2->IsVisible) {
             DisableDirectChatIfNeeded();
 
