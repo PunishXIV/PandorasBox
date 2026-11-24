@@ -2,7 +2,7 @@
 <Project Sdk="Dalamud.NET.Sdk/15.0.0">
     <PropertyGroup>
         <Authors>Puni.sh</Authors>
-        <Version>1.6.4.7</Version>
+        <Version>1.6.4.8</Version>
         <LangVersion>preview</LangVersion>
     </PropertyGroup>
 
@@ -16,7 +16,7 @@
 
     <ItemGroup>
         <PackageReference Include="AllaganLib.GameSheets" Version="2.2.4" />
-        <PackageReference Include="ECommons" Version="3.2.1.5" />
+        <PackageReference Include="ECommons" Version="3.2.1.26" />
         <PackageReference Include="NAudio" Version="2.1.0" />
     </ItemGroup>
 

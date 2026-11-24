@@ -13,5 +13,5 @@
         "punish",
         "plugin"
     ],
-    "ChangeLog": "- Fix QTE solver for FF16 event"
+    "ChangeLog": "- Add \"Auto-Follow Fairy\" feature.\n- Fix issue with certain UI automation features."
 }
