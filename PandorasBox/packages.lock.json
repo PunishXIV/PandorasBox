@@ -429,7 +429,7 @@
       "punishlib": {
         "type": "Project",
         "dependencies": {
-          "ECommons": "[3.2.1.26, )"
+          "ECommons": "[3.2.0.11, )"
         }
       }
     }
